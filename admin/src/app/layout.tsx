@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Register a student | Mentify Admin",
-  description: "Register students and manage your Mentify Academy workspace.",
+  title: "User registration | Mentify Admin",
+  description: "Register students and teachers in your Mentify Academy workspace.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

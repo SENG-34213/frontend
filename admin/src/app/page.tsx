@@ -8,7 +8,7 @@ type Notice = { kind: "success" | "error"; title: string; body: string };
 const initialValues = {
   firstName: "", lastName: "", email: "", phoneNumber: "", dateOfBirth: "",
   guardianName: "", guardianPhone: "", grade: "", attendanceMode: "PHYSICAL",
-  addressLine1: "", addressLine2: "", city: "", district: "", postalCode: "",
+  nic: "", hireDate: "", addressLine1: "", addressLine2: "", city: "", district: "", postalCode: "",
 };
 
 function Icon({ name, size = 20 }: { name: string; size?: number }) {
@@ -52,6 +52,9 @@ function SelectField({ label, name, options, values, onChange }: {
 
 export default function Home() {
   const [values, setValues] = useState(initialValues);
+  const [activeForm, setActiveForm] = useState<"student" | "teacher">("student");
+  const [specializations, setSpecializations] = useState<string[]>([]);
+  const [specializationInput, setSpecializationInput] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -108,7 +111,7 @@ export default function Home() {
       setApiUrl(normalizedUrl);
       setAdminPassword("");
       setShowSettings(false);
-      setNotice({ kind: "success", title: "Signed in securely", body: `Welcome${user.firstName ? `, ${user.firstName}` : ""}. You can now register students.` });
+      setNotice({ kind: "success", title: "Signed in securely", body: `Welcome${user.firstName ? `, ${user.firstName}` : ""}. You can now register students and teachers.` });
     } catch (error) {
       const message = error instanceof Error ? error.message : "We couldn’t connect to the sign-in service.";
       setNotice({ kind: "error", title: "Sign-in failed", body: message.includes("Failed to fetch") ? "Couldn’t reach the API. Check that the backend is running, the API URL is correct, and CORS allows this frontend origin." : message });
@@ -137,22 +140,36 @@ export default function Home() {
     setNotice({ kind: "success", title: "Signed out", body: "Your admin session was cleared from this browser tab." });
   }
 
-  async function registerStudent(event: FormEvent<HTMLFormElement>) {
+  function switchForm(form: "student" | "teacher") {
+    setActiveForm(form);
+    setValues(initialValues);
+    setSpecializations([]);
+    setSpecializationInput("");
+    setNotice(null);
+  }
+
+  async function registerAccount(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!token.trim()) {
       setShowSettings(true);
-      setNotice({ kind: "error", title: "Admin sign-in required", body: "Sign in with an ADMIN or SUPER_ADMIN account before registering a student." });
+      setNotice({ kind: "error", title: "Admin sign-in required", body: "Sign in with an ADMIN or SUPER_ADMIN account before registering users." });
+      return;
+    }
+    if (activeForm === "teacher" && specializations.length === 0) {
+      setNotice({ kind: "error", title: "Add a teaching specialization", body: "Add at least one subject or area the teacher specializes in." });
       return;
     }
     setBusy(true);
     setNotice(null);
     const payload = {
       email: values.email.trim(), firstName: values.firstName.trim(), lastName: values.lastName.trim(),
-      phoneNumber: values.phoneNumber.trim(), role: "STUDENT",
-      studentProfile: {
+      phoneNumber: values.phoneNumber.trim(), role: activeForm === "student" ? "STUDENT" : "TEACHER",
+      ...(activeForm === "student" ? { studentProfile: {
         dateOfBirth: values.dateOfBirth, guardianName: values.guardianName.trim(), guardianPhone: values.guardianPhone.trim(),
         attendanceMode: values.attendanceMode, grade: values.grade,
-      },
+      } } : { teacherProfile: {
+        dateOfBirth: values.dateOfBirth, nic: values.nic.trim(), specializations, hireDate: values.hireDate,
+      } }),
       address: {
         addressLine1: values.addressLine1.trim(), addressLine2: values.addressLine2.trim(), city: values.city.trim(),
         district: values.district.trim(), postalCode: values.postalCode.trim(),
@@ -185,13 +202,15 @@ export default function Home() {
       }
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const detail = result.message || result.error || (response.status === 401 ? "Your admin session may have expired. Sign in again and update API settings." : response.status === 403 ? "This account does not have permission to register students." : `The server returned ${response.status}.`);
+        const detail = result.message || result.error || (response.status === 401 ? "Your admin session may have expired. Sign in again and update API settings." : response.status === 403 ? `This account does not have permission to register ${activeForm === "student" ? "students" : "teachers"}.` : `The server returned ${response.status}.`);
         throw new Error(detail);
       }
-      const student = result.data ?? {};
-      const studentId = student.studentProfile?.studentId;
-      setNotice({ kind: "success", title: "Student registered", body: `${student.firstName || values.firstName} ${student.lastName || values.lastName} has been added${studentId ? ` with student ID ${studentId}` : ""}. A password setup invitation will be sent by the backend.` });
+      const registered = result.data ?? {};
+      const identifier = activeForm === "student" ? registered.studentProfile?.studentId : registered.teacherProfile?.teacherCode;
+      const kind = activeForm === "student" ? "Student" : "Teacher";
+      setNotice({ kind: "success", title: `${kind} registered`, body: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName} has been added${identifier ? ` with ${activeForm === "student" ? "student ID" : "teacher code"} ${identifier}` : ""}. A password setup invitation will be sent by the backend.` });
       setValues(initialValues);
+      setSpecializations([]);
       document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "We couldn’t connect to the registration service. Check the API URL and try again.";
@@ -210,9 +229,10 @@ export default function Home() {
         <span className="nav-caption">OVERVIEW</span>
         <a className="nav-link" href="#overview"><Icon name="grid"/><span>Dashboard</span></a>
         <span className="nav-caption nav-caption-spaced">PEOPLE</span>
-        <a className="nav-link active" href="#registration"><Icon name="users"/><span>Students</span><span className="nav-chevron"><Icon name="chevron" size={16}/></span></a>
-        <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Register student</a>
-        <a className="nav-link" href="#registration"><Icon name="users"/><span>Teachers</span></a>
+        <a className={`nav-link ${activeForm === "student" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("student"); }}><Icon name="users"/><span>Students</span><span className="nav-chevron"><Icon name="chevron" size={16}/></span></a>
+        {activeForm === "student" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Register student</a>}
+        <a className={`nav-link ${activeForm === "teacher" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("teacher"); }}><Icon name="users"/><span>Teachers</span><span className="nav-chevron"><Icon name="chevron" size={16}/></span></a>
+        {activeForm === "teacher" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Register teacher</a>}
         <span className="nav-caption nav-caption-spaced">LEARNING</span>
         <a className="nav-link" href="#registration"><Icon name="book"/><span>Courses</span></a>
         <a className="nav-link" href="#registration"><Icon name="calendar"/><span>Classes</span></a>
@@ -223,29 +243,31 @@ export default function Home() {
     </aside>
 
     <main className="main-area" id="top">
-      <header className="topbar"><div className="breadcrumb"><span>People</span><Icon name="chevron" size={14}/><span className="crumb-current">Students</span><Icon name="chevron" size={14}/><span className="crumb-current">Register</span></div><div className="topbar-right"><span className="secure-indicator"><span className="secure-dot"/>{adminUser ? `Signed in as ${adminUser.role === "SUPER_ADMIN" ? "Super admin" : "Admin"}` : "Admin sign in required"}</span><button className="top-avatar" aria-label={adminUser ? "Account settings" : "Sign in"} onClick={() => setShowSettings(true)}>{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</button></div></header>
+      <header className="topbar"><div className="breadcrumb"><span>People</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "student" ? "Students" : "Teachers"}</span><Icon name="chevron" size={14}/><span className="crumb-current">Register</span></div><div className="topbar-right"><span className="secure-indicator"><span className="secure-dot"/>{adminUser ? `Signed in as ${adminUser.role === "SUPER_ADMIN" ? "Super admin" : "Admin"}` : "Admin sign in required"}</span><button className="top-avatar" aria-label={adminUser ? "Account settings" : "Sign in"} onClick={() => setShowSettings(true)}>{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</button></div></header>
       <div className="content-wrap" id="registration">
-        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>PEOPLE MANAGEMENT</div><h1>Register a student</h1><p className="page-description">Add a student to your academy and send their account setup invitation.</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
+        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>PEOPLE MANAGEMENT</div><h1>Register a {activeForm}</h1><p className="page-description">Add a {activeForm} to your academy and send their account setup invitation.</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
 
-        <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>Student details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>
+        <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>{activeForm === "student" ? "Student" : "Teacher"} details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>
 
         {notice && <div className={`notice ${notice.kind}`} role="status"><span className="notice-icon"><Icon name={notice.kind === "success" ? "check" : "alert"} size={18}/></span><span className="notice-copy"><strong>{notice.title}</strong><span>{notice.body}</span></span><button className="notice-dismiss" type="button" onClick={() => setNotice(null)} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
-        <form className="form-card" onSubmit={registerStudent}>
-          <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="users" size={18}/></div><div><h2>Personal information</h2><p>Start with the student&apos;s basic details.</p></div><span className="section-index">01</span></div>
-            <div className="field-grid two-col"><Field label="First name" name="firstName" placeholder="e.g. Amaya" values={values} onChange={change}/><Field label="Last name" name="lastName" placeholder="e.g. Perera" values={values} onChange={change}/><Field label="Email address" name="email" type="email" placeholder="student@example.com" hint="Their account invitation will be sent to this email." values={values} onChange={change}/><Field label="Phone number" name="phoneNumber" type="tel" placeholder="077 123 4567" hint="Use a Sri Lankan mobile number." values={values} onChange={change}/><Field label="Date of birth" name="dateOfBirth" type="date" values={values} onChange={change}/><SelectField label="Grade" name="grade" options={[["", "Select grade"], ...Array.from({ length: 13 }, (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string])]} values={values} onChange={change}/></div>
+        <form className="form-card" onSubmit={registerAccount}>
+          <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="users" size={18}/></div><div><h2>{activeForm === "student" ? "Personal information" : "Teacher information"}</h2><p>{activeForm === "student" ? "Start with the student’s basic details." : "Add the teacher’s contact and employment details."}</p></div><span className="section-index">01</span></div>
+            <div className="field-grid two-col"><Field label="First name" name="firstName" placeholder="e.g. Amaya" values={values} onChange={change}/><Field label="Last name" name="lastName" placeholder="e.g. Perera" values={values} onChange={change}/><Field label="Email address" name="email" type="email" placeholder={activeForm === "student" ? "student@example.com" : "teacher@example.com"} hint="Their account invitation will be sent to this email." values={values} onChange={change}/><Field label="Phone number" name="phoneNumber" type="tel" placeholder="0771234567" hint="Use a Sri Lankan mobile number." values={values} onChange={change}/><Field label="Date of birth" name="dateOfBirth" type="date" values={values} onChange={change}/>{activeForm === "student" ? <SelectField label="Grade" name="grade" options={[["", "Select grade"], ...Array.from({ length: 13 }, (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string])]} values={values} onChange={change}/> : <><Field label="NIC number" name="nic" placeholder="e.g. 901234567V" hint="Enter the teacher’s national identity number." values={values} onChange={change}/><Field label="Hire date" name="hireDate" type="date" values={values} onChange={change}/></>}</div>
           </section>
-          <section className="form-section"><div className="section-heading"><div className="section-icon lavender"><Icon name="users" size={18}/></div><div><h2>Guardian &amp; attendance</h2><p>Keep a guardian contact on file and choose how the student attends.</p></div><span className="section-index">02</span></div>
-            <div className="field-grid two-col"><Field label="Guardian full name" name="guardianName" placeholder="e.g. Nadeesha Perera" values={values} onChange={change}/><Field label="Guardian phone" name="guardianPhone" type="tel" placeholder="077 987 6543" values={values} onChange={change}/><div className="attendance-field"><SelectField label="Attendance mode" name="attendanceMode" options={[["PHYSICAL", "In person"], ["ONLINE", "Online"], ["HYBRID", "Hybrid"]]} values={values} onChange={change}/><span className="field-hint">You can update this later in the student profile.</span></div></div>
-          </section>
-          <section className="form-section address-section"><div className="section-heading"><div className="section-icon mint"><Icon name="pin" size={18}/></div><div><h2>Home address</h2><p>Add the student&apos;s residential address.</p></div><span className="section-index">03</span></div>
+          {activeForm === "student" ? <section className="form-section"><div className="section-heading"><div className="section-icon lavender"><Icon name="users" size={18}/></div><div><h2>Guardian &amp; attendance</h2><p>Keep a guardian contact on file and choose how the student attends.</p></div><span className="section-index">02</span></div>
+            <div className="field-grid two-col"><Field label="Guardian full name" name="guardianName" placeholder="e.g. Nadeesha Perera" values={values} onChange={change}/><Field label="Guardian phone" name="guardianPhone" type="tel" placeholder="0779876543" values={values} onChange={change}/><div className="attendance-field"><SelectField label="Attendance mode" name="attendanceMode" options={[["PHYSICAL", "In person"], ["ONLINE", "Online"], ["HYBRID", "Hybrid"]]} values={values} onChange={change}/><span className="field-hint">You can update this later in the student profile.</span></div></div>
+          </section> : <section className="form-section"><div className="section-heading"><div className="section-icon lavender"><Icon name="book" size={18}/></div><div><h2>Teaching specializations</h2><p>Add the subjects or areas this teacher can teach.</p></div><span className="section-index">02</span></div>
+            <div className="specialization-input-wrap"><label className="field"><span className="field-label">Specializations<span className="required"> *</span></span><div className="specialization-entry"><input value={specializationInput} placeholder="Type a subject and press Enter" onChange={(event) => setSpecializationInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); const next = specializationInput.trim(); if (next && !specializations.some((item) => item.toLowerCase() === next.toLowerCase())) setSpecializations((current) => [...current, next]); setSpecializationInput(""); } }} /><button className="secondary-button" type="button" onClick={() => { const next = specializationInput.trim(); if (next && !specializations.some((item) => item.toLowerCase() === next.toLowerCase())) setSpecializations((current) => [...current, next]); setSpecializationInput(""); }}>Add subject</button></div><span className="field-hint">Add at least one specialization. You can include several.</span></label>{specializations.length > 0 && <div className="specialization-chips" aria-label="Selected specializations">{specializations.map((subject) => <span className="specialization-chip" key={subject}>{subject}<button type="button" aria-label={`Remove ${subject}`} onClick={() => setSpecializations((current) => current.filter((item) => item !== subject))}>×</button></span>)}</div>}</div>
+          </section>}
+          <section className="form-section address-section"><div className="section-heading"><div className="section-icon mint"><Icon name="pin" size={18}/></div><div><h2>Home address</h2><p>Add the {activeForm === "student" ? "student’s" : "teacher’s"} residential address.</p></div><span className="section-index">03</span></div>
             <div className="field-grid two-col"><Field label="Address line 1" name="addressLine1" placeholder="House number and street" values={values} onChange={change}/><Field label="Address line 2" name="addressLine2" placeholder="Apartment, suite, etc." required={false} values={values} onChange={change}/><Field label="City" name="city" placeholder="e.g. Colombo" values={values} onChange={change}/><Field label="District" name="district" placeholder="e.g. Colombo" values={values} onChange={change}/><Field label="Postal code" name="postalCode" placeholder="e.g. 00100" required={false} values={values} onChange={change}/></div>
           </section>
-          <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setValues(initialValues); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Registering…</> : <>Register student <Icon name="arrow" size={16}/></>}</button></div></div>
+          <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setValues(initialValues); setSpecializations([]); setSpecializationInput(""); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Registering…</> : <>Register {activeForm} <Icon name="arrow" size={16}/></>}</button></div></div>
         </form>
 
-        <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The student will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>
-        <footer className="page-footer"><span>© 2026 Mentify Academy</span><span><Icon name="shield" size={14}/> Student data is securely encrypted</span></footer>
+        <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>
+        <footer className="page-footer"><span>© 2026 Mentify Academy</span><span><Icon name="shield" size={14}/> User data is securely encrypted</span></footer>
       </div>
     </main>
 

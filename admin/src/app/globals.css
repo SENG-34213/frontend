@@ -110,6 +110,14 @@ h1 { margin-bottom: 7px; color: #20283a; font-size: 27px; font-weight: 690; lett
 .field select:invalid { color: #b3bac5; }
 .field-hint { color: #a0a8b5; font-size: 9px; line-height: 1.4; }
 .attendance-field { max-width: calc(50% - 10px); }
+.specialization-input-wrap { max-width: 100%; }
+.specialization-entry { display: flex; align-items: center; gap: 8px; }
+.specialization-entry input { flex: 1; }
+.specialization-entry .secondary-button { flex: 0 0 auto; height: 37px; white-space: nowrap; }
+.specialization-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.specialization-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e8e3fb; border-radius: 20px; background: #f6f4fd; padding: 5px 8px 5px 11px; color: #5e50a5; font-size: 10px; }
+.specialization-chip button { display: grid; width: 17px; height: 17px; place-items: center; border: 0; border-radius: 50%; background: #e9e4fb; color: #6b5bbc; font-size: 14px; line-height: 1; cursor: pointer; }
+.specialization-chip button:hover { background: #dcd4f8; }
 .address-section .field-grid { row-gap: 16px; }
 .form-footer { display: flex; min-height: 66px; align-items: center; justify-content: space-between; gap: 14px; border-top: 1px solid #edf0f4; background: #fdfdfe; padding: 12px 26px; }
 .required-note { color: #9099a8; font-size: 10px; }
@@ -171,5 +179,6 @@ h1 { margin-bottom: 7px; color: #20283a; font-size: 27px; font-weight: 690; lett
   .content-wrap { width: calc(100% - 28px); padding-top: 22px; }.page-heading { gap: 8px; }.eyebrow { margin-bottom: 9px; font-size: 8px; } h1 { font-size: 22px; }.page-description { max-width: 290px; font-size: 10px; }.text-action { margin-top: 17px; }
   .progress-strip { min-height: 49px; gap: 7px; padding: 0 9px; }.progress-step { font-size: 8px; }.step-number { width: 19px; height: 19px; }.progress-line { width: 12px; }.progress-note svg { width: 14px; }
   .two-col { grid-template-columns: minmax(0, 1fr); gap: 14px; }.attendance-field { max-width: none; }.field input, .field select { height: 39px; }.form-section { padding: 17px 15px 19px; }.section-heading { margin-bottom: 16px; }.section-heading p { max-width: 260px; }.form-footer { align-items: flex-start; flex-direction: column; padding: 13px 15px; }.form-actions { width: 100%; }.form-actions button { flex: 1; }.invitation-note { padding: 12px; }.invitation-note p { font-size: 9px; }.invitation-lock { display: none; }.page-footer { font-size: 8px; }.page-footer span:last-child { text-align: right; }
+  .specialization-entry { align-items: stretch; flex-direction: column; }.specialization-entry .secondary-button { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
