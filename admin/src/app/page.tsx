@@ -4,6 +4,29 @@ import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 type Notice = { kind: "success" | "error"; title: string; body: string };
+type AdminSection = "student" | "teacher" | "course";
+type RecentTeacher = { id: string; name: string; email: string };
+
+type CourseDraft = {
+  courseName: string;
+  courseDescription: string;
+  courseThumbnail: string;
+  courseFeeMonthly: string;
+  gradeId: string;
+  assignedTeacherId: string;
+  subject: string;
+  isOnline: boolean;
+  discountOfferPercent: string;
+  isVisible: boolean;
+  isPublished: boolean;
+  courseEnrollmentId: string;
+};
+
+const emptyCourse: CourseDraft = {
+  courseName: "", courseDescription: "", courseThumbnail: "", courseFeeMonthly: "",
+  gradeId: "", assignedTeacherId: "", subject: "", isOnline: true,
+  discountOfferPercent: "0", isVisible: true, isPublished: false, courseEnrollmentId: "",
+};
 
 const initialValues = {
   firstName: "", lastName: "", email: "", phoneNumber: "", dateOfBirth: "",
@@ -52,7 +75,13 @@ function SelectField({ label, name, options, values, onChange }: {
 
 export default function Home() {
   const [values, setValues] = useState(initialValues);
-  const [activeForm, setActiveForm] = useState<"student" | "teacher">("student");
+  const [activeForm, setActiveForm] = useState<AdminSection>("student");
+  const [course, setCourse] = useState<CourseDraft>(emptyCourse);
+  const [verifyingTeacher, setVerifyingTeacher] = useState(false);
+  const [teacherVerified, setTeacherVerified] = useState(false);
+  const [teacherVerification, setTeacherVerification] = useState("");
+  const [createdCourse, setCreatedCourse] = useState<{ id: string; name: string; status: string } | null>(null);
+  const [recentTeachers, setRecentTeachers] = useState<RecentTeacher[]>([]);
   const [specializations, setSpecializations] = useState<string[]>([]);
   const [specializationInput, setSpecializationInput] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -68,6 +97,12 @@ export default function Home() {
     setApiUrl(sessionStorage.getItem("mentify_api_url") || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080");
     const savedToken = sessionStorage.getItem("mentify_access_token") || "";
     setToken(savedToken);
+    try {
+      const savedTeachers = sessionStorage.getItem("mentify_recent_teachers");
+      if (savedTeachers) setRecentTeachers(JSON.parse(savedTeachers));
+    } catch {
+      sessionStorage.removeItem("mentify_recent_teachers");
+    }
     try {
       const savedAdmin = sessionStorage.getItem("mentify_admin_user");
       if (savedAdmin && savedToken) setAdminUser(JSON.parse(savedAdmin));
@@ -140,12 +175,128 @@ export default function Home() {
     setNotice({ kind: "success", title: "Signed out", body: "Your admin session was cleared from this browser tab." });
   }
 
-  function switchForm(form: "student" | "teacher") {
+  function switchForm(form: AdminSection) {
     setActiveForm(form);
-    setValues(initialValues);
-    setSpecializations([]);
-    setSpecializationInput("");
+    if (form === "student" || form === "teacher") {
+      setValues(initialValues);
+      setSpecializations([]);
+      setSpecializationInput("");
+    }
+    if (form === "course") {
+      setCourse(emptyCourse);
+      setTeacherVerified(false);
+      setTeacherVerification("");
+      setCreatedCourse(null);
+    }
     setNotice(null);
+  }
+
+  function changeCourse(name: keyof CourseDraft, value: string | boolean) {
+    setCourse((current) => ({ ...current, [name]: value }));
+    if (name === "assignedTeacherId") {
+      setTeacherVerified(false);
+      setTeacherVerification("");
+    }
+    if (notice?.kind === "error") setNotice(null);
+  }
+
+  async function authorizedCourseRequest(url: string, options: RequestInit) {
+    const send = (accessToken: string) => fetch(url, {
+      ...options,
+      headers: { ...(options.headers as Record<string, string> | undefined), Authorization: `Bearer ${accessToken}` },
+    });
+    let response = await send(token);
+    if (response.status !== 401) return response;
+
+    const refreshToken = sessionStorage.getItem("mentify_refresh_token");
+    if (!refreshToken) return response;
+    const refreshResponse = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refreshToken }),
+    });
+    const refreshed = await refreshResponse.json().catch(() => ({}));
+    if (!refreshResponse.ok || !refreshed.data?.accessToken) {
+      await signOut();
+      return response;
+    }
+    const nextAccessToken = refreshed.data.accessToken as string;
+    sessionStorage.setItem("mentify_access_token", nextAccessToken);
+    if (refreshed.data.refreshToken) sessionStorage.setItem("mentify_refresh_token", refreshed.data.refreshToken as string);
+    setToken(nextAccessToken);
+    return send(nextAccessToken);
+  }
+
+  async function verifyTeacher() {
+    const teacherId = course.assignedTeacherId.trim();
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teacherId)) {
+      setTeacherVerified(false);
+      setTeacherVerification("Enter a valid teacher UUID first.");
+      return;
+    }
+    setVerifyingTeacher(true);
+    setTeacherVerification("");
+    try {
+      const response = await authorizedCourseRequest(`${apiUrl}/api/v1/users/teachers/${encodeURIComponent(teacherId)}/exists`, { method: "GET" });
+      const exists = await response.json().catch(() => false);
+      if (!response.ok) throw new Error(response.status === 401 ? "Your admin session expired. Sign in again." : `Could not verify this teacher (HTTP ${response.status}).`);
+      setTeacherVerified(exists === true);
+      setTeacherVerification(exists === true ? "Teacher account verified." : "No teacher account was found for this ID.");
+    } catch (error) {
+      setTeacherVerified(false);
+      setTeacherVerification(error instanceof Error ? error.message : "Could not verify teacher ID.");
+    } finally {
+      setVerifyingTeacher(false);
+    }
+  }
+
+  async function submitCourse(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token) {
+      setShowSettings(true);
+      setNotice({ kind: "error", title: "Admin sign-in required", body: "Sign in with an ADMIN or SUPER_ADMIN account before creating a course." });
+      return;
+    }
+    if (!teacherVerified) {
+      setNotice({ kind: "error", title: "Verify the assigned teacher", body: "Use the teacher verification control before creating this course." });
+      return;
+    }
+    if (course.courseEnrollmentId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(course.courseEnrollmentId.trim())) {
+      setNotice({ kind: "error", title: "Invalid enrollment ID", body: "Course enrollment ID must be a valid UUID or left empty." });
+      return;
+    }
+    setBusy(true);
+    setNotice(null);
+    try {
+      const payload = {
+        courseName: course.courseName.trim(),
+        courseDescription: course.courseDescription.trim(),
+        courseThumbnail: course.courseThumbnail.trim() || null,
+        courseFeeMonthly: Number(course.courseFeeMonthly),
+        gradeId: course.gradeId.trim(),
+        assignedTeacherId: course.assignedTeacherId.trim(),
+        subject: course.subject.trim(),
+        isOnline: course.isOnline,
+        discountOfferPercent: Number(course.discountOfferPercent),
+        isVisible: course.isVisible,
+        isPublished: course.isPublished,
+        courseEnrollmentId: course.courseEnrollmentId.trim() || null,
+      };
+      const response = await authorizedCourseRequest(`${apiUrl}/api/v1/course`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = result.message || result.error || (response.status === 401 ? "Your admin session expired. Sign in again." : response.status === 403 ? "This account does not have permission to create courses." : response.status === 409 ? "A course with this name already exists for the selected grade." : `The server returned ${response.status}.`);
+        throw new Error(message);
+      }
+      const created = result.data ?? {};
+      setCreatedCourse({ id: created.id || "", name: created.courseName || course.courseName, status: created.courseStatus || (course.isPublished ? "PUBLISHED" : "DRAFT") });
+      setNotice({ kind: "success", title: "Course created", body: `${created.courseName || course.courseName} was created successfully as ${created.courseStatus || (course.isPublished ? "PUBLISHED" : "DRAFT")}.` });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not create the course.";
+      setNotice({ kind: "error", title: "Course creation failed", body: message.includes("Failed to fetch") ? "Couldn’t reach the course API. Confirm the backend and API gateway are running and allow this frontend origin." : message });
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function registerAccount(event: FormEvent<HTMLFormElement>) {
@@ -208,7 +359,14 @@ export default function Home() {
       const registered = result.data ?? {};
       const identifier = activeForm === "student" ? registered.studentProfile?.studentId : registered.teacherProfile?.teacherCode;
       const kind = activeForm === "student" ? "Student" : "Teacher";
-      setNotice({ kind: "success", title: `${kind} registered`, body: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName} has been added${identifier ? ` with ${activeForm === "student" ? "student ID" : "teacher code"} ${identifier}` : ""}. A password setup invitation will be sent by the backend.` });
+      if (activeForm === "teacher" && registered.id) {
+        const teacher: RecentTeacher = { id: registered.id, name: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName}`, email: registered.email || values.email };
+        const updatedTeachers = [teacher, ...recentTeachers.filter((item) => item.id !== teacher.id)].slice(0, 20);
+        setRecentTeachers(updatedTeachers);
+        sessionStorage.setItem("mentify_recent_teachers", JSON.stringify(updatedTeachers));
+      }
+      const accountId = activeForm === "teacher" ? registered.id : null;
+      setNotice({ kind: "success", title: `${kind} registered`, body: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName} has been added${identifier ? ` with ${activeForm === "student" ? "student ID" : "teacher code"} ${identifier}` : ""}${accountId ? `. Teacher account ID for course assignment: ${accountId}` : ""}. A password setup invitation will be sent by the backend.` });
       setValues(initialValues);
       setSpecializations([]);
       document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -234,7 +392,8 @@ export default function Home() {
         <a className={`nav-link ${activeForm === "teacher" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("teacher"); }}><Icon name="users"/><span>Teachers</span><span className="nav-chevron"><Icon name="chevron" size={16}/></span></a>
         {activeForm === "teacher" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Register teacher</a>}
         <span className="nav-caption nav-caption-spaced">LEARNING</span>
-        <a className="nav-link" href="#registration"><Icon name="book"/><span>Courses</span></a>
+        <a className={`nav-link ${activeForm === "course" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("course"); }}><Icon name="book"/><span>Courses</span>{activeForm === "course" && <span className="nav-chevron"><Icon name="chevron" size={16}/></span>}</a>
+        {activeForm === "course" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Create course</a>}
         <a className="nav-link" href="#registration"><Icon name="calendar"/><span>Classes</span></a>
       </nav>
       <div className="sidebar-bottom"><a className="nav-link" href="#api-settings" onClick={(event) => { event.preventDefault(); setShowSettings(true); }}><Icon name="settings"/><span>{adminUser ? "Account settings" : "Admin sign in"}</span></a>
@@ -243,15 +402,27 @@ export default function Home() {
     </aside>
 
     <main className="main-area" id="top">
-      <header className="topbar"><div className="breadcrumb"><span>People</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "student" ? "Students" : "Teachers"}</span><Icon name="chevron" size={14}/><span className="crumb-current">Register</span></div><div className="topbar-right"><span className="secure-indicator"><span className="secure-dot"/>{adminUser ? `Signed in as ${adminUser.role === "SUPER_ADMIN" ? "Super admin" : "Admin"}` : "Admin sign in required"}</span><button className="top-avatar" aria-label={adminUser ? "Account settings" : "Sign in"} onClick={() => setShowSettings(true)}>{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</button></div></header>
+      <header className="topbar"><div className="breadcrumb"><span>{activeForm === "course" ? "Academic" : "People"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "student" ? "Students" : activeForm === "teacher" ? "Teachers" : "Courses"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "course" ? "Create" : "Register"}</span></div><div className="topbar-right"><span className="secure-indicator"><span className="secure-dot"/>{adminUser ? `Signed in as ${adminUser.role === "SUPER_ADMIN" ? "Super admin" : "Admin"}` : "Admin sign in required"}</span><button className="top-avatar" aria-label={adminUser ? "Account settings" : "Sign in"} onClick={() => setShowSettings(true)}>{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</button></div></header>
       <div className="content-wrap" id="registration">
-        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>PEOPLE MANAGEMENT</div><h1>Register a {activeForm}</h1><p className="page-description">Add a {activeForm} to your academy and send their account setup invitation.</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
+        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>{activeForm === "course" ? "ACADEMIC MANAGEMENT" : "PEOPLE MANAGEMENT"}</div><h1>{activeForm === "course" ? "Create a course" : `Register a ${activeForm}`}</h1><p className="page-description">{activeForm === "course" ? "Set up a course, assign a teacher, and choose its grade and visibility." : `Add a ${activeForm} to your academy and send their account setup invitation.`}</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
 
-        <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>{activeForm === "student" ? "Student" : "Teacher"} details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>
+        {activeForm !== "course" && <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>{activeForm === "student" ? "Student" : "Teacher"} details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>}
 
         {notice && <div className={`notice ${notice.kind}`} role="status"><span className="notice-icon"><Icon name={notice.kind === "success" ? "check" : "alert"} size={18}/></span><span className="notice-copy"><strong>{notice.title}</strong><span>{notice.body}</span></span><button className="notice-dismiss" type="button" onClick={() => setNotice(null)} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
-        <form className="form-card" onSubmit={registerAccount}>
+        {activeForm === "course" ? <form className="form-card course-form" onSubmit={submitCourse}>
+          <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="book" size={18}/></div><div><h2>Course details</h2><p>Give the course a clear name and description for learners.</p></div><span className="section-index">01</span></div>
+            <div className="field-grid two-col"><label className="field"><span className="field-label">Course name<span className="required"> *</span></span><input required maxLength={150} value={course.courseName} placeholder="e.g. Grade 10 Mathematics" onChange={(event) => changeCourse("courseName", event.target.value)} /></label><label className="field"><span className="field-label">Subject<span className="required"> *</span></span><input required maxLength={100} value={course.subject} placeholder="e.g. Mathematics" onChange={(event) => changeCourse("subject", event.target.value)} /></label><label className="field course-description-field"><span className="field-label">Course description<span className="required"> *</span></span><textarea required maxLength={2000} rows={5} value={course.courseDescription} placeholder="Describe what students will learn in this course…" onChange={(event) => changeCourse("courseDescription", event.target.value)} /><span className="field-hint">{course.courseDescription.length}/2000 characters</span></label><label className="field"><span className="field-label">Course thumbnail URL</span><input type="url" maxLength={255} value={course.courseThumbnail} placeholder="https://example.com/course-image.jpg" onChange={(event) => changeCourse("courseThumbnail", event.target.value)} /><span className="field-hint">Optional. Provide a public image URL.</span></label></div>
+          </section>
+          <section className="form-section"><div className="section-heading"><div className="section-icon lavender"><Icon name="users" size={18}/></div><div><h2>Grade &amp; instructor</h2><p>Assign an existing grade and a teacher to this course.</p></div><span className="section-index">02</span></div>
+            <div className="field-grid two-col"><label className="field"><span className="field-label">Grade ID<span className="required"> *</span></span><input required pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" title="Enter the UUID for the grade." value={course.gradeId} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" onChange={(event) => changeCourse("gradeId", event.target.value)} /><span className="field-hint">The backend requires a grade UUID. No grade-list endpoint is currently available, so use an existing grade ID.</span></label><div className="field"><span className="field-label">Assigned teacher ID<span className="required"> *</span></span><div className="verify-input-row"><input aria-label="Assigned teacher UUID" list="recent-teacher-ids" required pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" title="Enter the UUID for an existing teacher." value={course.assignedTeacherId} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" onChange={(event) => changeCourse("assignedTeacherId", event.target.value)} /><datalist id="recent-teacher-ids">{recentTeachers.map((teacher) => <option key={teacher.id} value={teacher.id} label={`${teacher.name} · ${teacher.email}`} />)}</datalist><button className="secondary-button verify-button" type="button" disabled={verifyingTeacher || !course.assignedTeacherId.trim()} onClick={() => void verifyTeacher()}>{verifyingTeacher ? <><span className="spinner spinner-dark"/> Checking</> : "Verify ID"}</button></div><span className={`field-hint ${teacherVerification ? teacherVerified ? "verified-hint" : "invalid-hint" : ""}`}>{teacherVerification || (recentTeachers.length ? `Choose one of ${recentTeachers.length} recently registered teachers or enter a teacher UUID, then verify it.` : "Register a teacher first or paste an existing teacher UUID, then verify it.")}</span></div></div>
+          </section>
+          <section className="form-section"><div className="section-heading"><div className="section-icon mint"><Icon name="settings" size={18}/></div><div><h2>Pricing &amp; availability</h2><p>Choose the monthly fee, delivery mode, and publishing options.</p></div><span className="section-index">03</span></div>
+            <div className="field-grid two-col"><label className="field"><span className="field-label">Monthly fee (LKR)<span className="required"> *</span></span><div className="money-input"><span>LKR</span><input required type="number" min="0.01" step="0.01" value={course.courseFeeMonthly} placeholder="2500.00" onChange={(event) => changeCourse("courseFeeMonthly", event.target.value)} /></div></label><label className="field"><span className="field-label">Discount offer (%)</span><input type="number" min="0" max="100" step="0.01" value={course.discountOfferPercent} onChange={(event) => changeCourse("discountOfferPercent", event.target.value)} /><span className="field-hint">Enter a value between 0 and 100.</span></label><label className="field"><span className="field-label">Delivery mode</span><select value={course.isOnline ? "online" : "in-person"} onChange={(event) => changeCourse("isOnline", event.target.value === "online")}><option value="online">Online</option><option value="in-person">In person</option></select></label><label className="field"><span className="field-label">Enrollment ID</span><input value={course.courseEnrollmentId} placeholder="Optional UUID" onChange={(event) => changeCourse("courseEnrollmentId", event.target.value)} /><span className="field-hint">Optional link to an enrollment record.</span></label></div>
+            <div className="course-switches"><label className="toggle-row"><span className="toggle-copy"><strong>Visible to students</strong><small>Allow students to discover this course.</small></span><input type="checkbox" checked={course.isVisible} onChange={(event) => changeCourse("isVisible", event.target.checked)} /><span className="toggle-control"/></label><label className="toggle-row"><span className="toggle-copy"><strong>Publish course</strong><small>{course.isPublished ? "This course will be published immediately." : "Save as a draft and publish it later."}</small></span><input type="checkbox" checked={course.isPublished} onChange={(event) => changeCourse("isPublished", event.target.checked)} /><span className="toggle-control"/></label></div>
+          </section>
+          <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields · Teacher ID must be verified</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setCourse(emptyCourse); setTeacherVerified(false); setTeacherVerification(""); setCreatedCourse(null); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Creating…</> : <>Create course <Icon name="arrow" size={16}/></>}</button></div></div>
+        </form> : <form className="form-card" onSubmit={registerAccount}>
           <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="users" size={18}/></div><div><h2>{activeForm === "student" ? "Personal information" : "Teacher information"}</h2><p>{activeForm === "student" ? "Start with the student’s basic details." : "Add the teacher’s contact and employment details."}</p></div><span className="section-index">01</span></div>
             <div className="field-grid two-col"><Field label="First name" name="firstName" placeholder="e.g. Amaya" values={values} onChange={change}/><Field label="Last name" name="lastName" placeholder="e.g. Perera" values={values} onChange={change}/><Field label="Email address" name="email" type="email" placeholder={activeForm === "student" ? "student@example.com" : "teacher@example.com"} hint="Their account invitation will be sent to this email." values={values} onChange={change}/><Field label="Phone number" name="phoneNumber" type="tel" placeholder="0771234567" hint="Use a Sri Lankan mobile number." values={values} onChange={change}/><Field label="Date of birth" name="dateOfBirth" type="date" values={values} onChange={change}/>{activeForm === "student" ? <SelectField label="Grade" name="grade" options={[["", "Select grade"], ...Array.from({ length: 13 }, (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string])]} values={values} onChange={change}/> : <><Field label="NIC number" name="nic" placeholder="e.g. 901234567V" hint="Enter the teacher’s national identity number." values={values} onChange={change}/><Field label="Hire date" name="hireDate" type="date" values={values} onChange={change}/></>}</div>
           </section>
@@ -264,13 +435,13 @@ export default function Home() {
             <div className="field-grid two-col"><Field label="Address line 1" name="addressLine1" placeholder="House number and street" values={values} onChange={change}/><Field label="Address line 2" name="addressLine2" placeholder="Apartment, suite, etc." required={false} values={values} onChange={change}/><Field label="City" name="city" placeholder="e.g. Colombo" values={values} onChange={change}/><Field label="District" name="district" placeholder="e.g. Colombo" values={values} onChange={change}/><Field label="Postal code" name="postalCode" placeholder="e.g. 00100" required={false} values={values} onChange={change}/></div>
           </section>
           <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setValues(initialValues); setSpecializations([]); setSpecializationInput(""); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Registering…</> : <>Register {activeForm} <Icon name="arrow" size={16}/></>}</button></div></div>
-        </form>
+        </form>}
 
-        <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>
+        {activeForm === "course" ? createdCourse ? <div className="course-created-card"><div className="created-check"><Icon name="check" size={19}/></div><div><strong>Course is ready</strong><p>{createdCourse.name} · {createdCourse.status}{createdCourse.id ? ` · ID ${createdCourse.id}` : ""}</p><small>The course record is created. Modules, lessons, and learning materials can be added next.</small></div><button className="secondary-button" type="button" onClick={() => switchForm("course")}>Create another</button></div> : <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Course content comes next</strong><p>The backend creates the course record here. Its separate module, lesson, and material endpoints can be connected once the course has been created.</p></div><span className="invitation-lock"><Icon name="book" size={17}/></span></div> : <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>}
         <footer className="page-footer"><span>© 2026 Mentify Academy</span><span><Icon name="shield" size={14}/> User data is securely encrypted</span></footer>
       </div>
     </main>
 
-    {showSettings && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSettings(false); }}><section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div className="modal-heading"><div className="modal-icon"><Icon name="shield" size={19}/></div><button className="notice-dismiss" type="button" onClick={() => setShowSettings(false)} aria-label="Close"><Icon name="close" size={17}/></button></div><h2 id="settings-title">{adminUser ? "Admin account" : "Sign in to Mentify"}</h2><p className="modal-description">{adminUser ? `You’re signed in as ${adminUser.email}. Your session is stored in this browser tab.` : "Sign in with your academy admin account to register students. Only ADMIN and SUPER_ADMIN accounts can continue."}</p>{notice?.kind === "error" && <div className="modal-error" role="alert"><Icon name="alert" size={16}/><span>{notice.body}</span></div>}<label className="field modal-field"><span className="field-label">API base URL</span><input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} placeholder="http://localhost:8080" autoComplete="url" /></label>{!adminUser && <><label className="field modal-field"><span className="field-label">Admin email</span><input type="email" value={adminEmail} onChange={(event) => setAdminEmail(event.target.value)} placeholder="admin@youracademy.lk" autoComplete="username" /></label><label className="field modal-field"><span className="field-label">Password</span><input type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} placeholder="Enter your password" autoComplete="current-password" onKeyDown={(event) => { if (event.key === "Enter") void signIn(); }} /><span className="field-hint">Your password is sent directly to your Mentify API and is never saved in this browser.</span></label></>}<div className="modal-actions">{adminUser && <button className="secondary-button" type="button" onClick={() => void signOut()}>Sign out</button>}<button className="secondary-button" type="button" onClick={() => setShowSettings(false)}>Cancel</button>{!adminUser && <button className="primary-button" type="button" disabled={busy} onClick={() => void signIn()}>{busy ? <><span className="spinner"/> Signing in…</> : <>Sign in <Icon name="arrow" size={16}/></>}</button>}</div></section></div>}
+    {showSettings && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowSettings(false); }}><section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div className="modal-heading"><div className="modal-icon"><Icon name="shield" size={19}/></div><button className="notice-dismiss" type="button" onClick={() => setShowSettings(false)} aria-label="Close"><Icon name="close" size={17}/></button></div><h2 id="settings-title">{adminUser ? "Admin account" : "Sign in to Mentify"}</h2><p className="modal-description">{adminUser ? `You’re signed in as ${adminUser.email}. Your session is stored in this browser tab.` : "Sign in with your academy admin account to manage students, teachers, and courses. Only ADMIN and SUPER_ADMIN accounts can continue."}</p>{notice?.kind === "error" && <div className="modal-error" role="alert"><Icon name="alert" size={16}/><span>{notice.body}</span></div>}<label className="field modal-field"><span className="field-label">API base URL</span><input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} placeholder="http://localhost:8080" autoComplete="url" /></label>{!adminUser && <><label className="field modal-field"><span className="field-label">Admin email</span><input type="email" value={adminEmail} onChange={(event) => setAdminEmail(event.target.value)} placeholder="admin@youracademy.lk" autoComplete="username" /></label><label className="field modal-field"><span className="field-label">Password</span><input type="password" value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} placeholder="Enter your password" autoComplete="current-password" onKeyDown={(event) => { if (event.key === "Enter") void signIn(); }} /><span className="field-hint">Your password is sent directly to your Mentify API and is never saved in this browser.</span></label></>}<div className="modal-actions">{adminUser && <button className="secondary-button" type="button" onClick={() => void signOut()}>Sign out</button>}<button className="secondary-button" type="button" onClick={() => setShowSettings(false)}>Cancel</button>{!adminUser && <button className="primary-button" type="button" disabled={busy} onClick={() => void signIn()}>{busy ? <><span className="spinner"/> Signing in…</> : <>Sign in <Icon name="arrow" size={16}/></>}</button>}</div></section></div>}
   </div>;
 }
