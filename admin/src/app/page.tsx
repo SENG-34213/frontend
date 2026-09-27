@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 type Notice = { kind: "success" | "error"; title: string; body: string };
-type AdminSection = "student" | "teacher" | "course";
+type AdminSection = "student" | "teacher" | "course" | "enrollment";
 type RecentTeacher = { id: string; name: string; email: string };
+type RecentStudent = { id: string; name: string; email: string; grade?: string; phoneNumber?: string; attendanceMode?: string; studentCode?: string };
+type RecentCourse = { id: string; name: string; subject?: string };
+type SampleCourse = { id: string; grade: string; name: string; subject: string; teacher: string; schedule: string; fee: number; description: string };
+type SampleEnrollment = { studentId: string; courseIds: string[]; enrolledOn: string; updatedOn: string };
 
 type CourseDraft = {
   courseName: string;
@@ -27,6 +31,21 @@ const emptyCourse: CourseDraft = {
   gradeId: "", assignedTeacherId: "", subject: "", isOnline: true,
   discountOfferPercent: "0", isVisible: true, isPublished: false, courseEnrollmentId: "",
 };
+
+const subjects = ["Mathematics", "Science", "English", "ICT"];
+const sampleCourses: SampleCourse[] = Array.from({ length: 13 }, (_, index) => {
+  const grade = String(index + 1);
+  return subjects.map((subject, subjectIndex) => ({
+    id: `sample-grade-${grade}-${subject.toLowerCase()}`,
+    grade,
+    name: `Grade ${grade} ${subject}`,
+    subject,
+    teacher: ["Nimali Perera", "Kasun Silva", "Amaya Fernando", "Ruwan Jayasinghe"][subjectIndex],
+    schedule: ["Mon · 4:00 PM", "Tue · 3:30 PM", "Wed · 4:30 PM", "Sat · 9:00 AM"][subjectIndex],
+    fee: [3500, 4000, 3000, 3200][subjectIndex] + index * 150,
+    description: [`Build core concepts and problem-solving confidence for Grade ${grade}.`, `Explore key science topics through examples and guided practice.`, `Develop reading, writing, and communication skills.`, `Learn digital literacy, computing, and practical technology skills.`][subjectIndex],
+  }));
+}).flat();
 
 const initialValues = {
   firstName: "", lastName: "", email: "", phoneNumber: "", dateOfBirth: "",
@@ -82,6 +101,12 @@ export default function Home() {
   const [teacherVerification, setTeacherVerification] = useState("");
   const [createdCourse, setCreatedCourse] = useState<{ id: string; name: string; status: string } | null>(null);
   const [recentTeachers, setRecentTeachers] = useState<RecentTeacher[]>([]);
+  const [recentStudents, setRecentStudents] = useState<RecentStudent[]>([]);
+  const [recentCourses, setRecentCourses] = useState<RecentCourse[]>([]);
+  const [enrollmentStudentId, setEnrollmentStudentId] = useState("");
+  const [enrollmentGrade, setEnrollmentGrade] = useState("1");
+  const [selectedSampleCourses, setSelectedSampleCourses] = useState<string[]>([]);
+  const [sampleEnrollments, setSampleEnrollments] = useState<SampleEnrollment[]>([]);
   const [specializations, setSpecializations] = useState<string[]>([]);
   const [specializationInput, setSpecializationInput] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -102,6 +127,17 @@ export default function Home() {
       if (savedTeachers) setRecentTeachers(JSON.parse(savedTeachers));
     } catch {
       sessionStorage.removeItem("mentify_recent_teachers");
+    }
+    try {
+      const savedStudents = sessionStorage.getItem("mentify_recent_students");
+      if (savedStudents) setRecentStudents(JSON.parse(savedStudents));
+      const savedCourses = sessionStorage.getItem("mentify_recent_courses");
+      if (savedCourses) setRecentCourses(JSON.parse(savedCourses));
+      const savedEnrollments = sessionStorage.getItem("mentify_sample_enrollments");
+      if (savedEnrollments) setSampleEnrollments(JSON.parse(savedEnrollments));
+    } catch {
+      sessionStorage.removeItem("mentify_recent_students");
+      sessionStorage.removeItem("mentify_recent_courses");
     }
     try {
       const savedAdmin = sessionStorage.getItem("mentify_admin_user");
@@ -200,12 +236,12 @@ export default function Home() {
     if (notice?.kind === "error") setNotice(null);
   }
 
-  async function authorizedCourseRequest(url: string, options: RequestInit) {
+  async function authorizedApiRequest(url: string, options: RequestInit) {
     const send = (accessToken: string) => fetch(url, {
       ...options,
       headers: { ...(options.headers as Record<string, string> | undefined), Authorization: `Bearer ${accessToken}` },
     });
-    let response = await send(token);
+    const response = await send(token);
     if (response.status !== 401) return response;
 
     const refreshToken = sessionStorage.getItem("mentify_refresh_token");
@@ -235,7 +271,7 @@ export default function Home() {
     setVerifyingTeacher(true);
     setTeacherVerification("");
     try {
-      const response = await authorizedCourseRequest(`${apiUrl}/api/v1/users/teachers/${encodeURIComponent(teacherId)}/exists`, { method: "GET" });
+      const response = await authorizedApiRequest(`${apiUrl}/api/v1/users/teachers/${encodeURIComponent(teacherId)}/exists`, { method: "GET" });
       const exists = await response.json().catch(() => false);
       if (!response.ok) throw new Error(response.status === 401 ? "Your admin session expired. Sign in again." : `Could not verify this teacher (HTTP ${response.status}).`);
       setTeacherVerified(exists === true);
@@ -280,7 +316,7 @@ export default function Home() {
         isPublished: course.isPublished,
         courseEnrollmentId: course.courseEnrollmentId.trim() || null,
       };
-      const response = await authorizedCourseRequest(`${apiUrl}/api/v1/course`, {
+      const response = await authorizedApiRequest(`${apiUrl}/api/v1/course`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
       });
       const result = await response.json().catch(() => ({}));
@@ -290,6 +326,11 @@ export default function Home() {
       }
       const created = result.data ?? {};
       setCreatedCourse({ id: created.id || "", name: created.courseName || course.courseName, status: created.courseStatus || (course.isPublished ? "PUBLISHED" : "DRAFT") });
+      if (created.id) {
+        const recent: RecentCourse[] = [{ id: created.id, name: created.courseName || course.courseName, subject: created.subject || course.subject }, ...recentCourses.filter((item) => item.id !== created.id)].slice(0, 50);
+        sessionStorage.setItem("mentify_recent_courses", JSON.stringify(recent));
+        setRecentCourses(recent);
+      }
       setNotice({ kind: "success", title: "Course created", body: `${created.courseName || course.courseName} was created successfully as ${created.courseStatus || (course.isPublished ? "PUBLISHED" : "DRAFT")}.` });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not create the course.";
@@ -359,14 +400,34 @@ export default function Home() {
       const registered = result.data ?? {};
       const identifier = activeForm === "student" ? registered.studentProfile?.studentId : registered.teacherProfile?.teacherCode;
       const kind = activeForm === "student" ? "Student" : "Teacher";
+      const accountId = activeForm === "teacher" ? registered.id : null;
       if (activeForm === "teacher" && registered.id) {
         const teacher: RecentTeacher = { id: registered.id, name: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName}`, email: registered.email || values.email };
         const updatedTeachers = [teacher, ...recentTeachers.filter((item) => item.id !== teacher.id)].slice(0, 20);
         setRecentTeachers(updatedTeachers);
         sessionStorage.setItem("mentify_recent_teachers", JSON.stringify(updatedTeachers));
       }
-      const accountId = activeForm === "teacher" ? registered.id : null;
-      setNotice({ kind: "success", title: `${kind} registered`, body: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName} has been added${identifier ? ` with ${activeForm === "student" ? "student ID" : "teacher code"} ${identifier}` : ""}${accountId ? `. Teacher account ID for course assignment: ${accountId}` : ""}. A password setup invitation will be sent by the backend.` });
+      if (activeForm === "student" && registered.id) {
+        const student: RecentStudent = {
+          id: registered.id,
+          name: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName}`,
+          email: registered.email || values.email,
+          grade: String(registered.studentProfile?.grade ?? values.grade),
+          phoneNumber: registered.phoneNumber || values.phoneNumber,
+          attendanceMode: registered.studentProfile?.attendanceMode || values.attendanceMode,
+          studentCode: registered.studentProfile?.studentId,
+        };
+        const recent = [student, ...recentStudents.filter((item) => item.id !== student.id)].slice(0, 50);
+        sessionStorage.setItem("mentify_recent_students", JSON.stringify(recent));
+        setRecentStudents(recent);
+        setEnrollmentGrade(student.grade || "1");
+        setEnrollmentStudentId(student.id);
+        setSelectedSampleCourses([]);
+        setActiveForm("enrollment");
+        setNotice({ kind: "success", title: "Student registered · ready to enroll", body: `${student.name} is selected in Grade ${student.grade}. Choose the sample courses to add.` });
+      } else {
+        setNotice({ kind: "success", title: `${kind} registered`, body: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName} has been added${identifier ? ` with ${activeForm === "student" ? "student ID" : "teacher code"} ${identifier}` : ""}${accountId ? `. Teacher account ID for course assignment: ${accountId}` : ""}. A password setup invitation will be sent by the backend.` });
+      }
       setValues(initialValues);
       setSpecializations([]);
       document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -376,6 +437,44 @@ export default function Home() {
     } finally {
       setBusy(false);
     }
+  }
+
+  const gradeStudents = recentStudents.filter((student) => (student.grade || "1") === enrollmentGrade);
+  const selectedEnrollmentStudent = recentStudents.find((student) => student.id === enrollmentStudentId) || null;
+  const selectedEnrollment = sampleEnrollments.find((item) => item.studentId === enrollmentStudentId);
+  const gradeCourses = sampleCourses.filter((sampleCourse) => sampleCourse.grade === enrollmentGrade);
+
+  function chooseEnrollmentGrade(grade: string) {
+    setEnrollmentGrade(grade);
+    const nextStudent = recentStudents.find((student) => (student.grade || "1") === grade);
+    setEnrollmentStudentId(nextStudent?.id || "");
+    setSelectedSampleCourses([]);
+    setNotice(null);
+  }
+
+  function chooseEnrollmentStudent(student: RecentStudent) {
+    setEnrollmentGrade(student.grade || "1");
+    setEnrollmentStudentId(student.id);
+    setSelectedSampleCourses([]);
+    setNotice(null);
+  }
+
+  function saveSampleEnrollment() {
+    if (!selectedEnrollmentStudent || selectedSampleCourses.length === 0) return;
+    const current = sampleEnrollments.find((item) => item.studentId === selectedEnrollmentStudent.id);
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const nextRecord: SampleEnrollment = {
+      studentId: selectedEnrollmentStudent.id,
+      courseIds: [...new Set([...(current?.courseIds || []), ...selectedSampleCourses])],
+      enrolledOn: current?.enrolledOn || today,
+      updatedOn: today,
+    };
+    const nextEnrollments = [nextRecord, ...sampleEnrollments.filter((item) => item.studentId !== nextRecord.studentId)];
+    sessionStorage.setItem("mentify_sample_enrollments", JSON.stringify(nextEnrollments));
+    setSampleEnrollments(nextEnrollments);
+    setSelectedSampleCourses([]);
+    setNotice({ kind: "success", title: "Sample enrollment saved", body: `${selectedEnrollmentStudent.name} is now enrolled in ${nextRecord.courseIds.length} Grade ${enrollmentGrade} course${nextRecord.courseIds.length === 1 ? "" : "s"}.` });
   }
 
   return <div className="dashboard-shell">
@@ -394,6 +493,8 @@ export default function Home() {
         <span className="nav-caption nav-caption-spaced">LEARNING</span>
         <a className={`nav-link ${activeForm === "course" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("course"); }}><Icon name="book"/><span>Courses</span>{activeForm === "course" && <span className="nav-chevron"><Icon name="chevron" size={16}/></span>}</a>
         {activeForm === "course" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Create course</a>}
+        <a className={`nav-link ${activeForm === "enrollment" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("enrollment"); }}><Icon name="calendar"/><span>Enrollments</span>{activeForm === "enrollment" && <span className="nav-chevron"><Icon name="chevron" size={16}/></span>}</a>
+        {activeForm === "enrollment" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Enroll student</a>}
         <a className="nav-link" href="#registration"><Icon name="calendar"/><span>Classes</span></a>
       </nav>
       <div className="sidebar-bottom"><a className="nav-link" href="#api-settings" onClick={(event) => { event.preventDefault(); setShowSettings(true); }}><Icon name="settings"/><span>{adminUser ? "Account settings" : "Admin sign in"}</span></a>
@@ -402,11 +503,11 @@ export default function Home() {
     </aside>
 
     <main className="main-area" id="top">
-      <header className="topbar"><div className="breadcrumb"><span>{activeForm === "course" ? "Academic" : "People"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "student" ? "Students" : activeForm === "teacher" ? "Teachers" : "Courses"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "course" ? "Create" : "Register"}</span></div><div className="topbar-right"><span className="secure-indicator"><span className="secure-dot"/>{adminUser ? `Signed in as ${adminUser.role === "SUPER_ADMIN" ? "Super admin" : "Admin"}` : "Admin sign in required"}</span><button className="top-avatar" aria-label={adminUser ? "Account settings" : "Sign in"} onClick={() => setShowSettings(true)}>{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</button></div></header>
+      <header className="topbar"><div className="breadcrumb"><span>{activeForm === "course" || activeForm === "enrollment" ? "Academic" : "People"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "student" ? "Students" : activeForm === "teacher" ? "Teachers" : activeForm === "course" ? "Courses" : "Enrollments"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "course" ? "Create" : activeForm === "enrollment" ? "Enroll student" : "Register"}</span></div><div className="topbar-right"><span className="secure-indicator"><span className="secure-dot"/>{adminUser ? `Signed in as ${adminUser.role === "SUPER_ADMIN" ? "Super admin" : "Admin"}` : "Admin sign in required"}</span><button className="top-avatar" aria-label={adminUser ? "Account settings" : "Sign in"} onClick={() => setShowSettings(true)}>{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</button></div></header>
       <div className="content-wrap" id="registration">
-        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>{activeForm === "course" ? "ACADEMIC MANAGEMENT" : "PEOPLE MANAGEMENT"}</div><h1>{activeForm === "course" ? "Create a course" : `Register a ${activeForm}`}</h1><p className="page-description">{activeForm === "course" ? "Set up a course, assign a teacher, and choose its grade and visibility." : `Add a ${activeForm} to your academy and send their account setup invitation.`}</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
+        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>{activeForm === "course" || activeForm === "enrollment" ? "ACADEMIC MANAGEMENT" : "PEOPLE MANAGEMENT"}</div><h1>{activeForm === "course" ? "Create a course" : activeForm === "enrollment" ? "Grade enrollments" : `Register a ${activeForm}`}</h1><p className="page-description">{activeForm === "course" ? "Set up a course, assign a teacher, and choose its grade and visibility." : activeForm === "enrollment" ? "Review each grade’s student roster, enrollment status, and available courses." : `Add a ${activeForm} to your academy and send their account setup invitation.`}</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
 
-        {activeForm !== "course" && <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>{activeForm === "student" ? "Student" : "Teacher"} details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>}
+        {activeForm !== "course" && activeForm !== "enrollment" && <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>{activeForm === "student" ? "Student" : "Teacher"} details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>}
 
         {notice && <div className={`notice ${notice.kind}`} role="status"><span className="notice-icon"><Icon name={notice.kind === "success" ? "check" : "alert"} size={18}/></span><span className="notice-copy"><strong>{notice.title}</strong><span>{notice.body}</span></span><button className="notice-dismiss" type="button" onClick={() => setNotice(null)} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
@@ -422,7 +523,24 @@ export default function Home() {
             <div className="course-switches"><label className="toggle-row"><span className="toggle-copy"><strong>Visible to students</strong><small>Allow students to discover this course.</small></span><input type="checkbox" checked={course.isVisible} onChange={(event) => changeCourse("isVisible", event.target.checked)} /><span className="toggle-control"/></label><label className="toggle-row"><span className="toggle-copy"><strong>Publish course</strong><small>{course.isPublished ? "This course will be published immediately." : "Save as a draft and publish it later."}</small></span><input type="checkbox" checked={course.isPublished} onChange={(event) => changeCourse("isPublished", event.target.checked)} /><span className="toggle-control"/></label></div>
           </section>
           <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields · Teacher ID must be verified</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setCourse(emptyCourse); setTeacherVerified(false); setTeacherVerification(""); setCreatedCourse(null); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Creating…</> : <>Create course <Icon name="arrow" size={16}/></>}</button></div></div>
-        </form> : <form className="form-card" onSubmit={registerAccount}>
+        </form> : activeForm === "enrollment" ? <section className="grade-workspace">
+          <div className="sample-mode-banner"><span className="sample-mode-icon"><Icon name="book" size={17}/></span><span><strong>Sample course catalog</strong><small>Grade-based demo courses and enrollment changes are saved for this browser session.</small></span><span className="sample-mode-tag">DEMO DATA</span></div>
+          <div className="grade-picker-heading"><div><h2>Browse by grade</h2><p>Select a grade to view its students, courses, and enrollment activity.</p></div><button type="button" className="secondary-button" onClick={() => switchForm("student")}><Icon name="plus" size={15}/> Register student</button></div>
+          <div className="grade-tabs" role="tablist" aria-label="Grades">{Array.from({ length: 13 }, (_, index) => String(index + 1)).map((grade) => { const count = recentStudents.filter((student) => (student.grade || "1") === grade).length; return <button className={`grade-tab ${enrollmentGrade === grade ? "active" : ""}`} type="button" role="tab" aria-selected={enrollmentGrade === grade} key={grade} onClick={() => chooseEnrollmentGrade(grade)}><span>Grade</span><strong>{grade}</strong><small>{count} student{count === 1 ? "" : "s"}</small></button>; })}</div>
+          <div className="grade-summary-grid"><div className="grade-summary-card"><span className="summary-icon violet"><Icon name="users" size={17}/></span><span><small>Students in grade</small><strong>{gradeStudents.length}</strong></span></div><div className="grade-summary-card"><span className="summary-icon green"><Icon name="check" size={17}/></span><span><small>Students enrolled</small><strong>{gradeStudents.filter((student) => sampleEnrollments.some((item) => item.studentId === student.id && item.courseIds.length > 0)).length}</strong></span></div><div className="grade-summary-card"><span className="summary-icon blue"><Icon name="book" size={17}/></span><span><small>Available courses</small><strong>{gradeCourses.length}</strong></span></div><div className="grade-summary-card"><span className="summary-icon amber"><Icon name="calendar" size={17}/></span><span><small>Open enrollments</small><strong>{gradeStudents.filter((student) => !sampleEnrollments.some((item) => item.studentId === student.id && item.courseIds.length > 0)).length}</strong></span></div></div>
+          <div className="grade-columns">
+            <section className="roster-card"><div className="roster-heading"><div><h2>Grade {enrollmentGrade} students</h2><p>Choose a student to review or add courses.</p></div><span className="roster-count">{gradeStudents.length}</span></div>
+              {gradeStudents.length ? <div className="roster-list">{gradeStudents.map((student) => { const enrollment = sampleEnrollments.find((item) => item.studentId === student.id); return <button type="button" key={student.id} className={`roster-student ${enrollmentStudentId === student.id ? "selected" : ""}`} onClick={() => chooseEnrollmentStudent(student)}><span className="roster-avatar">{student.name.trim().charAt(0).toUpperCase()}</span><span className="roster-student-copy"><strong>{student.name}</strong><small>{student.email}</small><span className={`enrollment-status ${enrollment?.courseIds.length ? "has-enrollment" : "no-enrollment"}`}>{enrollment?.courseIds.length ? `${enrollment.courseIds.length} course${enrollment.courseIds.length === 1 ? "" : "s"} enrolled` : "Not enrolled"}</span></span><Icon name="chevron" size={17}/></button>; })}</div> : <div className="roster-empty"><span className="empty-roster-icon"><Icon name="users" size={21}/></span><strong>No students in Grade {enrollmentGrade} yet</strong><p>Register a student and they’ll appear here automatically.</p><button type="button" className="primary-button" onClick={() => switchForm("student")}><Icon name="plus" size={15}/> Register a student</button></div>}
+            </section>
+            <section className="student-enrollment-card">{selectedEnrollmentStudent && (selectedEnrollmentStudent.grade || "1") === enrollmentGrade ? <>
+              <div className="student-detail-heading"><span className="student-detail-avatar">{selectedEnrollmentStudent.name.trim().charAt(0).toUpperCase()}</span><div><span className="detail-kicker">STUDENT PROFILE</span><h2>{selectedEnrollmentStudent.name}</h2><p>{selectedEnrollmentStudent.email}</p></div><span className="grade-pill">Grade {enrollmentGrade}</span></div>
+              <div className="student-detail-facts"><div><small>Phone</small><strong>{selectedEnrollmentStudent.phoneNumber || "Not provided"}</strong></div><div><small>Attendance</small><strong>{selectedEnrollmentStudent.attendanceMode || "Not provided"}</strong></div><div><small>Enrollment record</small><strong>{selectedEnrollment ? `Started ${selectedEnrollment.enrolledOn}` : "No courses yet"}</strong></div></div>
+              <div className="current-courses"><div className="course-section-title"><div><h3>Current courses</h3><p>Courses already assigned to this student.</p></div><span>{selectedEnrollment?.courseIds.length || 0}</span></div>{selectedEnrollment?.courseIds.length ? <div className="current-course-chips">{selectedEnrollment.courseIds.map((courseId) => { const item = sampleCourses.find((sampleCourse) => sampleCourse.id === courseId); return <span className="current-course-chip" key={courseId}><Icon name="check" size={13}/>{item?.name || courseId}</span>; })}</div> : <p className="no-courses-copy">No courses enrolled yet. Add a course below.</p>}</div>
+              <div className="available-courses"><div className="course-section-title"><div><h3>Grade {enrollmentGrade} course catalog</h3><p>Sample courses available to this grade.</p></div><span>{gradeCourses.length} courses</span></div><div className="sample-course-list">{gradeCourses.map((item) => { const enrolled = Boolean(selectedEnrollment?.courseIds.includes(item.id)); const selected = selectedSampleCourses.includes(item.id); return <article key={item.id} className={`sample-course-card ${selected ? "selected" : ""} ${enrolled ? "enrolled" : ""}`}><label className="sample-course-select"><input type="checkbox" disabled={enrolled} checked={enrolled || selected} onChange={(event) => setSelectedSampleCourses((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))}/><span className="course-choice-check"><Icon name="check" size={13}/></span><span className="sample-course-copy"><strong>{item.name}</strong><small>{item.subject} · {item.teacher}</small></span></label><p>{item.description}</p><div className="sample-course-meta"><span>{item.schedule}</span><strong>LKR {item.fee.toLocaleString()} / month</strong>{enrolled && <span className="added-tag">ENROLLED</span>}</div></article>; })}</div></div>
+              <div className="enrollment-save-row"><span>{selectedSampleCourses.length ? `${selectedSampleCourses.length} new course${selectedSampleCourses.length === 1 ? "" : "s"} selected` : "Select courses to add to this student"}</span><button type="button" className="primary-button" disabled={!selectedSampleCourses.length} onClick={saveSampleEnrollment}>Save enrollment <Icon name="arrow" size={15}/></button></div>
+            </> : <div className="student-detail-empty"><span className="empty-roster-icon"><Icon name="book" size={21}/></span><strong>Select a Grade {enrollmentGrade} student</strong><p>Student information, current courses, and available courses will appear here.</p></div>}</section>
+          </div>
+        </section> : <form className="form-card" onSubmit={registerAccount}>
           <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="users" size={18}/></div><div><h2>{activeForm === "student" ? "Personal information" : "Teacher information"}</h2><p>{activeForm === "student" ? "Start with the student’s basic details." : "Add the teacher’s contact and employment details."}</p></div><span className="section-index">01</span></div>
             <div className="field-grid two-col"><Field label="First name" name="firstName" placeholder="e.g. Amaya" values={values} onChange={change}/><Field label="Last name" name="lastName" placeholder="e.g. Perera" values={values} onChange={change}/><Field label="Email address" name="email" type="email" placeholder={activeForm === "student" ? "student@example.com" : "teacher@example.com"} hint="Their account invitation will be sent to this email." values={values} onChange={change}/><Field label="Phone number" name="phoneNumber" type="tel" placeholder="0771234567" hint="Use a Sri Lankan mobile number." values={values} onChange={change}/><Field label="Date of birth" name="dateOfBirth" type="date" values={values} onChange={change}/>{activeForm === "student" ? <SelectField label="Grade" name="grade" options={[["", "Select grade"], ...Array.from({ length: 13 }, (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string])]} values={values} onChange={change}/> : <><Field label="NIC number" name="nic" placeholder="e.g. 901234567V" hint="Enter the teacher’s national identity number." values={values} onChange={change}/><Field label="Hire date" name="hireDate" type="date" values={values} onChange={change}/></>}</div>
           </section>
@@ -437,7 +555,7 @@ export default function Home() {
           <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setValues(initialValues); setSpecializations([]); setSpecializationInput(""); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Registering…</> : <>Register {activeForm} <Icon name="arrow" size={16}/></>}</button></div></div>
         </form>}
 
-        {activeForm === "course" ? createdCourse ? <div className="course-created-card"><div className="created-check"><Icon name="check" size={19}/></div><div><strong>Course is ready</strong><p>{createdCourse.name} · {createdCourse.status}{createdCourse.id ? ` · ID ${createdCourse.id}` : ""}</p><small>The course record is created. Modules, lessons, and learning materials can be added next.</small></div><button className="secondary-button" type="button" onClick={() => switchForm("course")}>Create another</button></div> : <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Course content comes next</strong><p>The backend creates the course record here. Its separate module, lesson, and material endpoints can be connected once the course has been created.</p></div><span className="invitation-lock"><Icon name="book" size={17}/></span></div> : <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>}
+        {activeForm === "course" ? createdCourse ? <div className="course-created-card"><div className="created-check"><Icon name="check" size={19}/></div><div><strong>Course is ready</strong><p>{createdCourse.name} · {createdCourse.status}{createdCourse.id ? ` · ID ${createdCourse.id}` : ""}</p><small>The course record is created. Modules, lessons, and learning materials can be added next.</small></div><button className="secondary-button" type="button" onClick={() => switchForm("course")}>Create another</button></div> : <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Course content comes next</strong><p>The backend creates the course record here. Its separate module, lesson, and material endpoints can be connected once the course has been created.</p></div><span className="invitation-lock"><Icon name="book" size={17}/></span></div> : activeForm === "enrollment" ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Sample enrollment workspace</strong><p>Course assignments here use sample records saved in this browser session. The live enrollment API needs real course UUIDs, but the backend currently has no grade-based course catalog endpoint to provide them.</p></div><span className="invitation-lock"><Icon name="users" size={17}/></span></div> : <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>}
         <footer className="page-footer"><span>© 2026 Mentify Academy</span><span><Icon name="shield" size={14}/> User data is securely encrypted</span></footer>
       </div>
     </main>

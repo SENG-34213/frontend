@@ -141,6 +141,123 @@ h1 { margin-bottom: 7px; color: #20283a; font-size: 27px; font-weight: 690; lett
 .course-created-card p { margin: 0 0 4px; color: #526b5f; font-size: 10px; overflow-wrap: anywhere; }
 .course-created-card small { color: #7d9287; font-size: 9px; line-height: 1.45; }
 .course-contract-note { background: #f7f7fb; }
+.enrollment-form .manual-id-row { display: flex; align-items: flex-end; gap: 9px; margin-top: 17px; }
+.manual-id-row .field { flex: 1; }
+.manual-id-row > button { height: 37px; flex: 0 0 auto; }
+.selected-entity { display: flex; align-items: center; gap: 10px; margin-top: 13px; border: 1px solid #e9e5fa; border-radius: 8px; background: #faf9ff; padding: 9px 11px; }
+.entity-avatar { display: grid; width: 31px; height: 31px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #ece8fc; color: #6855c2; font-size: 12px; font-weight: 700; }
+.selected-entity > div { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 3px; }
+.selected-entity strong { color: #465064; font-size: 10px; }
+.selected-entity small { overflow: hidden; color: #929bac; font-size: 9px; text-overflow: ellipsis; }
+.selected-entity > button { display: grid; width: 26px; height: 26px; place-items: center; border: 0; border-radius: 5px; background: transparent; color: #929bac; cursor: pointer; }
+.selected-entity > button:hover { background: #efedf8; color: #6251b2; }
+.course-choice-list { display: grid; gap: 8px; }
+.course-choice { position: relative; display: flex; min-height: 57px; align-items: center; gap: 11px; border: 1px solid #e8ebf1; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.course-choice:hover, .course-choice.selected { border-color: #c9c0f0; background: #faf9ff; }
+.course-choice > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.course-choice > input:focus-visible + .course-choice-check { outline: 3px solid #d8cffd; outline-offset: 2px; }
+.course-choice-check { display: grid; width: 18px; height: 18px; flex: 0 0 auto; place-items: center; border: 1px solid #dce0e8; border-radius: 5px; background: #fff; color: transparent; }
+.course-choice.selected .course-choice-check { border-color: #7058d7; background: #7058d7; color: #fff; }
+.course-choice-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 4px; }
+.course-choice-copy strong { overflow: hidden; color: #465064; font-size: 10px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.course-choice-copy small { overflow: hidden; color: #939cac; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.course-choice-arrow { display: flex; color: #a2aaba; }
+.selected-count { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; color: #5a4aa9; font-size: 10px; }
+.selected-count > span { display: inline-flex; align-items: center; gap: 6px; }
+.selected-count button { border: 0; background: transparent; color: #8b91a1; font-size: 9px; cursor: pointer; }
+.selected-count button:hover { color: #634dcc; }
+.empty-catalog { display: flex; align-items: center; gap: 12px; border: 1px dashed #e1e4ec; border-radius: 8px; background: #fcfcfe; padding: 13px; }
+.empty-catalog p { margin: 0; color: #848e9f; font-size: 10px; line-height: 1.55; }
+.enrollment-model-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 15px; border-radius: 7px; background: #f8f8fc; padding: 10px 12px; color: #828b9b; font-size: 9px; line-height: 1.5; }
+.enrollment-model-note svg { flex: 0 0 auto; margin-top: 1px; color: #7966cc; }
+.enrollment-model-note strong { color: #5c6373; font-weight: 650; }
+.enrollment-created { margin: 0 22px 18px; }
+.grade-workspace { display: flex; flex-direction: column; gap: 15px; }
+.sample-mode-banner { display: flex; align-items: center; gap: 11px; border: 1px solid #e9e5f8; border-radius: 9px; background: linear-gradient(110deg, #fbfaff, #fff); padding: 12px 15px; }
+.sample-mode-icon { display: grid; width: 31px; height: 31px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: #f0edfb; color: #7058d7; }
+.sample-mode-banner > span:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 3px; }
+.sample-mode-banner strong { color: #4f4a6b; font-size: 10px; font-weight: 650; }
+.sample-mode-banner small { color: #89889e; font-size: 9px; line-height: 1.4; }
+.sample-mode-tag { border: 1px solid #e5dff7; border-radius: 20px; background: #f6f3ff; padding: 5px 8px; color: #7968bf; font-size: 8px; font-weight: 750; letter-spacing: .6px; white-space: nowrap; }
+.grade-picker-heading, .roster-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.grade-picker-heading { margin-top: 3px; }
+.grade-picker-heading h2, .roster-heading h2 { margin: 0 0 4px; color: #303849; font-size: 13px; font-weight: 650; }
+.grade-picker-heading p, .roster-heading p { margin: 0; color: #929cad; font-size: 10px; }
+.grade-picker-heading > button { flex: 0 0 auto; }
+.grade-tabs { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 7px; }
+.grade-tab { display: flex; min-width: 0; min-height: 66px; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid #e7eaf0; border-radius: 8px; background: #fff; color: #8b95a5; cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.grade-tab:hover { border-color: #cfc6f1; transform: translateY(-1px); }
+.grade-tab.active { border-color: #8875df; background: #f6f4ff; box-shadow: 0 2px 8px #7058d714; color: #6753c5; }
+.grade-tab > span { font-size: 8px; }
+.grade-tab strong { color: #394255; font-size: 17px; font-weight: 700; line-height: 1.1; }
+.grade-tab.active strong { color: #6753c5; }
+.grade-tab small { color: #9ba3b1; font-size: 7px; white-space: nowrap; }
+.grade-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.grade-summary-card { display: flex; align-items: center; gap: 10px; min-height: 66px; border: 1px solid #e9edf2; border-radius: 8px; background: #fff; padding: 11px 13px; }
+.summary-icon { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 8px; }
+.summary-icon.violet { background: #f0edff; color: #7058d7; }.summary-icon.green { background: #e9f7f0; color: #359b78; }.summary-icon.blue { background: #edf5ff; color: #5686c5; }.summary-icon.amber { background: #fff5e7; color: #c08c3b; }
+.grade-summary-card > span:last-child { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.grade-summary-card small { color: #8993a3; font-size: 8px; }
+.grade-summary-card strong { color: #30394a; font-size: 16px; font-weight: 700; line-height: 1; }
+.grade-columns { display: grid; grid-template-columns: minmax(230px, .75fr) minmax(0, 1.65fr); align-items: start; gap: 13px; }
+.roster-card, .student-enrollment-card { min-width: 0; overflow: hidden; border: 1px solid #e8ebf1; border-radius: 9px; background: #fff; }
+.roster-heading { min-height: 66px; border-bottom: 1px solid #edf0f4; padding: 13px 15px; }
+.roster-count { display: grid; min-width: 25px; height: 25px; place-items: center; border-radius: 50%; background: #f2efff; color: #7058d7; font-size: 9px; font-weight: 700; }
+.roster-list { display: flex; flex-direction: column; }
+.roster-student { display: flex; width: 100%; align-items: center; gap: 9px; border: 0; border-bottom: 1px solid #f0f2f5; background: #fff; padding: 12px 13px; text-align: left; cursor: pointer; }
+.roster-student:last-child { border-bottom: 0; }
+.roster-student:hover, .roster-student.selected { background: #faf9ff; }
+.roster-student.selected { box-shadow: inset 3px 0 #7963dc; }
+.roster-avatar, .student-detail-avatar { display: grid; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #ece8fc; color: #6651c5; font-weight: 700; }
+.roster-avatar { width: 32px; height: 32px; font-size: 11px; }
+.roster-student-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 4px; }
+.roster-student-copy strong { overflow: hidden; color: #465064; font-size: 9px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.roster-student-copy small { overflow: hidden; color: #929bac; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.roster-student > svg { flex: 0 0 auto; color: #aab1bd; }
+.enrollment-status { font-size: 8px; }
+.enrollment-status.has-enrollment { color: #339273; }.enrollment-status.no-enrollment { color: #a0a7b3; }
+.roster-empty, .student-detail-empty { display: flex; min-height: 220px; flex-direction: column; align-items: center; justify-content: center; padding: 24px 17px; text-align: center; }
+.empty-roster-icon { display: grid; width: 40px; height: 40px; margin-bottom: 12px; place-items: center; border-radius: 12px; background: #f3f0ff; color: #7a67d3; }
+.roster-empty > strong, .student-detail-empty > strong { margin-bottom: 5px; color: #3f4859; font-size: 11px; font-weight: 650; }
+.roster-empty p, .student-detail-empty p { max-width: 230px; margin: 0 0 14px; color: #929cad; font-size: 9px; line-height: 1.5; }
+.roster-empty .primary-button { height: 32px; }
+.student-enrollment-card { padding: 17px; }
+.student-detail-heading { display: flex; align-items: center; gap: 11px; }
+.student-detail-avatar { width: 42px; height: 42px; font-size: 15px; }
+.student-detail-heading > div { min-width: 0; flex: 1; }
+.detail-kicker { display: block; margin-bottom: 4px; color: #9992bd; font-size: 7px; font-weight: 750; letter-spacing: .9px; }
+.student-detail-heading h2 { overflow: hidden; margin: 0 0 3px; color: #303849; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+.student-detail-heading p { overflow: hidden; margin: 0; color: #909aab; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.grade-pill { border: 1px solid #e7e2f7; border-radius: 18px; background: #f8f6ff; padding: 5px 8px; color: #6c5ac0; font-size: 8px; font-weight: 650; white-space: nowrap; }
+.student-detail-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 15px 0; border-top: 1px solid #eff1f4; border-bottom: 1px solid #eff1f4; padding: 11px 0; }
+.student-detail-facts > div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.student-detail-facts small { color: #9aa2af; font-size: 7px; }
+.student-detail-facts strong { overflow: hidden; color: #566174; font-size: 8px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.current-courses { margin-bottom: 15px; }
+.course-section-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.course-section-title h3 { margin: 0 0 3px; color: #434d5e; font-size: 10px; font-weight: 650; }
+.course-section-title p { margin: 0; color: #9aa2af; font-size: 8px; }
+.course-section-title > span { color: #7d8697; font-size: 8px; white-space: nowrap; }
+.current-course-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.current-course-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #d9eee5; border-radius: 18px; background: #f4fbf7; padding: 5px 8px; color: #388266; font-size: 8px; }
+.no-courses-copy { margin: 0; border: 1px dashed #e4e7ed; border-radius: 6px; padding: 9px; color: #9aa2af; font-size: 8px; }
+.sample-course-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sample-course-card { min-width: 0; border: 1px solid #e7eaf0; border-radius: 7px; background: #fff; padding: 10px; }
+.sample-course-card.selected { border-color: #a99be4; background: #fbfaff; }
+.sample-course-card.enrolled { border-color: #d6ebdf; background: #f9fcfa; }
+.sample-course-select { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.sample-course-select > input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.sample-course-select > input:focus-visible + .course-choice-check { outline: 3px solid #d8cffd; outline-offset: 2px; }
+.sample-course-card.enrolled .course-choice-check { border-color: #50a483; background: #50a483; color: #fff; }
+.sample-course-copy { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.sample-course-copy strong { overflow: hidden; color: #465064; font-size: 9px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.sample-course-copy small { overflow: hidden; color: #939cac; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.sample-course-card > p { min-height: 28px; margin: 8px 0; color: #858f9f; font-size: 8px; line-height: 1.45; }
+.sample-course-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 9px; color: #8e98a8; font-size: 7px; }
+.sample-course-meta strong { margin-left: auto; color: #596477; font-size: 8px; font-weight: 650; }
+.added-tag { border-radius: 10px; background: #e8f5ee; padding: 3px 5px; color: #388266; font-size: 6px; font-weight: 750; letter-spacing: .5px; }
+.enrollment-save-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; border-top: 1px solid #edf0f4; padding-top: 13px; color: #8791a2; font-size: 8px; }
+.enrollment-save-row .primary-button { height: 33px; }
 .specialization-input-wrap { max-width: 100%; }
 .specialization-entry { display: flex; align-items: center; gap: 8px; }
 .specialization-entry input { flex: 1; }
@@ -205,6 +322,7 @@ h1 { margin-bottom: 7px; color: #20283a; font-size: 27px; font-weight: 690; lett
   .content-wrap { width: min(100% - 36px, 600px); padding-top: 27px; }.page-heading { align-items: flex-start; margin-bottom: 20px; } h1 { font-size: 24px; }.page-description { max-width: 350px; font-size: 11px; line-height: 1.55; }.text-action { margin-top: 23px; font-size: 0; }.text-action svg { width: 18px; height: 18px; }
   .progress-strip { gap: 9px; padding: 0 12px; }.progress-step { gap: 6px; font-size: 9px; }.progress-line { width: 24px; }.progress-note { font-size: 0; gap: 0; }.progress-note svg { width: 17px; height: 17px; }
   .form-section { padding: 19px 18px 21px; }.field-grid { gap: 15px 13px; }.form-footer { padding: 12px 18px; }.required-note { font-size: 9px; }
+  .grade-tabs { grid-template-columns: repeat(7, minmax(0, 1fr)); }.grade-columns { grid-template-columns: minmax(0, 1fr); }.grade-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 480px) {
   .content-wrap { width: calc(100% - 28px); padding-top: 22px; }.page-heading { gap: 8px; }.eyebrow { margin-bottom: 9px; font-size: 8px; } h1 { font-size: 22px; }.page-description { max-width: 290px; font-size: 10px; }.text-action { margin-top: 17px; }
@@ -212,5 +330,7 @@ h1 { margin-bottom: 7px; color: #20283a; font-size: 27px; font-weight: 690; lett
   .two-col { grid-template-columns: minmax(0, 1fr); gap: 14px; }.attendance-field { max-width: none; }.field input, .field select { height: 39px; }.form-section { padding: 17px 15px 19px; }.section-heading { margin-bottom: 16px; }.section-heading p { max-width: 260px; }.form-footer { align-items: flex-start; flex-direction: column; padding: 13px 15px; }.form-actions { width: 100%; }.form-actions button { flex: 1; }.invitation-note { padding: 12px; }.invitation-note p { font-size: 9px; }.invitation-lock { display: none; }.page-footer { font-size: 8px; }.page-footer span:last-child { text-align: right; }
   .specialization-entry { align-items: stretch; flex-direction: column; }.specialization-entry .secondary-button { width: 100%; }
   .course-switches { grid-template-columns: minmax(0, 1fr); }.verify-input-row { align-items: stretch; flex-direction: column; }.verify-button { width: 100%; }.course-created-card { align-items: flex-start; flex-wrap: wrap; }.course-created-card > .secondary-button { width: 100%; }
+  .enrollment-form .manual-id-row { align-items: stretch; flex-direction: column; }.manual-id-row > button { width: 100%; }.selected-count { align-items: flex-start; }
+  .grade-picker-heading { align-items: flex-start; flex-direction: column; }.grade-picker-heading > button { width: 100%; }.grade-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }.grade-tab { min-height: 58px; }.grade-tab small { font-size: 6px; }.grade-summary-grid { gap: 7px; }.grade-summary-card { min-height: 58px; gap: 7px; padding: 8px; }.grade-summary-card small { font-size: 7px; }.grade-summary-card strong { font-size: 14px; }.grade-columns { gap: 10px; }.student-enrollment-card { padding: 13px; }.student-detail-facts { gap: 6px; }.sample-course-list { grid-template-columns: minmax(0, 1fr); }.sample-course-meta strong { margin-left: 0; }.enrollment-save-row { align-items: flex-start; flex-direction: column; }.enrollment-save-row .primary-button { width: 100%; justify-content: center; }.sample-mode-banner { align-items: flex-start; }.sample-mode-tag { font-size: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
