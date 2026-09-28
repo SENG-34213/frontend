@@ -1,96 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
-
-type Notice = { kind: "success" | "error"; title: string; body: string };
-type AdminSection = "student" | "teacher" | "course" | "enrollment";
-type RecentTeacher = { id: string; name: string; email: string };
-type RecentStudent = { id: string; name: string; email: string; grade?: string; phoneNumber?: string; attendanceMode?: string; studentCode?: string };
-type RecentCourse = { id: string; name: string; subject?: string };
-type SampleCourse = { id: string; grade: string; name: string; subject: string; teacher: string; schedule: string; fee: number; description: string };
-type SampleEnrollment = { studentId: string; courseIds: string[]; enrolledOn: string; updatedOn: string };
-
-type CourseDraft = {
-  courseName: string;
-  courseDescription: string;
-  courseThumbnail: string;
-  courseFeeMonthly: string;
-  gradeId: string;
-  assignedTeacherId: string;
-  subject: string;
-  isOnline: boolean;
-  discountOfferPercent: string;
-  isVisible: boolean;
-  isPublished: boolean;
-  courseEnrollmentId: string;
-};
-
-const emptyCourse: CourseDraft = {
-  courseName: "", courseDescription: "", courseThumbnail: "", courseFeeMonthly: "",
-  gradeId: "", assignedTeacherId: "", subject: "", isOnline: true,
-  discountOfferPercent: "0", isVisible: true, isPublished: false, courseEnrollmentId: "",
-};
-
-const subjects = ["Mathematics", "Science", "English", "ICT"];
-const sampleCourses: SampleCourse[] = Array.from({ length: 13 }, (_, index) => {
-  const grade = String(index + 1);
-  return subjects.map((subject, subjectIndex) => ({
-    id: `sample-grade-${grade}-${subject.toLowerCase()}`,
-    grade,
-    name: `Grade ${grade} ${subject}`,
-    subject,
-    teacher: ["Nimali Perera", "Kasun Silva", "Amaya Fernando", "Ruwan Jayasinghe"][subjectIndex],
-    schedule: ["Mon · 4:00 PM", "Tue · 3:30 PM", "Wed · 4:30 PM", "Sat · 9:00 AM"][subjectIndex],
-    fee: [3500, 4000, 3000, 3200][subjectIndex] + index * 150,
-    description: [`Build core concepts and problem-solving confidence for Grade ${grade}.`, `Explore key science topics through examples and guided practice.`, `Develop reading, writing, and communication skills.`, `Learn digital literacy, computing, and practical technology skills.`][subjectIndex],
-  }));
-}).flat();
-
-const initialValues = {
-  firstName: "", lastName: "", email: "", phoneNumber: "", dateOfBirth: "",
-  guardianName: "", guardianPhone: "", grade: "", attendanceMode: "PHYSICAL",
-  nic: "", hireDate: "", addressLine1: "", addressLine2: "", city: "", district: "", postalCode: "",
-};
-
-function Icon({ name, size = 20 }: { name: string; size?: number }) {
-  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
-  const paths: Record<string, ReactNode> = {
-    grid: <><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></>,
-    users: <><path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20"/><circle cx="9.5" cy="7" r="4"/><path d="M17 11a4 4 0 0 0 0-8M21 20v-1.5a4 4 0 0 0-3-3.87"/></>,
-    book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16M8 7h8M8 11h8"/></>,
-    calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></>,
-    settings: <><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4L7.5 15a8 8 0 0 1 0-1.9L6.1 12l1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a8 8 0 0 1-.1 1.9Z" transform="translate(-1 -1) scale(1.08)"/></>,
-    plus: <><path d="M12 5v14M5 12h14"/></>,
-    chevron: <path d="m9 18 6-6-6-6"/>,
-    pin: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
-    shield: <><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></>,
-    arrow: <><path d="M7 17 17 7M7 7h10v10"/></>,
-    check: <path d="m5 12 4 4L19 6"/>,
-    alert: <><path d="M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></>,
-    mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>,
-    close: <><path d="m18 6-12 12M6 6l12 12"/></>,
-  };
-  return <svg {...common}>{paths[name] ?? paths.grid}</svg>;
-}
-
-function Field({ label, name, type = "text", placeholder, required = true, hint, values, onChange }: {
-  label: string; name: keyof typeof initialValues; type?: string; placeholder?: string;
-  required?: boolean; hint?: string; values: typeof initialValues; onChange: (name: keyof typeof initialValues, value: string) => void;
-}) {
-  return <label className="field"><span className="field-label">{label}{required && <span className="required"> *</span>}</span>
-    <input name={name} type={type} required={required} placeholder={placeholder} pattern={name === "phoneNumber" || name === "guardianPhone" ? "(?:\\+94|0)7[0-9]{8}" : undefined} title={name === "phoneNumber" || name === "guardianPhone" ? "Use a Sri Lankan mobile number, for example 0771234567 or +94771234567." : undefined} value={values[name]} onChange={(event) => onChange(name, event.target.value)} />
-    {hint && <span className="field-hint">{hint}</span>}
-  </label>;
-}
-
-function SelectField({ label, name, options, values, onChange }: {
-  label: string; name: keyof typeof initialValues; options: [string, string][]; values: typeof initialValues; onChange: (name: keyof typeof initialValues, value: string) => void;
-}) {
-  return <label className="field"><span className="field-label">{label}<span className="required"> *</span></span>
-    <select name={name} required value={values[name]} onChange={(event) => onChange(name, event.target.value)}>{options.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-  </label>;
-}
+import type { FormEvent } from "react";
+import { Icon } from "@/components/admin/Icon";
+import { Field, SelectField } from "@/components/admin/FormFields";
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { emptyCourse, initialRegistrationValues as initialValues, sampleCourses } from "@/features/admin/data";
+import type { AdminSection, CourseDraft, Notice, RecentCourse, RecentStudent, RecentTeacher, SampleEnrollment } from "@/features/admin/types";
 
 export default function Home() {
   const [values, setValues] = useState(initialValues);
@@ -118,7 +35,10 @@ export default function Home() {
   const [adminPassword, setAdminPassword] = useState("");
   const [adminUser, setAdminUser] = useState<{ firstName?: string; lastName?: string; email?: string; role?: string } | null>(null);
 
+  // Browser session hydration is intentionally kept in one boundary so the page never reads sessionStorage during SSR.
   useEffect(() => {
+    // Session storage is an external browser boundary; hydrate it after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setApiUrl(sessionStorage.getItem("mentify_api_url") || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080");
     const savedToken = sessionStorage.getItem("mentify_access_token") || "";
     setToken(savedToken);
@@ -478,32 +398,9 @@ export default function Home() {
   }
 
   return <div className="dashboard-shell">
-    <aside className="sidebar">
-      <a className="brand" href="#top" aria-label="Mentify home"><span className="brand-mark"><span>m</span></span><span className="brand-name">mentify<span>.</span></span></a>
-      <div className="workspace-label">WORKSPACE</div>
-      <div className="workspace-picker"><span className="workspace-avatar">M</span><span className="workspace-copy"><strong>Mentify Academy</strong><small>Education workspace</small></span><span className="workspace-dots">···</span></div>
-      <nav className="nav-group" aria-label="Main navigation">
-        <span className="nav-caption">OVERVIEW</span>
-        <a className="nav-link" href="#overview"><Icon name="grid"/><span>Dashboard</span></a>
-        <span className="nav-caption nav-caption-spaced">PEOPLE</span>
-        <a className={`nav-link ${activeForm === "student" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("student"); }}><Icon name="users"/><span>Students</span><span className="nav-chevron"><Icon name="chevron" size={16}/></span></a>
-        {activeForm === "student" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Register student</a>}
-        <a className={`nav-link ${activeForm === "teacher" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("teacher"); }}><Icon name="users"/><span>Teachers</span><span className="nav-chevron"><Icon name="chevron" size={16}/></span></a>
-        {activeForm === "teacher" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Register teacher</a>}
-        <span className="nav-caption nav-caption-spaced">LEARNING</span>
-        <a className={`nav-link ${activeForm === "course" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("course"); }}><Icon name="book"/><span>Courses</span>{activeForm === "course" && <span className="nav-chevron"><Icon name="chevron" size={16}/></span>}</a>
-        {activeForm === "course" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Create course</a>}
-        <a className={`nav-link ${activeForm === "enrollment" ? "active" : ""}`} href="#registration" onClick={(event) => { event.preventDefault(); switchForm("enrollment"); }}><Icon name="calendar"/><span>Enrollments</span>{activeForm === "enrollment" && <span className="nav-chevron"><Icon name="chevron" size={16}/></span>}</a>
-        {activeForm === "enrollment" && <a className="nav-link sub-link selected" href="#registration"><span className="sub-dot"/>Enroll student</a>}
-        <a className="nav-link" href="#registration"><Icon name="calendar"/><span>Classes</span></a>
-      </nav>
-      <div className="sidebar-bottom"><a className="nav-link" href="#api-settings" onClick={(event) => { event.preventDefault(); setShowSettings(true); }}><Icon name="settings"/><span>{adminUser ? "Account settings" : "Admin sign in"}</span></a>
-        <div className="profile-card"><div className="profile-avatar">{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</div><span className="profile-copy"><strong>{adminUser ? `${adminUser.firstName || "Admin"} ${adminUser.lastName || ""}` : "Admin session"}</strong><small>{adminUser?.email || "Sign in to get started"}</small></span><button className="profile-menu" type="button" onClick={() => adminUser ? void signOut() : setShowSettings(true)} aria-label={adminUser ? "Sign out" : "Sign in"}>{adminUser ? "↗" : "···"}</button></div>
-      </div>
-    </aside>
-
+    <AdminSidebar activeSection={activeForm} adminUser={adminUser} onNavigate={switchForm} onSettings={() => setShowSettings(true)} onSignOut={() => void signOut()} />
     <main className="main-area" id="top">
-      <header className="topbar"><div className="breadcrumb"><span>{activeForm === "course" || activeForm === "enrollment" ? "Academic" : "People"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "student" ? "Students" : activeForm === "teacher" ? "Teachers" : activeForm === "course" ? "Courses" : "Enrollments"}</span><Icon name="chevron" size={14}/><span className="crumb-current">{activeForm === "course" ? "Create" : activeForm === "enrollment" ? "Enroll student" : "Register"}</span></div><div className="topbar-right"><span className="secure-indicator"><span className="secure-dot"/>{adminUser ? `Signed in as ${adminUser.role === "SUPER_ADMIN" ? "Super admin" : "Admin"}` : "Admin sign in required"}</span><button className="top-avatar" aria-label={adminUser ? "Account settings" : "Sign in"} onClick={() => setShowSettings(true)}>{adminUser ? `${adminUser.firstName?.[0] || "A"}${adminUser.lastName?.[0] || "D"}` : "AD"}</button></div></header>
+      <AdminHeader activeSection={activeForm} adminUser={adminUser} onSettings={() => setShowSettings(true)} />
       <div className="content-wrap" id="registration">
         <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>{activeForm === "course" || activeForm === "enrollment" ? "ACADEMIC MANAGEMENT" : "PEOPLE MANAGEMENT"}</div><h1>{activeForm === "course" ? "Create a course" : activeForm === "enrollment" ? "Grade enrollments" : `Register a ${activeForm}`}</h1><p className="page-description">{activeForm === "course" ? "Set up a course, assign a teacher, and choose its grade and visibility." : activeForm === "enrollment" ? "Review each grade’s student roster, enrollment status, and available courses." : `Add a ${activeForm} to your academy and send their account setup invitation.`}</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
 
