@@ -6,13 +6,22 @@ import { Icon } from "@/components/admin/Icon";
 import { Field, SelectField } from "@/components/admin/FormFields";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { CourseCatalog } from "@/components/admin/CourseCatalog";
+import { UserDirectory } from "@/components/admin/UserDirectory";
 import { emptyCourse, initialRegistrationValues as initialValues, sampleCourses } from "@/features/admin/data";
-import type { AdminSection, CourseDraft, Notice, RecentCourse, RecentStudent, RecentTeacher, SampleEnrollment } from "@/features/admin/types";
+import type { AdminSection, CourseDraft, DirectoryUser, LiveCourse, Notice, RecentCourse, RecentStudent, RecentTeacher, SampleEnrollment } from "@/features/admin/types";
+
+function normalizeGrade(grade: unknown) {
+  const value = String(grade ?? "").trim();
+  return value ? String(Number(value)) : "";
+}
 
 export default function Home() {
   const [values, setValues] = useState(initialValues);
   const [activeForm, setActiveForm] = useState<AdminSection>("student");
   const [course, setCourse] = useState<CourseDraft>(emptyCourse);
+  const [showCourseForm, setShowCourseForm] = useState(false);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [verifyingTeacher, setVerifyingTeacher] = useState(false);
   const [teacherVerified, setTeacherVerified] = useState(false);
   const [teacherVerification, setTeacherVerification] = useState("");
@@ -20,6 +29,14 @@ export default function Home() {
   const [recentTeachers, setRecentTeachers] = useState<RecentTeacher[]>([]);
   const [recentStudents, setRecentStudents] = useState<RecentStudent[]>([]);
   const [recentCourses, setRecentCourses] = useState<RecentCourse[]>([]);
+  const [liveCourses, setLiveCourses] = useState<LiveCourse[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesError, setCoursesError] = useState("");
+  const [coursesReloadKey, setCoursesReloadKey] = useState(0);
+  const [directoryUsers, setDirectoryUsers] = useState<DirectoryUser[]>([]);
+  const [directoryLoading, setDirectoryLoading] = useState(false);
+  const [directoryError, setDirectoryError] = useState("");
+  const [directoryReloadKey, setDirectoryReloadKey] = useState(0);
   const [enrollmentStudentId, setEnrollmentStudentId] = useState("");
   const [enrollmentGrade, setEnrollmentGrade] = useState("1");
   const [selectedSampleCourses, setSelectedSampleCourses] = useState<string[]>([]);
@@ -68,6 +85,64 @@ export default function Home() {
       setShowSettings(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (activeForm !== "course" || !token) return;
+    let cancelled = false;
+    async function loadCourses() {
+      setCoursesLoading(true);
+      setCoursesError("");
+      try {
+        const response = await authorizedApiRequest(`${apiUrl}/api/v1/course`, { method: "GET" });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || result.error || `The course service returned ${response.status}.`);
+        if (!Array.isArray(result.data)) throw new Error("The course service returned an unexpected catalog format.");
+        if (!cancelled) setLiveCourses(result.data as LiveCourse[]);
+      } catch (error) {
+        if (!cancelled) setCoursesError(error instanceof Error ? error.message : "Could not load the course catalog.");
+      } finally {
+        if (!cancelled) setCoursesLoading(false);
+      }
+    }
+    void loadCourses();
+    return () => { cancelled = true; };
+  // authorizedApiRequest intentionally uses the current session values and is not a stable dependency.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeForm, apiUrl, coursesReloadKey, token]);
+
+  useEffect(() => {
+    if ((activeForm !== "student" && activeForm !== "teacher") || !token) return;
+    let cancelled = false;
+    async function loadDirectory() {
+      setDirectoryLoading(true);
+      setDirectoryError("");
+      try {
+        const role = activeForm === "student" ? "STUDENT" : "TEACHER";
+        const response = await authorizedApiRequest(`${apiUrl}/api/v1/users?role=${role}`, { method: "GET" });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || result.error || `The user service returned ${response.status}.`);
+        if (!Array.isArray(result.data)) throw new Error("The user service returned an unexpected directory format.");
+        if (!cancelled) setDirectoryUsers(result.data.map((user: Record<string, unknown>) => {
+          const profile = (activeForm === "student" ? user.studentProfile : user.teacherProfile) as Record<string, unknown> | null | undefined;
+          return {
+            id: String(user.id || ""), name: `${user.firstName || ""} ${user.lastName || ""}`.trim(), email: String(user.email || ""),
+            phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined, accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
+            grade: activeForm === "student" ? normalizeGrade(profile?.grade) : undefined,
+            code: activeForm === "student" ? String(profile?.studentId || "") : String(profile?.teacherCode || ""),
+            specializations: activeForm === "teacher" && Array.isArray(profile?.specializations) ? profile.specializations.map(String) : undefined,
+          };
+        }));
+      } catch (error) {
+        if (!cancelled) setDirectoryError(error instanceof Error ? error.message : "Could not load the user directory.");
+      } finally {
+        if (!cancelled) setDirectoryLoading(false);
+      }
+    }
+    void loadDirectory();
+    return () => { cancelled = true; };
+  // authorizedApiRequest intentionally uses the current session values and is not a stable dependency.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeForm, apiUrl, directoryReloadKey, token]);
 
   function change(name: keyof typeof initialValues, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
@@ -135,11 +210,13 @@ export default function Home() {
     setActiveForm(form);
     if (form === "student" || form === "teacher") {
       setValues(initialValues);
+      setShowRegistrationForm(false);
       setSpecializations([]);
       setSpecializationInput("");
     }
     if (form === "course") {
       setCourse(emptyCourse);
+      setShowCourseForm(false);
       setTeacherVerified(false);
       setTeacherVerification("");
       setCreatedCourse(null);
@@ -250,8 +327,10 @@ export default function Home() {
         const recent: RecentCourse[] = [{ id: created.id, name: created.courseName || course.courseName, subject: created.subject || course.subject }, ...recentCourses.filter((item) => item.id !== created.id)].slice(0, 50);
         sessionStorage.setItem("mentify_recent_courses", JSON.stringify(recent));
         setRecentCourses(recent);
+        setCoursesReloadKey((current) => current + 1);
       }
       setNotice({ kind: "success", title: "Course created", body: `${created.courseName || course.courseName} was created successfully as ${created.courseStatus || (course.isPublished ? "PUBLISHED" : "DRAFT")}.` });
+      setShowCourseForm(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not create the course.";
       setNotice({ kind: "error", title: "Course creation failed", body: message.includes("Failed to fetch") ? "Couldn’t reach the course API. Confirm the backend and API gateway are running and allow this frontend origin." : message });
@@ -291,7 +370,7 @@ export default function Home() {
       const requestOptions: RequestInit = {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token.trim()}` }, body: JSON.stringify(payload),
       };
-      let response = await fetch(`${apiUrl}/api/v1/admin/users/register`, requestOptions);
+      let response = await fetch(`${apiUrl}/api/v1/users/register`, requestOptions);
       if (response.status === 401) {
         const refreshToken = sessionStorage.getItem("mentify_refresh_token");
         if (refreshToken) {
@@ -306,7 +385,7 @@ export default function Home() {
             if (nextRefreshToken) sessionStorage.setItem("mentify_refresh_token", nextRefreshToken);
             setToken(nextAccessToken);
             requestOptions.headers = { "Content-Type": "application/json", Authorization: `Bearer ${nextAccessToken}` };
-            response = await fetch(`${apiUrl}/api/v1/admin/users/register`, requestOptions);
+            response = await fetch(`${apiUrl}/api/v1/users/register`, requestOptions);
           } else {
             await signOut();
           }
@@ -314,10 +393,14 @@ export default function Home() {
       }
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const detail = result.message || result.error || (response.status === 401 ? "Your admin session may have expired. Sign in again and update API settings." : response.status === 403 ? `This account does not have permission to register ${activeForm === "student" ? "students" : "teachers"}.` : `The server returned ${response.status}.`);
+        const fieldErrors = result.fieldErrors && typeof result.fieldErrors === "object"
+          ? Object.values(result.fieldErrors as Record<string, unknown>).filter(Boolean).join(" ")
+          : "";
+        const detail = fieldErrors || result.message || result.error || (response.status === 401 ? "Your admin session may have expired. Sign in again and update API settings." : response.status === 403 ? `This account does not have permission to register ${activeForm === "student" ? "students" : "teachers"}.` : `The server returned ${response.status}.`);
         throw new Error(detail);
       }
       const registered = result.data ?? {};
+      setShowRegistrationForm(false);
       const identifier = activeForm === "student" ? registered.studentProfile?.studentId : registered.teacherProfile?.teacherCode;
       const kind = activeForm === "student" ? "Student" : "Teacher";
       const accountId = activeForm === "teacher" ? registered.id : null;
@@ -332,7 +415,7 @@ export default function Home() {
           id: registered.id,
           name: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName}`,
           email: registered.email || values.email,
-          grade: String(registered.studentProfile?.grade ?? values.grade),
+          grade: normalizeGrade(registered.studentProfile?.grade ?? values.grade),
           phoneNumber: registered.phoneNumber || values.phoneNumber,
           attendanceMode: registered.studentProfile?.attendanceMode || values.attendanceMode,
           studentCode: registered.studentProfile?.studentId,
@@ -350,6 +433,7 @@ export default function Home() {
       }
       setValues(initialValues);
       setSpecializations([]);
+      setDirectoryReloadKey((current) => current + 1);
       document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "We couldn’t connect to the registration service. Check the API URL and try again.";
@@ -408,7 +492,7 @@ export default function Home() {
 
         {notice && <div className={`notice ${notice.kind}`} role="status"><span className="notice-icon"><Icon name={notice.kind === "success" ? "check" : "alert"} size={18}/></span><span className="notice-copy"><strong>{notice.title}</strong><span>{notice.body}</span></span><button className="notice-dismiss" type="button" onClick={() => setNotice(null)} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
-        {activeForm === "course" ? <form className="form-card course-form" onSubmit={submitCourse}>
+        {activeForm === "course" ? <><CourseCatalog courses={liveCourses} loading={coursesLoading} error={coursesError} onRetry={() => setCoursesReloadKey((current) => current + 1)} onCreate={() => setShowCourseForm(true)} />{showCourseForm && <div className="modal-backdrop course-form-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowCourseForm(false); }}><section className="course-form-modal" role="dialog" aria-modal="true" aria-labelledby="course-form-title"><div className="course-form-modal-heading"><div><span className="catalog-kicker">ACADEMIC MANAGEMENT</span><h2 id="course-form-title">Create a course</h2><p>Set up a course, assign a teacher, and choose its visibility.</p></div><button className="notice-dismiss" type="button" onClick={() => setShowCourseForm(false)} aria-label="Close course form"><Icon name="close" size={18}/></button></div><form id="course-create-form" className="form-card course-form" onSubmit={submitCourse}>
           <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="book" size={18}/></div><div><h2>Course details</h2><p>Give the course a clear name and description for learners.</p></div><span className="section-index">01</span></div>
             <div className="field-grid two-col"><label className="field"><span className="field-label">Course name<span className="required"> *</span></span><input required maxLength={150} value={course.courseName} placeholder="e.g. Grade 10 Mathematics" onChange={(event) => changeCourse("courseName", event.target.value)} /></label><label className="field"><span className="field-label">Subject<span className="required"> *</span></span><input required maxLength={100} value={course.subject} placeholder="e.g. Mathematics" onChange={(event) => changeCourse("subject", event.target.value)} /></label><label className="field course-description-field"><span className="field-label">Course description<span className="required"> *</span></span><textarea required maxLength={2000} rows={5} value={course.courseDescription} placeholder="Describe what students will learn in this course…" onChange={(event) => changeCourse("courseDescription", event.target.value)} /><span className="field-hint">{course.courseDescription.length}/2000 characters</span></label><label className="field"><span className="field-label">Course thumbnail URL</span><input type="url" maxLength={255} value={course.courseThumbnail} placeholder="https://example.com/course-image.jpg" onChange={(event) => changeCourse("courseThumbnail", event.target.value)} /><span className="field-hint">Optional. Provide a public image URL.</span></label></div>
           </section>
@@ -420,7 +504,7 @@ export default function Home() {
             <div className="course-switches"><label className="toggle-row"><span className="toggle-copy"><strong>Visible to students</strong><small>Allow students to discover this course.</small></span><input type="checkbox" checked={course.isVisible} onChange={(event) => changeCourse("isVisible", event.target.checked)} /><span className="toggle-control"/></label><label className="toggle-row"><span className="toggle-copy"><strong>Publish course</strong><small>{course.isPublished ? "This course will be published immediately." : "Save as a draft and publish it later."}</small></span><input type="checkbox" checked={course.isPublished} onChange={(event) => changeCourse("isPublished", event.target.checked)} /><span className="toggle-control"/></label></div>
           </section>
           <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields · Teacher ID must be verified</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setCourse(emptyCourse); setTeacherVerified(false); setTeacherVerification(""); setCreatedCourse(null); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Creating…</> : <>Create course <Icon name="arrow" size={16}/></>}</button></div></div>
-        </form> : activeForm === "enrollment" ? <section className="grade-workspace">
+        </form></section></div>}</> : activeForm === "enrollment" ? <section className="grade-workspace">
           <div className="sample-mode-banner"><span className="sample-mode-icon"><Icon name="book" size={17}/></span><span><strong>Sample course catalog</strong><small>Grade-based demo courses and enrollment changes are saved for this browser session.</small></span><span className="sample-mode-tag">DEMO DATA</span></div>
           <div className="grade-picker-heading"><div><h2>Browse by grade</h2><p>Select a grade to view its students, courses, and enrollment activity.</p></div><button type="button" className="secondary-button" onClick={() => switchForm("student")}><Icon name="plus" size={15}/> Register student</button></div>
           <div className="grade-tabs" role="tablist" aria-label="Grades">{Array.from({ length: 13 }, (_, index) => String(index + 1)).map((grade) => { const count = recentStudents.filter((student) => (student.grade || "1") === grade).length; return <button className={`grade-tab ${enrollmentGrade === grade ? "active" : ""}`} type="button" role="tab" aria-selected={enrollmentGrade === grade} key={grade} onClick={() => chooseEnrollmentGrade(grade)}><span>Grade</span><strong>{grade}</strong><small>{count} student{count === 1 ? "" : "s"}</small></button>; })}</div>
@@ -437,7 +521,7 @@ export default function Home() {
               <div className="enrollment-save-row"><span>{selectedSampleCourses.length ? `${selectedSampleCourses.length} new course${selectedSampleCourses.length === 1 ? "" : "s"} selected` : "Select courses to add to this student"}</span><button type="button" className="primary-button" disabled={!selectedSampleCourses.length} onClick={saveSampleEnrollment}>Save enrollment <Icon name="arrow" size={15}/></button></div>
             </> : <div className="student-detail-empty"><span className="empty-roster-icon"><Icon name="book" size={21}/></span><strong>Select a Grade {enrollmentGrade} student</strong><p>Student information, current courses, and available courses will appear here.</p></div>}</section>
           </div>
-        </section> : <form className="form-card" onSubmit={registerAccount}>
+        </section> : <><UserDirectory section={activeForm} users={directoryUsers} loading={directoryLoading} error={directoryError} onRetry={() => setDirectoryReloadKey((current) => current + 1)} onRegister={() => setShowRegistrationForm(true)} />{showRegistrationForm && <div className="modal-backdrop registration-form-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowRegistrationForm(false); }}><section className="registration-form-modal" role="dialog" aria-modal="true" aria-labelledby="registration-form-title"><div className="course-form-modal-heading"><div><span className="catalog-kicker">PEOPLE MANAGEMENT</span><h2 id="registration-form-title">Register a {activeForm}</h2><p>Add the account details and send a secure invitation.</p></div><button className="notice-dismiss" type="button" onClick={() => setShowRegistrationForm(false)} aria-label="Close registration form"><Icon name="close" size={18}/></button></div><form className="form-card" onSubmit={registerAccount}>
           <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="users" size={18}/></div><div><h2>{activeForm === "student" ? "Personal information" : "Teacher information"}</h2><p>{activeForm === "student" ? "Start with the student’s basic details." : "Add the teacher’s contact and employment details."}</p></div><span className="section-index">01</span></div>
             <div className="field-grid two-col"><Field label="First name" name="firstName" placeholder="e.g. Amaya" values={values} onChange={change}/><Field label="Last name" name="lastName" placeholder="e.g. Perera" values={values} onChange={change}/><Field label="Email address" name="email" type="email" placeholder={activeForm === "student" ? "student@example.com" : "teacher@example.com"} hint="Their account invitation will be sent to this email." values={values} onChange={change}/><Field label="Phone number" name="phoneNumber" type="tel" placeholder="0771234567" hint="Use a Sri Lankan mobile number." values={values} onChange={change}/><Field label="Date of birth" name="dateOfBirth" type="date" values={values} onChange={change}/>{activeForm === "student" ? <SelectField label="Grade" name="grade" options={[["", "Select grade"], ...Array.from({ length: 13 }, (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string])]} values={values} onChange={change}/> : <><Field label="NIC number" name="nic" placeholder="e.g. 901234567V" hint="Enter the teacher’s national identity number." values={values} onChange={change}/><Field label="Hire date" name="hireDate" type="date" values={values} onChange={change}/></>}</div>
           </section>
@@ -450,9 +534,9 @@ export default function Home() {
             <div className="field-grid two-col"><Field label="Address line 1" name="addressLine1" placeholder="House number and street" values={values} onChange={change}/><Field label="Address line 2" name="addressLine2" placeholder="Apartment, suite, etc." required={false} values={values} onChange={change}/><Field label="City" name="city" placeholder="e.g. Colombo" values={values} onChange={change}/><Field label="District" name="district" placeholder="e.g. Colombo" values={values} onChange={change}/><Field label="Postal code" name="postalCode" placeholder="e.g. 00100" required={false} values={values} onChange={change}/></div>
           </section>
           <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setValues(initialValues); setSpecializations([]); setSpecializationInput(""); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Registering…</> : <>Register {activeForm} <Icon name="arrow" size={16}/></>}</button></div></div>
-        </form>}
+        </form></section></div>}</>}
 
-        {activeForm === "course" ? createdCourse ? <div className="course-created-card"><div className="created-check"><Icon name="check" size={19}/></div><div><strong>Course is ready</strong><p>{createdCourse.name} · {createdCourse.status}{createdCourse.id ? ` · ID ${createdCourse.id}` : ""}</p><small>The course record is created. Modules, lessons, and learning materials can be added next.</small></div><button className="secondary-button" type="button" onClick={() => switchForm("course")}>Create another</button></div> : <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Course content comes next</strong><p>The backend creates the course record here. Its separate module, lesson, and material endpoints can be connected once the course has been created.</p></div><span className="invitation-lock"><Icon name="book" size={17}/></span></div> : activeForm === "enrollment" ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Sample enrollment workspace</strong><p>Course assignments here use sample records saved in this browser session. The live enrollment API needs real course UUIDs, but the backend currently has no grade-based course catalog endpoint to provide them.</p></div><span className="invitation-lock"><Icon name="users" size={17}/></span></div> : <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>}
+        {activeForm === "course" ? createdCourse ? <div className="course-created-card"><div className="created-check"><Icon name="check" size={19}/></div><div><strong>Course is ready</strong><p>{createdCourse.name} · {createdCourse.status}{createdCourse.id ? ` · ID ${createdCourse.id}` : ""}</p><small>The course record is created. Modules, lessons, and learning materials can be added next.</small></div><button className="secondary-button" type="button" onClick={() => { switchForm("course"); setShowCourseForm(true); }}>Create another</button></div> : showCourseForm ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Course content comes next</strong><p>The backend creates the course record here. Its separate module, lesson, and material endpoints can be connected once the course has been created.</p></div><span className="invitation-lock"><Icon name="book" size={17}/></span></div> : null : activeForm === "enrollment" ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Sample enrollment workspace</strong><p>Course assignments here use sample records saved in this browser session. The live enrollment API needs real course UUIDs, but the backend currently has no grade-based course catalog endpoint to provide them.</p></div><span className="invitation-lock"><Icon name="users" size={17}/></span></div> : <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>}
         <footer className="page-footer"><span>© 2026 Mentify Academy</span><span><Icon name="shield" size={14}/> User data is securely encrypted</span></footer>
       </div>
     </main>

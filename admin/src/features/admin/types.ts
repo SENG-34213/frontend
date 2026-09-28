@@ -4,6 +4,24 @@ export type AdminSection = "student" | "teacher" | "course" | "enrollment";
 export type RecentTeacher = { id: string; name: string; email: string };
 export type RecentStudent = { id: string; name: string; email: string; grade?: string; phoneNumber?: string; attendanceMode?: string; studentCode?: string };
 export type RecentCourse = { id: string; name: string; subject?: string };
+export type LiveCourse = {
+  id: string;
+  courseName: string;
+  courseDescription?: string;
+  courseThumbnail?: string;
+  courseFeeMonthly?: number;
+  assignedTeacherId?: string;
+  gradeId?: string;
+  subject?: string;
+  online?: boolean;
+  discountOfferPercent?: number;
+  visible?: boolean;
+  isPublished?: boolean;
+  courseStatus?: string;
+  numberOfStudents?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
 export type SampleCourse = { id: string; grade: string; name: string; subject: string; teacher: string; schedule: string; fee: number; description: string };
 export type SampleEnrollment = { studentId: string; courseIds: string[]; enrolledOn: string; updatedOn: string };
 
@@ -30,3 +48,4 @@ export type RegistrationValues = {
 
 export type AdminUser = { firstName?: string; lastName?: string; email?: string; role?: string };
 export type CreatedCourse = { id: string; name: string; status: string };
+export type DirectoryUser = { id: string; name: string; email: string; phoneNumber?: string; grade?: string; code?: string; accountStatus?: string; specializations?: string[] };
