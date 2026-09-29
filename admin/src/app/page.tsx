@@ -8,8 +8,9 @@ import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { CourseCatalog } from "@/components/admin/CourseCatalog";
 import { UserDirectory } from "@/components/admin/UserDirectory";
+import { EnrollmentWorkspace } from "@/components/admin/EnrollmentWorkspace";
 import { emptyCourse, initialRegistrationValues as initialValues, sampleCourses } from "@/features/admin/data";
-import type { AdminSection, CourseDraft, DirectoryUser, LiveCourse, Notice, RecentCourse, RecentStudent, RecentTeacher, SampleEnrollment } from "@/features/admin/types";
+import type { AdminSection, CourseDraft, DirectoryUser, EnrollmentRecord, LiveCourse, Notice, RecentCourse, RecentStudent, RecentTeacher, SampleEnrollment } from "@/features/admin/types";
 
 function normalizeGrade(grade: unknown) {
   const value = String(grade ?? "").trim();
@@ -37,6 +38,11 @@ export default function Home() {
   const [directoryLoading, setDirectoryLoading] = useState(false);
   const [directoryError, setDirectoryError] = useState("");
   const [directoryReloadKey, setDirectoryReloadKey] = useState(0);
+  const [enrollmentStudents, setEnrollmentStudents] = useState<DirectoryUser[]>([]);
+  const [enrollmentRecords, setEnrollmentRecords] = useState<EnrollmentRecord[]>([]);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(false);
+  const [enrollmentError, setEnrollmentError] = useState("");
+  const [enrollmentReloadKey, setEnrollmentReloadKey] = useState(0);
   const [enrollmentStudentId, setEnrollmentStudentId] = useState("");
   const [enrollmentGrade, setEnrollmentGrade] = useState("1");
   const [selectedSampleCourses, setSelectedSampleCourses] = useState<string[]>([]);
@@ -143,6 +149,44 @@ export default function Home() {
   // authorizedApiRequest intentionally uses the current session values and is not a stable dependency.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeForm, apiUrl, directoryReloadKey, token]);
+
+  useEffect(() => {
+    if (activeForm !== "enrollment" || !token) return;
+    let cancelled = false;
+    async function loadEnrollmentWorkspace() {
+      setEnrollmentLoading(true);
+      setEnrollmentError("");
+      try {
+        const [studentsResponse, unenrolledResponse, enrollmentsResponse] = await Promise.all([
+          authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/enrollments/students/unenrolled`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/enrollments`, { method: "GET" }),
+        ]);
+        const studentsResult = await studentsResponse.json().catch(() => ({}));
+        const unenrolledResult = await unenrolledResponse.json().catch(() => ({}));
+        const enrollmentsResult = await enrollmentsResponse.json().catch(() => ({}));
+        if (!studentsResponse.ok) throw new Error(studentsResult.message || studentsResult.error || `The student service returned ${studentsResponse.status}.`);
+        if (!unenrolledResponse.ok) throw new Error(unenrolledResult.message || unenrolledResult.error || `The enrollment service returned ${unenrolledResponse.status}.`);
+        if (!enrollmentsResponse.ok) throw new Error(enrollmentsResult.message || enrollmentsResult.error || `The enrollment service returned ${enrollmentsResponse.status}.`);
+        if (!Array.isArray(studentsResult.data) || !Array.isArray(unenrolledResult.data) || !Array.isArray(enrollmentsResult.data)) throw new Error("The enrollment service returned an unexpected response format.");
+        if (!cancelled) {
+          setEnrollmentStudents(studentsResult.data.map((user: Record<string, unknown>) => {
+            const profile = user.studentProfile as Record<string, unknown> | null | undefined;
+            return { id: String(user.id || ""), name: `${user.firstName || ""} ${user.lastName || ""}`.trim(), email: String(user.email || ""), phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined, grade: normalizeGrade(profile?.grade), code: String(profile?.studentId || ""), accountStatus: user.accountStatus ? String(user.accountStatus) : undefined };
+          }));
+          setEnrollmentRecords(enrollmentsResult.data as EnrollmentRecord[]);
+        }
+      } catch (error) {
+        if (!cancelled) setEnrollmentError(error instanceof Error ? error.message : "Could not load enrollment data.");
+      } finally {
+        if (!cancelled) setEnrollmentLoading(false);
+      }
+    }
+    void loadEnrollmentWorkspace();
+    return () => { cancelled = true; };
+  // authorizedApiRequest intentionally uses the current session values and is not a stable dependency.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeForm, apiUrl, enrollmentReloadKey, token]);
 
   function change(name: keyof typeof initialValues, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
@@ -481,6 +525,26 @@ export default function Home() {
     setNotice({ kind: "success", title: "Sample enrollment saved", body: `${selectedEnrollmentStudent.name} is now enrolled in ${nextRecord.courseIds.length} Grade ${enrollmentGrade} course${nextRecord.courseIds.length === 1 ? "" : "s"}.` });
   }
 
+  async function createEnrollment(studentId: string, courseIds: string[]) {
+    const response = await authorizedApiRequest(`${apiUrl}/api/v1/enrollments`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ studentId, courseIds }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `The enrollment service returned ${response.status}.`);
+    setNotice({ kind: "success", title: "Enrollment saved", body: "The student has been enrolled in the selected courses." });
+    setEnrollmentReloadKey((current) => current + 1);
+  }
+
+  async function updateEnrollment(enrollmentId: string, courseIds: string[]) {
+    const response = await authorizedApiRequest(`${apiUrl}/api/v1/enrollments/${encodeURIComponent(enrollmentId)}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ courseIds }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `The enrollment service returned ${response.status}.`);
+    setNotice({ kind: "success", title: "Enrollment updated", body: "The student’s course enrollment has been updated." });
+    setEnrollmentReloadKey((current) => current + 1);
+  }
+
   return <div className="dashboard-shell">
     <AdminSidebar activeSection={activeForm} adminUser={adminUser} onNavigate={switchForm} onSettings={() => setShowSettings(true)} onSignOut={() => void signOut()} />
     <main className="main-area" id="top">
@@ -504,7 +568,7 @@ export default function Home() {
             <div className="course-switches"><label className="toggle-row"><span className="toggle-copy"><strong>Visible to students</strong><small>Allow students to discover this course.</small></span><input type="checkbox" checked={course.isVisible} onChange={(event) => changeCourse("isVisible", event.target.checked)} /><span className="toggle-control"/></label><label className="toggle-row"><span className="toggle-copy"><strong>Publish course</strong><small>{course.isPublished ? "This course will be published immediately." : "Save as a draft and publish it later."}</small></span><input type="checkbox" checked={course.isPublished} onChange={(event) => changeCourse("isPublished", event.target.checked)} /><span className="toggle-control"/></label></div>
           </section>
           <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields · Teacher ID must be verified</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setCourse(emptyCourse); setTeacherVerified(false); setTeacherVerification(""); setCreatedCourse(null); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Creating…</> : <>Create course <Icon name="arrow" size={16}/></>}</button></div></div>
-        </form></section></div>}</> : activeForm === "enrollment" ? <section className="grade-workspace">
+        </form></section></div>}</> : activeForm === "enrollment" ? <><EnrollmentWorkspace students={enrollmentStudents} enrollments={enrollmentRecords} courses={liveCourses} loading={enrollmentLoading} error={enrollmentError} onRetry={() => setEnrollmentReloadKey((current) => current + 1)} onEnroll={createEnrollment} onUpdateEnrollment={updateEnrollment} />{selectedEnrollmentStudent && selectedEnrollment && false && <section className="grade-workspace">
           <div className="sample-mode-banner"><span className="sample-mode-icon"><Icon name="book" size={17}/></span><span><strong>Sample course catalog</strong><small>Grade-based demo courses and enrollment changes are saved for this browser session.</small></span><span className="sample-mode-tag">DEMO DATA</span></div>
           <div className="grade-picker-heading"><div><h2>Browse by grade</h2><p>Select a grade to view its students, courses, and enrollment activity.</p></div><button type="button" className="secondary-button" onClick={() => switchForm("student")}><Icon name="plus" size={15}/> Register student</button></div>
           <div className="grade-tabs" role="tablist" aria-label="Grades">{Array.from({ length: 13 }, (_, index) => String(index + 1)).map((grade) => { const count = recentStudents.filter((student) => (student.grade || "1") === grade).length; return <button className={`grade-tab ${enrollmentGrade === grade ? "active" : ""}`} type="button" role="tab" aria-selected={enrollmentGrade === grade} key={grade} onClick={() => chooseEnrollmentGrade(grade)}><span>Grade</span><strong>{grade}</strong><small>{count} student{count === 1 ? "" : "s"}</small></button>; })}</div>
@@ -513,15 +577,15 @@ export default function Home() {
             <section className="roster-card"><div className="roster-heading"><div><h2>Grade {enrollmentGrade} students</h2><p>Choose a student to review or add courses.</p></div><span className="roster-count">{gradeStudents.length}</span></div>
               {gradeStudents.length ? <div className="roster-list">{gradeStudents.map((student) => { const enrollment = sampleEnrollments.find((item) => item.studentId === student.id); return <button type="button" key={student.id} className={`roster-student ${enrollmentStudentId === student.id ? "selected" : ""}`} onClick={() => chooseEnrollmentStudent(student)}><span className="roster-avatar">{student.name.trim().charAt(0).toUpperCase()}</span><span className="roster-student-copy"><strong>{student.name}</strong><small>{student.email}</small><span className={`enrollment-status ${enrollment?.courseIds.length ? "has-enrollment" : "no-enrollment"}`}>{enrollment?.courseIds.length ? `${enrollment.courseIds.length} course${enrollment.courseIds.length === 1 ? "" : "s"} enrolled` : "Not enrolled"}</span></span><Icon name="chevron" size={17}/></button>; })}</div> : <div className="roster-empty"><span className="empty-roster-icon"><Icon name="users" size={21}/></span><strong>No students in Grade {enrollmentGrade} yet</strong><p>Register a student and they’ll appear here automatically.</p><button type="button" className="primary-button" onClick={() => switchForm("student")}><Icon name="plus" size={15}/> Register a student</button></div>}
             </section>
-            <section className="student-enrollment-card">{selectedEnrollmentStudent && (selectedEnrollmentStudent.grade || "1") === enrollmentGrade ? <>
-              <div className="student-detail-heading"><span className="student-detail-avatar">{selectedEnrollmentStudent.name.trim().charAt(0).toUpperCase()}</span><div><span className="detail-kicker">STUDENT PROFILE</span><h2>{selectedEnrollmentStudent.name}</h2><p>{selectedEnrollmentStudent.email}</p></div><span className="grade-pill">Grade {enrollmentGrade}</span></div>
-              <div className="student-detail-facts"><div><small>Phone</small><strong>{selectedEnrollmentStudent.phoneNumber || "Not provided"}</strong></div><div><small>Attendance</small><strong>{selectedEnrollmentStudent.attendanceMode || "Not provided"}</strong></div><div><small>Enrollment record</small><strong>{selectedEnrollment ? `Started ${selectedEnrollment.enrolledOn}` : "No courses yet"}</strong></div></div>
-              <div className="current-courses"><div className="course-section-title"><div><h3>Current courses</h3><p>Courses already assigned to this student.</p></div><span>{selectedEnrollment?.courseIds.length || 0}</span></div>{selectedEnrollment?.courseIds.length ? <div className="current-course-chips">{selectedEnrollment.courseIds.map((courseId) => { const item = sampleCourses.find((sampleCourse) => sampleCourse.id === courseId); return <span className="current-course-chip" key={courseId}><Icon name="check" size={13}/>{item?.name || courseId}</span>; })}</div> : <p className="no-courses-copy">No courses enrolled yet. Add a course below.</p>}</div>
+            <section className="student-enrollment-card">{selectedEnrollmentStudent && (selectedEnrollmentStudent!.grade || "1") === enrollmentGrade ? <>
+              <div className="student-detail-heading"><span className="student-detail-avatar">{selectedEnrollmentStudent!.name.trim().charAt(0).toUpperCase()}</span><div><span className="detail-kicker">STUDENT PROFILE</span><h2>{selectedEnrollmentStudent!.name}</h2><p>{selectedEnrollmentStudent!.email}</p></div><span className="grade-pill">Grade {enrollmentGrade}</span></div>
+              <div className="student-detail-facts"><div><small>Phone</small><strong>{selectedEnrollmentStudent!.phoneNumber || "Not provided"}</strong></div><div><small>Attendance</small><strong>{selectedEnrollmentStudent!.attendanceMode || "Not provided"}</strong></div><div><small>Enrollment record</small><strong>{selectedEnrollment ? `Started ${selectedEnrollment!.enrolledOn}` : "No courses yet"}</strong></div></div>
+              <div className="current-courses"><div className="course-section-title"><div><h3>Current courses</h3><p>Courses already assigned to this student.</p></div><span>{selectedEnrollment?.courseIds.length || 0}</span></div>{selectedEnrollment?.courseIds.length ? <div className="current-course-chips">{selectedEnrollment!.courseIds.map((courseId) => { const item = sampleCourses.find((sampleCourse) => sampleCourse.id === courseId); return <span className="current-course-chip" key={courseId}><Icon name="check" size={13}/>{item?.name || courseId}</span>; })}</div> : <p className="no-courses-copy">No courses enrolled yet. Add a course below.</p>}</div>
               <div className="available-courses"><div className="course-section-title"><div><h3>Grade {enrollmentGrade} course catalog</h3><p>Sample courses available to this grade.</p></div><span>{gradeCourses.length} courses</span></div><div className="sample-course-list">{gradeCourses.map((item) => { const enrolled = Boolean(selectedEnrollment?.courseIds.includes(item.id)); const selected = selectedSampleCourses.includes(item.id); return <article key={item.id} className={`sample-course-card ${selected ? "selected" : ""} ${enrolled ? "enrolled" : ""}`}><label className="sample-course-select"><input type="checkbox" disabled={enrolled} checked={enrolled || selected} onChange={(event) => setSelectedSampleCourses((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))}/><span className="course-choice-check"><Icon name="check" size={13}/></span><span className="sample-course-copy"><strong>{item.name}</strong><small>{item.subject} · {item.teacher}</small></span></label><p>{item.description}</p><div className="sample-course-meta"><span>{item.schedule}</span><strong>LKR {item.fee.toLocaleString()} / month</strong>{enrolled && <span className="added-tag">ENROLLED</span>}</div></article>; })}</div></div>
               <div className="enrollment-save-row"><span>{selectedSampleCourses.length ? `${selectedSampleCourses.length} new course${selectedSampleCourses.length === 1 ? "" : "s"} selected` : "Select courses to add to this student"}</span><button type="button" className="primary-button" disabled={!selectedSampleCourses.length} onClick={saveSampleEnrollment}>Save enrollment <Icon name="arrow" size={15}/></button></div>
             </> : <div className="student-detail-empty"><span className="empty-roster-icon"><Icon name="book" size={21}/></span><strong>Select a Grade {enrollmentGrade} student</strong><p>Student information, current courses, and available courses will appear here.</p></div>}</section>
           </div>
-        </section> : <><UserDirectory section={activeForm} users={directoryUsers} loading={directoryLoading} error={directoryError} onRetry={() => setDirectoryReloadKey((current) => current + 1)} onRegister={() => setShowRegistrationForm(true)} />{showRegistrationForm && <div className="modal-backdrop registration-form-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowRegistrationForm(false); }}><section className="registration-form-modal" role="dialog" aria-modal="true" aria-labelledby="registration-form-title"><div className="course-form-modal-heading"><div><span className="catalog-kicker">PEOPLE MANAGEMENT</span><h2 id="registration-form-title">Register a {activeForm}</h2><p>Add the account details and send a secure invitation.</p></div><button className="notice-dismiss" type="button" onClick={() => setShowRegistrationForm(false)} aria-label="Close registration form"><Icon name="close" size={18}/></button></div><form className="form-card" onSubmit={registerAccount}>
+        </section>}</> : <><UserDirectory section={activeForm} users={directoryUsers} loading={directoryLoading} error={directoryError} onRetry={() => setDirectoryReloadKey((current) => current + 1)} onRegister={() => setShowRegistrationForm(true)} />{showRegistrationForm && <div className="modal-backdrop registration-form-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowRegistrationForm(false); }}><section className="registration-form-modal" role="dialog" aria-modal="true" aria-labelledby="registration-form-title"><div className="course-form-modal-heading"><div><span className="catalog-kicker">PEOPLE MANAGEMENT</span><h2 id="registration-form-title">Register a {activeForm}</h2><p>Add the account details and send a secure invitation.</p></div><button className="notice-dismiss" type="button" onClick={() => setShowRegistrationForm(false)} aria-label="Close registration form"><Icon name="close" size={18}/></button></div><form className="form-card" onSubmit={registerAccount}>
           <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="users" size={18}/></div><div><h2>{activeForm === "student" ? "Personal information" : "Teacher information"}</h2><p>{activeForm === "student" ? "Start with the student’s basic details." : "Add the teacher’s contact and employment details."}</p></div><span className="section-index">01</span></div>
             <div className="field-grid two-col"><Field label="First name" name="firstName" placeholder="e.g. Amaya" values={values} onChange={change}/><Field label="Last name" name="lastName" placeholder="e.g. Perera" values={values} onChange={change}/><Field label="Email address" name="email" type="email" placeholder={activeForm === "student" ? "student@example.com" : "teacher@example.com"} hint="Their account invitation will be sent to this email." values={values} onChange={change}/><Field label="Phone number" name="phoneNumber" type="tel" placeholder="0771234567" hint="Use a Sri Lankan mobile number." values={values} onChange={change}/><Field label="Date of birth" name="dateOfBirth" type="date" values={values} onChange={change}/>{activeForm === "student" ? <SelectField label="Grade" name="grade" options={[["", "Select grade"], ...Array.from({ length: 13 }, (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string])]} values={values} onChange={change}/> : <><Field label="NIC number" name="nic" placeholder="e.g. 901234567V" hint="Enter the teacher’s national identity number." values={values} onChange={change}/><Field label="Hire date" name="hireDate" type="date" values={values} onChange={change}/></>}</div>
           </section>
