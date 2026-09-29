@@ -1,6 +1,6 @@
 export type Notice = { kind: "success" | "error"; title: string; body: string };
 
-export type AdminSection = "student" | "teacher" | "course" | "enrollment";
+export type AdminSection = "student" | "teacher" | "course" | "enrollment" | "grade";
 export type RecentTeacher = { id: string; name: string; email: string };
 export type RecentStudent = { id: string; name: string; email: string; grade?: string; phoneNumber?: string; attendanceMode?: string; studentCode?: string };
 export type RecentCourse = { id: string; name: string; subject?: string };
@@ -50,3 +50,4 @@ export type AdminUser = { firstName?: string; lastName?: string; email?: string;
 export type CreatedCourse = { id: string; name: string; status: string };
 export type DirectoryUser = { id: string; name: string; email: string; phoneNumber?: string; grade?: string; code?: string; accountStatus?: string; specializations?: string[] };
 export type EnrollmentRecord = { id: string; studentId: string; courseIds: string[]; enrolledOn?: string; createdAt?: string; updatedAt?: string };
+export type GradeRecord = { id: string; name: string; description?: string; active?: boolean; createdAt?: string; updatedAt?: string };
