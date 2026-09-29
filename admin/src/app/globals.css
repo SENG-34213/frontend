@@ -375,6 +375,21 @@ h1 { margin-bottom: 7px; color: #20283a; font-size: 27px; font-weight: 690; lett
 .detail-list dd { overflow-wrap: anywhere; margin: 0; color: #566174; font-size: 9px; text-align: right; }
 .detail-avatar-large { display: grid; width: 48px; height: 48px; margin-bottom: 16px; place-items: center; border-radius: 50%; background: #ece8fc; color: #6651c5; font-size: 18px; font-weight: 700; }
 .live-course-card:focus-visible, .user-directory-card:focus-visible { outline: 3px solid #d8cffd; outline-offset: 2px; }
+.enrollment-workspace { border: 1px solid #e8ebf1; border-radius: 10px; background: #fff; padding: 18px; }
+.enrollment-workspace-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.enrollment-workspace-heading h2 { margin: 0 0 4px; color: #303849; font-size: 15px; font-weight: 680; }
+.enrollment-workspace-heading p { margin: 0; color: #929cad; font-size: 10px; }
+.enrollment-grade-tabs { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
+.enrollment-grade-tabs button { display: flex; min-height: 58px; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 1px solid #e7eaf0; border-radius: 8px; background: #fff; color: #8b95a5; cursor: pointer; }
+.enrollment-grade-tabs button.active { border-color: #8875df; background: #f6f4ff; color: #6753c5; }
+.enrollment-grade-tabs span, .enrollment-grade-tabs small { font-size: 7px; }.enrollment-grade-tabs strong { color: #394255; font-size: 16px; }.enrollment-grade-tabs button.active strong { color: #6753c5; }
+.enrollment-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-bottom: 15px; }
+.enrollment-summary-grid > div { border: 1px solid #e9edf2; border-radius: 8px; background: #fff; padding: 11px 12px; }.enrollment-summary-grid small { display: block; margin-bottom: 5px; color: #8993a3; font-size: 8px; }.enrollment-summary-grid strong { color: #30394a; font-size: 16px; }.enrollment-summary-grid .summary-enrolled { background: #f5fbf8; border-color: #dcefe5; }.enrollment-summary-grid .summary-unenrolled { background: #fffaf3; border-color: #f1e5d3; }
+.enrollment-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #f0f2f5; padding-top: 14px; margin-bottom: 14px; }.enrollment-filters { display: flex; flex-wrap: wrap; gap: 6px; }.enrollment-filters button { border: 1px solid #e6e9ef; border-radius: 18px; background: #fff; padding: 7px 10px; color: #7e899a; font-size: 9px; cursor: pointer; }.enrollment-filters button.active { border-color: #c7bdf0; background: #f3f0ff; color: #634dcc; font-weight: 650; }.enrollment-filters span { margin-left: 3px; color: #a2a9b5; }
+.enrollment-student-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }.enrollment-student-card { display: flex; min-width: 0; gap: 10px; border: 1px solid #e8ebf1; border-left: 3px solid #e0e3e9; border-radius: 8px; padding: 12px; }.enrollment-student-card.is-enrolled { border-left-color: #55ad88; }.enrollment-student-card.is-unenrolled { border-left-color: #d8a858; }.enrollment-student-copy { min-width: 0; flex: 1; }.enrollment-student-copy > p { overflow: hidden; margin: 4px 0 7px; color: #929baa; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }.enrollment-badge { border-radius: 12px; padding: 3px 6px; font-size: 7px; font-weight: 700; }.enrollment-badge.enrolled { background: #e8f6ef; color: #368966; }.enrollment-badge.unenrolled { background: #fff3df; color: #b47d2f; }.enrollment-date { display: block; margin-top: 9px; color: #929baa; font-size: 8px; }.enrollment-action { height: 29px; margin-top: 9px; padding: 0 9px; font-size: 8px; }
+.enrollment-course-picker { display: grid; gap: 8px; max-height: 390px; overflow: auto; margin-bottom: 18px; }.enrollment-course-option { display: flex; align-items: center; gap: 9px; border: 1px solid #e7eaf0; border-radius: 8px; padding: 11px; cursor: pointer; }.enrollment-course-option.selected { border-color: #a99be4; background: #fbfaff; }.enrollment-course-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }.enrollment-course-option > span:last-child { display: flex; min-width: 0; flex-direction: column; gap: 4px; }.enrollment-course-option strong { overflow: hidden; color: #465064; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }.enrollment-course-option small { color: #929baa; font-size: 8px; }
+.enrollment-detail-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }.enrollment-detail-summary > div { border: 1px solid #edf0f4; border-radius: 7px; background: #fbfcfd; padding: 10px; }.enrollment-detail-summary small { display: block; margin-bottom: 5px; color: #9aa2af; font-size: 8px; }.enrollment-detail-summary strong { display: block; overflow: hidden; color: #4e596b; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }.enrolled-course-detail-list { display: grid; gap: 9px; margin-bottom: 18px; }.enrolled-course-detail { display: flex; gap: 10px; border: 1px solid #dcefe5; border-radius: 8px; background: #f9fcfa; padding: 11px; }.enrolled-course-icon { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 8px; background: #e6f5ed; color: #388d6a; }.enrolled-course-detail h3 { margin: 0 0 4px; color: #465064; font-size: 10px; font-weight: 680; }.enrolled-course-detail p { margin: 0 0 7px; color: #8993a2; font-size: 8px; line-height: 1.45; }
+.enrollment-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }.danger-action { border-color: #f0d8d8; color: #b45b5b; }.danger-action:hover { border-color: #e7bcbc; background: #fff8f7; color: #a34b4b; }
 .user-directory { border: 1px solid #e8ebf1; border-radius: 10px; background: #fff; padding: 18px; }
 .user-directory-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .user-directory-heading h2 { margin: 0 0 4px; color: #303849; font-size: 15px; font-weight: 680; }
@@ -392,10 +407,181 @@ h1 { margin-bottom: 7px; color: #20283a; font-size: 27px; font-weight: 690; lett
 .directory-facts span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 @media (max-width: 760px) { .course-catalog-heading, .course-catalog-toolbar { align-items: stretch; flex-direction: column; }.course-search { width: 100%; }.live-course-grid { grid-template-columns: 1fr; } }
-@media (max-width: 760px) { .course-form-backdrop, .registration-form-backdrop { align-items: end; padding: 0; }.course-form-modal, .registration-form-modal { width: 100%; max-height: 94vh; border-radius: 14px 14px 0 0; }.course-form-modal-heading { padding: 17px 18px 14px; }.course-form-modal > .course-form .form-footer, .registration-form-modal > .form-card .form-footer { flex-direction: column; align-items: stretch; }.course-form-modal > .course-form .form-actions, .registration-form-modal > .form-card .form-actions { justify-content: flex-end; }.user-directory-heading, .directory-toolbar { align-items: stretch; flex-direction: column; }.user-directory-grid { grid-template-columns: 1fr; }.detail-backdrop { align-items: end; padding: 0; }.detail-modal { width: 100%; max-height: 90vh; border-radius: 14px 14px 0 0; }.detail-list > div { grid-template-columns: 110px minmax(0, 1fr); } }
+@media (max-width: 760px) { .course-form-backdrop, .registration-form-backdrop { align-items: end; padding: 0; }.course-form-modal, .registration-form-modal { width: 100%; max-height: 94vh; border-radius: 14px 14px 0 0; }.course-form-modal-heading { padding: 17px 18px 14px; }.course-form-modal > .course-form .form-footer, .registration-form-modal > .form-card .form-footer { flex-direction: column; align-items: stretch; }.course-form-modal > .course-form .form-actions, .registration-form-modal > .form-card .form-actions { justify-content: flex-end; }.user-directory-heading, .directory-toolbar, .enrollment-workspace-heading, .enrollment-toolbar { align-items: stretch; flex-direction: column; }.user-directory-grid, .enrollment-student-grid { grid-template-columns: 1fr; }.enrollment-grade-tabs { grid-template-columns: repeat(7, minmax(0, 1fr)); }.enrollment-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.detail-backdrop { align-items: end; padding: 0; }.detail-modal { width: 100%; max-height: 90vh; border-radius: 14px 14px 0 0; }.detail-list > div { grid-template-columns: 110px minmax(0, 1fr); } }
+
+/* Readability and interaction polish */
+.sidebar { padding-top: 30px; }
+.nav-link { min-height: 42px; font-size: 13px; }
+.sub-link { font-size: 12px; }
+.workspace-copy strong, .profile-copy strong { font-size: 12px; }.workspace-copy small, .profile-copy small { font-size: 11px; }
+.breadcrumb { font-size: 12px; }.secure-indicator { font-size: 11px; }
+.page-description { font-size: 14px; line-height: 1.55; }.eyebrow { font-size: 10px; }
+.text-action { font-size: 12px; }
+.field-label { font-size: 12px; }.field input, .field select, .field textarea { font-size: 13px; }.field-hint { font-size: 11px; line-height: 1.45; }
+.section-heading h2 { font-size: 15px; }.section-heading p { font-size: 11px; }
+.primary-button, .secondary-button { min-height: 38px; font-size: 12px; }.form-footer { min-height: 72px; }.required-note { font-size: 11px; }
+.course-catalog, .user-directory, .enrollment-workspace { padding: 22px; }.course-catalog-heading h2, .user-directory-heading h2, .enrollment-workspace-heading h2 { font-size: 18px; }.course-catalog-heading p, .user-directory-heading p, .enrollment-workspace-heading p { font-size: 12px; line-height: 1.5; }
+.course-grade-tabs button, .enrollment-filters button { padding: 8px 12px; font-size: 11px; }.course-search { height: 38px; font-size: 12px; }
+.live-course-card, .user-directory-card, .enrollment-student-card { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }.live-course-card { cursor: pointer; }.live-course-card:hover, .user-directory-card:hover, .enrollment-student-card:hover { border-color: #cfc6f1; box-shadow: 0 5px 18px #2532520d; transform: translateY(-1px); }
+.live-course-card h3, .directory-user-top h3, .enrollment-student-copy h3 { font-size: 13px; }.live-course-card p, .directory-user-copy > p, .enrollment-student-copy > p { font-size: 10px; line-height: 1.5; }.live-course-meta, .directory-facts, .enrollment-date { font-size: 9px; }.live-course-meta strong { font-size: 10px; }.live-course-footer { font-size: 9px; }.live-course-status, .directory-status, .enrollment-badge { font-size: 8px; }
+.enrollment-grade-tabs button { min-height: 68px; }.enrollment-grade-tabs span, .enrollment-grade-tabs small { font-size: 8px; }.enrollment-grade-tabs strong { font-size: 19px; }.enrollment-summary-grid small { font-size: 10px; }.enrollment-summary-grid strong { font-size: 19px; }.enrollment-toolbar { padding-top: 16px; }.enrollment-student-card { padding: 14px; }.enrollment-action { font-size: 10px; }
+.detail-modal-heading { padding: 23px 26px 19px; }.detail-modal-heading h2, .course-form-modal-heading h2 { font-size: 21px; }.detail-modal-heading p, .course-form-modal-heading p { font-size: 12px; }.detail-modal-body { padding: 24px 26px 27px; }.detail-description { font-size: 13px; }.detail-stat-grid small, .enrollment-detail-summary small { font-size: 9px; }.detail-stat-grid strong, .enrollment-detail-summary strong { font-size: 12px; }.detail-list dt, .detail-list dd { font-size: 11px; }.enrolled-course-detail h3 { font-size: 12px; }.enrolled-course-detail p { font-size: 10px; }.enrollment-course-option strong { font-size: 12px; }.enrollment-course-option small { font-size: 10px; }
+.catalog-state strong { font-size: 13px; }.catalog-state p { font-size: 11px; }
+
+@media (max-width: 760px) { .content-wrap { width: min(100% - 28px, 900px); padding-top: 25px; }.page-heading { align-items: flex-start; flex-direction: column; }.page-heading h1 { font-size: 24px; }.course-catalog, .user-directory, .enrollment-workspace { padding: 16px; }.detail-modal-heading { padding: 19px 18px 16px; }.detail-modal-body { padding: 19px 18px 22px; } }
 
 @media (min-width: 1500px) { .content-wrap { padding-top: 46px; } }
 @media (max-width: 1080px) { .sidebar { width: 220px; } .main-area { margin-left: 220px; } .content-wrap { width: min(100% - 54px, 820px); } .topbar { padding: 0 27px; } }
+
+/* Final admin layout scale: comfortable reading sizes and consistent rhythm. */
+:root { --admin-radius: 12px; --admin-space: 24px; }
+body { color: #273044; font-size: 15px; }
+.sidebar { width: 268px; padding: 30px 20px 20px; }
+.main-area { margin-left: 268px; }
+.brand { margin-bottom: 42px; }
+.brand-name { font-size: 24px; }
+.workspace-label, .nav-caption { font-size: 11px; letter-spacing: 1px; }
+.workspace-picker { padding: 11px; }
+.workspace-copy strong, .profile-copy strong { font-size: 13px; }
+.workspace-copy small, .profile-copy small { font-size: 11px; }
+.nav-group { margin-top: 36px; }
+.nav-link { height: 44px; padding: 0 12px; font-size: 14px; }
+.sub-link { height: 37px; padding-left: 47px; font-size: 13px; }
+.topbar { height: 70px; padding: 0 48px; }
+.breadcrumb { font-size: 13px; }
+.secure-indicator { font-size: 12px; }
+.content-wrap { width: min(100% - 96px, 1180px); padding-top: 44px; }
+.page-heading { margin-bottom: 30px; }
+.eyebrow { margin-bottom: 13px; font-size: 11px; }
+h1 { margin-bottom: 10px; font-size: 34px; letter-spacing: -.95px; }
+.page-description { font-size: 15px; line-height: 1.6; }
+.text-action { font-size: 13px; }
+.progress-strip { min-height: 62px; gap: 16px; margin-bottom: 22px; padding: 0 22px; }
+.progress-step { font-size: 12px; }
+.step-number { width: 26px; height: 26px; font-size: 11px; }
+.progress-note { font-size: 12px; }
+.form-card, .course-catalog, .user-directory, .enrollment-workspace { border-radius: var(--admin-radius); }
+.form-section { padding: 28px 32px 31px; }
+.section-heading { gap: 14px; margin-bottom: 23px; }
+.section-icon { width: 37px; height: 37px; border-radius: 10px; }
+.section-heading h2 { margin-top: 2px; font-size: 17px; }
+.section-heading p { font-size: 13px; line-height: 1.5; }
+.section-index { font-size: 12px; }
+.field-grid { gap: 21px 24px; }
+.field { gap: 8px; }
+.field-label { font-size: 13px; }
+.field input, .field select { height: 44px; border-radius: 8px; padding: 0 13px; font-size: 14px; }
+.field-hint { font-size: 12px; line-height: 1.5; }
+.course-description-field textarea { min-height: 130px; border-radius: 8px; padding: 12px 13px; font-size: 14px; }
+.verify-button { height: 44px; padding: 0 14px; }
+.money-input { height: 44px; border-radius: 8px; }
+.money-input > span { padding: 0 12px; font-size: 12px; }
+.course-switches { gap: 16px; margin-top: 26px; }
+.toggle-row { min-height: 70px; gap: 14px; border-radius: 9px; padding: 13px 15px; }
+.toggle-copy { gap: 5px; }
+.toggle-copy strong { font-size: 13px; }
+.toggle-copy small { font-size: 11px; line-height: 1.45; }
+.primary-button, .secondary-button { min-height: 44px; border-radius: 8px; padding: 0 17px; font-size: 13px; }
+.form-footer { min-height: 88px; padding: 18px 32px; }
+.required-note { font-size: 12px; }
+.course-created-card { padding: 18px 20px; }
+.course-created-card strong { font-size: 14px; }
+.course-created-card p { font-size: 13px; }
+.course-created-card small { font-size: 11px; }
+.selected-entity strong { font-size: 13px; }
+.selected-entity small { font-size: 11px; }
+.course-choice { min-height: 66px; padding: 13px 15px; }
+.course-choice-copy strong { font-size: 13px; }
+.course-choice-copy small { font-size: 11px; }
+.selected-count { font-size: 12px; }
+.selected-count button { font-size: 11px; }
+.empty-catalog p { font-size: 12px; }
+.enrollment-model-note { font-size: 11px; }
+.course-catalog, .user-directory, .enrollment-workspace { padding: 28px; }
+.course-catalog-heading, .user-directory-heading, .enrollment-workspace-heading { margin-bottom: 22px; }
+.course-catalog-heading h2, .user-directory-heading h2, .enrollment-workspace-heading h2 { font-size: 21px; }
+.course-catalog-heading p, .user-directory-heading p, .enrollment-workspace-heading p { font-size: 13px; }
+.course-grade-tabs button, .enrollment-filters button { border-radius: 9px; padding: 10px 15px; font-size: 12px; }
+.course-search { height: 44px; border-radius: 8px; padding: 0 14px; font-size: 13px; }
+.live-course-grid, .user-directory-grid { gap: 16px; }
+.live-course-card, .user-directory-card, .enrollment-student-card { border-radius: 10px; padding: 18px; }
+.live-course-card h3, .directory-user-top h3, .enrollment-student-copy h3 { font-size: 16px; }
+.live-course-card p, .directory-user-copy > p, .enrollment-student-copy > p { font-size: 12px; line-height: 1.55; }
+.live-course-meta, .directory-facts, .enrollment-date { font-size: 11px; }
+.live-course-meta strong { font-size: 12px; }
+.live-course-footer { font-size: 11px; }
+.live-course-status, .directory-status, .enrollment-badge { font-size: 10px; }
+.directory-facts { gap: 9px; }
+.enrollment-workspace-heading h2 { font-size: 21px; }
+.enrollment-grade-tabs { gap: 8px; }
+.enrollment-grade-tabs button { min-height: 78px; border-radius: 10px; }
+.enrollment-grade-tabs span, .enrollment-grade-tabs small { font-size: 10px; }
+.enrollment-grade-tabs strong { font-size: 22px; }
+.enrollment-summary-grid { gap: 12px; }
+.enrollment-summary-grid > div { border-radius: 10px; padding: 15px; }
+.enrollment-summary-grid small { font-size: 11px; }
+.enrollment-summary-grid strong { font-size: 22px; }
+.enrollment-toolbar { padding-top: 20px; margin-bottom: 20px; }
+.enrollment-filters { gap: 8px; }
+.enrollment-student-grid { gap: 14px; }
+.enrollment-student-card { gap: 13px; padding: 17px; }
+.enrollment-action { height: 36px; margin-top: 11px; padding: 0 12px; font-size: 11px; }
+.enrollment-date { margin-top: 11px; }
+.detail-modal { border-radius: 16px; }
+.detail-modal-heading { padding: 28px 32px 22px; }
+.detail-modal-heading h2, .course-form-modal-heading h2 { font-size: 24px; }
+.detail-modal-heading p, .course-form-modal-heading p { font-size: 13px; }
+.detail-modal-body { padding: 30px 32px 34px; }
+.detail-description { font-size: 14px; line-height: 1.6; }
+.detail-stat-grid, .enrollment-detail-summary { gap: 12px; }
+.detail-stat-grid > div, .enrollment-detail-summary > div { padding: 13px; }
+.detail-stat-grid small, .enrollment-detail-summary small { font-size: 10px; }
+.detail-stat-grid strong, .enrollment-detail-summary strong { font-size: 13px; }
+.detail-list { gap: 11px; }
+.detail-list dt, .detail-list dd { font-size: 12px; }
+.enrollment-course-picker { gap: 10px; max-height: 450px; }
+.enrollment-course-option { gap: 11px; border-radius: 10px; padding: 14px; }
+.enrollment-course-option strong { font-size: 14px; }
+.enrollment-course-option small { font-size: 11px; }
+.enrollment-detail-actions { gap: 10px; }
+.enrolled-course-detail { gap: 13px; border-radius: 10px; padding: 14px; }
+.enrolled-course-detail h3 { font-size: 14px; }
+.enrolled-course-detail p { font-size: 11px; line-height: 1.55; }
+.catalog-state strong { font-size: 15px; }
+.catalog-state p { font-size: 13px; line-height: 1.55; }
+
+@media (max-width: 1080px) {
+  .sidebar { width: 232px; }
+  .main-area { margin-left: 232px; }
+  .content-wrap { width: min(100% - 56px, 980px); }
+  .topbar { padding: 0 28px; }
+}
+
+@media (max-width: 760px) {
+  .sidebar { position: static; width: 100%; min-height: auto; border-right: 0; border-bottom: 1px solid #edf0f4; padding: 18px 16px; }
+  .brand { margin-bottom: 22px; }
+  .workspace-picker, .nav-caption, .nav-group, .sidebar-bottom { display: none; }
+  .main-area { margin-left: 0; }
+  .topbar { height: 58px; padding: 0 18px; }
+  .secure-indicator { display: none; }
+  .content-wrap { width: min(100% - 32px, 680px); padding-top: 28px; }
+  .page-heading { gap: 14px; margin-bottom: 22px; }
+  h1 { font-size: 28px; }
+  .page-description { font-size: 14px; }
+  .progress-strip { align-items: flex-start; flex-direction: column; gap: 10px; padding: 14px 16px; }
+  .progress-note { margin-left: 0; }
+  .form-section { padding: 22px 18px 24px; }
+  .two-col, .course-switches { grid-template-columns: 1fr; }
+  .attendance-field { max-width: none; }
+  .form-footer { align-items: stretch; flex-direction: column; gap: 14px; padding: 18px; }
+  .form-actions { justify-content: stretch; }
+  .form-actions button { flex: 1; }
+  .course-catalog, .user-directory, .enrollment-workspace { padding: 18px; }
+  .enrollment-grade-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .enrollment-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detail-modal-heading, .course-form-modal-heading { padding: 20px 19px 17px; }
+  .detail-modal-body { padding: 21px 19px 25px; }
+}
 @media (max-width: 760px) {
   .sidebar { position: static; width: auto; height: 58px; flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid #edf0f4; padding: 0 18px; }
   .brand { margin: 0; }.brand-mark { width: 29px; height: 29px; }.brand-name { font-size: 20px; }

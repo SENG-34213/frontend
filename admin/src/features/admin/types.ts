@@ -49,3 +49,4 @@ export type RegistrationValues = {
 export type AdminUser = { firstName?: string; lastName?: string; email?: string; role?: string };
 export type CreatedCourse = { id: string; name: string; status: string };
 export type DirectoryUser = { id: string; name: string; email: string; phoneNumber?: string; grade?: string; code?: string; accountStatus?: string; specializations?: string[] };
+export type EnrollmentRecord = { id: string; studentId: string; courseIds: string[]; enrolledOn?: string; createdAt?: string; updatedAt?: string };
