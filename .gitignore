@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# OS and debug files
+.DS_Store
+*.log
+*.tsbuildinfo
