@@ -626,3 +626,67 @@ h1 { margin-bottom: 10px; font-size: 34px; letter-spacing: -.95px; }
   .grade-picker-heading { align-items: flex-start; flex-direction: column; }.grade-picker-heading > button { width: 100%; }.grade-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }.grade-tab { min-height: 58px; }.grade-tab small { font-size: 6px; }.grade-summary-grid { gap: 7px; }.grade-summary-card { min-height: 58px; gap: 7px; padding: 8px; }.grade-summary-card small { font-size: 7px; }.grade-summary-card strong { font-size: 14px; }.grade-columns { gap: 10px; }.student-enrollment-card { padding: 13px; }.student-detail-facts { gap: 6px; }.sample-course-list { grid-template-columns: minmax(0, 1fr); }.sample-course-meta strong { margin-left: 0; }.enrollment-save-row { align-items: flex-start; flex-direction: column; }.enrollment-save-row .primary-button { width: 100%; justify-content: center; }.sample-mode-banner { align-items: flex-start; }.sample-mode-tag { font-size: 6px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* Admin workspace polish: keep navigation usable and present dense data as rows. */
+.sidebar { overflow: hidden; }
+.nav-group { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #d8d2f3 transparent; padding-right: 3px; }
+.nav-group::-webkit-scrollbar { width: 5px; }
+.nav-group::-webkit-scrollbar-thumb { border-radius: 8px; background: #d8d2f3; }
+.sidebar-bottom { flex: 0 0 auto; background: #fff; padding-top: 8px; }
+
+.user-directory-grid, .live-course-grid, .enrollment-student-grid, .communication-group-grid, .grade-manager-grid { display: flex; flex-direction: column; gap: 0; overflow: hidden; border: 1px solid #e7eaf0; border-radius: 10px; background: #fff; }
+.user-directory-card, .live-course-card, .enrollment-student-card, .communication-group-card, .grade-manager-card { border-width: 0 0 1px; border-radius: 0; background: #fff; box-shadow: none; transition: background .15s ease, box-shadow .15s ease; }
+.user-directory-card:last-child, .live-course-card:last-child, .enrollment-student-card:last-child, .communication-group-card:last-child, .grade-manager-card:last-child { border-bottom: 0; }
+.user-directory-card:hover, .live-course-card:hover, .enrollment-student-card:hover, .communication-group-card:hover, .grade-manager-card:hover { background: #fbfaff; box-shadow: inset 3px 0 0 #8875df; transform: none; }
+.user-directory-card { display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: center; padding: 15px 17px; }
+.user-directory-card .directory-user-copy { display: grid; grid-template-columns: minmax(145px, 1.1fr) minmax(180px, 1fr) auto; align-items: center; gap: 14px; }
+.user-directory-card .directory-user-top { display: block; }
+.user-directory-card .directory-user-top h3 { font-size: 13px; }
+.user-directory-card .directory-user-copy > p { margin: 0; font-size: 11px; }
+.user-directory-card .directory-facts { justify-content: flex-end; font-size: 10px; }
+.live-course-card { display: grid; grid-template-columns: 92px minmax(0, 1fr); min-height: 108px; }
+.live-course-thumbnail { width: 92px; min-height: 108px; }
+.live-course-card-body { display: grid; grid-template-columns: minmax(170px, 1.25fr) minmax(180px, 1fr) auto; align-items: center; gap: 14px; padding: 14px 18px; }
+.live-course-card-top { display: block; }
+.live-course-card h3 { margin: 5px 0; font-size: 14px; }
+.live-course-card p { min-height: 0; margin: 0; font-size: 10px; }
+.live-course-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; font-size: 10px; }
+.live-course-meta strong { margin: 0; font-size: 11px; }
+.live-course-footer { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin: 0; border: 0; padding: 0; font-size: 10px; }
+.enrollment-student-card { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; padding: 14px 17px; }
+.enrollment-student-copy { display: grid; grid-template-columns: minmax(145px, 1.1fr) minmax(150px, 1fr) auto; align-items: center; gap: 14px; }
+.enrollment-student-copy > p { margin: 0; font-size: 11px; }
+.enrollment-student-copy .directory-user-top { display: block; }
+.enrollment-student-copy .directory-user-top h3 { font-size: 13px; }
+.enrollment-student-copy .directory-facts { font-size: 10px; }
+.enrollment-action, .enrollment-date { margin: 0; }
+.communication-group-card { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; padding: 15px 17px; }
+.communication-group-copy { display: grid; grid-template-columns: minmax(170px, 1fr) minmax(200px, 1fr); align-items: center; gap: 16px; }
+.communication-group-copy p { margin: 0; }
+.communication-group-meta { justify-content: flex-end; }
+.grade-manager-card { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; padding: 15px 17px; }
+.grade-manager-copy { display: grid; grid-template-columns: minmax(150px, .8fr) minmax(160px, 1fr) auto; align-items: center; gap: 16px; }
+.grade-manager-copy p, .grade-manager-copy small { margin: 0; }
+
+.data-table-head { display: grid; align-items: center; min-height: 38px; border: 1px solid #e7eaf0; border-bottom: 0; border-radius: 10px 10px 0 0; background: #f8f9fc; padding: 0 17px; color: #8a94a4; font-size: 9px; font-weight: 750; letter-spacing: .7px; line-height: 1; text-transform: uppercase; }
+.data-table-head span:last-child { text-align: right; }
+.user-table-head { grid-template-columns: minmax(145px, 1.1fr) minmax(180px, 1fr) minmax(150px, 1fr) auto; column-gap: 14px; padding-left: 72px; }
+.course-table-head { grid-template-columns: minmax(170px, 1.25fr) minmax(160px, 1fr) minmax(150px, 1fr) auto; column-gap: 14px; padding-left: 110px; }
+.enrollment-table-head { grid-template-columns: minmax(145px, 1.1fr) minmax(150px, 1fr) minmax(130px, 1fr) auto; column-gap: 14px; padding-left: 72px; }
+.communication-table-head { grid-template-columns: minmax(170px, 1fr) minmax(200px, 1fr) auto; column-gap: 16px; padding-left: 72px; }
+.grade-table-head { grid-template-columns: minmax(150px, .8fr) minmax(160px, 1fr) minmax(120px, 1fr) auto; column-gap: 16px; padding-left: 72px; }
+.data-table-head + .user-directory-grid, .data-table-head + .live-course-grid, .data-table-head + .enrollment-student-grid, .data-table-head + .communication-group-grid, .data-table-head + .grade-manager-grid { border-top-left-radius: 0; border-top-right-radius: 0; }
+
+@media (max-width: 760px) {
+  .data-table-head { display: none; }
+  .nav-group { overflow: visible; flex: initial; }
+  .sidebar { overflow: visible; }
+  .user-directory-card .directory-user-copy, .enrollment-student-copy, .live-course-card-body, .communication-group-copy, .grade-manager-copy { display: flex; align-items: flex-start; flex-direction: column; gap: 7px; }
+  .user-directory-card .directory-facts, .enrollment-student-copy .directory-facts, .communication-group-meta { justify-content: flex-start; }
+  .live-course-card { grid-template-columns: 64px minmax(0, 1fr); }
+  .live-course-thumbnail { width: 64px; min-height: 145px; }
+  .live-course-footer { align-items: flex-start; }
+  .enrollment-student-card { grid-template-columns: 38px minmax(0, 1fr); }
+  .enrollment-student-card > .enrollment-student-copy { grid-column: 2; }
+  .enrollment-student-card .enrollment-action { align-self: flex-start; grid-column: 2; }
+}
