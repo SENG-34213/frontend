@@ -7,12 +7,12 @@ build/
 .next/
 out/
 
-# Local environment files
+# Environment files
 .env
 .env.*
 !.env.example
 
-# OS and debug files
+# Local/system files
 .DS_Store
 *.log
 *.tsbuildinfo
