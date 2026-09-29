@@ -9,8 +9,10 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { CourseCatalog } from "@/components/admin/CourseCatalog";
 import { UserDirectory } from "@/components/admin/UserDirectory";
 import { EnrollmentWorkspace } from "@/components/admin/EnrollmentWorkspace";
+import { CommunicationGroups } from "@/components/admin/CommunicationGroups";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { emptyCourse, initialRegistrationValues as initialValues, sampleCourses } from "@/features/admin/data";
-import type { AdminSection, CourseDraft, DirectoryUser, EnrollmentRecord, LiveCourse, Notice, RecentCourse, RecentStudent, RecentTeacher, SampleEnrollment } from "@/features/admin/types";
+import type { AdminSection, CommunicationGroup, CourseDraft, DirectoryUser, EnrollmentRecord, GroupMember, LiveCourse, Notice, RecentCourse, RecentStudent, RecentTeacher, SampleEnrollment } from "@/features/admin/types";
 
 function normalizeGrade(grade: unknown) {
   const value = String(grade ?? "").trim();
@@ -19,7 +21,7 @@ function normalizeGrade(grade: unknown) {
 
 export default function Home() {
   const [values, setValues] = useState(initialValues);
-  const [activeForm, setActiveForm] = useState<AdminSection>("student");
+  const [activeForm, setActiveForm] = useState<AdminSection>("dashboard");
   const [course, setCourse] = useState<CourseDraft>(emptyCourse);
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
@@ -57,6 +59,14 @@ export default function Home() {
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [adminUser, setAdminUser] = useState<{ firstName?: string; lastName?: string; email?: string; role?: string } | null>(null);
+  const [communicationGroups, setCommunicationGroups] = useState<CommunicationGroup[]>([]);
+  const [communicationStudents, setCommunicationStudents] = useState<DirectoryUser[]>([]);
+  const [communicationLoading, setCommunicationLoading] = useState(false);
+  const [communicationError, setCommunicationError] = useState("");
+  const [communicationReloadKey, setCommunicationReloadKey] = useState(0);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
+  const [dashboardGroupCount, setDashboardGroupCount] = useState(0);
 
   // Browser session hydration is intentionally kept in one boundary so the page never reads sessionStorage during SSR.
   useEffect(() => {
@@ -187,6 +197,82 @@ export default function Home() {
   // authorizedApiRequest intentionally uses the current session values and is not a stable dependency.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeForm, apiUrl, enrollmentReloadKey, token]);
+
+  useEffect(() => {
+    if (activeForm !== "communication" || !token) return;
+    let cancelled = false;
+    async function loadCommunicationWorkspace() {
+      setCommunicationLoading(true);
+      setCommunicationError("");
+      try {
+        const [groupsResponse, coursesResponse, studentsResponse] = await Promise.all([
+          authorizedApiRequest(`${apiUrl}/api/communication/groups`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/course`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, { method: "GET" }),
+        ]);
+        const groupsResult = await groupsResponse.json().catch(() => ({}));
+        const coursesResult = await coursesResponse.json().catch(() => ({}));
+        const studentsResult = await studentsResponse.json().catch(() => ({}));
+        if (!groupsResponse.ok) throw new Error(groupsResult.message || groupsResult.error || `The communication service returned ${groupsResponse.status}.`);
+        if (!coursesResponse.ok) throw new Error(coursesResult.message || coursesResult.error || `The course service returned ${coursesResponse.status}.`);
+        if (!studentsResponse.ok) throw new Error(studentsResult.message || studentsResult.error || `The user service returned ${studentsResponse.status}.`);
+        if (!Array.isArray(groupsResult.data) || !Array.isArray(coursesResult.data) || !Array.isArray(studentsResult.data)) throw new Error("The communication workspace returned an unexpected response format.");
+        if (!cancelled) {
+          setCommunicationGroups(groupsResult.data as CommunicationGroup[]);
+          setLiveCourses(coursesResult.data as LiveCourse[]);
+          setCommunicationStudents(studentsResult.data.map((user: Record<string, unknown>) => {
+            const profile = user.studentProfile as Record<string, unknown> | null | undefined;
+            return { id: String(user.id || ""), name: `${user.firstName || ""} ${user.lastName || ""}`.trim(), email: String(user.email || ""), phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined, grade: normalizeGrade(profile?.grade), code: String(profile?.studentId || ""), accountStatus: user.accountStatus ? String(user.accountStatus) : undefined };
+          }));
+        }
+      } catch (error) {
+        if (!cancelled) setCommunicationError(error instanceof Error ? error.message : "Could not load communication groups.");
+      } finally {
+        if (!cancelled) setCommunicationLoading(false);
+      }
+    }
+    void loadCommunicationWorkspace();
+    return () => { cancelled = true; };
+  // authorizedApiRequest intentionally uses the current session values and is not a stable dependency.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeForm, apiUrl, communicationReloadKey, token]);
+
+  useEffect(() => {
+    if (activeForm !== "dashboard" || !token) return;
+    let cancelled = false;
+    async function loadDashboard() {
+      setDashboardLoading(true);
+      try {
+        const responses = await Promise.all([
+          authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/users?role=TEACHER`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/course`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/enrollments`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/communication/groups`, { method: "GET" }),
+        ]);
+        const results = await Promise.all(responses.map((response) => response.json().catch(() => ({}))));
+        if (!responses.every((response) => response.ok)) throw new Error("Some dashboard data could not be loaded.");
+        if (!cancelled) {
+          const mapUser = (user: Record<string, unknown>, role: "student" | "teacher"): DirectoryUser => {
+            const profile = (role === "student" ? user.studentProfile : user.teacherProfile) as Record<string, unknown> | null | undefined;
+            return { id: String(user.id || ""), name: `${user.firstName || ""} ${user.lastName || ""}`.trim(), email: String(user.email || ""), grade: role === "student" ? normalizeGrade(profile?.grade) : undefined, code: role === "student" ? String(profile?.studentId || "") : String(profile?.teacherCode || ""), phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined, accountStatus: user.accountStatus ? String(user.accountStatus) : undefined };
+          };
+          setRecentStudents(Array.isArray(results[0].data) ? results[0].data.slice(0, 5).map((user: Record<string, unknown>) => mapUser(user, "student")) : []);
+          setRecentTeachers(Array.isArray(results[1].data) ? results[1].data.slice(0, 5).map((user: Record<string, unknown>) => mapUser(user, "teacher")) : []);
+          setLiveCourses(Array.isArray(results[2].data) ? results[2].data as LiveCourse[] : []);
+          setDashboardGroupCount(Array.isArray(results[4].data) ? results[4].data.length : 0);
+        }
+      } catch {
+        // The dashboard keeps its shell usable even when one optional summary endpoint is unavailable.
+      } finally {
+        if (!cancelled) setDashboardLoading(false);
+      }
+    }
+    void loadDashboard();
+    return () => { cancelled = true; };
+  // authorizedApiRequest intentionally uses the current session values and is not a stable dependency.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeForm, apiUrl, dashboardReloadKey, token]);
 
   function change(name: keyof typeof initialValues, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
@@ -545,18 +631,59 @@ export default function Home() {
     setEnrollmentReloadKey((current) => current + 1);
   }
 
+  async function createCommunicationGroup(draft: { courseId: string; name: string; description: string }) {
+    const response = await authorizedApiRequest(`${apiUrl}/api/communication/groups`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(draft) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `The communication service returned ${response.status}.`);
+    setNotice({ kind: "success", title: "Communication group created", body: `${draft.name} is ready for course communication.` });
+    setCommunicationReloadKey((current) => current + 1);
+  }
+
+  async function addStudentToCommunicationGroup(groupId: string, studentId: string) {
+    const response = await authorizedApiRequest(`${apiUrl}/api/communication/groups/${encodeURIComponent(groupId)}/students`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ studentId }) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `The communication service returned ${response.status}.`);
+    setNotice({ kind: "success", title: "Student added", body: "The student has been added to the communication group." });
+  }
+
+  async function archiveCommunicationGroup(groupId: string) {
+    const response = await authorizedApiRequest(`${apiUrl}/api/communication/groups/${encodeURIComponent(groupId)}/archive`, { method: "POST" });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `The communication service returned ${response.status}.`);
+    setNotice({ kind: "success", title: "Group archived", body: "The communication group is no longer active." });
+    setCommunicationReloadKey((current) => current + 1);
+    return result.data as CommunicationGroup;
+  }
+
+  async function unarchiveCommunicationGroup(groupId: string) {
+    const response = await authorizedApiRequest(`${apiUrl}/api/communication/groups/${encodeURIComponent(groupId)}/unarchive`, { method: "POST" });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `The communication service returned ${response.status}.`);
+    setNotice({ kind: "success", title: "Group unarchived", body: "The communication group is active again." });
+    setCommunicationReloadKey((current) => current + 1);
+    return result.data as CommunicationGroup;
+  }
+
+  async function loadCommunicationMembers(groupId: string): Promise<GroupMember[]> {
+    const response = await authorizedApiRequest(`${apiUrl}/api/communication/groups/${encodeURIComponent(groupId)}/members`, { method: "GET" });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.message || result.error || `The communication service returned ${response.status}.`);
+    if (!Array.isArray(result.data)) throw new Error("The group members response was not in the expected format.");
+    return result.data as GroupMember[];
+  }
+
   return <div className="dashboard-shell">
     <AdminSidebar activeSection={activeForm} adminUser={adminUser} onNavigate={switchForm} onSettings={() => setShowSettings(true)} onSignOut={() => void signOut()} />
     <main className="main-area" id="top">
       <AdminHeader activeSection={activeForm} adminUser={adminUser} onSettings={() => setShowSettings(true)} />
       <div className="content-wrap" id="registration">
-        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>{activeForm === "course" || activeForm === "enrollment" ? "ACADEMIC MANAGEMENT" : "PEOPLE MANAGEMENT"}</div><h1>{activeForm === "course" ? "Create a course" : activeForm === "enrollment" ? "Grade enrollments" : `Register a ${activeForm}`}</h1><p className="page-description">{activeForm === "course" ? "Set up a course, assign a teacher, and choose its grade and visibility." : activeForm === "enrollment" ? "Review each grade’s student roster, enrollment status, and available courses." : `Add a ${activeForm} to your academy and send their account setup invitation.`}</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
+        <div className="page-heading"><div><div className="eyebrow"><span className="eyebrow-line"/>{activeForm === "dashboard" ? "ACADEMY OVERVIEW" : activeForm === "communication" ? "COMMUNICATION MANAGEMENT" : activeForm === "course" || activeForm === "enrollment" ? "ACADEMIC MANAGEMENT" : "PEOPLE MANAGEMENT"}</div><h1>{activeForm === "dashboard" ? "Dashboard" : activeForm === "communication" ? "Communication groups" : activeForm === "course" ? "Course catalog" : activeForm === "enrollment" ? "Grade enrollments" : `Manage ${activeForm}s`}</h1><p className="page-description">{activeForm === "dashboard" ? "Monitor your academy, move work forward, and keep your community connected." : activeForm === "communication" ? "Create course-based groups and manage the people connected to each conversation." : activeForm === "course" ? "Review courses by grade and create a new course when your catalog needs one." : activeForm === "enrollment" ? "Review each grade’s student roster, enrollment status, and available courses." : `Browse your live ${activeForm} directory and manage new registrations from here.`}</p></div><button className="text-action" type="button" onClick={() => setShowSettings(true)}><Icon name="settings" size={16}/> API settings</button></div>
 
-        {activeForm !== "course" && activeForm !== "enrollment" && <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>{activeForm === "student" ? "Student" : "Teacher"} details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>}
+        {activeForm !== "dashboard" && activeForm !== "communication" && activeForm !== "course" && activeForm !== "enrollment" && <div className="progress-strip"><div className="progress-step active-step"><span className="step-number"><Icon name="check" size={13}/></span><span>{activeForm === "student" ? "Student" : "Teacher"} details</span></div><span className="progress-line"/><div className="progress-step upcoming-step"><span className="step-number">2</span><span>Account invitation</span></div><span className="progress-note"><Icon name="shield" size={15}/> Secure registration</span></div>}
 
         {notice && <div className={`notice ${notice.kind}`} role="status"><span className="notice-icon"><Icon name={notice.kind === "success" ? "check" : "alert"} size={18}/></span><span className="notice-copy"><strong>{notice.title}</strong><span>{notice.body}</span></span><button className="notice-dismiss" type="button" onClick={() => setNotice(null)} aria-label="Dismiss"><Icon name="close" size={16}/></button></div>}
 
-        {activeForm === "course" ? <><CourseCatalog courses={liveCourses} loading={coursesLoading} error={coursesError} onRetry={() => setCoursesReloadKey((current) => current + 1)} onCreate={() => setShowCourseForm(true)} />{showCourseForm && <div className="modal-backdrop course-form-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowCourseForm(false); }}><section className="course-form-modal" role="dialog" aria-modal="true" aria-labelledby="course-form-title"><div className="course-form-modal-heading"><div><span className="catalog-kicker">ACADEMIC MANAGEMENT</span><h2 id="course-form-title">Create a course</h2><p>Set up a course, assign a teacher, and choose its visibility.</p></div><button className="notice-dismiss" type="button" onClick={() => setShowCourseForm(false)} aria-label="Close course form"><Icon name="close" size={18}/></button></div><form id="course-create-form" className="form-card course-form" onSubmit={submitCourse}>
+        {activeForm === "dashboard" ? <AdminDashboard students={recentStudents.map((student) => ({ id: student.id, name: student.name, email: student.email, grade: student.grade, phoneNumber: student.phoneNumber }))} teachers={recentTeachers.map((teacher) => ({ id: teacher.id, name: teacher.name, email: teacher.email }))} courses={liveCourses} enrollmentCount={enrollmentRecords.length} groupCount={dashboardGroupCount} loading={dashboardLoading} onNavigate={switchForm} onRefresh={() => setDashboardReloadKey((current) => current + 1)} /> : activeForm === "communication" ? <CommunicationGroups groups={communicationGroups} courses={liveCourses} students={communicationStudents} loading={communicationLoading} error={communicationError} onRetry={() => setCommunicationReloadKey((current) => current + 1)} onCreate={createCommunicationGroup} onAddStudent={addStudentToCommunicationGroup} onArchive={archiveCommunicationGroup} onUnarchive={unarchiveCommunicationGroup} onLoadMembers={loadCommunicationMembers} /> : activeForm === "course" ? <><CourseCatalog courses={liveCourses} loading={coursesLoading} error={coursesError} onRetry={() => setCoursesReloadKey((current) => current + 1)} onCreate={() => setShowCourseForm(true)} />{showCourseForm && <div className="modal-backdrop course-form-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowCourseForm(false); }}><section className="course-form-modal" role="dialog" aria-modal="true" aria-labelledby="course-form-title"><div className="course-form-modal-heading"><div><span className="catalog-kicker">ACADEMIC MANAGEMENT</span><h2 id="course-form-title">Create a course</h2><p>Set up a course, assign a teacher, and choose its visibility.</p></div><button className="notice-dismiss" type="button" onClick={() => setShowCourseForm(false)} aria-label="Close course form"><Icon name="close" size={18}/></button></div><form id="course-create-form" className="form-card course-form" onSubmit={submitCourse}>
           <section className="form-section"><div className="section-heading"><div className="section-icon"><Icon name="book" size={18}/></div><div><h2>Course details</h2><p>Give the course a clear name and description for learners.</p></div><span className="section-index">01</span></div>
             <div className="field-grid two-col"><label className="field"><span className="field-label">Course name<span className="required"> *</span></span><input required maxLength={150} value={course.courseName} placeholder="e.g. Grade 10 Mathematics" onChange={(event) => changeCourse("courseName", event.target.value)} /></label><label className="field"><span className="field-label">Subject<span className="required"> *</span></span><input required maxLength={100} value={course.subject} placeholder="e.g. Mathematics" onChange={(event) => changeCourse("subject", event.target.value)} /></label><label className="field course-description-field"><span className="field-label">Course description<span className="required"> *</span></span><textarea required maxLength={2000} rows={5} value={course.courseDescription} placeholder="Describe what students will learn in this course…" onChange={(event) => changeCourse("courseDescription", event.target.value)} /><span className="field-hint">{course.courseDescription.length}/2000 characters</span></label><label className="field"><span className="field-label">Course thumbnail URL</span><input type="url" maxLength={255} value={course.courseThumbnail} placeholder="https://example.com/course-image.jpg" onChange={(event) => changeCourse("courseThumbnail", event.target.value)} /><span className="field-hint">Optional. Provide a public image URL.</span></label></div>
           </section>
@@ -600,7 +727,7 @@ export default function Home() {
           <div className="form-footer"><span className="required-note"><span className="required">*</span> Required fields</span><div className="form-actions"><button className="secondary-button" type="reset" onClick={() => { setValues(initialValues); setSpecializations([]); setSpecializationInput(""); setNotice(null); }}>Clear form</button><button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner"/> Registering…</> : <>Register {activeForm} <Icon name="arrow" size={16}/></>}</button></div></div>
         </form></section></div>}</>}
 
-        {activeForm === "course" ? createdCourse ? <div className="course-created-card"><div className="created-check"><Icon name="check" size={19}/></div><div><strong>Course is ready</strong><p>{createdCourse.name} · {createdCourse.status}{createdCourse.id ? ` · ID ${createdCourse.id}` : ""}</p><small>The course record is created. Modules, lessons, and learning materials can be added next.</small></div><button className="secondary-button" type="button" onClick={() => { switchForm("course"); setShowCourseForm(true); }}>Create another</button></div> : showCourseForm ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Course content comes next</strong><p>The backend creates the course record here. Its separate module, lesson, and material endpoints can be connected once the course has been created.</p></div><span className="invitation-lock"><Icon name="book" size={17}/></span></div> : null : activeForm === "enrollment" ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Sample enrollment workspace</strong><p>Course assignments here use sample records saved in this browser session. The live enrollment API needs real course UUIDs, but the backend currently has no grade-based course catalog endpoint to provide them.</p></div><span className="invitation-lock"><Icon name="users" size={17}/></span></div> : <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>}
+        {activeForm === "course" ? createdCourse ? <div className="course-created-card"><div className="created-check"><Icon name="check" size={19}/></div><div><strong>Course is ready</strong><p>{createdCourse.name} · {createdCourse.status}{createdCourse.id ? ` · ID ${createdCourse.id}` : ""}</p><small>The course record is created. Modules, lessons, and learning materials can be added next.</small></div><button className="secondary-button" type="button" onClick={() => { switchForm("course"); setShowCourseForm(true); }}>Create another</button></div> : showCourseForm ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Course content comes next</strong><p>The backend creates the course record here. Its separate module, lesson, and material endpoints can be connected once the course has been created.</p></div><span className="invitation-lock"><Icon name="book" size={17}/></span></div> : null : activeForm === "enrollment" ? <div className="invitation-note course-contract-note"><div className="invitation-icon"><Icon name="shield" size={18}/></div><div><strong>Sample enrollment workspace</strong><p>Course assignments here use sample records saved in this browser session. The live enrollment API needs real course UUIDs, but the backend currently has no grade-based course catalog endpoint to provide them.</p></div><span className="invitation-lock"><Icon name="users" size={17}/></span></div> : activeForm === "communication" || activeForm === "dashboard" ? null : <div className="invitation-note"><div className="invitation-icon"><Icon name="mail" size={18}/></div><div><strong>What happens next?</strong><p>The {activeForm} will receive a secure email invitation to verify their address and set a password. You don&apos;t need to create one for them.</p></div><span className="invitation-lock"><Icon name="shield" size={17}/></span></div>}
         <footer className="page-footer"><span>© 2026 Mentify Academy</span><span><Icon name="shield" size={14}/> User data is securely encrypted</span></footer>
       </div>
     </main>
