@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type IconName = "grid" | "users" | "book" | "calendar" | "settings" | "plus" | "chevron" | "pin" | "shield" | "arrow" | "check" | "alert" | "mail" | "close";
+type IconName = "grid" | "users" | "book" | "calendar" | "settings" | "plus" | "chevron" | "pin" | "shield" | "arrow" | "check" | "alert" | "mail" | "close" | "sparkles";
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
@@ -15,7 +15,7 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     shield: <><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></>,
     arrow: <><path d="M7 17 17 7M7 7h10v10"/></>, check: <path d="m5 12 4 4L19 6"/>,
     alert: <><path d="M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/></>,
-    mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>, close: <><path d="m18 6-12 12M6 6l12 12"/></>,
+    mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>, close: <><path d="m18 6-12 12M6 6l12 12"/></>, sparkles: <><path d="m12 3-1.2 4.3L7 8.5l3.8 1.2L12 14l1.2-4.3L17 8.5l-3.8-1.2L12 3Z"/><path d="m19 13-.7 2.3L16 16l2.3.7L19 19l.7-2.3L22 16l-2.3-.7L19 13Z"/><path d="m5 14-.7 2.3L2 17l2.3.7L5 20l.7-2.3L8 17l-2.3-.7L5 14Z"/></>,
   };
   return <svg {...common}>{paths[name]}</svg>;
 }

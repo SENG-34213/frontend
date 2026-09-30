@@ -1,0 +1,3 @@
+import { Icon } from "@/components/admin/Icon";
+const prompts = ["Give me an overview of Mentify", "Show today's activity", "Analyze student performance", "Show attendance insights", "Summarize teacher activity"];
+export function SuggestedPrompts({ onSelect }: { onSelect: (prompt: string) => void }) { return <div className="ai-suggested-prompts"><div className="ai-suggested-heading"><span>Try asking</span><Icon name="sparkles" size={15} /></div><div className="ai-prompt-grid">{prompts.map((prompt) => <button type="button" className="ai-prompt-card" key={prompt} onClick={() => onSelect(prompt)}><span>{prompt}</span><Icon name="arrow" size={14} /></button>)}</div></div>; }
