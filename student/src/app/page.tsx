@@ -1,69 +1,30 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+import { useEffect, useState } from "react";
+import { configuredCourseIds, getToken, login, studentApi, type Assignment, type Attendance, type Group, type Quiz, type Student, type Submission } from "../lib/studentApi";
+
+type Tab = "overview" | "assignments" | "courses" | "messages";
+const nav = [{ id: "overview", label: "Overview", icon: "⌂" }, { id: "courses", label: "My courses", icon: "▦" }, { id: "assignments", label: "Assignments", icon: "✓" }, { id: "messages", label: "Messages", icon: "✉" }] as const;
+const initials = (s?: Student) => `${s?.firstName?.[0] || "S"}${s?.lastName?.[0] || "T"}`.toUpperCase();
+const dateText = (v?: string) => v ? new Date(v).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "No due date";
+
+function SignIn({ onDone }: { onDone: () => void }) {
+  const [apiUrl, setApiUrl] = useState("http://localhost:8080"); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [courses, setCourses] = useState(""); const [error, setError] = useState(""); const [submitting, setSubmitting] = useState(false);
+  const submit = async (e: React.FormEvent) => { e.preventDefault(); setSubmitting(true); setError(""); try { const result = await login(email.trim(), password, apiUrl); if (result.user?.role && result.user.role !== "STUDENT") throw new Error("This account is not a student account."); sessionStorage.setItem("mentify_api_url", apiUrl.replace(/\/$/, "")); sessionStorage.setItem("mentify_access_token", result.accessToken!); if (result.refreshToken) sessionStorage.setItem("mentify_refresh_token", result.refreshToken); if (courses.trim()) sessionStorage.setItem("mentify_student_course_ids", courses); onDone(); } catch (e) { setError(e instanceof Error ? e.message : "Unable to sign in."); } finally { setSubmitting(false); } };
+  return <main className="sign-in"><form className="sign-card" onSubmit={submit}><div className="brand" style={{ padding: 0 }}><span className="brand-mark">M</span><span>mentify</span></div><h1>Welcome back.</h1><p>Sign in with your Mentify student account to continue learning.</p>{error && <div className="error">{error}</div>}<div className="field"><label>API base URL</label><input value={apiUrl} onChange={e => setApiUrl(e.target.value)} placeholder="http://localhost:8080" /></div><div className="field"><label>Email address</label><input required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" type="email" autoComplete="email" /></div><div className="field"><label>Password</label><input required value={password} onChange={e => setPassword(e.target.value)} placeholder="Your password" type="password" autoComplete="current-password" /></div><div className="field"><label>Course IDs <span style={{ fontWeight: 400 }}>(optional, comma separated)</span></label><input value={courses} onChange={e => setCourses(e.target.value)} placeholder="For assignments and course activity" /></div><button className="primary" disabled={submitting}>{submitting ? "Signing in…" : "Sign in to workspace"}</button><p className="muted-note">Your session is stored only in this browser.</p></form></main>;
 }
+function Empty({ title, children }: { title: string; children: React.ReactNode }) { return <div className="empty"><strong>{title}</strong>{children}</div>; }
+
+function App() {
+  const [tab, setTab] = useState<Tab>("overview"); const [student, setStudent] = useState<Student>(); const [groups, setGroups] = useState<Group[]>([]); const [submissions, setSubmissions] = useState<Submission[]>([]); const [assignments, setAssignments] = useState<Assignment[]>([]); const [quizzes, setQuizzes] = useState<Quiz[]>([]); const [attendance, setAttendance] = useState<Record<string, Attendance>>({}); const [error, setError] = useState(""); const [loading, setLoading] = useState(true); const [mounted, setMounted] = useState(false); const [ready, setReady] = useState(false);
+  const courseIds = configuredCourseIds();
+  useEffect(() => { Promise.resolve().then(() => { setMounted(true); setReady(Boolean(getToken())); }); }, []);
+  useEffect(() => { if (!ready) return; let mounted = true; const ids = configuredCourseIds(); Promise.allSettled([studentApi.me(), studentApi.groups(), studentApi.submissions(), ...ids.map(id => studentApi.assignments(id)), ...ids.map(id => studentApi.quizzes(id)), ...ids.map(id => studentApi.attendance(id))]).then(results => { if (!mounted) return; const [me, group, submission, ...courseResults] = results; if (me.status === "fulfilled") setStudent(me.value); if (group.status === "fulfilled") setGroups(group.value || []); if (submission.status === "fulfilled") setSubmissions(submission.value || []); const assignmentResults = courseResults.slice(0, ids.length); const quizResults = courseResults.slice(ids.length, ids.length * 2); const attendanceResults = courseResults.slice(ids.length * 2); setAssignments(assignmentResults.flatMap(r => r.status === "fulfilled" ? (r.value as Assignment[]) : [])); setQuizzes(quizResults.flatMap(r => r.status === "fulfilled" ? (r.value as Quiz[]) : [])); setAttendance(Object.fromEntries(attendanceResults.map((r, i) => [ids[i], r.status === "fulfilled" ? (r.value as Attendance) : {}]))); if (me.status === "rejected" && group.status === "rejected" && submission.status === "rejected") setError("We could not reach the student services. Check the API URL and token."); setLoading(false); }); return () => { mounted = false; }; }, [ready]);
+  const firstName = student?.firstName || "Student"; const graded = submissions.filter(s => s.marks !== undefined && s.marks !== null).length; const pending = assignments.filter(a => !submissions.some(s => s.assignmentId === a.id && ["SUBMITTED", "GRADED", "RETURNED"].includes(s.status || ""))).length; const dueSoon = assignments.filter(a => a.dueDate).slice(0, 4);
+  useEffect(() => { if (!ready) return; studentApi.me().catch(() => { sessionStorage.removeItem("mentify_access_token"); sessionStorage.removeItem("mentify_refresh_token"); setReady(false); }); }, [ready]);
+  useEffect(() => { if (!ready) return; const actions = document.querySelector(".top-actions"); if (!actions || actions.querySelector(".sign-out")) return; const button = document.createElement("button"); button.className = "sign-out"; button.type = "button"; button.textContent = "Sign out"; button.addEventListener("click", () => { sessionStorage.clear(); setStudent(undefined); setReady(false); }); actions.prepend(button); return () => { button.remove(); }; }, [ready]);
+  void quizzes; void attendance;
+  if (!mounted || !ready) return <SignIn onDone={() => setReady(true)} />;
+  return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">M</span><span>mentify</span></div><div className="eyebrow">STUDENT SPACE</div><nav className="nav">{nav.map(item => <button key={item.id} className={`nav-button ${tab === item.id ? "active" : ""}`} onClick={() => setTab(item.id)}><span className="nav-icon">{item.icon}</span><span>{item.label}</span></button>)}</nav><div className="side-note"><strong>Learning tip</strong>Small, consistent study sessions make the biggest difference.</div></aside><main className="main"><header className="topbar"><div className="crumb">WORKSPACE <span>/</span> <b>{nav.find(item => item.id === tab)?.label}</b></div><div className="top-actions"><span className="bell">♢</span><div className="avatar">{initials(student)}</div></div></header><div className="content">{tab === "overview" ? <><div className="hero"><div><span className="kicker">STUDENT OVERVIEW</span><h1>Good morning, {firstName}.</h1><p>Here’s what’s happening with your learning today.</p></div><span className="date-pill">{new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span></div>{error && <div className="error">{error}</div>}<div className="stat-grid"><div className="card stat-card"><span className="stat-label">Active courses</span><div className="stat-value">{courseIds.length || "—"}</div><span className="stat-meta">Configured workspace courses</span></div><div className="card stat-card"><span className="stat-label">To complete</span><div className="stat-value">{pending}</div><span className="stat-meta">Assignments in your queue</span></div><div className="card stat-card"><span className="stat-label">Submitted work</span><div className="stat-value">{submissions.length}</div><span className="stat-meta">{graded} graded so far</span></div><div className="card stat-card"><span className="stat-label">Study groups</span><div className="stat-value">{groups.length}</div><span className="stat-meta">Active conversations</span></div></div><div className="grid"><section className="card section-card"><div className="section-head"><h2>Upcoming assignments</h2><button className="link-button" onClick={() => setTab("assignments")}>View all →</button></div>{loading ? <Empty title="Loading your activity…">Connecting to the assignment service.</Empty> : dueSoon.length ? <div className="assignment-list">{dueSoon.map(a => <div className="assignment" key={a.id}><div className="assignment-main"><p className="assignment-title">{a.title}</p><span className="assignment-course">{a.courseId ? `Course ${a.courseId.slice(0, 8)}…` : "Course activity"}</span></div><div className="due">{dateText(a.dueDate)}<span>{a.maxMarks ? `${a.maxMarks} marks` : "Assignment"}</span></div></div>)}</div> : <Empty title="Nothing due yet">Your upcoming assignments will appear here.</Empty>}</section><section className="card section-card"><div className="section-head"><h2>Learning progress</h2><button className="link-button" onClick={() => setTab("courses")}>Details →</button></div><div className="progress-wrap"><div className="progress-item"><div className="progress-top"><span>Submitted work</span><span>{assignments.length ? Math.round((submissions.length / assignments.length) * 100) : 0}%</span></div><div className="progress-bar"><i style={{ width: `${assignments.length ? Math.min(100, (submissions.length / assignments.length) * 100) : 0}%` }} /></div></div><div className="progress-item"><div className="progress-top"><span>Graded work</span><span>{submissions.length ? Math.round((graded / submissions.length) * 100) : 0}%</span></div><div className="progress-bar"><i style={{ width: `${submissions.length ? (graded / submissions.length) * 100 : 0}%` }} /></div></div><Empty title={courseIds.length ? "Attendance is course-based" : "Add course IDs to unlock progress"}>{courseIds.length ? "Attendance summaries can be viewed from each course." : "Set course IDs when signing in to load assignments, quizzes and attendance."}</Empty></div></section></div></> : tab === "assignments" ? <><div className="page-title"><span className="kicker">YOUR WORK</span><h1>Assignments</h1><p>Keep track of due dates, submissions, and feedback.</p></div>{error && <div className="error">{error}</div>}<section className="card table">{loading ? <Empty title="Loading assignments…">Fetching your course activity.</Empty> : assignments.length ? <><div className="table-row table-head"><span>Assignment</span><span>Due date</span><span>Marks</span><span>Status</span></div>{assignments.map(a => { const s = submissions.find(item => item.assignmentId === a.id); return <div className="table-row" key={a.id}><strong>{a.title}</strong><span>{dateText(a.dueDate)}</span><span>{a.maxMarks || "—"}</span><span className={`status ${s ? "" : "pending"}`}>{s?.status || "To do"}</span></div>; })}</> : <Empty title="No assignments to show">Add your enrolled course IDs to load assignment activity.</Empty>}</section></> : tab === "courses" ? <><div className="page-title"><span className="kicker">LEARNING</span><h1>My courses</h1><p>Your course-level activity and learning services in one place.</p></div><section className="card section-card">{courseIds.length ? <div className="assignment-list">{courseIds.map((id, index) => <div className="assignment" key={id}><div className="assignment-main"><p className="assignment-title">Course {index + 1}</p><span className="assignment-course">{id}</span></div><button className="link-button" onClick={() => setTab("assignments")}>Open activity →</button></div>)}</div> : <Empty title="Course list is not available yet">The backend currently exposes course-scoped student services, but not a student “my courses” endpoint. Add course IDs in your session to load this view.</Empty>}</section></> : <><div className="page-title"><span className="kicker">COMMUNITY</span><h1>Messages</h1><p>Stay connected with your teachers and learning groups.</p></div><section className="card section-card">{groups.length ? <div className="assignment-list">{groups.map(group => <div className="assignment" key={group.id}><div className="assignment-main"><p className="assignment-title">{group.name || "Learning group"}</p><span className="assignment-course">{group.description || "Communication group"}</span></div><span className="status">Active</span></div>)}</div> : <Empty title="No groups yet">When you join a learning group, its conversations will appear here.</Empty>}</section></>}</div></main></div>;
+}
+export default function Home() { return <App />; }
