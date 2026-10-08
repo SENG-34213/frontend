@@ -1,69 +1,48 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+import { useEffect, useState } from "react";
+import { configuredCourseIds, getToken, login, studentApi, type Assignment, type Attendance, type Group, type Quiz, type Student, type Submission } from "../lib/studentApi";
+
+type Section = "Dashboard" | "My Courses" | "Browse Courses" | "Assignments" | "Quizzes" | "Messages" | "Discussion Forums" | "AI Insights";
+const navItems: { label: Section; icon: string }[] = [{ label: "Dashboard", icon: "▦" }, { label: "My Courses", icon: "⌁" }, { label: "Browse Courses", icon: "⌕" }, { label: "Assignments", icon: "▤" }, { label: "Quizzes", icon: "▣" }, { label: "Messages", icon: "▱" }, { label: "Discussion Forums", icon: "▰" }, { label: "AI Insights", icon: "♙" }];
+type Activity = { assignments: Assignment[]; submissions: Submission[]; quizzes: Quiz[]; groups: Group[]; attendance: Attendance[]; courseIds: string[]; loading: boolean; error: string };
+
+function useActivity(ready: boolean): Activity {
+  const [activity, setActivity] = useState<Activity>({ assignments: [], submissions: [], quizzes: [], groups: [], attendance: [], courseIds: [], loading: true, error: "" });
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    const courseIds = configuredCourseIds();
+    Promise.allSettled([studentApi.groups(), studentApi.submissions()]).then(async ([groupResult, submissionsResult]) => {
+      if (cancelled) return;
+      const [assignmentResults, quizResults, attendanceResults] = await Promise.all([Promise.allSettled(courseIds.map((id) => studentApi.assignments(id))), Promise.allSettled(courseIds.map((id) => studentApi.quizzes(id))), Promise.allSettled(courseIds.map((id) => studentApi.attendance(id)))]);
+      const groups = groupResult.status === "fulfilled" ? groupResult.value || [] : [];
+      const submissions = submissionsResult.status === "fulfilled" ? submissionsResult.value || [] : [];
+      const assignments = assignmentResults.flatMap((r) => r.status === "fulfilled" ? r.value || [] : []);
+      const quizzes = quizResults.flatMap((r) => r.status === "fulfilled" ? r.value || [] : []);
+      const attendance = attendanceResults.flatMap((r) => r.status === "fulfilled" ? [r.value] : []);
+      const rejected = [groupResult, submissionsResult, ...assignmentResults, ...quizResults, ...attendanceResults].filter((r) => r.status === "rejected").length;
+      setActivity({ assignments, submissions, quizzes, groups, attendance, courseIds, loading: false, error: rejected === 2 + assignmentResults.length + quizResults.length + attendanceResults.length ? "We could not reach the student services." : "" });
+    });
+    return () => { cancelled = true; };
+  }, [ready]);
+  return activity;
 }
+
+function SignIn({ onDone }: { onDone: () => void }) {
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [apiUrl, setApiUrl] = useState("http://localhost:8080"); const [courses, setCourses] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  async function submit(event: React.FormEvent) { event.preventDefault(); setBusy(true); setError(""); try { const result = await login(email.trim(), password, apiUrl); if (result.user?.role && result.user.role !== "STUDENT") throw new Error("Please use a student account."); sessionStorage.setItem("mentify_api_url", apiUrl.replace(/\/$/, "")); sessionStorage.setItem("mentify_access_token", result.accessToken || ""); if (result.refreshToken) sessionStorage.setItem("mentify_refresh_token", result.refreshToken); if (courses.trim()) sessionStorage.setItem("mentify_student_course_ids", courses); onDone(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Unable to sign in."); } finally { setBusy(false); } }
+  return <main className="auth-page"><form className="auth-card" onSubmit={submit}><div className="brand"><span className="brand-mark">⌁</span><span>Mentify</span></div><p className="brand-caption">ACADEMIC EDITORIAL</p><h1>Welcome back.</h1><p className="auth-copy">Sign in to continue your intellectual journey.</p>{error && <div className="error">{error}</div>}<label className="field-label">API base URL<input value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} /></label><label className="field-label">Email address<input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label><label className="field-label">Password<input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" /></label><label className="field-label">Course IDs <span className="helper">optional, comma separated</span><input value={courses} onChange={(e) => setCourses(e.target.value)} placeholder="course-id-1, course-id-2" /></label><button className="primary-button" disabled={busy}>{busy ? "Signing in…" : "Sign in to workspace"}</button></form></main>;
+}
+
+function ProgressCard({ title, subtitle, progress, tone }: { title: string; subtitle: string; progress: number; tone: "mint" | "violet" }) { return <article className="course-card"><div className={`course-icon ${tone}`}>{tone === "mint" ? "♨" : "∑"}</div><h3>{title}</h3><p>{subtitle}</p><div className="progress-label"><span>Progress</span><b>{progress}%</b></div><div className="progress-track"><i className={tone} style={{ width: `${progress}%` }} /></div></article>; }
+
+function Dashboard({ student, activity, onSignOut }: { student?: Student; activity: Activity; onSignOut: () => void }) {
+  const [section, setSection] = useState<Section>("Dashboard"); const firstName = student?.firstName || "Student"; const fullName = `${student?.firstName || "Student"} ${student?.lastName || ""}`.trim(); const initials = `${firstName[0] || "S"}${student?.lastName?.[0] || ""}`;
+  const submittedIds = new Set(activity.submissions.map((item) => item.assignmentId)); const completed = activity.assignments.filter((item) => submittedIds.has(item.id)).length; const completion = activity.assignments.length ? Math.round((completed / activity.assignments.length) * 100) : 0; const courses = activity.courseIds.length ? activity.courseIds : [...new Set(activity.assignments.map((item) => item.courseId).filter(Boolean) as string[])]; const averageAttendance = activity.attendance.length ? Math.round(activity.attendance.reduce((sum, item) => sum + (item.percentage || 0), 0) / activity.attendance.length) : null;
+  const upcoming = [...activity.assignments.map((item) => ({ title: item.title, course: item.courseId, date: item.dueDate, kind: "Assignment" })), ...activity.quizzes.map((item) => ({ title: item.title || "Quiz", course: item.courseId, date: item.dueDate, kind: item.status || "Quiz" }))].filter((item) => item.date).sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime()).slice(0, 3); const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "No due date";
+  function signOut() { sessionStorage.clear(); onSignOut(); }
+  return <div className="workspace"><aside className="sidebar"><div className="sidebar-brand"><span className="brand-mark">⌁</span><div><strong>Mentify</strong><small>ACADEMIC EDITORIAL</small></div></div><nav className="side-nav">{navItems.map((item) => <button key={item.label} className={section === item.label ? "active" : ""} onClick={() => setSection(item.label)}><span>{item.icon}</span>{item.label}</button>)}</nav><div className="sidebar-footer"><button className="new-session" onClick={() => setSection("AI Insights")}><span>✦</span> New AI Session</button><button onClick={() => setSection("Messages")}><span>?</span> Support</button><button onClick={signOut}><span>↪</span> Logout</button></div></aside><main className="main-area"><header className="topbar"><label className="search"><span>⌕</span><input aria-label="Search" placeholder="Search courses, notes, or AI insights..." /></label><div className="profile"><button className="notification" aria-label="Notifications">♧<i /></button><div className="profile-copy"><strong>{fullName}</strong><span>{student?.studentProfile?.grade ? `Grade ${student.studentProfile.grade}` : "Student workspace"}</span></div><span className="avatar">{initials}</span></div></header><div className="content-area">{section === "Dashboard" ? <><div className="welcome"><div><h1>Welcome back, {firstName}.</h1><p>{activity.loading ? "Syncing your latest learning activity…" : `${activity.assignments.length} assignments and ${activity.quizzes.length} quizzes are connected to your workspace.`}</p></div><div className="readiness"><span>✦</span><div><small>LEARNING ACTIVITY</small><b>{activity.loading ? "Syncing workspace…" : `${courses.length} active course${courses.length === 1 ? "" : "s"}`}</b></div></div></div><div className="dashboard-grid"><section className="primary-column"><div className="revision-banner"><div className="revision-copy"><span>LEARNING<br />SUMMARY</span><p>{activity.error || (activity.loading ? "Syncing assignments, quizzes, and attendance from your student services…" : activity.assignments.length ? `${completed} of ${activity.assignments.length} assignments submitted. Keep your momentum going.` : "Add course IDs during sign-in to load your assignments and course activity.")}</p></div><button onClick={() => setSection("Assignments")}>View<br />Activity</button></div><div className="course-grid">{courses.slice(0, 2).map((courseId, index) => { const courseAssignments = activity.assignments.filter((item) => item.courseId === courseId); const done = courseAssignments.filter((item) => submittedIds.has(item.id)).length; return <ProgressCard key={courseId} title={`Course ${index + 1}`} subtitle={courseId} progress={courseAssignments.length ? Math.round((done / courseAssignments.length) * 100) : 0} tone={index === 0 ? "mint" : "violet"} />; })}{!courses.length && <div className="course-card empty-state"><h3>No course activity yet</h3><p>Configure course IDs during sign-in to connect course-level services.</p></div>}</div><section className="momentum card"><div className="section-heading"><h2>Learning Momentum <span>LIVE DATA</span></h2><button onClick={() => setSection("Assignments")}>View Activity</button></div><div className="momentum-stats"><div><span>ASSIGNMENTS<br />DONE</span><b>{completed}</b></div><div><span>QUIZZES<br />AVAILABLE</span><b>{activity.quizzes.length}</b></div><div><span>SUBMISSION<br />RATE</span><b>{completion}%</b></div><div><span>ATTENDANCE</span><b>{averageAttendance === null ? "—" : `${averageAttendance}%`}</b></div></div><div className="week-chart"><div className="chart-lines"><i /><i /><i /><i /></div><div className="chart-bars"><b style={{ height: `${Math.max(8, completion)}%` }} /><b style={{ height: `${Math.max(8, Math.min(100, activity.quizzes.length * 10))}%` }} /><b style={{ height: `${Math.max(8, averageAttendance || 0)}%` }} /><b style={{ height: `${Math.max(8, Math.min(100, activity.groups.length * 15))}%` }} /><b style={{ height: "35%" }} /><b style={{ height: "58%" }} /><b style={{ height: "28%" }} /></div><div className="week-days"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div></div></section></section><aside className="right-column"><section className="card deadlines"><div className="section-heading"><h2>Deadlines</h2><span>Next 7 Days</span></div>{upcoming.length ? upcoming.map((item) => <div className="deadline" key={`${item.kind}-${item.title}`}><span className="deadline-icon">▧</span><div><b>{item.title}</b><small>{item.course || "Course activity"}</small><em>{formatDate(item.date)}</em></div></div>) : <div className="empty-state"><p>{activity.loading ? "Loading deadlines…" : "No upcoming deadlines found."}</p></div>}<button className="outline-button" onClick={() => setSection("Assignments")}>View Full Schedule</button></section><section className="card performance"><div className="section-heading"><h2>Performance</h2><span>SUBMISSIONS <b>{activity.submissions.length}</b></span></div>{activity.submissions.slice(0, 3).map((submission) => <div className="performance-row" key={submission.id}><b>{submission.marks ?? "—"}</b><div><strong>{activity.assignments.find((item) => item.id === submission.assignmentId)?.title || "Submitted work"}</strong><small>{submission.status || "Submitted"}</small></div><span>{submission.status || "ACTIVE"}</span></div>)}{!activity.submissions.length && <div className="empty-state"><p>{activity.loading ? "Loading submissions…" : "Your submitted work will appear here."}</p></div>}<div className="pathway"><small>✦ API CONNECTED</small><p>Your dashboard is using live student profile, assignment, quiz, group, submission, and attendance data.</p></div></section></aside></div></> : <section className="placeholder-page"><span className="eyebrow">STUDENT WORKSPACE</span><h1>{section}</h1><p>{section === "Assignments" ? `${activity.assignments.length} assignments loaded from the backend.` : section === "Quizzes" ? `${activity.quizzes.length} quizzes loaded from the backend.` : section === "Messages" ? `${activity.groups.length} communication groups loaded from the backend.` : "This section is connected to the workspace navigation."}</p><div className="card placeholder-card"><span className="placeholder-icon">✦</span><h2>{activity.loading ? "Syncing your learning data…" : "Your live learning data is connected."}</h2><p>Use the dashboard to review activity, deadlines, submissions, quizzes, groups, and attendance summaries returned by the backend.</p><button className="primary-button" onClick={() => setSection("Dashboard")}>Back to Dashboard</button></div></section>}</div></main></div>;
+}
+
+export default function Home() { const [ready, setReady] = useState(() => Boolean(getToken())); const [student, setStudent] = useState<Student>(); const activity = useActivity(ready); useEffect(() => { if (ready) studentApi.me().then(setStudent).catch(() => setReady(false)); }, [ready]); if (!ready) return <SignIn onDone={() => setReady(true)} />; return <Dashboard student={student} activity={activity} onSignOut={() => setReady(false)} />; }
