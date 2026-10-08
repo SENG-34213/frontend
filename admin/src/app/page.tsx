@@ -13,6 +13,7 @@ import { AdminAiAssistant } from "@/ai-assistant/AdminAiAssistant";
 import { CommunicationGroups } from "@/components/admin/CommunicationGroups";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { GradeManager } from "@/components/admin/GradeManager";
+import { ReportsAnalytics } from "@/components/admin/ReportsAnalytics";
 import {
   emptyCourse,
   initialRegistrationValues as initialValues,
@@ -41,9 +42,12 @@ function normalizeGrade(grade: unknown) {
 export default function Home() {
   const [values, setValues] = useState(initialValues);
   const [activeForm, setActiveForm] = useState<AdminSection>("dashboard");
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [course, setCourse] = useState<CourseDraft>(emptyCourse);
   const [showCourseForm, setShowCourseForm] = useState(false);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [registrationStep, setRegistrationStep] = useState(1);
   const [verifyingTeacher, setVerifyingTeacher] = useState(false);
   const [teacherVerified, setTeacherVerified] = useState(false);
   const [teacherVerification, setTeacherVerification] = useState("");
@@ -110,7 +114,9 @@ export default function Home() {
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
   const [dashboardGroupCount, setDashboardGroupCount] = useState(0);
+  const [dashboardEnrollmentCount, setDashboardEnrollmentCount] = useState(0);
   const [grades, setGrades] = useState<GradeRecord[]>([]);
+  const [gradeDirectoryStudents, setGradeDirectoryStudents] = useState<DirectoryUser[]>([]);
   const [gradesLoading, setGradesLoading] = useState(false);
   const [gradesError, setGradesError] = useState("");
   const [gradesReloadKey, setGradesReloadKey] = useState(0);
@@ -475,7 +481,7 @@ export default function Home() {
   }, [activeForm, apiUrl, communicationReloadKey, token]);
 
   useEffect(() => {
-    if (activeForm !== "dashboard" || !token) return;
+    if (activeForm !== "dashboard" && activeForm !== "reports" || !token) return;
     let cancelled = false;
     async function loadDashboard() {
       setDashboardLoading(true);
@@ -498,6 +504,11 @@ export default function Home() {
         const results = await Promise.all(
           responses.map((response) => response.json().catch(() => ({}))),
         );
+        const readList = (payload: unknown): unknown[] => {
+          if (Array.isArray(payload)) return payload;
+          if (payload && typeof payload === "object" && Array.isArray((payload as { data?: unknown }).data)) return (payload as { data: unknown[] }).data;
+          return [];
+        };
         if (!responses.every((response) => response.ok))
           throw new Error("Some dashboard data could not be loaded.");
         if (!cancelled) {
@@ -527,30 +538,31 @@ export default function Home() {
             };
           };
           setRecentStudents(
-            Array.isArray(results[0].data)
-              ? results[0].data
+            readList(results[0]).length
+              ? readList(results[0])
                   .slice(0, 5)
-                  .map((user: Record<string, unknown>) =>
-                    mapUser(user, "student"),
+                  .map((user) =>
+                    mapUser(user as Record<string, unknown>, "student"),
                   )
               : [],
           );
           setRecentTeachers(
-            Array.isArray(results[1].data)
-              ? results[1].data
+            readList(results[1]).length
+              ? readList(results[1])
                   .slice(0, 5)
-                  .map((user: Record<string, unknown>) =>
-                    mapUser(user, "teacher"),
+                  .map((user) =>
+                    mapUser(user as Record<string, unknown>, "teacher"),
                   )
               : [],
           );
           setLiveCourses(
-            Array.isArray(results[2].data)
-              ? (results[2].data as LiveCourse[])
-              : [],
+            readList(results[2]) as LiveCourse[],
           );
           setDashboardGroupCount(
-            Array.isArray(results[4].data) ? results[4].data.length : 0,
+            readList(results[4]).length,
+          );
+          setDashboardEnrollmentCount(
+            readList(results[3]).length,
           );
         }
       } catch {
@@ -573,22 +585,36 @@ export default function Home() {
       setGradesLoading(true);
       setGradesError("");
       try {
-        const response = await authorizedApiRequest(
-          `${apiUrl}/api/v1/course/grades`,
-          { method: "GET" },
-        );
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok)
+        const [gradesResponse, studentsResponse, coursesResponse] = await Promise.all([
+          authorizedApiRequest(`${apiUrl}/api/v1/course/grades`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/course`, { method: "GET" }),
+        ]);
+        const result = await gradesResponse.json().catch(() => ({}));
+        const studentsResult = await studentsResponse.json().catch(() => ({}));
+        const coursesResult = await coursesResponse.json().catch(() => ({}));
+        if (!gradesResponse.ok)
           throw new Error(
             result.message ||
               result.error ||
-              `The grade service returned ${response.status}.`,
+              `The grade service returned ${gradesResponse.status}.`,
           );
         if (!Array.isArray(result.data))
           throw new Error(
             "The grade service returned an unexpected response format.",
           );
-        if (!cancelled) setGrades(result.data as GradeRecord[]);
+        if (!cancelled) {
+          setGrades(result.data as GradeRecord[]);
+          if (studentsResponse.ok && Array.isArray(studentsResult.data)) {
+            setGradeDirectoryStudents(studentsResult.data.map((user: Record<string, unknown>) => {
+              const profile = user.studentProfile as Record<string, unknown> | null | undefined;
+              return { id: String(user.id || ""), name: `${user.firstName || ""} ${user.lastName || ""}`.trim(), email: String(user.email || ""), grade: normalizeGrade(profile?.grade) };
+            }));
+          }
+          if (coursesResponse.ok && Array.isArray(coursesResult.data)) {
+            setLiveCourses(coursesResult.data as LiveCourse[]);
+          }
+        }
       } catch (error) {
         if (!cancelled)
           setGradesError(
@@ -708,8 +734,10 @@ export default function Home() {
 
   function switchForm(form: AdminSection) {
     setActiveForm(form);
+    setAiDrawerOpen(false);
     if (form === "student" || form === "teacher") {
       setValues(initialValues);
+      setRegistrationStep(1);
       setShowRegistrationForm(false);
       setSpecializations([]);
       setSpecializationInput("");
@@ -1447,11 +1475,24 @@ export default function Home() {
   }
 
   return (
-    <div className="dashboard-shell">
+    <div className={`dashboard-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       <AdminSidebar
         activeSection={activeForm}
         adminUser={adminUser}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((current) => !current)}
         onNavigate={switchForm}
+        onSubNavigate={(section) => {
+          if (section === "student" || section === "teacher") {
+            switchForm(section);
+            setRegistrationStep(1);
+            setShowRegistrationForm(true);
+          } else if (section === "course") {
+            openCourseForm();
+          } else {
+            switchForm(section);
+          }
+        }}
         onSettings={() => setShowSettings(true)}
         onSignOut={() => void signOut()}
       />
@@ -1468,7 +1509,9 @@ export default function Home() {
                 <span className="eyebrow-line" />
                 {activeForm === "dashboard"
                   ? "ACADEMY OVERVIEW"
-                  : activeForm === "communication"
+                      : activeForm === "reports"
+                        ? "ACADEMY INTELLIGENCE"
+                      : activeForm === "communication"
                     ? "COMMUNICATION MANAGEMENT"
                     : activeForm === "ai-assistant"
                       ? "MENTIFY INTELLIGENCE"
@@ -1481,7 +1524,9 @@ export default function Home() {
               <h1>
                 {activeForm === "dashboard"
                   ? "Dashboard"
-                  : activeForm === "communication"
+                    : activeForm === "reports"
+                      ? "Reports & analytics"
+                    : activeForm === "communication"
                     ? "Communication groups"
                     : activeForm === "ai-assistant"
                       ? "Mentify AI Assistant"
@@ -1496,7 +1541,9 @@ export default function Home() {
               <p className="page-description">
                 {activeForm === "dashboard"
                   ? "Monitor your academy, move work forward, and keep your community connected."
-                  : activeForm === "communication"
+                    : activeForm === "reports"
+                      ? "Review live academy metrics across people, learning, enrollments, and community activity."
+                    : activeForm === "communication"
                     ? "Create course-based groups and manage the people connected to each conversation."
                     : activeForm === "ai-assistant"
                       ? "Ask questions and turn your academy data into actionable insights."
@@ -1573,9 +1620,21 @@ export default function Home() {
                 authorizedApiRequest(`${apiUrl}${url}`, options)
               }
             />
+          ) : activeForm === "reports" ? (
+            <ReportsAnalytics
+              students={recentStudents.map((student) => ({ id: student.id, name: student.name, email: student.email, grade: student.grade, phoneNumber: student.phoneNumber }))}
+              teachers={recentTeachers.map((teacher) => ({ id: teacher.id, name: teacher.name, email: teacher.email }))}
+              courses={liveCourses}
+              enrollmentCount={dashboardEnrollmentCount}
+              groupCount={dashboardGroupCount}
+              loading={dashboardLoading}
+              onRefresh={() => setDashboardReloadKey((current) => current + 1)}
+            />
           ) : activeForm === "grade" ? (
             <GradeManager
               grades={grades}
+              students={gradeDirectoryStudents}
+              courses={liveCourses}
               loading={gradesLoading}
               error={gradesError}
               onRetry={() => setGradesReloadKey((current) => current + 1)}
@@ -1598,7 +1657,7 @@ export default function Home() {
                 email: teacher.email,
               }))}
               courses={liveCourses}
-              enrollmentCount={enrollmentRecords.length}
+              enrollmentCount={dashboardEnrollmentCount}
               groupCount={dashboardGroupCount}
               loading={dashboardLoading}
               onNavigate={switchForm}
@@ -1628,6 +1687,12 @@ export default function Home() {
                 error={coursesError}
                 onRetry={() => setCoursesReloadKey((current) => current + 1)}
                 onCreate={() => openCourseForm()}
+                onEdit={(selectedCourse) => {
+                  setNotice({ kind: "error", title: "Course editing API not connected", body: `The backend does not currently expose an update endpoint for ${selectedCourse.courseName}.` });
+                }}
+                onDelete={(selectedCourse) => {
+                  setNotice({ kind: "error", title: "Course deletion API not connected", body: `The backend does not currently expose a delete endpoint for ${selectedCourse.courseName}.` });
+                }}
               />
               {showCourseForm && (
                 <div
@@ -2441,12 +2506,18 @@ export default function Home() {
                 loading={directoryLoading}
                 error={directoryError}
                 onRetry={() => setDirectoryReloadKey((current) => current + 1)}
-                onRegister={() => setShowRegistrationForm(true)}
+                onRegister={() => { setRegistrationStep(1); setShowRegistrationForm(true); }}
                 onAddCourse={
                   activeForm === "teacher"
                     ? (teacher) => openCourseForm({ id: teacher.id, name: teacher.name, email: teacher.email })
                     : undefined
                 }
+                onEdit={(user) => {
+                  setNotice({ kind: "error", title: "User editing API not connected", body: `The backend does not currently expose an update endpoint for ${user.name}.` });
+                }}
+                onDelete={(user) => {
+                  setNotice({ kind: "error", title: "User deletion API not connected", body: `The backend does not currently expose a delete endpoint for ${user.name}.` });
+                }}
               />
               {showRegistrationForm && (
                 <div
@@ -2484,8 +2555,9 @@ export default function Home() {
                         <Icon name="close" size={18} />
                       </button>
                     </div>
+                    {(activeForm === "student" || activeForm === "teacher") && <div className="registration-levels" aria-label="Registration progress"><div className={`registration-level ${registrationStep >= 1 ? "complete" : ""} ${registrationStep === 1 ? "current" : ""}`}><span>01</span><strong>Personal</strong></div><i/><div className={`registration-level ${registrationStep >= 2 ? "complete" : ""} ${registrationStep === 2 ? "current" : ""}`}><span>02</span><strong>{activeForm === "student" ? "Guardian" : "Teaching areas"}</strong></div><i/><div className={`registration-level ${registrationStep >= 3 ? "complete" : ""} ${registrationStep === 3 ? "current" : ""}`}><span>03</span><strong>Address</strong></div></div>}
                     <form className="form-card" onSubmit={registerAccount}>
-                      <section className="form-section">
+                      <section className={`form-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 1 ? "registration-step-hidden" : "registration-step-active"}`}>
                         <div className="section-heading">
                           <div className="section-icon">
                             <Icon name="users" size={18} />
@@ -2588,7 +2660,7 @@ export default function Home() {
                         </div>
                       </section>
                       {activeForm === "student" ? (
-                        <section className="form-section">
+                        <section className={`form-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 2 ? "registration-step-hidden" : "registration-step-active"}`}>
                           <div className="section-heading">
                             <div className="section-icon lavender">
                               <Icon name="users" size={18} />
@@ -2744,7 +2816,7 @@ export default function Home() {
                           </div>
                         </section>
                       )}
-                      <section className="form-section address-section">
+                      <section className={`form-section address-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 3 ? "registration-step-hidden" : "registration-step-active"}`}>
                         <div className="section-heading">
                           <div className="section-icon mint">
                             <Icon name="pin" size={18} />
@@ -2811,6 +2883,7 @@ export default function Home() {
                             type="reset"
                             onClick={() => {
                               setValues(initialValues);
+                              setRegistrationStep(1);
                               setSpecializations([]);
                               setSpecializationInput("");
                               setNotice(null);
@@ -2818,22 +2891,8 @@ export default function Home() {
                           >
                             Clear form
                           </button>
-                          <button
-                            className="primary-button"
-                            type="submit"
-                            disabled={busy}
-                          >
-                            {busy ? (
-                              <>
-                                <span className="spinner" /> Registering…
-                              </>
-                            ) : (
-                              <>
-                                Register {activeForm}{" "}
-                                <Icon name="arrow" size={16} />
-                              </>
-                            )}
-                          </button>
+                          {(activeForm === "student" || activeForm === "teacher") && registrationStep > 1 && <button className="secondary-button registration-back" type="button" onClick={() => setRegistrationStep((current) => current - 1)}><Icon name="chevron" size={15} /> Back</button>}
+                          {(activeForm === "student" || activeForm === "teacher") && registrationStep < 3 ? <button className="primary-button" type="button" onClick={() => setRegistrationStep((current) => current + 1)}>Continue <Icon name="arrow" size={16} /></button> : <button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner" /> Registering…</> : <>Register {activeForm} <Icon name="arrow" size={16} /></>}</button>}
                         </div>
                       </div>
                     </form>
@@ -2934,6 +2993,25 @@ export default function Home() {
           </footer>
         </div>
       </main>
+
+      {!aiDrawerOpen && (
+        <button className="global-ai-launcher" type="button" onClick={() => setAiDrawerOpen(true)} aria-label="Open Mentify AI assistant" title="Ask Mentify AI">
+          <Icon name="sparkles" size={21} />
+          <span className="global-ai-launcher-pulse" />
+        </button>
+      )}
+      {aiDrawerOpen && (
+        <div className="ai-drawer-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAiDrawerOpen(false); }}>
+          <aside className="ai-drawer" aria-label="Mentify AI assistant">
+            <button className="ai-drawer-close" type="button" onClick={() => setAiDrawerOpen(false)} aria-label="Close Mentify AI assistant"><Icon name="close" size={18} /></button>
+            <AdminAiAssistant
+              apiUrl={apiUrl}
+              token={token}
+              apiRequest={(url, options) => authorizedApiRequest(`${apiUrl}${url}`, options)}
+            />
+          </aside>
+        </div>
+      )}
 
       {showSettings && (
         <div
