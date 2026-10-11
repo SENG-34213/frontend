@@ -65,6 +65,11 @@ export type ExamStatus = "DRAFT" | "SCHEDULED" | "MARKING" | "COMPLETED" | "CANC
 export type Exam = { id: string; courseId: string; title: string; description?: string; examDate: string; startTime: string; endTime: string; totalMarks: number; passMarks: number; type: ExamType; status: ExamStatus };
 export type ExamResult = { studentId: string; attendanceStatus: "PRESENT" | "ABSENT"; marksObtained?: number; resultStatus?: string; grade?: string; remarks?: string };
 export type ExamResultSheet = { examId: string; courseId: string; title: string; status: ExamStatus; totalMarks: number; passMarks: number; results: ExamResult[] };
+export type CalendarEventType = "CLASS" | "ASSIGNMENT" | "QUIZ" | "EXAM" | "MEETING" | "HOLIDAY" | "ADMIN" | "CUSTOM" | "ATTENDANCE";
+export type CalendarEventStatus = "SCHEDULED" | "CANCELLED";
+export type CalendarVisibility = "PRIVATE" | "COURSE" | "ROLE" | "GLOBAL";
+export type CalendarTargetRole = "ADMIN" | "TEACHER" | "STUDENT";
+export type CalendarEvent = { id: string; title: string; description?: string; eventType: CalendarEventType; startDateTime: string; endDateTime?: string; allDay: boolean; courseId?: string; sourceType?: string; sourceId?: string; visibility: CalendarVisibility; targetRole?: CalendarTargetRole; status: CalendarEventStatus; location?: string; canEdit: boolean; canCancel: boolean };
 
 function apiBase() {
   if (typeof window !== "undefined") {
@@ -134,5 +139,10 @@ export const teacherApi = {
   examResults: (examId: string) => request<ExamResultSheet>(`/api/v1/exams/${encodeURIComponent(examId)}/results`),
   enterExamMarks: (examId: string, results: Array<{ studentId: string; attendanceStatus: "PRESENT" | "ABSENT"; marksObtained?: number; remarks?: string }>) => request<{ examId: string; updatedCount: number; results: ExamResult[] }>(`/api/v1/exams/${encodeURIComponent(examId)}/results`, { method: "PUT", body: JSON.stringify({ results }) }),
   completeExam: (examId: string) => request<Exam>(`/api/v1/exams/${encodeURIComponent(examId)}/complete`, { method: "POST" }),
+  upcomingCalendarEvents: (limit = 20) => request<CalendarEvent[]>(`/api/v1/calendar/upcoming?limit=${limit}`),
+  calendarEvents: (start: string, end: string, courseId?: string) => request<CalendarEvent[]>(`/api/v1/calendar/events?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}${courseId ? `&courseId=${encodeURIComponent(courseId)}` : ""}`),
+  createCalendarEvent: (draft: { title: string; description: string; eventType: CalendarEventType; startDateTime: string; endDateTime?: string; allDay: boolean; courseId?: string; visibility: CalendarVisibility; targetRole?: CalendarTargetRole; location?: string }) => request<CalendarEvent>("/api/v1/calendar/events", { method: "POST", body: JSON.stringify(draft) }),
+  updateCalendarEvent: (eventId: string, draft: { title: string; description: string; eventType: CalendarEventType; startDateTime: string; endDateTime?: string; allDay: boolean; courseId?: string; visibility: CalendarVisibility; targetRole?: CalendarTargetRole; location?: string }) => request<CalendarEvent>(`/api/v1/calendar/events/${encodeURIComponent(eventId)}`, { method: "PUT", body: JSON.stringify(draft) }),
+  cancelCalendarEvent: (eventId: string) => request<CalendarEvent>(`/api/v1/calendar/events/${encodeURIComponent(eventId)}/cancel`, { method: "POST" }),
 };
 
