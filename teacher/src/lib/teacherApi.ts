@@ -55,6 +55,17 @@ export type QuizQuestionDraft = { id?: string; questionText: string; questionTyp
 export type TeacherQuiz = { id: string; courseId: string; title: string; description?: string; durationMinutes: number; totalMarks: number; passMark: number; maxAttempts: number; status: "DRAFT" | "PUBLISHED"; creationMethod?: "MANUAL" | "AI_GENERATED"; questions?: QuizQuestionDraft[] };
 export type AiQuizDraft = { courseId: string; questionCount: number; difficulty: "EASY" | "MEDIUM" | "HARD"; questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER"; creationMethod: "AI_GENERATED"; questions: QuizQuestionDraft[]; provider?: string; model?: string };
 
+export type AttendanceStatus = "NOT_MARKED" | "PRESENT" | "ABSENT" | "LATE";
+export type AttendanceSessionStatus = "OPEN" | "COMPLETED" | "CANCELLED";
+export type AttendanceRecord = { id: string; studentId: string; status: AttendanceStatus; remarks?: string; markedAt?: string };
+export type AttendanceSession = { id: string; courseId: string; title: string; attendanceDate: string; startTime: string; endTime: string; mode: "PHYSICAL" | "ONLINE"; status: AttendanceSessionStatus; records: AttendanceRecord[] };
+export type AttendanceSummary = { studentId: string; courseId: string; completedSessions: number; presentCount: number; lateCount: number; absentCount: number; attendedCount: number; attendancePercentage: number };
+export type ExamType = "MIDTERM" | "FINAL" | "PRACTICAL" | "OTHER";
+export type ExamStatus = "DRAFT" | "SCHEDULED" | "MARKING" | "COMPLETED" | "CANCELLED";
+export type Exam = { id: string; courseId: string; title: string; description?: string; examDate: string; startTime: string; endTime: string; totalMarks: number; passMarks: number; type: ExamType; status: ExamStatus };
+export type ExamResult = { studentId: string; attendanceStatus: "PRESENT" | "ABSENT"; marksObtained?: number; resultStatus?: string; grade?: string; remarks?: string };
+export type ExamResultSheet = { examId: string; courseId: string; title: string; status: ExamStatus; totalMarks: number; passMarks: number; results: ExamResult[] };
+
 function apiBase() {
   if (typeof window !== "undefined") {
     return sessionStorage.getItem("mentify_api_url") || process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
@@ -110,4 +121,18 @@ export const teacherApi = {
     if (options.userPrompt.trim()) formData.append("userPrompt", options.userPrompt.trim());
     return upload<AiQuizDraft>("/api/assignments/quizzes/ai/generate", formData);
   },
+  attendanceSessions: (courseId: string) => request<AttendanceSession[]>(`/api/v1/attendance/courses/${encodeURIComponent(courseId)}/sessions`),
+  createAttendanceSession: (draft: { courseId: string; title: string; attendanceDate: string; startTime: string; endTime: string }) => request<AttendanceSession>("/api/v1/attendance/sessions", { method: "POST", body: JSON.stringify(draft) }),
+  markAttendance: (sessionId: string, records: Array<{ studentId: string; status: AttendanceStatus; remarks?: string }>) => request<AttendanceSession>(`/api/v1/attendance/sessions/${encodeURIComponent(sessionId)}/records`, { method: "PUT", body: JSON.stringify({ records }) }),
+  completeAttendance: (sessionId: string) => request<AttendanceSession>(`/api/v1/attendance/sessions/${encodeURIComponent(sessionId)}/complete`, { method: "POST" }),
+  cancelAttendance: (sessionId: string) => request<AttendanceSession>(`/api/v1/attendance/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: "POST" }),
+  exams: (courseId: string) => request<Exam[]>(`/api/v1/exams/courses/${encodeURIComponent(courseId)}`),
+  createExam: (draft: { courseId: string; title: string; description: string; examDate: string; startTime: string; endTime: string; totalMarks: number; passMarks: number; type: ExamType }) => request<Exam>("/api/v1/exams", { method: "POST", body: JSON.stringify(draft) }),
+  scheduleExam: (examId: string) => request<Exam>(`/api/v1/exams/${encodeURIComponent(examId)}/schedule`, { method: "POST" }),
+  cancelExam: (examId: string) => request<Exam>(`/api/v1/exams/${encodeURIComponent(examId)}/cancel`, { method: "POST" }),
+  startExamMarking: (examId: string) => request<Exam>(`/api/v1/exams/${encodeURIComponent(examId)}/start-marking`, { method: "POST" }),
+  examResults: (examId: string) => request<ExamResultSheet>(`/api/v1/exams/${encodeURIComponent(examId)}/results`),
+  enterExamMarks: (examId: string, results: Array<{ studentId: string; attendanceStatus: "PRESENT" | "ABSENT"; marksObtained?: number; remarks?: string }>) => request<{ examId: string; updatedCount: number; results: ExamResult[] }>(`/api/v1/exams/${encodeURIComponent(examId)}/results`, { method: "PUT", body: JSON.stringify({ results }) }),
+  completeExam: (examId: string) => request<Exam>(`/api/v1/exams/${encodeURIComponent(examId)}/complete`, { method: "POST" }),
 };
+
