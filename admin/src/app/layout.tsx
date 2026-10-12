@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./mentify-theme.css";
 import "./admin-dashboard-theme.css";
+import "../../../shared/materials/materials.css";
+import "./admin-materials.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
