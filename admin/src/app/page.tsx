@@ -14,6 +14,7 @@ import { CommunicationGroups } from "@/components/admin/CommunicationGroups";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { GradeManager } from "@/components/admin/GradeManager";
 import { ReportsAnalytics } from "@/components/admin/ReportsAnalytics";
+import { AdminMaterialsWorkspace } from "@/components/admin/AdminMaterialsWorkspace";
 import {
   emptyCourse,
   initialRegistrationValues as initialValues,
@@ -1517,7 +1518,8 @@ export default function Home() {
                       ? "MENTIFY INTELLIGENCE"
                       : activeForm === "grade" ||
                           activeForm === "course" ||
-                          activeForm === "enrollment"
+                          activeForm === "enrollment" ||
+                          activeForm === "materials"
                         ? "ACADEMIC MANAGEMENT"
                         : "PEOPLE MANAGEMENT"}
               </div>
@@ -1534,8 +1536,10 @@ export default function Home() {
                         ? "Grades"
                         : activeForm === "course"
                           ? "Course catalog"
-                          : activeForm === "enrollment"
+                      : activeForm === "enrollment"
                             ? "Grade enrollments"
+                            : activeForm === "materials"
+                              ? "Materials"
                             : `Manage ${activeForm}s`}
               </h1>
               <p className="page-description">
@@ -1551,8 +1555,10 @@ export default function Home() {
                         ? "Create and maintain the grade levels used throughout your academy."
                         : activeForm === "course"
                           ? "Review courses by grade and create a new course when your catalog needs one."
-                          : activeForm === "enrollment"
+                      : activeForm === "enrollment"
                             ? "Review each grade’s student roster, enrollment status, and available courses."
+                            : activeForm === "materials"
+                              ? "Review, secure, and maintain learning resources across the platform."
                             : `Browse your live ${activeForm} directory and manage new registrations from here.`}
               </p>
             </div>
@@ -1570,7 +1576,8 @@ export default function Home() {
             activeForm !== "ai-assistant" &&
             activeForm !== "grade" &&
             activeForm !== "course" &&
-            activeForm !== "enrollment" && (
+            activeForm !== "enrollment" &&
+            activeForm !== "materials" && (
               <div className="progress-strip">
                 <div className="progress-step active-step">
                   <span className="step-number">
@@ -1679,6 +1686,8 @@ export default function Home() {
               onUnarchive={unarchiveCommunicationGroup}
               onLoadMembers={loadCommunicationMembers}
             />
+          ) : activeForm === "materials" ? (
+            <AdminMaterialsWorkspace apiUrl={apiUrl} authenticated={Boolean(adminUser)} />
           ) : activeForm === "course" ? (
             <>
               <CourseCatalog
@@ -2967,7 +2976,8 @@ export default function Home() {
               </span>
             </div>
           ) : activeForm === "communication" ||
-            activeForm === "dashboard" ? null : (
+            activeForm === "dashboard" ||
+            activeForm === "materials" ? null : (
             <div className="invitation-note">
               <div className="invitation-icon">
                 <Icon name="mail" size={18} />
