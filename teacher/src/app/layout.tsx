@@ -5,6 +5,8 @@ import "./mentify-theme.css";
 import "./teacher-dashboard-theme.css";
 import "./teacher-assets.css";
 import "./teacher-pages.css";
+import "../../../shared/materials/materials.css";
+import "./teacher-materials.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

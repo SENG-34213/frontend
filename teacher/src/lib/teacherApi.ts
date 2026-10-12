@@ -46,6 +46,7 @@ export type CourseLesson = {
   releaseDate?: string;
   isVisible?: boolean;
 };
+export type TeacherAssignment = { id: string; title: string; courseId?: string; moduleId?: string; lessonId?: string; status?: string };
 
 export type CommunicationGroup = { id: string; courseId: string; name: string; description?: string; status?: string };
 export type GroupMember = { userId: string; role?: string; joinedAt?: string };
@@ -103,6 +104,7 @@ export const teacherApi = {
   modules: (courseId: string) => request<CourseModule[]>(`/api/v1/course/${encodeURIComponent(courseId)}/modules`),
   createModule: (courseId: string, draft: { title: string; description: string; sequenceOrder: number }) => request<CourseModule>(`/api/v1/course/${encodeURIComponent(courseId)}/modules`, { method: "POST", body: JSON.stringify({ ...draft, isVisible: true }) }),
   lessons: (courseId: string, moduleId: string) => request<CourseLesson[]>(`/api/v1/course/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons`),
+  assignments: (courseId: string) => request<TeacherAssignment[]>(`/api/v1/courses/${encodeURIComponent(courseId)}/assignments`),
   createLesson: (courseId: string, moduleId: string, draft: { title: string; description: string }) => request<CourseLesson>(`/api/v1/course/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons`, { method: "POST", body: JSON.stringify({ ...draft, isVisible: true }) }),
   groups: () => request<CommunicationGroup[]>("/api/communication/groups"),
   groupMembers: (groupId: string) => request<GroupMember[]>(`/api/communication/groups/${encodeURIComponent(groupId)}/members`),

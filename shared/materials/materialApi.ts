@@ -49,12 +49,16 @@ export function createMaterialApi(configuredBaseUrl?: string): MaterialApi {
   const baseUrl = getBaseUrl(configuredBaseUrl);
   return {
     list: async (filters = {}) => {
-      const params = new URLSearchParams({ size: "50" });
-      Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+      const params = new URLSearchParams({ size: String(filters.size || 50), page: String(filters.page || 0) });
+      Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, String(value)); });
       return normalizeList(await request<MaterialListResponse>(baseUrl, `/api/v1/materials?${params.toString()}`));
     },
     upload: (file, draft, onProgress) => uploadWithProgress(baseUrl, file, draft, onProgress),
     download: (materialId) => request<MaterialDownloadResponse>(baseUrl, `/api/v1/materials/${encodeURIComponent(materialId)}/download`),
+    update: (materialId, patch) => request<Material>(baseUrl, `/api/v1/materials/${encodeURIComponent(materialId)}`, { method: "PATCH", body: JSON.stringify(patch) }),
+    archive: (materialId) => request<Material>(baseUrl, `/api/v1/materials/${encodeURIComponent(materialId)}/archive`, { method: "POST" }),
+    remove: async (materialId) => { await request<unknown>(baseUrl, `/api/v1/materials/${encodeURIComponent(materialId)}`, { method: "DELETE" }); },
+    attach: (materialId, target) => request<Material>(baseUrl, `/api/v1/materials/${encodeURIComponent(materialId)}/attachments`, { method: "POST", body: JSON.stringify(target) }),
   };
 }
 
