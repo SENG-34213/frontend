@@ -14,6 +14,7 @@ import "./admin-teacher-management.css";
 import "./admin-calendar.css";
 import "./admin-ai-assistant.css";
 import "./admin-course-management.css";
+import "./admin-copilot.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

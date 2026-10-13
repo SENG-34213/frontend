@@ -1,0 +1,65 @@
+.aa-workspace{color:#211b38;font-size:13px;line-height:1.5;background:white;border-radius:14px;overflow:hidden}
+.aa-workspace button{font:inherit;border:1px solid #eeeaf8;background:#f3f1ff;color:#5542cc;border-radius:7px;padding:9px 12px;cursor:pointer;text-align:left}
+.aa-workspace button:hover{background:#e8e3ff}
+.aa-workspace button:disabled{opacity:.45;cursor:default}
+.aa-workspace :focus-visible{outline:3px solid #9b85f5;outline-offset:2px}
+.aa-workspace .aa-primary{background:linear-gradient(115deg,#4f39eb,#873df3);border-color:#6043de;color:white}
+.aa-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px;border-bottom:1px solid #eeeafa}
+.aa-heading small{font-size:10px;color:#837693;letter-spacing:.03em}
+.aa-heading h1{font-size:25px;letter-spacing:-.03em;margin:7px 0}
+.aa-heading h1 span{display:inline-block;vertical-align:middle;border-radius:15px;background:#ede6ff;font-size:11px;letter-spacing:0;color:#7043d6;padding:4px 8px}
+.aa-heading p{font-size:11px;margin:0;color:#81758d}
+.aa-heading>div:last-child{display:flex;gap:8px;flex-shrink:0}
+.aa-layout{display:grid;grid-template-columns:215px minmax(300px,1fr) 260px}
+.aa-library{padding:16px 12px;background:#fbfaff;border-right:1px solid #eeeaf9;display:flex;flex-direction:column;gap:8px;min-width:0}
+.aa-full{width:100%;text-align:center!important}
+.aa-library input{width:100%;min-width:0;font:inherit;font-size:11px;background:#f2effc;border:1px solid #eeeafa;padding:10px;border-radius:7px}
+.aa-library h3,.aa-artifacts>h3{font-size:10px;letter-spacing:.05em;font-weight:500;color:#82778e;margin:18px 0 5px}
+.aa-library .aa-tool,.aa-library .aa-thread{border:0;background:transparent;font-size:11px;color:#82718e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aa-library .selected{background:#eae4ff;color:#5039d9}
+.aa-library-note{margin-top:auto;background:#f0ebff;border-radius:10px;padding:12px;font-size:11px;color:#7f7192}
+.aa-library-note p{margin-bottom:0}
+.aa-chat{min-width:0;display:flex;flex-direction:column;height:calc(100dvh - 205px);min-height:650px;max-height:1000px}
+.aa-chat>header{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:16px;border-bottom:1px solid #f2effa}
+.aa-chat>header>div{min-width:0}
+.aa-chat>header strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.aa-chat>header small{display:block;color:#897c97;font-size:10px}
+.aa-chat>header>span{font-size:10px;color:#998198;white-space:nowrap}
+.aa-chat>header .aa-connected{color:#168567}
+.aa-grounding{margin:12px 18px 0;border-radius:12px;background:#eeebff;color:#75608e;padding:10px 12px;font-size:10px}
+.aa-messages{flex:1;overflow:auto;padding:22px;min-height:0;background:#fcfbff}
+.aa-message{margin-bottom:22px;max-width:96%}
+.aa-message>small{display:block;color:#7441cf;font-size:10px;margin-bottom:8px}
+.aa-message>div{white-space:pre-wrap;overflow-wrap:anywhere;background:white;border:1px solid #eeebf7;border-radius:15px;padding:20px;line-height:1.8;font-size:13px}
+.aa-message.user{margin-left:auto;width:fit-content;max-width:86%}
+.aa-message.user>small{text-align:right;color:#9785a1}
+.aa-message.user>div{background:#5339e8;border-color:#5339e8;color:white;border-bottom-right-radius:5px}
+.aa-welcome{text-align:center;margin:45px auto;max-width:390px;color:#81718e}
+.aa-welcome>span{font-size:40px;color:#7944dd}
+.aa-welcome h2{font-size:23px;color:#36214e}
+.aa-welcome button{display:block;width:100%;margin-top:12px;background:white}
+.aa-thinking{font-size:12px;color:#7044cd}
+.aa-composer{margin:12px 18px 0;padding:12px;background:#f8f6ff;border:1px solid #e9e3f7;border-radius:14px}
+.aa-composer>span{font-size:10px;color:#6841c6;background:#ede5ff;border-radius:7px;padding:4px 7px}
+.aa-composer textarea{display:block;width:100%;min-width:0;border:0;background:transparent;resize:vertical;max-height:180px;font:inherit;color:#463454;line-height:1.6;margin:10px 0}
+.aa-composer footer{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.aa-composer footer small{font-size:10px;color:#9b8ba8}
+.aa-disclaimer{font-size:9px;text-align:center;padding:0 18px;color:#9c8aaa}
+.aa-artifacts{padding:18px;background:#fff;border-left:1px solid #eeeafa;min-width:0}
+.aa-artifacts>header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.aa-artifacts h2{font-size:12px;font-weight:500}
+.aa-artifacts header>span{font-size:8px;border-radius:10px;background:#e5f8eb;color:#418661;padding:3px 6px}
+.aa-artifact-card{background:#f3efff;padding:16px;border-radius:12px;margin-top:14px}
+.aa-artifact-card>small{font-size:9px;color:#7244ca;letter-spacing:.06em}
+.aa-artifact-card h3{font-size:13px;font-weight:500}
+.aa-artifact-preview{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.7;max-height:340px;overflow:auto;background:#fff;padding:12px;border-radius:8px}
+.aa-artifact-empty{text-align:center;padding:24px 8px;background:#ffffffa8;border-radius:9px;color:#9684a3;font-size:11px}
+.aa-artifact-empty>span{font-size:45px;color:#9470e7}
+.aa-artifacts>button{display:block;width:100%;margin:8px 0;font-size:11px}
+.aa-info{margin-top:25px;background:#ebe4ff;border-radius:10px;padding:14px;color:#7e6993;font-size:11px}
+.aa-info strong{color:#6943c3;font-weight:500}
+.aa-error{padding:12px 20px;background:#fff0f0;color:#ad3941;margin:0}
+@media(max-width:1250px){.aa-layout{grid-template-columns:190px minmax(0,1fr)}.aa-artifacts{grid-column:1/-1;border-top:1px solid #eeeafa}.aa-artifact-preview{max-height:200px}.aa-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:700px){.aa-layout{grid-template-columns:1fr}.aa-library{max-height:320px;overflow:auto}.aa-chat{height:700px;min-height:550px}.aa-heading h1{font-size:23px}.aa-messages{padding:16px}.aa-message>div{padding:15px}.aa-chat>header{flex-wrap:wrap}.aa-library-note{display:none}}
+
+.aa-thread-row{display:flex;align-items:center;min-width:0;gap:2px}.aa-thread-row>.aa-thread{flex:1;min-width:0}.aa-thread-row>button:not(.aa-thread){padding:5px;border:0;background:transparent;font-size:11px}

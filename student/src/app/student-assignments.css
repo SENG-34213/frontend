@@ -1,0 +1,98 @@
+.sa-workspace{font-size:14px;line-height:1.6;color:#1b1831;max-width:1240px;margin:auto}
+.workspace:has(.sa-workspace){background:#faf8ff}
+.sa-workspace h1,.sa-workspace h2,.sa-workspace h3,.sa-workspace p{margin:0}
+.sa-workspace button,.sa-dialog button{border:0;border-radius:7px;background:#f2f1ff;color:#4935c7;padding:9px 13px;font:inherit;font-size:12px;cursor:pointer}
+.sa-workspace button:hover,.sa-dialog button:hover{background:#e5e0ff}
+.sa-workspace button:focus-visible,.sa-dialog :focus-visible{outline:3px solid #9180f1;outline-offset:3px}
+.sa-workspace .sa-primary,.sa-dialog .sa-primary{background:#3824db;color:white;box-shadow:0 2px 3px #3421a51a}
+.sa-dialog button:disabled{opacity:.5;cursor:default}
+.sa-hero{border-radius:14px;padding:26px;background:radial-gradient(ellipse at top right,#f0eaff,white 65%);border:1px solid #f1edf9;margin-bottom:26px}
+.sa-hero>small{font-size:11px}
+.sa-hero>small span{color:#4830dc}
+.sa-hero>div{display:flex;justify-content:space-between;align-items:center;gap:24px;margin:14px 0 22px}
+.sa-hero h1{font-size:32px;line-height:1.25;letter-spacing:-.035em;font-weight:650;margin-bottom:10px}
+.sa-hero p{max-width:480px;color:#706780;font-size:13px}
+.sa-hero>div>button{flex-shrink:0}
+.sa-hero nav{display:flex;flex-wrap:wrap;gap:8px}
+.sa-hero nav button{border-radius:20px;font-size:11px;padding:6px 12px}
+.sa-hero nav button[aria-pressed=true]{background:#3824db;color:white}
+.sa-layout{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(230px,1fr);gap:24px;align-items:start}
+.sa-layout>div{min-width:0}
+.sa-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px}
+.sa-section-title:not(:first-child){margin-top:32px}
+.sa-workspace h2{font-size:18px;line-height:1.4;font-weight:600}
+.sa-section-title small{color:#83758f;font-size:11px;white-space:nowrap}
+.sa-card{background:white;border:1px solid #f0edf8;border-radius:13px;padding:22px;margin-bottom:16px}
+.sa-card>header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.sa-tag{display:inline-block;padding:3px 8px;background:#e9e4ff;color:#4a30c8;border-radius:6px;font-size:11px}
+.sa-status{background:#f0edff;border-radius:20px;padding:4px 10px;font-size:10px;color:#716084;text-align:right}
+.sa-grade{background:#eeebff;border-radius:12px;padding:8px 12px;font-weight:600;color:#4730c7;white-space:nowrap}
+.sa-card h3{font-size:18px;line-height:1.5;font-weight:550;letter-spacing:-.015em}
+.sa-card>p{font-size:13px;color:#756781;line-height:1.75;margin:8px 0 14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.sa-card details{background:#faf9ff;border-radius:8px;padding:12px;margin-top:12px;font-size:12px}
+.sa-card summary{cursor:pointer;color:#5542bf}
+.sa-card details p{white-space:pre-wrap;margin-top:10px}
+.sa-facts{display:flex;flex-wrap:wrap;gap:8px 20px;background:#f5f2ff;border-radius:9px;padding:13px;margin:14px 0;font-size:11px;color:#7d6b8f}
+.sa-card footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px}
+.sa-feedback{background:#efebff;padding:16px;border-radius:10px;margin:15px 0;font-size:12px}
+.sa-feedback>span{font-size:11px;color:#5439bb}
+.sa-feedback p{font-style:italic;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;margin-top:8px}
+.sa-submitted{display:block;color:#84738e;font-size:11px}
+.sa-side{display:grid;gap:20px}
+.sa-side>section{background:white;border:1px solid #f0ecf9;border-radius:13px;padding:22px}
+.sa-side p{color:#7a6c88;font-size:12px;margin:12px 0;line-height:1.7}
+.sa-rule{background:#f5f2ff;border-radius:8px;padding:12px;margin-top:10px}
+.sa-rule strong{font-size:11px;font-weight:550}
+.sa-rule p{margin:4px 0 0;font-size:11px}
+.sa-workspace .sa-deadline{display:block;border-left:2px solid #a08ae9;border-radius:0;background:transparent;margin:18px 0;padding:0 0 0 12px;text-align:left;width:100%}
+.sa-deadline small,.sa-deadline strong{display:block}
+.sa-deadline small{font-size:10px;color:#7652cb}
+.sa-deadline strong{font-size:12px;color:#392845;line-height:1.6;margin-top:4px}
+.sa-side .sa-help{background:linear-gradient(135deg,#eeebff,#e4e4ff)}
+.sa-help h2{margin-top:10px}
+.sa-empty{text-align:center;padding:35px 20px;background:white;border-radius:12px;color:#8d7d9c;font-size:13px}
+.sa-error,.sa-success{padding:13px 16px;background:#fff0ed;color:#a84237;border-radius:8px;margin:12px 0!important;font-size:13px}
+.sa-error button{margin-left:12px}
+.sa-success{background:#e7f7ee;color:#287256}
+.sa-dialog{position:fixed;inset:0;margin:auto;width:min(620px,calc(100% - 32px));max-height:90dvh;overflow:auto;border:0;border-radius:16px;background:white;padding:24px;color:#2c213b;font-size:14px;line-height:1.6}
+.sa-dialog::backdrop{background:#20173388;backdrop-filter:blur(3px)}
+.sa-dialog header{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.sa-dialog h2{font-size:21px;margin:0}
+.sa-dialog>p{white-space:pre-wrap;overflow-wrap:anywhere}
+.sa-dialog label{display:grid;gap:8px;font-size:12px;margin-top:18px}
+.sa-dialog textarea{width:100%;resize:vertical;min-height:160px;border:1px solid #ddd4ee;border-radius:9px;background:#fcfaff;padding:14px;font:inherit;color:inherit}
+.sa-dialog footer{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:18px}
+.sa-history-row{padding:16px 0;border-bottom:1px solid #eee8f6}
+.sa-history-row p{font-size:12px;color:#84708f}
+@media(max-width:1000px){.sa-layout{grid-template-columns:minmax(0,1fr)}.sa-side{grid-template-columns:repeat(2,minmax(0,1fr))}.sa-hero>div{align-items:flex-start;flex-direction:column}}
+@media(max-width:600px){.sa-hero{padding:20px}.sa-hero h1{font-size:26px}.sa-card{padding:18px}.sa-card>header{flex-wrap:wrap}.sa-side{grid-template-columns:1fr}.sa-section-title{align-items:flex-start;flex-direction:column}.sa-card h3{font-size:17px}}
+/* Match the reference's compact portal framing and lavender surfaces. */
+.workspace:has(.sa-workspace){font-family:var(--font-geist-sans),Arial,sans-serif}
+.workspace:has(.sa-workspace) .sidebar{width:218px;position:sticky;top:0;height:100dvh;overflow:auto;border-right:0;padding:20px 14px}
+.workspace:has(.sa-workspace) .sidebar-brand{padding-bottom:30px}
+.workspace:has(.sa-workspace) .sidebar-brand strong{font-size:19px}
+.workspace:has(.sa-workspace) .side-nav button{font-size:12px;padding:9px 10px;color:#5e5571}
+.workspace:has(.sa-workspace) .side-nav button.active{background:#3924d8;color:white;border:0;padding-left:10px}
+.workspace:has(.sa-workspace) .side-nav button.active span{color:white}
+.workspace:has(.sa-workspace) .content-area{padding:26px;max-width:1350px}
+.workspace:has(.sa-workspace) .topbar{border:0;background:#faf8ff;padding:0 26px;gap:15px}
+.workspace:has(.sa-workspace) .search{border:0;border-radius:8px;background:#f1eeff;height:36px}
+.workspace:has(.sa-workspace) .search input{font-size:12px}
+.sa-hero{padding:24px;margin-bottom:22px}
+.sa-hero h1{font-size:30px}
+.sa-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sa-hero-actions button{white-space:nowrap}
+.sa-card{padding:22px;border:0;box-shadow:0 1px 2px #2b185508}
+.sa-side>section{border:0;box-shadow:0 1px 2px #2b185508}
+.sa-card h3{font-size:17px;color:#181228}
+.sa-submission-source{background:#f3f0ff;border-radius:10px;padding:16px;margin:16px 0}
+.sa-submission-source header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sa-submission-source strong{font-size:12px;font-weight:500}
+.sa-submission-source span{font-size:10px;color:#867490}
+.sa-submission-source p{font-size:12px;line-height:1.7;color:#7c698a;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0!important;max-height:120px;overflow:auto}
+.sa-submission-source button{display:block;margin-left:auto}
+.sa-workspace button:disabled{opacity:.5;cursor:not-allowed}
+.sa-layout{grid-template-columns:minmax(0,2.1fr) minmax(220px,1fr);gap:22px}
+@media(min-width:1001px) and (max-width:1300px){.sa-hero>div{flex-direction:column;align-items:flex-start}}
+@media(max-width:1000px){.workspace:has(.sa-workspace) .sidebar{width:76px;padding-inline:10px}.workspace:has(.sa-workspace) .side-nav button{font-size:0}.workspace:has(.sa-workspace) .side-nav button span{font-size:16px}.sa-layout{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.workspace:has(.sa-workspace) .content-area{padding:16px 12px}.workspace:has(.sa-workspace) .sidebar{width:58px;padding-inline:5px}.workspace:has(.sa-workspace) .topbar{padding-inline:12px}.sa-hero{padding:18px}.sa-hero h1{font-size:24px}.sa-card{padding:17px}.sa-hero-actions{align-items:stretch;flex-direction:column;width:100%}.sa-submission-source header{flex-wrap:wrap}.sa-dialog{padding:18px}}

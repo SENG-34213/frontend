@@ -7,6 +7,18 @@ import "./teacher-assets.css";
 import "./teacher-pages.css";
 import "../../../shared/materials/materials.css";
 import "./teacher-materials.css";
+import "./teacher-admin-style.css";
+import "./teacher-assignments.css";
+import "./teacher-attendance.css";
+import "./teacher-curriculum.css";
+import "./teacher-library.css";
+import "./teacher-catalog.css";
+import "./teacher-students.css";
+import "./teacher-assessments.css";
+import "./teacher-overview.css";
+import "./teacher-calendar.css";
+import "./teacher-messages.css";
+import "./teacher-copilot.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
