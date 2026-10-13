@@ -1,0 +1,276 @@
+
+{
+  "site": {
+    "name": "நிறுவனத்தின் பெயர்",
+    "tagline": "கல்வி, அறிவு மற்றும் வளர்ச்சி"
+  },
+  "nav": {
+    "home": "முகப்பு",
+    "about": "எங்களைப் பற்றி",
+    "services": "சேவைகள்",
+    "resources": "வளங்கள்",
+    "contact": "தொடர்பு",
+    "preregister": "முன்பதிவு",
+    "openMenu": "வழிசெலுத்தல் மெனுவைத் திறக்கவும்",
+    "mainNavigation": "முக்கிய வழிசெலுத்தல்",
+    "selectLanguage": "மொழியைத் தேர்ந்தெடுக்கவும்"
+  },
+  "footer": {
+    "description": "கல்வி, வழிகாட்டுதல் மற்றும் பொதுவான கற்றல் வளங்கள் மூலம் கற்றலை ஆதரிக்கிறோம்.",
+    "addressLabel": "முகவரி",
+    "address": "123 எடுத்துக்காட்டு வீதி, கொழும்பு, இலங்கை",
+    "phoneLabel": "தொலைபேசி",
+    "phone": "+94 11 234 5678",
+    "emailLabel": "மின்னஞ்சல்",
+    "email": "info@example.org",
+    "quickLinks": "விரைவு இணைப்புகள்",
+    "legal": "சட்டத் தகவல்கள்",
+    "privacy": "தனியுரிமைக் கொள்கை",
+    "terms": "பயன்பாட்டு விதிமுறைகள்",
+    "youtube": "YouTube சேனல்",
+    "copyright": "அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை."
+  },
+  "home": {
+    "eyebrow": "எங்கள் நிறுவனத்திற்கு வரவேற்கிறோம்",
+    "title": "கற்று, வளர்ந்து, உங்கள் எதிர்காலத்தை உருவாக்குங்கள்.",
+    "description": "எங்கள் நிகழ்ச்சிகளை அறிந்து, கல்வி வளங்களை ஆராய்ந்து, எங்கள் குழுவைத் தொடர்புகொள்ளுங்கள்.",
+    "servicesButton": "எங்கள் சேவைகளைப் பாருங்கள்",
+    "resourcesButton": "வளங்களைப் பாருங்கள்",
+    "servicesEyebrow": "What we offer",
+    "servicesHeading": "Explore Our Services",
+    "servicesDescription": "Discover learning opportunities and support designed to help you move forward.",
+    "viewAllServices": "Explore all services",
+    "resourcesHeading": "Explore Our Resources",
+    "resourcesDescription": "Browse educational materials to support your learning and personal development.",
+    "ctaHeading": "Ready to Get Started?",
+    "ctaDescription": "Take the next step and register your interest in our programmes.",
+    "ctaButton": "Pre-register Now"
+
+  },
+  
+  "pages": {
+    "about": {
+      "title": "எங்களைப் பற்றி",
+      "description": "எங்கள் நிறுவனம், அதன் நோக்கம் மற்றும் கல்விக்கான அர்ப்பணிப்பு பற்றி அறிந்துகொள்ளுங்கள்."
+    },
+    "services": {
+      "title": "எங்கள் சேவைகள்",
+      "description": "நாங்கள் வழங்கும் கல்வித் திட்டங்கள், வழிகாட்டுதல் மற்றும் சேவைகளைப் பாருங்கள்."
+    },
+    "resources": {
+      "title": "கற்றல் வளங்கள்",
+      "description": "எங்கள் நிறுவனம் வழங்கும் கல்விப் பொருட்கள் மற்றும் கற்றல் வளங்களை ஆராயுங்கள்."
+    },
+    "contact": {
+      "title": "எங்களைத் தொடர்புகொள்ளுங்கள்",
+      "description": "கேள்விகள் உள்ளனவா? எங்கள் தொடர்பு விவரங்களைப் பார்த்து எங்களைத் தொடர்புகொள்ளுங்கள்."
+    },
+    "preregister": {
+      "title": "முன்பதிவு",
+      "description": "எங்கள் திட்டங்களில் உங்கள் ஆர்வத்தைப் பதிவு செய்யுங்கள். மேலதிக விவரங்கள் பின்னர் இங்கு வழங்கப்படும்."
+    },
+    "privacy-policy": {
+      "title": "தனியுரிமைக் கொள்கை",
+      "description": "இந்த இணையதளத்தின் மூலம் சமர்ப்பிக்கப்படும் தனிப்பட்ட தகவல்களை நாங்கள் எவ்வாறு கையாளத் திட்டமிட்டுள்ளோம் என்பதை அறிந்துகொள்ளுங்கள்."
+    },
+    "terms-of-use": {
+      "title": "பயன்பாட்டு விதிமுறைகள்",
+      "description": "இந்த இணையதளம் மற்றும் அதன் கல்வி வளங்களைப் பயன்படுத்துவதற்கான பொதுவான விதிமுறைகளைப் பாருங்கள்."
+    }
+  },
+  "shared": {
+    "sampleHeading": "மேலதிக தகவல்கள் விரைவில்",
+    "sampleText": "இந்தப் பகுதி ஒரு மாதிரி இடமாகும். நிறுவனத்தின் உறுதிப்படுத்தப்பட்ட தகவல்கள் பின்னர் சேர்க்கப்படும்.",
+    "backHome": "முகப்புக்குத் திரும்பு"
+  },
+  "notFound": {
+    "title": "பக்கம் கிடைக்கவில்லை",
+    "message": "மன்னிக்கவும், நீங்கள் தேடிய பக்கத்தைக் கண்டறிய முடியவில்லை. அது மாற்றப்பட்டிருக்கலாம் அல்லது முகவரி தவறாக இருக்கலாம்.",
+    "homeButton": "முகப்புக்குத் திரும்பு"
+  },
+  
+"resourcesLibrary": {
+  "eyebrow": "அனைவருக்குமான அறிவு",
+  "title": "வள நூலகம்",
+  "description": "கல்விப் பொருட்கள் மற்றும் பயனுள்ள கற்றல் வளங்களை ஆராயுங்கள்.",
+  "searchLabel": "வளங்களைத் தேடுங்கள்",
+  "searchPlaceholder": "தலைப்பு அல்லது விளக்கத்தின் மூலம் தேடுங்கள்...",
+  "categoryLabel": "வகையின்படி வடிகட்டுங்கள்",
+  "allCategories": "அனைத்து வகைகளும்",
+  "categories": {
+    "study-skills": "கற்றல் திறன்கள்",
+    "learning": "கற்றல்",
+    "reference": "குறிப்புப் பொருட்கள்"
+  },
+  "fileType": "கோப்பு வகை",
+  "fileSize": "கோப்பு அளவு",
+  "free": "இலவச வளம்",
+  "paid": "கட்டண வளம்",
+  "viewDetails": "விவரங்களைப் பார்க்கவும்",
+  "noResults": "உங்கள் தேடலுக்குப் பொருத்தமான வளங்கள் இல்லை.",
+  "backToResources": "வளங்களுக்குத் திரும்பு",
+  "download": "வளத்தைப் பதிவிறக்கவும்",
+  "downloadUnavailable": "பதிவிறக்கங்கள் இன்னும் கிடைக்கவில்லை.",
+  "paidNotice": "இந்த வளத்தைப் பெறக் கட்டணம் செலுத்த வேண்டும். இணையவழிக் கட்டண வசதி பின்னர் அறிமுகப்படுத்தப்படும்.",
+  "sampleNotice": "மாதிரி வளப் பட்டியல் — உண்மையான வளங்கள் பின்னர் சேர்க்கப்படும்."
+},
+
+"contactForm": {
+  "name": "முழுப் பெயர்",
+  "email": "மின்னஞ்சல் முகவரி",
+  "subject": "தலைப்பு",
+  "message": "உங்கள் செய்தி",
+  "namePlaceholder": "உங்கள் முழுப் பெயரை உள்ளிடவும்",
+  "emailPlaceholder": "you@example.com",
+  "subjectPlaceholder": "உங்கள் விசாரணை எதைப் பற்றியது?",
+  "messagePlaceholder": "உங்கள் செய்தியை இங்கே எழுதவும்...",
+  "consent": "எனது தகவல்கள் கையாளப்படுவது தொடர்பான தனியுரிமைக் கொள்கையைப் படித்து ஏற்றுக்கொள்கிறேன்.",
+  "submit": "செய்தியை அனுப்பவும்",
+  "sending": "அனுப்பப்படுகிறது...",
+  "required": "இந்தப் புலத்தை நிரப்பவும்.",
+  "invalidEmail": "சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
+  "consentRequired": "தொடர்வதற்கு முன் தனியுரிமைக் கொள்கையை ஏற்றுக்கொள்ளவும்.",
+  "setupNotice": "மின்னஞ்சல் அனுப்பும் வசதி இன்னும் அமைக்கப்படவில்லை. உங்கள் செய்தி அனுப்பப்படவில்லை. நீங்கள் உள்ளிட்ட விவரங்கள் படிவத்தில் இருக்கும்.",
+  "success": "உங்கள் செய்தி வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது.",
+  "failure": "உங்கள் செய்தியை அனுப்ப முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது கீழே உள்ள தொடர்பு விவரங்களைப் பயன்படுத்தவும்.",
+  "privacyLink": "தனியுரிமைக் கொள்கை"
+},
+"preRegisterForm": {
+  "name": "முழுப் பெயர்",
+  "email": "மின்னஞ்சல் முகவரி",
+  "phone": "தொலைபேசி எண்",
+  "programme": "விருப்பமான நிகழ்ச்சித்திட்டம்",
+  "programmePlaceholder": "நிகழ்ச்சித்திட்டத்தைத் தேர்ந்தெடுக்கவும்",
+  "programmes": {
+    "general": "பொதுவான விசாரணை",
+    "programmeOne": "மாதிரி நிகழ்ச்சித்திட்டம் 1",
+    "programmeTwo": "மாதிரி நிகழ்ச்சித்திட்டம் 2"
+  },
+  "consent": "எனது தகவல்கள் கையாளப்படுவது தொடர்பான தனியுரிமைக் கொள்கையைப் படித்து ஏற்றுக்கொள்கிறேன்.",
+  "submit": "முன்பதிவைச் சமர்ப்பிக்கவும்",
+  "sending": "சமர்ப்பிக்கப்படுகிறது...",
+  "required": "இந்தப் புலத்தை நிரப்பவும்.",
+  "invalidEmail": "சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
+  "invalidPhone": "சரியான தொலைபேசி எண்ணை உள்ளிடவும்.",
+  "consentRequired": "தொடர்வதற்கு முன் தனியுரிமைக் கொள்கையை ஏற்றுக்கொள்ளவும்.",
+  "setupNotice": "மின்னஞ்சல் அனுப்பும் வசதி இன்னும் அமைக்கப்படவில்லை. உங்கள் முன்பதிவு சமர்ப்பிக்கப்படவில்லை. நீங்கள் உள்ளிட்ட தகவல்கள் படிவத்தில் இருக்கும்.",
+  "success": "உங்கள் முன்பதிவு வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது.",
+  "failure": "உங்கள் முன்பதிவைச் சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது கீழே உள்ள தொடர்பு விவரங்களைப் பயன்படுத்தவும்.",
+  "privacyLink": "தனியுரிமைக் கொள்கை"
+},
+
+"aboutPage": {
+  "introduction": "We are an educational institution committed to making knowledge, learning opportunities, and practical resources accessible to our community.",
+  "sections": {
+    "mission": {
+      "title": "Our Mission",
+      "description": "To support lifelong learning by providing accessible educational programmes, useful resources, and opportunities for personal development."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "To build a community where people can develop their knowledge, strengthen their abilities, and pursue meaningful opportunities."
+    },
+    "values": {
+      "title": "Our Values",
+      "description": "We value accessibility, integrity, respect, continuous improvement, and a commitment to the learning needs of our community."
+    }
+  }
+},
+
+"servicesPage": {
+  "introduction": "Explore the educational programmes, guidance, and learning resources available through our institute. The details below are sample content and will be updated to reflect our actual services.",
+  "items": {
+    "education": {
+      "title": "Educational Programmes",
+      "description": "Sample programmes designed to help learners develop knowledge, practical skills, and confidence."
+    },
+    "consultation": {
+      "title": "Guidance and Consultation",
+      "description": "Sample guidance services to help individuals identify learning goals and explore suitable opportunities."
+    },
+    "resources": {
+      "title": "Learning Resources",
+      "description": "Educational materials and reference resources to support independent study and continued learning."
+    }
+  }
+},
+
+"legalPage": {
+  "reviewNotice": "Draft content for review. Please confirm that this policy accurately describes the institute's actual practices before publication.",
+  "privacy": {
+    "introduction": "This draft explains how the institute intends to handle information associated with visits to this website and enquiries made through its forms. The final policy must be checked against the website's actual operation.",
+    "sections": {
+      "information": {
+        "title": "Information We May Collect",
+        "content": "Visitors may provide their name, email address, phone number, selected programme, and enquiry details when using our forms. Technical information may also be processed by the website hosting provider, depending on the hosting and analytics services enabled."
+      },
+      "usage": {
+        "title": "How Information Is Used",
+        "content": "Information may be used to respond to enquiries, follow up on programme interests, provide requested information, and maintain website security. The institute should document any additional purposes before collecting information for them."
+      },
+      "forms": {
+        "title": "Contact and Pre-registration Forms",
+        "content": "At present, the forms are demonstration interfaces. They validate entries in the visitor's browser but do not send the submitted details to the institute or save them in an institute database. This statement must be updated when server-side submission and email delivery are implemented."
+      },
+      "sharing": {
+        "title": "Sharing of Information",
+        "content": "The institute does not intend to sell visitors' personal information. If third-party hosting, email, analytics, or other services process information, the final policy should identify the relevant services and explain the applicable arrangements."
+      },
+      "security": {
+        "title": "Data Security and Retention",
+        "content": "Reasonable safeguards should be used to protect personal information. Retention periods, access controls, backup practices, and procedures for handling security incidents must be established and documented before the website begins collecting personal information."
+      },
+      "rights": {
+        "title": "Your Privacy Choices",
+        "content": "Depending on applicable law and the circumstances, visitors may have rights to request access to, correction of, or deletion of their personal information, or to object to certain processing. The institute should provide an appropriate process for handling such requests."
+      },
+      "contact": {
+        "title": "Contact Us About Privacy",
+        "content": "For privacy-related questions, contact the institute using the contact details published on this website. Replace this general statement with the institute's designated privacy contact before publication."
+      }
+    }
+  },
+  
+"terms": {
+  "introduction": "These draft terms describe the intended conditions for using the institute's website and public resources. They should be reviewed and approved before publication.",
+  "sections": {
+    "acceptance": {
+      "title": "Acceptance of These Terms",
+      "content": "By using this website, visitors are expected to use it lawfully and responsibly. The institute should confirm the final terms and how acceptance will be communicated before publication."
+    },
+    "websiteUse": {
+      "title": "Permitted Use",
+      "content": "Visitors may browse public pages and use available features for lawful purposes. Visitors must not attempt to disrupt the website, bypass access restrictions, interfere with other users, or misuse website content or services."
+    },
+    "resources": {
+      "title": "Educational Resources and Downloads",
+      "content": "Resource descriptions and access labels are provided to explain the materials offered. Free resources may be downloaded when the download feature is available. Resources marked as paid are not available for free download. Any future purchase, licence, or access conditions must be displayed clearly before payment or access is granted."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "content": "Unless otherwise stated, website text, branding, and educational materials may be protected by intellectual property laws. Visitors must obtain the appropriate permission before reproducing, redistributing, or commercially using protected materials, except where applicable law permits such use."
+    },
+    "accuracy": {
+      "title": "Information and Availability",
+      "content": "Website content may be updated, corrected, or removed. Sample text, sample programmes, and demonstration resources are illustrative only and should not be treated as confirmed institutional offerings."
+    },
+    "externalLinks": {
+      "title": "External Websites",
+      "content": "This website may link to third-party services or websites. The institute does not control their content or practices and should not be assumed to endorse them solely because a link is provided."
+    },
+    "liability": {
+      "title": "Limitations and Responsibilities",
+      "content": "The website is provided for general informational and educational purposes. Any limitations of responsibility must be drafted and reviewed in accordance with applicable law; this draft does not establish a legally enforceable exclusion of liability."
+    },
+    "changes": {
+      "title": "Changes to These Terms",
+      "content": "The institute may revise these terms when its website or services change. The published version should display an appropriate effective or last-updated date and explain how material changes will be communicated where necessary."
+    },
+    "contact": {
+      "title": "Questions About These Terms",
+      "content": "For questions about these terms, contact the institute using the contact details published on this website."
+    }
+  }
+}
+}
+}

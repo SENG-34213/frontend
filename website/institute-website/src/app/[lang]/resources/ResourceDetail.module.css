@@ -1,0 +1,113 @@
+
+.page {
+  min-height: 55vh;
+  padding: 56px 24px 88px;
+}
+
+.container {
+  width: min(100%, 850px);
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 24px;
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.detailCard {
+  padding: clamp(24px, 5vw, 44px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-background);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.fileType {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.freeBadge,
+.paidBadge {
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.freeBadge {
+  background: #e6f3eb;
+  color: #205c3c;
+}
+
+.paidBadge {
+  background: #fff0d8;
+  color: #80510b;
+}
+
+.detailCard h1 {
+  margin: 24px 0 12px;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.2;
+}
+
+.description {
+  color: var(--color-text-muted);
+  font-size: 1.05rem;
+}
+
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  margin: 28px 0;
+  padding: 20px 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.metadata div {
+  min-width: 110px;
+}
+
+.metadata dt {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.metadata dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.notice {
+  padding: 16px;
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+.sampleNotice {
+  margin: 20px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 36px 20px 64px;
+  }
+
+  .metadata {
+    gap: 20px;
+  }
+}

@@ -1,0 +1,68 @@
+
+.page {
+  min-height: 55vh;
+  padding: 72px 24px 88px;
+  background: var(--color-background);
+}
+
+.container {
+  width: min(100%, 900px);
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.container h1 {
+  margin: 0 0 20px;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.description {
+  max-width: 720px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+}
+
+.infoCard {
+  margin-top: 36px;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+}
+
+.infoCard h2 {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+}
+
+.infoCard p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.homeLink {
+  display: inline-block;
+  margin-top: 28px;
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 48px 20px 64px;
+  }
+
+  .infoCard {
+    padding: 20px;
+  }
+}

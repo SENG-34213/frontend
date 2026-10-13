@@ -1,0 +1,73 @@
+
+/*
+ * Global styles
+ * Shared design foundations for the entire website.
+ * Component-specific styles will live in CSS Modules.
+ */
+
+:root {
+  --color-primary: #234e52;
+  --color-primary-dark: #183b3e;
+  --color-accent: #d6a756;
+
+  --color-background: #ffffff;
+  --color-surface: #f5f7f6;
+  --color-text: #202827;
+  --color-text-muted: #5c6866;
+  --color-border: #dce3e1;
+
+  --font-body: Arial, Helvetica, sans-serif;
+
+  --content-width: 1200px;
+  --page-padding: 24px;
+
+  --radius-small: 6px;
+  --radius-medium: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-primary);
+  color: #ffffff;
+}
