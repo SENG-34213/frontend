@@ -1,6 +1,6 @@
 export type Notice = { kind: "success" | "error"; title: string; body: string };
 
-export type AdminSection = "dashboard" | "reports" | "student" | "teacher" | "course" | "enrollment" | "grade" | "materials" | "communication" | "ai-assistant";
+export type AdminSection = "dashboard" | "reports" | "student" | "teacher" | "course" | "enrollment" | "grade" | "calendar" | "materials" | "communication" | "ai-assistant";
 export type RecentTeacher = { id: string; name: string; email: string };
 export type RecentStudent = { id: string; name: string; email: string; grade?: string; phoneNumber?: string; attendanceMode?: string; studentCode?: string };
 export type RecentCourse = { id: string; name: string; subject?: string };
