@@ -15,6 +15,7 @@ import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { GradeManager } from "@/components/admin/GradeManager";
 import { ReportsAnalytics } from "@/components/admin/ReportsAnalytics";
 import { AdminMaterialsWorkspace } from "@/components/admin/AdminMaterialsWorkspace";
+import { CalendarWorkspace } from "@/components/admin/CalendarWorkspace";
 import {
   emptyCourse,
   initialRegistrationValues as initialValues,
@@ -1501,10 +1502,11 @@ export default function Home() {
         <AdminHeader
           activeSection={activeForm}
           adminUser={adminUser}
+          onNavigate={switchForm}
           onSettings={() => setShowSettings(true)}
         />
         <div className="content-wrap" id="registration">
-          <div className="page-heading">
+          <div className={`page-heading ${activeForm === "dashboard" ? "page-heading-dashboard" : ""} ${activeForm === "materials" ? "page-heading-materials" : ""} ${activeForm === "ai-assistant" ? "page-heading-ai" : ""} ${activeForm === "course" ? "page-heading-course" : ""}`}>
             <div>
               <div className="eyebrow">
                 <span className="eyebrow-line" />
@@ -1518,6 +1520,7 @@ export default function Home() {
                       ? "MENTIFY INTELLIGENCE"
                       : activeForm === "grade" ||
                           activeForm === "course" ||
+                          activeForm === "calendar" ||
                           activeForm === "enrollment" ||
                           activeForm === "materials"
                         ? "ACADEMIC MANAGEMENT"
@@ -1532,10 +1535,12 @@ export default function Home() {
                     ? "Communication groups"
                     : activeForm === "ai-assistant"
                       ? "Mentify AI Assistant"
-                      : activeForm === "grade"
+                        : activeForm === "grade"
                         ? "Grades"
                         : activeForm === "course"
                           ? "Course catalog"
+                      : activeForm === "calendar"
+                            ? "Sessions & Academic Calendar"
                       : activeForm === "enrollment"
                             ? "Grade enrollments"
                             : activeForm === "materials"
@@ -1555,6 +1560,8 @@ export default function Home() {
                         ? "Create and maintain the grade levels used throughout your academy."
                         : activeForm === "course"
                           ? "Review courses by grade and create a new course when your catalog needs one."
+                      : activeForm === "calendar"
+                            ? "Monitor live mentoring sessions, resolve schedule conflicts, and dispatch substitute teachers in real time."
                       : activeForm === "enrollment"
                             ? "Review each grade’s student roster, enrollment status, and available courses."
                             : activeForm === "materials"
@@ -1577,7 +1584,8 @@ export default function Home() {
             activeForm !== "grade" &&
             activeForm !== "course" &&
             activeForm !== "enrollment" &&
-            activeForm !== "materials" && (
+            activeForm !== "materials" &&
+            activeForm !== "calendar" && (
               <div className="progress-strip">
                 <div className="progress-step active-step">
                   <span className="step-number">
@@ -1688,6 +1696,8 @@ export default function Home() {
             />
           ) : activeForm === "materials" ? (
             <AdminMaterialsWorkspace apiUrl={apiUrl} authenticated={Boolean(adminUser)} />
+          ) : activeForm === "calendar" ? (
+            <CalendarWorkspace apiUrl={apiUrl} authenticated={Boolean(adminUser)} courses={liveCourses.map((course) => ({ id: course.id, courseName: course.courseName }))} />
           ) : activeForm === "course" ? (
             <>
               <CourseCatalog
@@ -2538,7 +2548,7 @@ export default function Home() {
                   }}
                 >
                   <section
-                    className="registration-form-modal"
+                    className={`registration-form-modal ${activeForm}-registration-form`}
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="registration-form-title"
@@ -2549,7 +2559,7 @@ export default function Home() {
                           PEOPLE MANAGEMENT
                         </span>
                         <h2 id="registration-form-title">
-                          Register a {activeForm}
+                          {activeForm === "student" ? "Register New Student" : "Register a teacher"}
                         </h2>
                         <p>
                           Add the account details and send a secure invitation.
@@ -2564,7 +2574,7 @@ export default function Home() {
                         <Icon name="close" size={18} />
                       </button>
                     </div>
-                    {(activeForm === "student" || activeForm === "teacher") && <div className="registration-levels" aria-label="Registration progress"><div className={`registration-level ${registrationStep >= 1 ? "complete" : ""} ${registrationStep === 1 ? "current" : ""}`}><span>01</span><strong>Personal</strong></div><i/><div className={`registration-level ${registrationStep >= 2 ? "complete" : ""} ${registrationStep === 2 ? "current" : ""}`}><span>02</span><strong>{activeForm === "student" ? "Guardian" : "Teaching areas"}</strong></div><i/><div className={`registration-level ${registrationStep >= 3 ? "complete" : ""} ${registrationStep === 3 ? "current" : ""}`}><span>03</span><strong>Address</strong></div></div>}
+                    {(activeForm === "student" || activeForm === "teacher") && <div className="registration-levels" aria-label="Registration progress"><div className={`registration-level ${registrationStep >= 1 ? "complete" : ""} ${registrationStep === 1 ? "current" : ""}`}><span>01</span><strong>Personal Information</strong></div><i/><div className={`registration-level ${registrationStep >= 2 ? "complete" : ""} ${registrationStep === 2 ? "current" : ""}`}><span>02</span><strong>{activeForm === "student" ? "Academic Profile" : "Academic Credentials"}</strong></div><i/><div className={`registration-level ${registrationStep >= 3 ? "complete" : ""} ${registrationStep === 3 ? "current" : ""}`}><span>03</span><strong>{activeForm === "student" ? "Guardian & Emergency" : "Caseload & Rates"}</strong></div>{activeForm === "student" && <><i/><div className="registration-level"><span>04</span><strong>Access &amp; Learning Tier</strong></div></>}</div>}
                     <form className="form-card" onSubmit={registerAccount}>
                       <section className={`form-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 1 ? "registration-step-hidden" : "registration-step-active"}`}>
                         <div className="section-heading">
@@ -2901,7 +2911,7 @@ export default function Home() {
                             Clear form
                           </button>
                           {(activeForm === "student" || activeForm === "teacher") && registrationStep > 1 && <button className="secondary-button registration-back" type="button" onClick={() => setRegistrationStep((current) => current - 1)}><Icon name="chevron" size={15} /> Back</button>}
-                          {(activeForm === "student" || activeForm === "teacher") && registrationStep < 3 ? <button className="primary-button" type="button" onClick={() => setRegistrationStep((current) => current + 1)}>Continue <Icon name="arrow" size={16} /></button> : <button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner" /> Registering…</> : <>Register {activeForm} <Icon name="arrow" size={16} /></>}</button>}
+                          {activeForm === "teacher" && registrationStep < 3 ? <button className="primary-button" type="button" onClick={() => setRegistrationStep((current) => current + 1)}>Continue <Icon name="arrow" size={16} /></button> : <button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner" /> Registering…</> : <>Complete {activeForm === "student" ? "Student Registration" : "Teacher Registration"} <Icon name="arrow" size={16} /></>}</button>}
                         </div>
                       </div>
                     </form>
@@ -2977,7 +2987,8 @@ export default function Home() {
             </div>
           ) : activeForm === "communication" ||
             activeForm === "dashboard" ||
-            activeForm === "materials" ? null : (
+            activeForm === "materials" ||
+            activeForm === "calendar" ? null : (
             <div className="invitation-note">
               <div className="invitation-icon">
                 <Icon name="mail" size={18} />

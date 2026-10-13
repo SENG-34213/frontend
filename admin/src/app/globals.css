@@ -56,6 +56,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .sidebar-bottom { margin-top: auto; }
 .profile-card { display: flex; align-items: center; gap: 9px; margin-top: 15px; border-top: 1px solid #edf0f4; padding: 17px 2px 0; }
 .profile-avatar, .top-avatar { display: grid; flex: 0 0 auto; place-items: center; border: 0; border-radius: 50%; background: #e9e3ff; color: #654dce; font-size: 10px; font-weight: 750; }
+.topbar-icon-button { position: relative; display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #727e90; cursor: pointer; transition: background .2s ease, color .2s ease, border-color .2s ease; }
+.topbar-icon-button:hover, .topbar-icon-button.active { border-color: #dfe2ff; background: #eef0ff; color: #4f46e5; }
+.topbar-icon-button.has-notification i { position: absolute; top: -3px; right: -3px; display: grid; width: 14px; height: 14px; place-items: center; border: 2px solid #fff; border-radius: 50%; background: #ef5b68; color: #fff; font-size: 7px; font-style: normal; font-weight: 800; }
 .profile-avatar { width: 33px; height: 33px; }
 .profile-menu { margin-left: auto; }
 
