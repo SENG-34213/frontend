@@ -7,7 +7,7 @@
   "nav": {
     "home": "முகப்பு",
     "about": "எங்களைப் பற்றி",
-    "services": "சேவைகள்",
+    "services": "வகுப்புகளைத் தேடுங்கள்",
     "resources": "வளங்கள்",
     "contact": "தொடர்பு",
     "preregister": "முன்பதிவு",
@@ -35,11 +35,28 @@
     "title": "கற்று, வளர்ந்து, உங்கள் எதிர்காலத்தை உருவாக்குங்கள்.",
     "description": "எங்கள் நிகழ்ச்சிகளை அறிந்து, கல்வி வளங்களை ஆராய்ந்து, எங்கள் குழுவைத் தொடர்புகொள்ளுங்கள்.",
     "servicesButton": "எங்கள் சேவைகளைப் பாருங்கள்",
-    "resourcesButton": "வளங்களைப் பாருங்கள்",
-    "servicesEyebrow": "What we offer",
-    "servicesHeading": "Explore Our Services",
-    "servicesDescription": "Discover learning opportunities and support designed to help you move forward.",
-    "viewAllServices": "Explore all services",
+    "servicesEyebrow": "WHAT WE OFFER",
+    "servicesHeading": "Tuition Classes for Every Learner",
+    "servicesDescription": "Explore on-site and online tuition across multiple subjects for Grades 1–11 and Advanced Level.",
+    "viewAllServices": "Explore Our Classes",
+    "serviceCards": {
+      "onsite": {
+        "title": "நேரடி வகுப்புகள்",
+        "description": "ஆதரவான வகுப்பறைச் சூழலில் நேரடி வழிகாட்டுதலுடன் கற்கவும்."
+      },
+      "online": {
+        "title": "இணையவழி வகுப்புகள்",
+        "description": "நீங்கள் இருக்கும் இடத்திலிருந்தே இணையவழியில் கற்கவும்."
+      },
+      "subjects": {
+        "title": "பல பாடங்கள்",
+        "description": "கணிதம், விஞ்ஞானம், ஆங்கிலம், வரலாறு, தமிழ் மற்றும் சிங்களம் ஆகிய பாடங்களை ஆராயுங்கள்."
+      },
+      "grades": {
+        "title": "தரம் 1–11 மற்றும் உயர்தரம்",
+        "description": "பள்ளி மாணவர்களுக்கும் உயர்தர மாணவர்களுக்கும் பொருத்தமான வகுப்புகளைத் தேடுங்கள்."
+      }
+    },
     "resourcesHeading": "Explore Our Resources",
     "resourcesDescription": "Browse educational materials to support your learning and personal development.",
     "ctaHeading": "Ready to Get Started?",
@@ -54,8 +71,8 @@
       "description": "எங்கள் நிறுவனம், அதன் நோக்கம் மற்றும் கல்விக்கான அர்ப்பணிப்பு பற்றி அறிந்துகொள்ளுங்கள்."
     },
     "services": {
-      "title": "எங்கள் சேவைகள்",
-      "description": "நாங்கள் வழங்கும் கல்வித் திட்டங்கள், வழிகாட்டுதல் மற்றும் சேவைகளைப் பாருங்கள்."
+      "title": "வகுப்புகளைத் தேடுங்கள்",
+      "description": "தரம் 1–11 மற்றும் உயர்தர மாணவர்களுக்கான நேரடி மற்றும் இணையவழி தனியார் வகுப்புகளைப் பாடவாரியாகத் தேடுங்கள்."
     },
     "resources": {
       "title": "கற்றல் வளங்கள்",
@@ -88,7 +105,79 @@
     "message": "மன்னிக்கவும், நீங்கள் தேடிய பக்கத்தைக் கண்டறிய முடியவில்லை. அது மாற்றப்பட்டிருக்கலாம் அல்லது முகவரி தவறாக இருக்கலாம்.",
     "homeButton": "முகப்புக்குத் திரும்பு"
   },
-  
+"classDirectory": {
+  "eyebrow": "T.I.T. யாழ்ப்பாணம் · தனியார் வகுப்புகள்",
+  "heroTags": {
+    "onsite": "நேரடி வகுப்புகள்",
+    "online": "இணையவழி வகுப்புகள்",
+    "subjects": "பல பாடங்கள்"
+  },
+  "sectionEyebrow": "எங்கள் வகுப்புகளை ஆராயுங்கள்",
+  "heading": "வகுப்பைத் தேடுங்கள்",
+  "intro": "உங்களுக்குப் பொருத்தமான வகுப்பைக் கண்டறிய தரம், பாடம் அல்லது கற்பித்தல் முறையைத் தேர்ந்தெடுக்கவும்.",
+  "filters": {
+    "grade": "தரம்",
+    "allGrades": "அனைத்து தரங்களும்",
+    "subject": "பாடம்",
+    "allSubjects": "அனைத்துப் பாடங்களும்",
+    "format": "வகுப்பு முறை",
+    "allFormats": "அனைத்து முறைகளும்",
+    "onsite": "நேரடி வகுப்புகள்",
+    "online": "இணையவழி வகுப்புகள்",
+    "reset": "தேர்வுகளை மீட்டமைக்கவும்"
+  },
+  "results": {
+    "one": "வகுப்பு கண்டறியப்பட்டது",
+    "many": "வகுப்புகள் கண்டறியப்பட்டன",
+    "onsiteFirst": "நேரடி வகுப்புகள் முதலில் காட்டப்படும்"
+  },
+  "badges": {
+    "onsite": "நேரடி வகுப்பு",
+    "online": "இணையவழி"
+  },
+  "details": {
+    "schedule": "வகுப்பு நேரம்",
+    "teacher": "ஆசிரியர்",
+    "location": "இடம்",
+    "format": "முறை",
+    "fee": "வகுப்புக் கட்டணம்"
+  },
+  "enquire": "வகுப்பு குறித்து விசாரிக்கவும்",
+  "empty": {
+    "heading": "பொருந்தும் வகுப்புகள் இல்லை",
+    "description": "இந்தத் தேர்வுகளுக்குப் பொருந்தும் வகுப்புகள் தற்போது பட்டியலிடப்படவில்லை. வேறு தேர்வுகளை முயற்சிக்கவும் அல்லது மேலதிக தகவல்களுக்கு நிறுவனத்தைத் தொடர்புகொள்ளவும்.",
+    "reset": "அனைத்து வகுப்புகளையும் காண்க"
+  },
+  "grades": {
+    "grade": "தரம்",
+    "advancedLevel": "உயர்தரம்",
+    "toBeConfirmed": "தரம் உறுதிப்படுத்தப்படவில்லை"
+  },
+  "subjects": {
+    "english": "ஆங்கிலம்",
+    "mathematics": "கணிதம்",
+    "science": "விஞ்ஞானம்",
+    "history": "வரலாறு",
+    "tamil": "தமிழ்",
+    "sinhala": "சிங்களம்"
+  },
+  "classTitleSuffix": "தனியார் வகுப்பு",
+  "placeholders": {
+    "teacher": "ஆசிரியர் உறுதிப்படுத்தப்படவில்லை",
+    "days": "நாட்கள் உறுதிப்படுத்தப்படவில்லை",
+    "time": "நேரம் உறுதிப்படுத்தப்படவில்லை",
+    "location": "வகுப்பிடம்",
+    "onlineLocation": "இணையவழி — தளம் உறுதிப்படுத்தப்படவில்லை",
+    "fee": "கட்டணத்திற்கு தொடர்புகொள்ளவும்",
+    "availability": "இன்னும் உறுதிப்படுத்தப்படவில்லை",
+    "onlineAvailability": "அட்டவணை உறுதிப்படுத்தப்படவில்லை"
+  },
+  "descriptions": {
+    "grade6Mathematics": "தரம் 6 மாணவர்களுக்கான நேரடி கணித வகுப்பு.",
+    "grade8Science": "தரம் 8 மாணவர்களுக்கான நேரடி விஞ்ஞான வகுப்பு.",
+    "advancedLevelEnglishOnline": "உயர்தர மாணவர்களுக்கான இணையவழி ஆங்கில வகுப்பு."
+  }
+},  
 "resourcesLibrary": {
   "eyebrow": "அனைவருக்குமான அறிவு",
   "title": "வள நூலகம்",

@@ -7,7 +7,7 @@
   "nav": {
     "home": "මුල් පිටුව",
     "about": "අප ගැන",
-    "services": "සේවාවන්",
+    "services": "පන්ති සොයන්න",
     "resources": "සම්පත්",
     "contact": "අමතන්න",
     "preregister": "පූර්ව ලියාපදිංචිය",
@@ -36,10 +36,28 @@
     "description": "අපගේ වැඩසටහන් හඳුනාගෙන, අධ්‍යාපනික සම්පත් ගවේෂණය කර, අපගේ කණ්ඩායම අමතන්න.",
     "servicesButton": "අපගේ සේවාවන් බලන්න",
     "resourcesButton": "සම්පත් බලන්න",
-    "servicesEyebrow": "What we offer",
-    "servicesHeading": "Explore Our Services",
-    "servicesDescription": "Discover learning opportunities and support designed to help you move forward.",
-    "viewAllServices": "Explore all services",
+    "servicesEyebrow": "WHAT WE OFFER",
+    "servicesHeading": "Tuition Classes for Every Learner",
+    "servicesDescription": "Explore on-site and online tuition across multiple subjects for Grades 1–11 and Advanced Level.",
+    "viewAllServices": "Explore Our Classes",
+    "serviceCards": {
+      "onsite": {
+        "title": "ස්ථානීය පන්ති",
+        "description": "සහායක පන්තිකාමර පරිසරයක මුහුණට මුහුණ මඟපෙන්වීම සමඟ ඉගෙන ගන්න."
+      },
+      "online": {
+        "title": "මාර්ගගත පන්ති",
+        "description": "ඔබ සිටින ස්ථානයේ සිටම මාර්ගගතව ඉගෙන ගන්න."
+      },
+      "subjects": {
+        "title": "විවිධ විෂයයන්",
+        "description": "ගණිතය, විද්‍යාව, ඉංග්‍රීසි, ඉතිහාසය, දෙමළ සහ සිංහල යන විෂයයන් ගවේෂණය කරන්න."
+      },
+      "grades": {
+        "title": "1–11 ශ්‍රේණි සහ උසස් පෙළ",
+        "description": "පාසල් සිසුන්ට සහ උසස් පෙළ සිසුන්ට ගැළපෙන පන්ති සොයා ගන්න."
+      }
+    },
     "resourcesHeading": "Explore Our Resources",
     "resourcesDescription": "Browse educational materials to support your learning and personal development.",
     "ctaHeading": "Ready to Get Started?",
@@ -54,8 +72,8 @@
       "description": "අපගේ ආයතනය, එහි අරමුණ සහ අධ්‍යාපනය සඳහා ඇති කැපවීම පිළිබඳව දැනගන්න."
     },
     "services": {
-      "title": "අපගේ සේවාවන්",
-      "description": "අප විසින් සපයනු ලබන අධ්‍යාපන වැඩසටහන්, මඟපෙන්වීම් සහ සේවාවන් ගවේෂණය කරන්න."
+      "title": "පන්තියක් සොයන්න",
+      "description": "1–11 ශ්‍රේණි සහ උසස් පෙළ සඳහා විවිධ විෂයයන් යටතේ පැවැත්වෙන ස්ථානීය සහ මාර්ගගත උපකාරක පන්ති සොයා ගන්න."
     },
     "resources": {
       "title": "ඉගෙනුම් සම්පත්",
@@ -88,7 +106,79 @@
     "message": "කණගාටුයි, ඔබ සොයන පිටුව සොයාගත නොහැක. එය වෙනස් කර තිබිය හැකිය, නැතහොත් ලිපිනය වැරදි විය හැකිය.",
     "homeButton": "මුල් පිටුවට ආපසු යන්න"
   },
-  
+"classDirectory": {
+  "eyebrow": "T.I.T. යාපනය · උපකාරක පන්ති",
+  "heroTags": {
+    "onsite": "ස්ථානීය පන්ති",
+    "online": "මාර්ගගත පන්ති",
+    "subjects": "විවිධ විෂයයන්"
+  },
+  "sectionEyebrow": "අපගේ පන්ති ගවේෂණය කරන්න",
+  "heading": "පන්තියක් සොයන්න",
+  "intro": "ඔබට සුදුසු පන්තියක් සොයා ගැනීමට ශ්‍රේණිය, විෂයය හෝ ඉගෙනුම් ක්‍රමය අනුව තෝරන්න.",
+  "filters": {
+    "grade": "ශ්‍රේණිය",
+    "allGrades": "සියලුම ශ්‍රේණි",
+    "subject": "විෂයය",
+    "allSubjects": "සියලුම විෂයයන්",
+    "format": "පන්ති ක්‍රමය",
+    "allFormats": "සියලුම ක්‍රම",
+    "onsite": "ස්ථානීය පන්ති",
+    "online": "මාර්ගගත පන්ති",
+    "reset": "තේරීම් යළි සකසන්න"
+  },
+  "results": {
+    "one": "පන්තියක් හමු විය",
+    "many": "පන්ති හමු විය",
+    "onsiteFirst": "ස්ථානීය පන්ති පළමුව පෙන්වනු ලැබේ"
+  },
+  "badges": {
+    "onsite": "ස්ථානීය",
+    "online": "මාර්ගගත"
+  },
+  "details": {
+    "schedule": "පන්ති වේලාව",
+    "teacher": "ගුරුවරයා",
+    "location": "ස්ථානය",
+    "format": "ක්‍රමය",
+    "fee": "පන්ති ගාස්තුව"
+  },
+  "enquire": "පන්තිය පිළිබඳ විමසන්න",
+  "empty": {
+    "heading": "ගැළපෙන පන්ති හමු නොවීය",
+    "description": "ඔබ තෝරාගත් පෙරහන්වලට ගැළපෙන පන්තියක් දැනට ලැයිස්තුගත කර නොමැත. වෙනත් තේරීම් උත්සාහ කරන්න හෝ වැඩි විස්තර සඳහා ආයතනය අමතන්න.",
+    "reset": "ලැයිස්තුගත සියලුම පන්ති බලන්න"
+  },
+  "grades": {
+    "grade": "ශ්‍රේණිය",
+    "advancedLevel": "උසස් පෙළ",
+    "toBeConfirmed": "ශ්‍රේණිය තහවුරු කර නැත"
+  },
+  "subjects": {
+    "english": "ඉංග්‍රීසි",
+    "mathematics": "ගණිතය",
+    "science": "විද්‍යාව",
+    "history": "ඉතිහාසය",
+    "tamil": "දෙමළ",
+    "sinhala": "සිංහල"
+  },
+  "classTitleSuffix": "උපකාරක පන්තිය",
+  "placeholders": {
+    "teacher": "ගුරුවරයා තහවුරු කර නැත",
+    "days": "දින තහවුරු කර නැත",
+    "time": "වේලාව තහවුරු කර නැත",
+    "location": "පන්ති කාමරය",
+    "onlineLocation": "මාර්ගගත — වේදිකාව තහවුරු කර නැත",
+    "fee": "ගාස්තු සඳහා විමසන්න",
+    "availability": "තවම තහවුරු කර නැත",
+    "onlineAvailability": "කාලසටහන තහවුරු කර නැත"
+  },
+  "descriptions": {
+    "grade6Mathematics": "6 ශ්‍රේණියේ සිසුන් සඳහා ස්ථානීය ගණිත පන්තිය.",
+    "grade8Science": "8 ශ්‍රේණියේ සිසුන් සඳහා ස්ථානීය විද්‍යා පන්තිය.",
+    "advancedLevelEnglishOnline": "උසස් පෙළ සිසුන් සඳහා මාර්ගගත ඉංග්‍රීසි පන්තිය."
+  }
+},
 "resourcesLibrary": {
   "eyebrow": "සැමට දැනුම",
   "title": "සම්පත් පුස්තකාලය",

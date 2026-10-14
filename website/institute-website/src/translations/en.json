@@ -7,7 +7,7 @@
   "nav": {
     "home": "Home",
     "about": "About",
-    "services": "Services",
+    "services": "Find a Class",
     "resources": "Resources",
     "contact": "Contact",
     "preregister": "Pre-register",
@@ -36,10 +36,28 @@
     "description": "Discover our programmes, explore educational resources, and get in touch with our team.",
     "servicesButton": "Explore our services",
     "resourcesButton": "Browse resources",   
-    "servicesEyebrow": "What we offer",
-    "servicesHeading": "Explore Our Services",
-    "servicesDescription": "Discover learning opportunities and support designed to help you move forward.",
-    "viewAllServices": "Explore all services",
+    "servicesEyebrow": "WHAT WE OFFER",
+    "servicesHeading": "Tuition Classes for Every Learner",
+    "servicesDescription": "Explore on-site and online tuition across multiple subjects for Grades 1–11 and Advanced Level.",
+    "viewAllServices": "Explore Our Classes",
+    "serviceCards": {
+      "onsite": {
+        "title": "On-site Tuition",
+        "description": "Learn in a supportive classroom environment with in-person guidance."
+      },
+      "online": {
+        "title": "Online Classes",
+        "description": "Access tuition from wherever you are through online learning."
+      },
+      "subjects": {
+        "title": "Multiple Subjects",
+        "description": "Explore Mathematics, Science, English, History, Tamil, and Sinhala."
+      },
+      "grades": {
+        "title": "Grades 1–11 & Advanced Level",
+        "description": "Find tuition options for school students and Advanced Level learners."
+      }
+    },
     "resourcesHeading": "Explore Our Resources",
     "resourcesDescription": "Browse educational materials to support your learning and personal development.",
     "ctaHeading": "Ready to Get Started?",
@@ -53,8 +71,8 @@
       "description": "Learn about our institute, our purpose, and our commitment to education."
     },
     "services": {
-      "title": "Our Services",
-      "description": "Explore the educational programmes, guidance, and services we offer."
+      "title": "Find a Class",
+      "description": "Explore on-site and online tuition classes for Grades 1–11 and Advanced Level across a range of subjects."
     },
     "resources": {
       "title": "Learning Resources",
@@ -77,6 +95,78 @@
       "description": "Review the general terms for using this website and its educational resources."
     }
   },
+"classDirectory": {
+  "eyebrow": "T.I.T. JAFFNA · TUITION CLASSES",
+  "heroTags": {
+    "onsite": "On-site tuition",
+    "online": "Online classes",
+    "subjects": "Multiple subjects"
+  },
+  "sectionEyebrow": "EXPLORE OUR CLASSES",
+  "heading": "Find a class",
+  "intro": "Filter by grade, subject, or learning format to find a suitable class.",
+  "filters": {
+    "grade": "Grade",
+    "allGrades": "All grades",
+    "subject": "Subject",
+    "allSubjects": "All subjects",
+    "format": "Class format",
+    "allFormats": "All formats",
+    "onsite": "On-site classes",
+    "online": "Online classes",
+    "reset": "Reset filters"
+  },
+  "results": {
+    "one": "class found",
+    "many": "classes found",
+    "onsiteFirst": "On-site classes appear first"
+  },
+  "badges": {
+    "onsite": "ON-SITE",
+    "online": "ONLINE"
+  },
+  "details": {
+    "schedule": "Schedule",
+    "teacher": "Teacher",
+    "location": "Location",
+    "format": "Format",
+    "fee": "Class fee"
+  },
+  "enquire": "Enquire about class",
+  "empty": {
+    "heading": "No matching classes yet",
+    "description": "We haven't added a class matching these filters. Try another selection or contact the institute for more information.",
+    "reset": "View all listed classes"
+  },
+  "grades": {
+    "grade": "Grade",
+    "advancedLevel": "Advanced Level"
+  },
+  "subjects": {
+    "english": "English",
+    "mathematics": "Mathematics",
+    "science": "Science",
+    "history": "History",
+    "tamil": "Tamil",
+    "sinhala": "Sinhala"
+  },
+  "classTitleSuffix": "Tuition Class",
+  "placeholders": {
+    "teacher": "Teacher to be confirmed",
+    "days": "Days to be confirmed",
+    "time": "Time to be confirmed",
+    "location": "Institute classroom",
+    "onlineLocation": "Online — platform to be confirmed",
+    "fee": "Contact for fees",
+    "availability": "To be confirmed",
+    "onlineAvailability": "Schedule to be confirmed"
+  },
+  "descriptions": {
+    "grade6Mathematics": "On-site Mathematics tuition for Grade 6 students.",
+    "grade8Science": "On-site Science tuition for Grade 8 students.",
+    "advancedLevelEnglishOnline": "Online English tuition for Advanced Level students."
+  }
+},
   "shared": {
     "sampleHeading": "More information coming soon",
     "sampleText": "This section is a placeholder. We will add the institute's confirmed information and details in a later step.",

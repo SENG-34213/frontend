@@ -161,3 +161,41 @@
     transition: none;
   }
 }
+
+/* Keeps social media links visible and aligned within the header. */
+.socialLinks {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.socialLinks a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--color-primary);
+  border-radius: 50%;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.socialLinks a:hover {
+  color: var(--color-background);
+  background-color: var(--color-primary);
+}
+
+.socialLinks svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.socialLinks a:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}

@@ -113,6 +113,33 @@ export default function Header() {
             </select>
           </label>
 
+          {/* Social media links — replace placeholder URLs when ready. */}
+          <div className={styles.socialLinks}>
+            <a
+              href="https://www.youtube.com/@titeducation2087"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit our YouTube channel"
+              title="YouTube"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z" />
+              </svg>
+            </a>
+
+            <a
+              href="https://web.facebook.com/ThirupathyInformationTechnology"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Visit our Facebook page"
+              title="Facebook"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.3c0-3 1.8-4.7 4.5-4.7 1.3 0 2.6.2 2.6.2v2.9h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12Z" />
+              </svg>
+            </a>
+          </div>
+
           <Link
             href={getLocalizedPath(currentLanguage, "preregister")}
             className={styles.preregisterButton}
