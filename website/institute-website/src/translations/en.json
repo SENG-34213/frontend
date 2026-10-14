@@ -18,7 +18,7 @@
   "footer": {
     "description": "Supporting learning through education, guidance and accessible public resources.",
     "addressLabel": "Address",
-    "address": "123 Example Street, Colombo, Sri Lanka",
+    "address": "Jaffna, Sri Lanka",
     "phoneLabel": "Phone",
     "phone": "+94 11 234 5678",
     "emailLabel": "Email",
@@ -48,10 +48,6 @@
       "online": {
         "title": "Online Classes",
         "description": "Access tuition from wherever you are through online learning."
-      },
-      "subjects": {
-        "title": "Multiple Subjects",
-        "description": "Explore Mathematics, Science, English, History, Tamil, and Sinhala."
       },
       "grades": {
         "title": "Grades 1–11 & Advanced Level",
@@ -224,17 +220,36 @@
   "failure": "We could not send your message. Please try again or contact us using the details below.",
   "privacyLink": "Privacy Policy"
 },
+
 "preRegisterForm": {
+  "intro": "Pre-register your interest in classes. Enrolment is subject to approval before payment.",
   "name": "Full name",
   "email": "Email address",
   "phone": "Phone number",
-  "programme": "Programme of interest",
-  "programmePlaceholder": "Select a programme",
-  "programmes": {
-    "general": "General enquiry",
-    "programmeOne": "Sample Programme 1",
-    "programmeTwo": "Sample Programme 2"
+  "role": "Who are you?",
+  "roles": {
+    "student": "Student",
+    "parent": "Parent / Guardian"
   },
+  "district": "District",
+  "city": "City / town (optional)",
+  "classFormat": "Preferred class format",
+  "formats": {
+    "online": "Online",
+    "onsite": "Onsite / physical classes",
+    "either": "Either is suitable"
+  },
+  "grade": "Grade",
+  "al": "Advanced Level (A/L)",
+  "subjects": "Preferred subjects (select all that apply)",
+  "selectGradeFirst": "Select a grade to see the available subjects.",
+  "contactMethod": "Preferred contact method",
+  "methods": {
+    "whatsapp": "WhatsApp",
+    "phone": "Phone call",
+    "email": "Email"
+  },
+  "selectOption": "Select an option",
   "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
   "submit": "Submit pre-registration",
   "sending": "Submitting...",
@@ -242,7 +257,6 @@
   "invalidEmail": "Enter a valid email address.",
   "invalidPhone": "Enter a valid phone number.",
   "consentRequired": "Please agree to the Privacy Policy before continuing.",
-  "setupNotice": "Email delivery has not been configured yet. Your pre-registration has not been submitted. Your entries will remain in the form.",
   "success": "Your pre-registration has been submitted successfully.",
   "failure": "We could not submit your pre-registration. Please try again or contact us using the details below.",
   "privacyLink": "Privacy Policy"

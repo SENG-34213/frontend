@@ -5,14 +5,6 @@ import Link from "next/link";
 import { translate } from "../lib/translations";
 import styles from "./ContactForm.module.css";
 
-/*
- * Contact form UI and client-side validation.
- *
- * Email delivery will be connected in a later step.
- * Until then, submitting a valid form clearly tells the
- * visitor that no message has been sent. Entered values
- * are preserved so the visitor does not lose their work.
- */
 export default function ContactForm({ lang }) {
   const [values, setValues] = useState({
     name: "",
@@ -20,10 +12,13 @@ export default function ContactForm({ lang }) {
     subject: "",
     message: "",
     consent: false,
+    website: "",
   });
 
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   function updateField(event) {
     const { name, value, checked, type } = event.target;
@@ -33,7 +28,6 @@ export default function ContactForm({ lang }) {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    // Clear a field's validation error when the visitor edits it.
     setErrors((current) => ({
       ...current,
       [name]: "",
@@ -42,27 +36,42 @@ export default function ContactForm({ lang }) {
     setNotice("");
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const nextErrors = {};
+    if (isSubmitting) return;
 
-    if (!values.name.trim()) {
+    const nextErrors = {};
+    const name = values.name.trim();
+    const email = values.email.trim();
+    const subject = values.subject.trim();
+    const message = values.message.trim();
+
+    if (!name) {
       nextErrors.name = translate(lang, "contactForm.required");
+    } else if (name.length > 100) {
+      nextErrors.name = "Name must be 100 characters or fewer.";
     }
 
-    if (!values.email.trim()) {
+    if (!email) {
       nextErrors.email = translate(lang, "contactForm.required");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+    } else if (
+      email.length > 254 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
       nextErrors.email = translate(lang, "contactForm.invalidEmail");
     }
 
-    if (!values.subject.trim()) {
+    if (!subject) {
       nextErrors.subject = translate(lang, "contactForm.required");
+    } else if (subject.length > 150) {
+      nextErrors.subject = "Subject must be 150 characters or fewer.";
     }
 
-    if (!values.message.trim()) {
+    if (!message) {
       nextErrors.message = translate(lang, "contactForm.required");
+    } else if (message.length > 5000) {
+      nextErrors.message = "Message must be 5000 characters or fewer.";
     }
 
     if (!values.consent) {
@@ -76,13 +85,95 @@ export default function ContactForm({ lang }) {
       return;
     }
 
-    // Do not simulate a successful submission before email delivery
-    // has been configured and confirmed by the server.
-    setNotice(translate(lang, "contactForm.setupNotice"));
+    setIsSubmitting(true);
+    setNotice("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          subject,
+          message,
+          website: values.website,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 400) {
+          throw new Error(
+            result.message || "Please check your details and try again.",
+          );
+        }
+
+        if (response.status === 429) {
+          throw new Error("Too many submissions. Please try again later.");
+        }
+
+        throw new Error(
+          "We could not send your message. Please try again later.",
+        );
+      }
+
+      setSubmitSuccess(true);
+      setNotice(translate(lang, "contactForm.success"));
+
+      setValues({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+        consent: false,
+        website: "",
+      });
+      setErrors({});
+    } catch (error) {
+      setSubmitSuccess(false);
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : translate(lang, "contactForm.failure"),
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
+      {/* Honeypot field to help detect automated submissions. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          padding: 0,
+          margin: "-1px",
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
+          border: 0,
+        }}
+      >
+        <label htmlFor="contact-website">Leave this field empty</label>
+        <input
+          id="contact-website"
+          name="website"
+          type="text"
+          value={values.website}
+          onChange={updateField}
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       <div className={styles.field}>
         <label htmlFor="contact-name">
           {translate(lang, "contactForm.name")}
@@ -91,6 +182,7 @@ export default function ContactForm({ lang }) {
           id="contact-name"
           name="name"
           autoComplete="name"
+          maxLength={100}
           value={values.name}
           onChange={updateField}
           placeholder={translate(lang, "contactForm.namePlaceholder")}
@@ -113,6 +205,7 @@ export default function ContactForm({ lang }) {
           name="email"
           type="email"
           autoComplete="email"
+          maxLength={254}
           value={values.email}
           onChange={updateField}
           placeholder={translate(lang, "contactForm.emailPlaceholder")}
@@ -133,6 +226,7 @@ export default function ContactForm({ lang }) {
         <input
           id="contact-subject"
           name="subject"
+          maxLength={150}
           value={values.subject}
           onChange={updateField}
           placeholder={translate(lang, "contactForm.subjectPlaceholder")}
@@ -156,6 +250,7 @@ export default function ContactForm({ lang }) {
           id="contact-message"
           name="message"
           rows={6}
+          maxLength={5000}
           value={values.message}
           onChange={updateField}
           placeholder={translate(lang, "contactForm.messagePlaceholder")}
@@ -197,12 +292,23 @@ export default function ContactForm({ lang }) {
         )}
       </div>
 
-      <button className={styles.submitButton} type="submit">
-        {translate(lang, "contactForm.submit")}
+      <button
+        className={styles.submitButton}
+        type="submit"
+        disabled={isSubmitting}
+      >
+        {isSubmitting
+          ? translate(lang, "contactForm.sending")
+          : translate(lang, "contactForm.submit")}
       </button>
 
       {notice && (
-        <p className={styles.notice} role="status" aria-live="polite">
+        <p
+          className={styles.notice}
+          role="status"
+          aria-live="polite"
+          data-success={submitSuccess}
+        >
           {notice}
         </p>
       )}

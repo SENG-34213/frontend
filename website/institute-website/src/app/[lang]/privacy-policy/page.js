@@ -24,9 +24,6 @@ export default async function PrivacyPolicyPage({ params }) {
         <section className={styles.page}>
             <article className={styles.container}>
                 <header className={styles.introduction}>
-                    <p className={styles.eyebrow}>
-                        {translate(lang, "site.name")}
-                    </p>
                     <h1>{translate(lang, "pages.privacy-policy.title")}</h1>
                     <p>{translate(lang, "legalPage.privacy.introduction")}</p>
                     <p className={styles.reviewNotice}>

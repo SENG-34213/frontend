@@ -17,9 +17,6 @@ export default async function AboutPage({ params }) {
         <section className={styles.page}>
             <div className={styles.container}>
                 <header className={styles.introduction}>
-                    <p className={styles.eyebrow}>
-                        {translate(lang, "site.name")}
-                    </p>
 
                     <h1>{translate(lang, "pages.about.title")}</h1>
 

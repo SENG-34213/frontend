@@ -48,10 +48,6 @@
         "title": "இணையவழி வகுப்புகள்",
         "description": "நீங்கள் இருக்கும் இடத்திலிருந்தே இணையவழியில் கற்கவும்."
       },
-      "subjects": {
-        "title": "பல பாடங்கள்",
-        "description": "கணிதம், விஞ்ஞானம், ஆங்கிலம், வரலாறு, தமிழ் மற்றும் சிங்களம் ஆகிய பாடங்களை ஆராயுங்கள்."
-      },
       "grades": {
         "title": "தரம் 1–11 மற்றும் உயர்தரம்",
         "description": "பள்ளி மாணவர்களுக்கும் உயர்தர மாணவர்களுக்கும் பொருத்தமான வகுப்புகளைத் தேடுங்கள்."
@@ -224,28 +220,46 @@
   "failure": "உங்கள் செய்தியை அனுப்ப முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது கீழே உள்ள தொடர்பு விவரங்களைப் பயன்படுத்தவும்.",
   "privacyLink": "தனியுரிமைக் கொள்கை"
 },
+
 "preRegisterForm": {
-  "name": "முழுப் பெயர்",
-  "email": "மின்னஞ்சல் முகவரி",
-  "phone": "தொலைபேசி எண்",
-  "programme": "விருப்பமான நிகழ்ச்சித்திட்டம்",
-  "programmePlaceholder": "நிகழ்ச்சித்திட்டத்தைத் தேர்ந்தெடுக்கவும்",
-  "programmes": {
-    "general": "பொதுவான விசாரணை",
-    "programmeOne": "மாதிரி நிகழ்ச்சித்திட்டம் 1",
-    "programmeTwo": "மாதிரி நிகழ்ச்சித்திட்டம் 2"
+  "intro": "Pre-register your interest in classes. Enrolment is subject to approval before payment.",
+  "name": "Full name",
+  "email": "Email address",
+  "phone": "Phone number",
+  "role": "Who are you?",
+  "roles": {
+    "student": "Student",
+    "parent": "Parent / Guardian"
   },
-  "consent": "எனது தகவல்கள் கையாளப்படுவது தொடர்பான தனியுரிமைக் கொள்கையைப் படித்து ஏற்றுக்கொள்கிறேன்.",
-  "submit": "முன்பதிவைச் சமர்ப்பிக்கவும்",
-  "sending": "சமர்ப்பிக்கப்படுகிறது...",
-  "required": "இந்தப் புலத்தை நிரப்பவும்.",
-  "invalidEmail": "சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
-  "invalidPhone": "சரியான தொலைபேசி எண்ணை உள்ளிடவும்.",
-  "consentRequired": "தொடர்வதற்கு முன் தனியுரிமைக் கொள்கையை ஏற்றுக்கொள்ளவும்.",
-  "setupNotice": "மின்னஞ்சல் அனுப்பும் வசதி இன்னும் அமைக்கப்படவில்லை. உங்கள் முன்பதிவு சமர்ப்பிக்கப்படவில்லை. நீங்கள் உள்ளிட்ட தகவல்கள் படிவத்தில் இருக்கும்.",
-  "success": "உங்கள் முன்பதிவு வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது.",
-  "failure": "உங்கள் முன்பதிவைச் சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது கீழே உள்ள தொடர்பு விவரங்களைப் பயன்படுத்தவும்.",
-  "privacyLink": "தனியுரிமைக் கொள்கை"
+  "district": "District",
+  "city": "City / town (optional)",
+  "classFormat": "Preferred class format",
+  "formats": {
+    "online": "Online",
+    "onsite": "Onsite / physical classes",
+    "either": "Either is suitable"
+  },
+  "grade": "Grade",
+  "al": "Advanced Level (A/L)",
+  "subjects": "Preferred subjects (select all that apply)",
+  "selectGradeFirst": "Select a grade to see the available subjects.",
+  "contactMethod": "Preferred contact method",
+  "methods": {
+    "whatsapp": "WhatsApp",
+    "phone": "Phone call",
+    "email": "Email"
+  },
+  "selectOption": "Select an option",
+  "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
+  "submit": "Submit pre-registration",
+  "sending": "Submitting...",
+  "required": "Please complete this field.",
+  "invalidEmail": "Enter a valid email address.",
+  "invalidPhone": "Enter a valid phone number.",
+  "consentRequired": "Please agree to the Privacy Policy before continuing.",
+  "success": "Your pre-registration has been submitted successfully.",
+  "failure": "We could not submit your pre-registration. Please try again or contact us using the details below.",
+  "privacyLink": "Privacy Policy"
 },
 
 "aboutPage": {

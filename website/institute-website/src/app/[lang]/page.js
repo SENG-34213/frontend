@@ -5,7 +5,7 @@ import { translate, supportedLanguages } from "../../lib/translations";
 import { resources } from "../../data/resources";
 import styles from "./Home.module.css";
 
-const serviceIds = ["onsite", "online", "subjects", "grades"];
+const serviceIds = ["onsite", "online", "grades"];
 
 export default async function HomePage({ params }) {
     const { lang } = await params;

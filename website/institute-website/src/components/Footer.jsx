@@ -53,16 +53,16 @@ export default function Footer() {
 
         <section>
           <h3>{translate(language, "footer.addressLabel")}</h3>
-          <p>{translate(language, "footer.address")}</p>
+          <p>Jaffna, Sri Lanka</p>
 
           <h3>{translate(language, "footer.phoneLabel")}</h3>
-          <a href={`tel:${translate(language, "footer.phone")}`}>
-            {translate(language, "footer.phone")}
+          <a href={`tel:+94770158446`}>
+            +94770158446
           </a>
 
           <h3>{translate(language, "footer.emailLabel")}</h3>
-          <a href={`mailto:${translate(language, "footer.email")}`}>
-            {translate(language, "footer.email")}
+          <a href={`mailto:admin@titjaffna.lk`}>
+            admin@titjaffna.lk
           </a>
         </section>
 

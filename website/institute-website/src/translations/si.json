@@ -49,10 +49,6 @@
         "title": "මාර්ගගත පන්ති",
         "description": "ඔබ සිටින ස්ථානයේ සිටම මාර්ගගතව ඉගෙන ගන්න."
       },
-      "subjects": {
-        "title": "විවිධ විෂයයන්",
-        "description": "ගණිතය, විද්‍යාව, ඉංග්‍රීසි, ඉතිහාසය, දෙමළ සහ සිංහල යන විෂයයන් ගවේෂණය කරන්න."
-      },
       "grades": {
         "title": "1–11 ශ්‍රේණි සහ උසස් පෙළ",
         "description": "පාසල් සිසුන්ට සහ උසස් පෙළ සිසුන්ට ගැළපෙන පන්ති සොයා ගන්න."
@@ -225,28 +221,46 @@
   "failure": "ඔබේ පණිවිඩය යැවීමට නොහැකි විය. නැවත උත්සාහ කරන්න හෝ පහත සම්බන්ධතා තොරතුරු භාවිත කරන්න.",
   "privacyLink": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය"
 },
+
 "preRegisterForm": {
-  "name": "සම්පූර්ණ නම",
-  "email": "විද්‍යුත් තැපැල් ලිපිනය",
-  "phone": "දුරකථන අංකය",
-  "programme": "ඔබ කැමති වැඩසටහන",
-  "programmePlaceholder": "වැඩසටහනක් තෝරන්න",
-  "programmes": {
-    "general": "සාමාන්‍ය විමසීමක්",
-    "programmeOne": "ආදර්ශ වැඩසටහන 1",
-    "programmeTwo": "ආදර්ශ වැඩසටහන 2"
+  "intro": "Pre-register your interest in classes. Enrolment is subject to approval before payment.",
+  "name": "Full name",
+  "email": "Email address",
+  "phone": "Phone number",
+  "role": "Who are you?",
+  "roles": {
+    "student": "Student",
+    "parent": "Parent / Guardian"
   },
-  "consent": "මගේ තොරතුරු භාවිත කිරීම පිළිබඳ පෞද්ගලිකත්ව ප්‍රතිපත්තිය කියවා එකඟ වෙමි.",
-  "submit": "පූර්ව ලියාපදිංචිය ඉදිරිපත් කරන්න",
-  "sending": "ඉදිරිපත් කරමින්...",
-  "required": "කරුණාකර මෙම ක්ෂේත්‍රය පුරවන්න.",
-  "invalidEmail": "වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
-  "invalidPhone": "වලංගු දුරකථන අංකයක් ඇතුළත් කරන්න.",
-  "consentRequired": "ඉදිරියට යාමට පෙර පෞද්ගලිකත්ව ප්‍රතිපත්තියට එකඟ වන්න.",
-  "setupNotice": "විද්‍යුත් තැපැල් යැවීම තවම සකසා නොමැත. ඔබගේ පූර්ව ලියාපදිංචිය ඉදිරිපත් කර නැත. ඇතුළත් කළ තොරතුරු පෝරමයේ පවතිනු ඇත.",
-  "success": "ඔබගේ පූර්ව ලියාපදිංචිය සාර්ථකව ඉදිරිපත් කර ඇත.",
-  "failure": "ඔබගේ පූර්ව ලියාපදිංචිය ඉදිරිපත් කළ නොහැකි විය. නැවත උත්සාහ කරන්න හෝ පහත සම්බන්ධතා තොරතුරු භාවිත කරන්න.",
-  "privacyLink": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය"
+  "district": "District",
+  "city": "City / town (optional)",
+  "classFormat": "Preferred class format",
+  "formats": {
+    "online": "Online",
+    "onsite": "Onsite / physical classes",
+    "either": "Either is suitable"
+  },
+  "grade": "Grade",
+  "al": "Advanced Level (A/L)",
+  "subjects": "Preferred subjects (select all that apply)",
+  "selectGradeFirst": "Select a grade to see the available subjects.",
+  "contactMethod": "Preferred contact method",
+  "methods": {
+    "whatsapp": "WhatsApp",
+    "phone": "Phone call",
+    "email": "Email"
+  },
+  "selectOption": "Select an option",
+  "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
+  "submit": "Submit pre-registration",
+  "sending": "Submitting...",
+  "required": "Please complete this field.",
+  "invalidEmail": "Enter a valid email address.",
+  "invalidPhone": "Enter a valid phone number.",
+  "consentRequired": "Please agree to the Privacy Policy before continuing.",
+  "success": "Your pre-registration has been submitted successfully.",
+  "failure": "We could not submit your pre-registration. Please try again or contact us using the details below.",
+  "privacyLink": "Privacy Policy"
 },
 
 "aboutPage": {

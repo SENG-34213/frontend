@@ -16,9 +16,6 @@ export default async function PreRegisterPage({ params }) {
         <section className={styles.page}>
             <div className={styles.container}>
                 <div className={styles.introduction}>
-                    <p className={styles.eyebrow}>
-                        {translate(lang, "site.name")}
-                    </p>
 
                     <h1>{translate(lang, "pages.preregister.title")}</h1>
 

@@ -1,4 +1,3 @@
-
 import { notFound } from "next/navigation";
 import ContactForm from "../../../components/ContactForm";
 import { supportedLanguages, translate } from "../../../lib/translations";
@@ -15,9 +14,6 @@ export default async function ContactPage({ params }) {
     <section className={styles.page}>
       <div className={styles.container}>
         <div className={styles.introduction}>
-          <p className={styles.eyebrow}>
-            {translate(lang, "site.name")}
-          </p>
           <h1>{translate(lang, "pages.contact.title")}</h1>
           <p>{translate(lang, "pages.contact.description")}</p>
         </div>
