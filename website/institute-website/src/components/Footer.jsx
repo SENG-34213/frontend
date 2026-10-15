@@ -28,12 +28,12 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.container}>
         <section className={styles.introduction}>
-          <h2>{translate(language, "site.name")}</h2>
+          <h2>TiT Education</h2>
 
           <p>{translate(language, "footer.description")}</p>
 
           <a href="https://www.youtube.com/" target="_blank" rel="noreferrer">
-            {translate(language, "footer.youtube")}
+            YouTube Channel
           </a>
         </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { translate, supportedLanguages } from "../lib/translations";
@@ -48,8 +48,40 @@ export default function Header() {
     setMenuOpen(false);
   }
 
+  const [isHidden, setIsHidden] = useState(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDifference = currentScrollY - lastScrollY;
+
+      // Always show the header near the top.
+      if (currentScrollY <= 80) {
+        setIsHidden(false);
+      } else if (scrollDifference > 5 && currentScrollY > 120) {
+        // Scrolling down: hide the header.
+        setIsHidden(true);
+      } else if (scrollDifference < -5) {
+        // Scrolling up: reveal the header.
+        setIsHidden(false);
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, {
+      passive: true,
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${isHidden ? styles.hidden : ""}`}>
       <div className={styles.container}>
         <Link
           href={getLocalizedPath(currentLanguage)}

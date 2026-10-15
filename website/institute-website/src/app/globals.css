@@ -1,4 +1,3 @@
-
 /*
  * Global styles
  * Shared design foundations for the entire website.
@@ -6,23 +5,36 @@
  */
 
 :root {
-  --color-primary: #234e52;
-  --color-primary-dark: #183b3e;
-  --color-accent: #d6a756;
+  /* Primary colours */
+  --color-primary: #1a1a1a;
+  --color-primary-dark: #303030;
 
-  --color-background: #ffffff;
-  --color-surface: #f5f7f6;
-  --color-text: #202827;
-  --color-text-muted: #5c6866;
-  --color-border: #dce3e1;
+  /* Gold accents */
+  --color-accent: #d4af37;
+  --color-accent-bright: #ffd700;
 
-  --font-body: Arial, Helvetica, sans-serif;
+  /* Backgrounds and surfaces */
+  --color-background: #fbf9f5;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f5f1e8;
 
+  /* Text */
+  --color-text: #1a1a1a;
+  --color-text-muted: #66615a;
+
+  /* Borders */
+  --color-border: #e8e1d5;
+
+  /* Typography and layout */
+  --font-heading: var(--font-syne), sans-serif;
+  --font-body: var(--font-outfit), sans-serif;
   --content-width: 1200px;
   --page-padding: 24px;
 
-  --radius-small: 6px;
-  --radius-medium: 12px;
+  /* Rounded corners */
+  --radius-small: 8px;
+  --radius-medium: 16px;
+  --radius-pill: 999px;
 }
 
 * {
@@ -39,6 +51,18 @@ body {
   color: var(--color-text);
   font-family: var(--font-body);
   line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
 }
 
 a {
