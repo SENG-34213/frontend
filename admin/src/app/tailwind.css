@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* One Tailwind entrypoint for the admin workspace. Existing visual layers are
+ * kept in Tailwind's component layer so the current admin UI remains pixel
+ * consistent while the screens move to utility-first markup incrementally. */
+@import "./globals.css" layer(components);
+@import "./mentify-theme.css" layer(components);
+@import "./admin-dashboard-theme.css" layer(components);
+@import "../../../shared/materials/materials.css" layer(components);
+@import "./admin-materials.css" layer(components);
+@import "./admin-figma-refactor.css" layer(components);
+@import "./admin-figma-pages.css" layer(components);
+@import "./admin-figma-registration.css" layer(components);
+@import "./admin-student-management.css" layer(components);
+@import "./admin-teacher-management.css" layer(components);
+@import "./admin-calendar.css" layer(components);
+@import "./admin-ai-assistant.css" layer(components);
+@import "./admin-course-management.css" layer(components);
+
+@theme inline {
+  --color-background: var(--canvas, #f8f9fb);
+  --color-foreground: var(--ink, #1e293b);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer base {
+  body { min-height: 100%; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; }
+  button, input, textarea, select { font-family: inherit; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #8b78df44; outline-offset: 2px; }
+}

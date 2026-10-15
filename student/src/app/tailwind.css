@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Shared Tailwind entrypoint for the student workspace. The existing student
+ * skin is layered into Tailwind without changing its measured UI output. */
+@import "./globals.css" layer(components);
+@import "./student-materials.css" layer(components);
+
+@theme inline {
+  --color-background: var(--surface, #f9f9ff);
+  --color-foreground: var(--ink, #141b2b);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer base {
+  body { min-height: 100%; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; }
+  button, input, textarea, select { font-family: inherit; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #4f46e51a; outline-offset: 2px; }
+}
