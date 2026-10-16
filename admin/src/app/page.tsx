@@ -70,23 +70,15 @@ export default function Home() {
   const [directoryLoading, setDirectoryLoading] = useState(false);
   const [directoryError, setDirectoryError] = useState("");
   const [directoryReloadKey, setDirectoryReloadKey] = useState(0);
-  const [enrollmentStudents, setEnrollmentStudents] = useState<DirectoryUser[]>(
-    [],
-  );
-  const [enrollmentRecords, setEnrollmentRecords] = useState<
-    EnrollmentRecord[]
-  >([]);
+  const [enrollmentStudents, setEnrollmentStudents] = useState<DirectoryUser[]>([]);
+  const [enrollmentRecords, setEnrollmentRecords] = useState<EnrollmentRecord[]>([]);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   const [enrollmentError, setEnrollmentError] = useState("");
   const [enrollmentReloadKey, setEnrollmentReloadKey] = useState(0);
   const [enrollmentStudentId, setEnrollmentStudentId] = useState("");
   const [enrollmentGrade, setEnrollmentGrade] = useState("1");
-  const [selectedSampleCourses, setSelectedSampleCourses] = useState<string[]>(
-    [],
-  );
-  const [sampleEnrollments, setSampleEnrollments] = useState<
-    SampleEnrollment[]
-  >([]);
+  const [selectedSampleCourses, setSelectedSampleCourses] = useState<string[]>([]);
+  const [sampleEnrollments, setSampleEnrollments] = useState<SampleEnrollment[]>([]);
   const [specializations, setSpecializations] = useState<string[]>([]);
   const [specializationInput, setSpecializationInput] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -104,12 +96,8 @@ export default function Home() {
     email?: string;
     role?: string;
   } | null>(null);
-  const [communicationGroups, setCommunicationGroups] = useState<
-    CommunicationGroup[]
-  >([]);
-  const [communicationStudents, setCommunicationStudents] = useState<
-    DirectoryUser[]
-  >([]);
+  const [communicationGroups, setCommunicationGroups] = useState<CommunicationGroup[]>([]);
+  const [communicationStudents, setCommunicationStudents] = useState<DirectoryUser[]>([]);
   const [communicationLoading, setCommunicationLoading] = useState(false);
   const [communicationError, setCommunicationError] = useState("");
   const [communicationReloadKey, setCommunicationReloadKey] = useState(0);
@@ -145,9 +133,7 @@ export default function Home() {
       if (savedStudents) setRecentStudents(JSON.parse(savedStudents));
       const savedCourses = sessionStorage.getItem("mentify_recent_courses");
       if (savedCourses) setRecentCourses(JSON.parse(savedCourses));
-      const savedEnrollments = sessionStorage.getItem(
-        "mentify_sample_enrollments",
-      );
+      const savedEnrollments = sessionStorage.getItem("mentify_sample_enrollments");
       if (savedEnrollments) setSampleEnrollments(JSON.parse(savedEnrollments));
     } catch {
       sessionStorage.removeItem("mentify_recent_students");
@@ -191,9 +177,7 @@ export default function Home() {
               `The teacher service returned ${teachersResponse.status}.`,
           );
         if (!Array.isArray(result.data) || !Array.isArray(teachersResult.data))
-          throw new Error(
-            "The course setup service returned an unexpected response format.",
-          );
+          throw new Error("The course setup service returned an unexpected response format.");
         if (!cancelled) {
           setLiveCourses(result.data as LiveCourse[]);
           setCourseTeachers(
@@ -207,9 +191,7 @@ export default function Home() {
       } catch (error) {
         if (!cancelled)
           setCoursesError(
-            error instanceof Error
-              ? error.message
-              : "Could not load the course catalog.",
+            error instanceof Error ? error.message : "Could not load the course catalog.",
           );
       } finally {
         if (!cancelled) setCoursesLoading(false);
@@ -224,58 +206,45 @@ export default function Home() {
   }, [activeForm, apiUrl, coursesReloadKey, token]);
 
   useEffect(() => {
-    if ((activeForm !== "student" && activeForm !== "teacher") || !token)
-      return;
+    if ((activeForm !== "student" && activeForm !== "teacher") || !token) return;
     let cancelled = false;
     async function loadDirectory() {
       setDirectoryLoading(true);
       setDirectoryError("");
       try {
         const role = activeForm === "student" ? "STUDENT" : "TEACHER";
-        const response = await authorizedApiRequest(
-          `${apiUrl}/api/v1/users?role=${role}`,
-          { method: "GET" },
-        );
+        const response = await authorizedApiRequest(`${apiUrl}/api/v1/users?role=${role}`, {
+          method: "GET",
+        });
         const result = await response.json().catch(() => ({}));
         if (!response.ok)
           throw new Error(
-            result.message ||
-              result.error ||
-              `The user service returned ${response.status}.`,
+            result.message || result.error || `The user service returned ${response.status}.`,
           );
         if (!Array.isArray(result.data))
-          throw new Error(
-            "The user service returned an unexpected directory format.",
-          );
+          throw new Error("The user service returned an unexpected directory format.");
         if (!cancelled)
           setDirectoryUsers(
             result.data.map((user: Record<string, unknown>) => {
               const profile = (
-                activeForm === "student"
-                  ? user.studentProfile
-                  : user.teacherProfile
+                activeForm === "student" ? user.studentProfile : user.teacherProfile
               ) as Record<string, unknown> | null | undefined;
               return {
-                id: activeForm === "teacher" ? String(user.keycloakUserId || "") : String(user.id || ""),
+                id:
+                  activeForm === "teacher"
+                    ? String(user.keycloakUserId || "")
+                    : String(user.id || ""),
                 name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
                 email: String(user.email || ""),
-                phoneNumber: user.phoneNumber
-                  ? String(user.phoneNumber)
-                  : undefined,
-                accountStatus: user.accountStatus
-                  ? String(user.accountStatus)
-                  : undefined,
-                grade:
-                  activeForm === "student"
-                    ? normalizeGrade(profile?.grade)
-                    : undefined,
+                phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
+                accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
+                grade: activeForm === "student" ? normalizeGrade(profile?.grade) : undefined,
                 code:
                   activeForm === "student"
                     ? String(profile?.studentId || "")
                     : String(profile?.teacherCode || ""),
                 specializations:
-                  activeForm === "teacher" &&
-                  Array.isArray(profile?.specializations)
+                  activeForm === "teacher" && Array.isArray(profile?.specializations)
                     ? profile.specializations.map(String)
                     : undefined,
               };
@@ -284,9 +253,7 @@ export default function Home() {
       } catch (error) {
         if (!cancelled)
           setDirectoryError(
-            error instanceof Error
-              ? error.message
-              : "Could not load the user directory.",
+            error instanceof Error ? error.message : "Could not load the user directory.",
           );
       } finally {
         if (!cancelled) setDirectoryLoading(false);
@@ -307,26 +274,20 @@ export default function Home() {
       setEnrollmentLoading(true);
       setEnrollmentError("");
       try {
-        const [studentsResponse, unenrolledResponse, enrollmentsResponse] =
-          await Promise.all([
-            authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, {
-              method: "GET",
-            }),
-            authorizedApiRequest(
-              `${apiUrl}/api/v1/enrollments/students/unenrolled`,
-              { method: "GET" },
-            ),
-            authorizedApiRequest(`${apiUrl}/api/v1/enrollments`, {
-              method: "GET",
-            }),
-          ]);
+        const [studentsResponse, unenrolledResponse, enrollmentsResponse] = await Promise.all([
+          authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, {
+            method: "GET",
+          }),
+          authorizedApiRequest(`${apiUrl}/api/v1/enrollments/students/unenrolled`, {
+            method: "GET",
+          }),
+          authorizedApiRequest(`${apiUrl}/api/v1/enrollments`, {
+            method: "GET",
+          }),
+        ]);
         const studentsResult = await studentsResponse.json().catch(() => ({}));
-        const unenrolledResult = await unenrolledResponse
-          .json()
-          .catch(() => ({}));
-        const enrollmentsResult = await enrollmentsResponse
-          .json()
-          .catch(() => ({}));
+        const unenrolledResult = await unenrolledResponse.json().catch(() => ({}));
+        const enrollmentsResult = await enrollmentsResponse.json().catch(() => ({}));
         if (!studentsResponse.ok)
           throw new Error(
             studentsResult.message ||
@@ -350,26 +311,19 @@ export default function Home() {
           !Array.isArray(unenrolledResult.data) ||
           !Array.isArray(enrollmentsResult.data)
         )
-          throw new Error(
-            "The enrollment service returned an unexpected response format.",
-          );
+          throw new Error("The enrollment service returned an unexpected response format.");
         if (!cancelled) {
           setEnrollmentStudents(
             studentsResult.data.map((user: Record<string, unknown>) => {
-              const profile = user.studentProfile as
-                Record<string, unknown> | null | undefined;
+              const profile = user.studentProfile as Record<string, unknown> | null | undefined;
               return {
                 id: String(user.id || ""),
                 name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
                 email: String(user.email || ""),
-                phoneNumber: user.phoneNumber
-                  ? String(user.phoneNumber)
-                  : undefined,
+                phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 grade: normalizeGrade(profile?.grade),
                 code: String(profile?.studentId || ""),
-                accountStatus: user.accountStatus
-                  ? String(user.accountStatus)
-                  : undefined,
+                accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
               };
             }),
           );
@@ -378,9 +332,7 @@ export default function Home() {
       } catch (error) {
         if (!cancelled)
           setEnrollmentError(
-            error instanceof Error
-              ? error.message
-              : "Could not load enrollment data.",
+            error instanceof Error ? error.message : "Could not load enrollment data.",
           );
       } finally {
         if (!cancelled) setEnrollmentLoading(false);
@@ -401,16 +353,15 @@ export default function Home() {
       setCommunicationLoading(true);
       setCommunicationError("");
       try {
-        const [groupsResponse, coursesResponse, studentsResponse] =
-          await Promise.all([
-            authorizedApiRequest(`${apiUrl}/api/communication/groups`, {
-              method: "GET",
-            }),
-            authorizedApiRequest(`${apiUrl}/api/v1/course`, { method: "GET" }),
-            authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, {
-              method: "GET",
-            }),
-          ]);
+        const [groupsResponse, coursesResponse, studentsResponse] = await Promise.all([
+          authorizedApiRequest(`${apiUrl}/api/communication/groups`, {
+            method: "GET",
+          }),
+          authorizedApiRequest(`${apiUrl}/api/v1/course`, { method: "GET" }),
+          authorizedApiRequest(`${apiUrl}/api/v1/users?role=STUDENT`, {
+            method: "GET",
+          }),
+        ]);
         const groupsResult = await groupsResponse.json().catch(() => ({}));
         const coursesResult = await coursesResponse.json().catch(() => ({}));
         const studentsResult = await studentsResponse.json().catch(() => ({}));
@@ -437,28 +388,21 @@ export default function Home() {
           !Array.isArray(coursesResult.data) ||
           !Array.isArray(studentsResult.data)
         )
-          throw new Error(
-            "The communication workspace returned an unexpected response format.",
-          );
+          throw new Error("The communication workspace returned an unexpected response format.");
         if (!cancelled) {
           setCommunicationGroups(groupsResult.data as CommunicationGroup[]);
           setLiveCourses(coursesResult.data as LiveCourse[]);
           setCommunicationStudents(
             studentsResult.data.map((user: Record<string, unknown>) => {
-              const profile = user.studentProfile as
-                Record<string, unknown> | null | undefined;
+              const profile = user.studentProfile as Record<string, unknown> | null | undefined;
               return {
                 id: String(user.id || ""),
                 name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
                 email: String(user.email || ""),
-                phoneNumber: user.phoneNumber
-                  ? String(user.phoneNumber)
-                  : undefined,
+                phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 grade: normalizeGrade(profile?.grade),
                 code: String(profile?.studentId || ""),
-                accountStatus: user.accountStatus
-                  ? String(user.accountStatus)
-                  : undefined,
+                accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
               };
             }),
           );
@@ -466,9 +410,7 @@ export default function Home() {
       } catch (error) {
         if (!cancelled)
           setCommunicationError(
-            error instanceof Error
-              ? error.message
-              : "Could not load communication groups.",
+            error instanceof Error ? error.message : "Could not load communication groups.",
           );
       } finally {
         if (!cancelled) setCommunicationLoading(false);
@@ -483,7 +425,7 @@ export default function Home() {
   }, [activeForm, apiUrl, communicationReloadKey, token]);
 
   useEffect(() => {
-    if (activeForm !== "dashboard" && activeForm !== "reports" || !token) return;
+    if ((activeForm !== "dashboard" && activeForm !== "reports") || !token) return;
     let cancelled = false;
     async function loadDashboard() {
       setDashboardLoading(true);
@@ -508,7 +450,12 @@ export default function Home() {
         );
         const readList = (payload: unknown): unknown[] => {
           if (Array.isArray(payload)) return payload;
-          if (payload && typeof payload === "object" && Array.isArray((payload as { data?: unknown }).data)) return (payload as { data: unknown[] }).data;
+          if (
+            payload &&
+            typeof payload === "object" &&
+            Array.isArray((payload as { data?: unknown }).data)
+          )
+            return (payload as { data: unknown[] }).data;
           return [];
         };
         if (!responses.every((response) => response.ok))
@@ -518,54 +465,40 @@ export default function Home() {
             user: Record<string, unknown>,
             role: "student" | "teacher",
           ): DirectoryUser => {
-            const profile = (
-              role === "student" ? user.studentProfile : user.teacherProfile
-            ) as Record<string, unknown> | null | undefined;
+            const profile = (role === "student" ? user.studentProfile : user.teacherProfile) as
+              | Record<string, unknown>
+              | null
+              | undefined;
             return {
               id: role === "teacher" ? String(user.keycloakUserId || "") : String(user.id || ""),
               name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
               email: String(user.email || ""),
-              grade:
-                role === "student" ? normalizeGrade(profile?.grade) : undefined,
+              grade: role === "student" ? normalizeGrade(profile?.grade) : undefined,
               code:
                 role === "student"
                   ? String(profile?.studentId || "")
                   : String(profile?.teacherCode || ""),
-              phoneNumber: user.phoneNumber
-                ? String(user.phoneNumber)
-                : undefined,
-              accountStatus: user.accountStatus
-                ? String(user.accountStatus)
-                : undefined,
+              phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
+              accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
             };
           };
           setRecentStudents(
             readList(results[0]).length
               ? readList(results[0])
                   .slice(0, 5)
-                  .map((user) =>
-                    mapUser(user as Record<string, unknown>, "student"),
-                  )
+                  .map((user) => mapUser(user as Record<string, unknown>, "student"))
               : [],
           );
           setRecentTeachers(
             readList(results[1]).length
               ? readList(results[1])
                   .slice(0, 5)
-                  .map((user) =>
-                    mapUser(user as Record<string, unknown>, "teacher"),
-                  )
+                  .map((user) => mapUser(user as Record<string, unknown>, "teacher"))
               : [],
           );
-          setLiveCourses(
-            readList(results[2]) as LiveCourse[],
-          );
-          setDashboardGroupCount(
-            readList(results[4]).length,
-          );
-          setDashboardEnrollmentCount(
-            readList(results[3]).length,
-          );
+          setLiveCourses(readList(results[2]) as LiveCourse[]);
+          setDashboardGroupCount(readList(results[4]).length);
+          setDashboardEnrollmentCount(readList(results[3]).length);
         }
       } catch {
         // The dashboard keeps its shell usable even when one optional summary endpoint is unavailable.
@@ -602,16 +535,21 @@ export default function Home() {
               `The grade service returned ${gradesResponse.status}.`,
           );
         if (!Array.isArray(result.data))
-          throw new Error(
-            "The grade service returned an unexpected response format.",
-          );
+          throw new Error("The grade service returned an unexpected response format.");
         if (!cancelled) {
           setGrades(result.data as GradeRecord[]);
           if (studentsResponse.ok && Array.isArray(studentsResult.data)) {
-            setGradeDirectoryStudents(studentsResult.data.map((user: Record<string, unknown>) => {
-              const profile = user.studentProfile as Record<string, unknown> | null | undefined;
-              return { id: String(user.id || ""), name: `${user.firstName || ""} ${user.lastName || ""}`.trim(), email: String(user.email || ""), grade: normalizeGrade(profile?.grade) };
-            }));
+            setGradeDirectoryStudents(
+              studentsResult.data.map((user: Record<string, unknown>) => {
+                const profile = user.studentProfile as Record<string, unknown> | null | undefined;
+                return {
+                  id: String(user.id || ""),
+                  name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+                  email: String(user.email || ""),
+                  grade: normalizeGrade(profile?.grade),
+                };
+              }),
+            );
           }
           if (coursesResponse.ok && Array.isArray(coursesResult.data)) {
             setLiveCourses(coursesResult.data as LiveCourse[]);
@@ -619,9 +557,7 @@ export default function Home() {
         }
       } catch (error) {
         if (!cancelled)
-          setGradesError(
-            error instanceof Error ? error.message : "Could not load grades.",
-          );
+          setGradesError(error instanceof Error ? error.message : "Could not load grades.");
       } finally {
         if (!cancelled) setGradesLoading(false);
       }
@@ -694,9 +630,7 @@ export default function Home() {
       });
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "We couldn’t connect to the sign-in service.";
+        error instanceof Error ? error.message : "We couldn’t connect to the sign-in service.";
       setNotice({
         kind: "error",
         title: "Sign-in failed",
@@ -759,9 +693,7 @@ export default function Home() {
     setCourse({ ...emptyCourse, assignedTeacherId: teacher?.id || "" });
     setShowCourseForm(true);
     setTeacherVerified(Boolean(teacher?.id));
-    setTeacherVerification(
-      teacher?.id ? "Teacher selected and ready for course assignment." : "",
-    );
+    setTeacherVerification(teacher?.id ? "Teacher selected and ready for course assignment." : "");
     setCreatedCourse(null);
     setNotice(null);
   }
@@ -802,21 +734,14 @@ export default function Home() {
     const nextAccessToken = refreshed.data.accessToken as string;
     sessionStorage.setItem("mentify_access_token", nextAccessToken);
     if (refreshed.data.refreshToken)
-      sessionStorage.setItem(
-        "mentify_refresh_token",
-        refreshed.data.refreshToken as string,
-      );
+      sessionStorage.setItem("mentify_refresh_token", refreshed.data.refreshToken as string);
     setToken(nextAccessToken);
     return send(nextAccessToken);
   }
 
   async function verifyTeacher() {
     const teacherId = course.assignedTeacherId.trim();
-    if (
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        teacherId,
-      )
-    ) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teacherId)) {
       setTeacherVerified(false);
       setTeacherVerification("Enter a valid teacher UUID first.");
       return;
@@ -837,9 +762,7 @@ export default function Home() {
         );
       setTeacherVerified(exists === true);
       setTeacherVerification(
-        exists === true
-          ? "Teacher account verified."
-          : "No teacher account was found for this ID.",
+        exists === true ? "Teacher account verified." : "No teacher account was found for this ID.",
       );
     } catch (error) {
       setTeacherVerified(false);
@@ -923,8 +846,7 @@ export default function Home() {
       setCreatedCourse({
         id: created.id || "",
         name: created.courseName || course.courseName,
-        status:
-          created.courseStatus || (course.isPublished ? "PUBLISHED" : "DRAFT"),
+        status: created.courseStatus || (course.isPublished ? "PUBLISHED" : "DRAFT"),
       });
       if (created.id) {
         const recent: RecentCourse[] = [
@@ -935,10 +857,7 @@ export default function Home() {
           },
           ...recentCourses.filter((item) => item.id !== created.id),
         ].slice(0, 50);
-        sessionStorage.setItem(
-          "mentify_recent_courses",
-          JSON.stringify(recent),
-        );
+        sessionStorage.setItem("mentify_recent_courses", JSON.stringify(recent));
         setRecentCourses(recent);
         setCoursesReloadKey((current) => current + 1);
       }
@@ -949,8 +868,7 @@ export default function Home() {
       });
       setShowCourseForm(false);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Could not create the course.";
+      const message = error instanceof Error ? error.message : "Could not create the course.";
       setNotice({
         kind: "error",
         title: "Course creation failed",
@@ -1025,10 +943,7 @@ export default function Home() {
         },
         body: JSON.stringify(payload),
       };
-      let response = await fetch(
-        `${apiUrl}/api/v1/users/register`,
-        requestOptions,
-      );
+      let response = await fetch(`${apiUrl}/api/v1/users/register`, requestOptions);
       if (response.status === 401) {
         const refreshToken = sessionStorage.getItem("mentify_refresh_token");
         if (refreshToken) {
@@ -1040,20 +955,15 @@ export default function Home() {
           const refreshed = await refreshResponse.json().catch(() => ({}));
           if (refreshResponse.ok && refreshed.data?.accessToken) {
             const nextAccessToken = refreshed.data.accessToken as string;
-            const nextRefreshToken = refreshed.data.refreshToken as
-              string | undefined;
+            const nextRefreshToken = refreshed.data.refreshToken as string | undefined;
             sessionStorage.setItem("mentify_access_token", nextAccessToken);
-            if (nextRefreshToken)
-              sessionStorage.setItem("mentify_refresh_token", nextRefreshToken);
+            if (nextRefreshToken) sessionStorage.setItem("mentify_refresh_token", nextRefreshToken);
             setToken(nextAccessToken);
             requestOptions.headers = {
               "Content-Type": "application/json",
               Authorization: `Bearer ${nextAccessToken}`,
             };
-            response = await fetch(
-              `${apiUrl}/api/v1/users/register`,
-              requestOptions,
-            );
+            response = await fetch(`${apiUrl}/api/v1/users/register`, requestOptions);
           } else {
             await signOut();
           }
@@ -1097,11 +1007,11 @@ export default function Home() {
           ...recentTeachers.filter((item) => item.id !== teacher.id),
         ].slice(0, 20);
         setRecentTeachers(updatedTeachers);
-        setCourseTeachers((current) => [teacher, ...current.filter((item) => item.id !== teacher.id)]);
-        sessionStorage.setItem(
-          "mentify_recent_teachers",
-          JSON.stringify(updatedTeachers),
-        );
+        setCourseTeachers((current) => [
+          teacher,
+          ...current.filter((item) => item.id !== teacher.id),
+        ]);
+        sessionStorage.setItem("mentify_recent_teachers", JSON.stringify(updatedTeachers));
         setCourse({ ...emptyCourse, assignedTeacherId: teacher.id });
         setTeacherVerified(true);
         setTeacherVerification("Teacher selected and ready for course assignment.");
@@ -1119,22 +1029,16 @@ export default function Home() {
           id: registered.id,
           name: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName}`,
           email: registered.email || values.email,
-          grade: normalizeGrade(
-            registered.studentProfile?.grade ?? values.grade,
-          ),
+          grade: normalizeGrade(registered.studentProfile?.grade ?? values.grade),
           phoneNumber: registered.phoneNumber || values.phoneNumber,
-          attendanceMode:
-            registered.studentProfile?.attendanceMode || values.attendanceMode,
+          attendanceMode: registered.studentProfile?.attendanceMode || values.attendanceMode,
           studentCode: registered.studentProfile?.studentId,
         };
-        const recent = [
-          student,
-          ...recentStudents.filter((item) => item.id !== student.id),
-        ].slice(0, 50);
-        sessionStorage.setItem(
-          "mentify_recent_students",
-          JSON.stringify(recent),
+        const recent = [student, ...recentStudents.filter((item) => item.id !== student.id)].slice(
+          0,
+          50,
         );
+        sessionStorage.setItem("mentify_recent_students", JSON.stringify(recent));
         setRecentStudents(recent);
         setEnrollmentGrade(student.grade || "1");
         setEnrollmentStudentId(student.id);
@@ -1155,9 +1059,7 @@ export default function Home() {
       setValues(initialValues);
       setSpecializations([]);
       setDirectoryReloadKey((current) => current + 1);
-      document
-        .querySelector(".form-card")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (error) {
       const message =
         error instanceof Error
@@ -1179,8 +1081,7 @@ export default function Home() {
     (student) => (student.grade || "1") === enrollmentGrade,
   );
   const selectedEnrollmentStudent =
-    recentStudents.find((student) => student.id === enrollmentStudentId) ||
-    null;
+    recentStudents.find((student) => student.id === enrollmentStudentId) || null;
   const selectedEnrollment = sampleEnrollments.find(
     (item) => item.studentId === enrollmentStudentId,
   );
@@ -1190,9 +1091,7 @@ export default function Home() {
 
   function chooseEnrollmentGrade(grade: string) {
     setEnrollmentGrade(grade);
-    const nextStudent = recentStudents.find(
-      (student) => (student.grade || "1") === grade,
-    );
+    const nextStudent = recentStudents.find((student) => (student.grade || "1") === grade);
     setEnrollmentStudentId(nextStudent?.id || "");
     setSelectedSampleCourses([]);
     setNotice(null);
@@ -1206,8 +1105,7 @@ export default function Home() {
   }
 
   function saveSampleEnrollment() {
-    if (!selectedEnrollmentStudent || selectedSampleCourses.length === 0)
-      return;
+    if (!selectedEnrollmentStudent || selectedSampleCourses.length === 0) return;
     const current = sampleEnrollments.find(
       (item) => item.studentId === selectedEnrollmentStudent.id,
     );
@@ -1215,22 +1113,15 @@ export default function Home() {
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const nextRecord: SampleEnrollment = {
       studentId: selectedEnrollmentStudent.id,
-      courseIds: [
-        ...new Set([...(current?.courseIds || []), ...selectedSampleCourses]),
-      ],
+      courseIds: [...new Set([...(current?.courseIds || []), ...selectedSampleCourses])],
       enrolledOn: current?.enrolledOn || today,
       updatedOn: today,
     };
     const nextEnrollments = [
       nextRecord,
-      ...sampleEnrollments.filter(
-        (item) => item.studentId !== nextRecord.studentId,
-      ),
+      ...sampleEnrollments.filter((item) => item.studentId !== nextRecord.studentId),
     ];
-    sessionStorage.setItem(
-      "mentify_sample_enrollments",
-      JSON.stringify(nextEnrollments),
-    );
+    sessionStorage.setItem("mentify_sample_enrollments", JSON.stringify(nextEnrollments));
     setSampleEnrollments(nextEnrollments);
     setSelectedSampleCourses([]);
     setNotice({
@@ -1241,20 +1132,15 @@ export default function Home() {
   }
 
   async function createEnrollment(studentId: string, courseIds: string[]) {
-    const response = await authorizedApiRequest(
-      `${apiUrl}/api/v1/enrollments`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, courseIds }),
-      },
-    );
+    const response = await authorizedApiRequest(`${apiUrl}/api/v1/enrollments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId, courseIds }),
+    });
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The enrollment service returned ${response.status}.`,
+        result.message || result.error || `The enrollment service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1276,9 +1162,7 @@ export default function Home() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The enrollment service returned ${response.status}.`,
+        result.message || result.error || `The enrollment service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1293,20 +1177,15 @@ export default function Home() {
     name: string;
     description: string;
   }) {
-    const response = await authorizedApiRequest(
-      `${apiUrl}/api/communication/groups`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
-      },
-    );
+    const response = await authorizedApiRequest(`${apiUrl}/api/communication/groups`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft),
+    });
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The communication service returned ${response.status}.`,
+        result.message || result.error || `The communication service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1316,10 +1195,7 @@ export default function Home() {
     setCommunicationReloadKey((current) => current + 1);
   }
 
-  async function addStudentToCommunicationGroup(
-    groupId: string,
-    studentId: string,
-  ) {
+  async function addStudentToCommunicationGroup(groupId: string, studentId: string) {
     const response = await authorizedApiRequest(
       `${apiUrl}/api/communication/groups/${encodeURIComponent(groupId)}/students`,
       {
@@ -1331,9 +1207,7 @@ export default function Home() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The communication service returned ${response.status}.`,
+        result.message || result.error || `The communication service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1350,9 +1224,7 @@ export default function Home() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The communication service returned ${response.status}.`,
+        result.message || result.error || `The communication service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1371,9 +1243,7 @@ export default function Home() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The communication service returned ${response.status}.`,
+        result.message || result.error || `The communication service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1384,9 +1254,7 @@ export default function Home() {
     return result.data as CommunicationGroup;
   }
 
-  async function loadCommunicationMembers(
-    groupId: string,
-  ): Promise<GroupMember[]> {
+  async function loadCommunicationMembers(groupId: string): Promise<GroupMember[]> {
     const response = await authorizedApiRequest(
       `${apiUrl}/api/communication/groups/${encodeURIComponent(groupId)}/members`,
       { method: "GET" },
@@ -1394,32 +1262,23 @@ export default function Home() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The communication service returned ${response.status}.`,
+        result.message || result.error || `The communication service returned ${response.status}.`,
       );
     if (!Array.isArray(result.data))
-      throw new Error(
-        "The group members response was not in the expected format.",
-      );
+      throw new Error("The group members response was not in the expected format.");
     return result.data as GroupMember[];
   }
 
   async function createGrade(draft: { name: string; description: string }) {
-    const response = await authorizedApiRequest(
-      `${apiUrl}/api/v1/course/grades`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
-      },
-    );
+    const response = await authorizedApiRequest(`${apiUrl}/api/v1/course/grades`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft),
+    });
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The grade service returned ${response.status}.`,
+        result.message || result.error || `The grade service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1429,10 +1288,7 @@ export default function Home() {
     setGradesReloadKey((current) => current + 1);
   }
 
-  async function updateGrade(
-    id: string,
-    draft: { name: string; description: string },
-  ) {
+  async function updateGrade(id: string, draft: { name: string; description: string }) {
     const response = await authorizedApiRequest(
       `${apiUrl}/api/v1/course/grades/${encodeURIComponent(id)}`,
       {
@@ -1444,9 +1300,7 @@ export default function Home() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The grade service returned ${response.status}.`,
+        result.message || result.error || `The grade service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1464,9 +1318,7 @@ export default function Home() {
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(
-        result.message ||
-          result.error ||
-          `The grade service returned ${response.status}.`,
+        result.message || result.error || `The grade service returned ${response.status}.`,
       );
     setNotice({
       kind: "success",
@@ -1506,74 +1358,72 @@ export default function Home() {
           onSettings={() => setShowSettings(true)}
         />
         <div className="content-wrap" id="registration">
-          <div className={`page-heading ${activeForm === "dashboard" ? "page-heading-dashboard" : ""} ${activeForm === "materials" ? "page-heading-materials" : ""} ${activeForm === "ai-assistant" ? "page-heading-ai" : ""} ${activeForm === "course" ? "page-heading-course" : ""}`}>
+          <div
+            className={`page-heading ${activeForm === "dashboard" ? "page-heading-dashboard" : ""} ${activeForm === "materials" ? "page-heading-materials" : ""} ${activeForm === "ai-assistant" ? "page-heading-ai" : ""} ${activeForm === "course" ? "page-heading-course" : ""}`}
+          >
             <div>
               <div className="eyebrow">
                 <span className="eyebrow-line" />
                 {activeForm === "dashboard"
                   ? "ACADEMY OVERVIEW"
-                      : activeForm === "reports"
-                        ? "ACADEMY INTELLIGENCE"
-                      : activeForm === "communication"
-                    ? "COMMUNICATION MANAGEMENT"
-                    : activeForm === "ai-assistant"
-                      ? "MENTIFY INTELLIGENCE"
-                      : activeForm === "grade" ||
-                          activeForm === "course" ||
-                          activeForm === "calendar" ||
-                          activeForm === "enrollment" ||
-                          activeForm === "materials"
-                        ? "ACADEMIC MANAGEMENT"
-                        : "PEOPLE MANAGEMENT"}
+                  : activeForm === "reports"
+                    ? "ACADEMY INTELLIGENCE"
+                    : activeForm === "communication"
+                      ? "COMMUNICATION MANAGEMENT"
+                      : activeForm === "ai-assistant"
+                        ? "MENTIFY INTELLIGENCE"
+                        : activeForm === "grade" ||
+                            activeForm === "course" ||
+                            activeForm === "calendar" ||
+                            activeForm === "enrollment" ||
+                            activeForm === "materials"
+                          ? "ACADEMIC MANAGEMENT"
+                          : "PEOPLE MANAGEMENT"}
               </div>
               <h1>
                 {activeForm === "dashboard"
                   ? "Dashboard"
-                    : activeForm === "reports"
-                      ? "Reports & analytics"
+                  : activeForm === "reports"
+                    ? "Reports & analytics"
                     : activeForm === "communication"
-                    ? "Communication groups"
-                    : activeForm === "ai-assistant"
-                      ? "Mentify AI Assistant"
+                      ? "Communication groups"
+                      : activeForm === "ai-assistant"
+                        ? "Mentify AI Assistant"
                         : activeForm === "grade"
-                        ? "Grades"
-                        : activeForm === "course"
-                          ? "Course catalog"
-                      : activeForm === "calendar"
-                            ? "Sessions & Academic Calendar"
-                      : activeForm === "enrollment"
-                            ? "Grade enrollments"
-                            : activeForm === "materials"
-                              ? "Materials"
-                            : `Manage ${activeForm}s`}
+                          ? "Grades"
+                          : activeForm === "course"
+                            ? "Course catalog"
+                            : activeForm === "calendar"
+                              ? "Sessions & Academic Calendar"
+                              : activeForm === "enrollment"
+                                ? "Grade enrollments"
+                                : activeForm === "materials"
+                                  ? "Materials"
+                                  : `Manage ${activeForm}s`}
               </h1>
               <p className="page-description">
                 {activeForm === "dashboard"
                   ? "Monitor your academy, move work forward, and keep your community connected."
-                    : activeForm === "reports"
-                      ? "Review live academy metrics across people, learning, enrollments, and community activity."
+                  : activeForm === "reports"
+                    ? "Review live academy metrics across people, learning, enrollments, and community activity."
                     : activeForm === "communication"
-                    ? "Create course-based groups and manage the people connected to each conversation."
-                    : activeForm === "ai-assistant"
-                      ? "Ask questions and turn your academy data into actionable insights."
-                      : activeForm === "grade"
-                        ? "Create and maintain the grade levels used throughout your academy."
-                        : activeForm === "course"
-                          ? "Review courses by grade and create a new course when your catalog needs one."
-                      : activeForm === "calendar"
-                            ? "Monitor live mentoring sessions, resolve schedule conflicts, and dispatch substitute teachers in real time."
-                      : activeForm === "enrollment"
-                            ? "Review each grade’s student roster, enrollment status, and available courses."
-                            : activeForm === "materials"
-                              ? "Review, secure, and maintain learning resources across the platform."
-                            : `Browse your live ${activeForm} directory and manage new registrations from here.`}
+                      ? "Create course-based groups and manage the people connected to each conversation."
+                      : activeForm === "ai-assistant"
+                        ? "Ask questions and turn your academy data into actionable insights."
+                        : activeForm === "grade"
+                          ? "Create and maintain the grade levels used throughout your academy."
+                          : activeForm === "course"
+                            ? "Review courses by grade and create a new course when your catalog needs one."
+                            : activeForm === "calendar"
+                              ? "Monitor live mentoring sessions, resolve schedule conflicts, and dispatch substitute teachers in real time."
+                              : activeForm === "enrollment"
+                                ? "Review each grade’s student roster, enrollment status, and available courses."
+                                : activeForm === "materials"
+                                  ? "Review, secure, and maintain learning resources across the platform."
+                                  : `Browse your live ${activeForm} directory and manage new registrations from here.`}
               </p>
             </div>
-            <button
-              className="text-action"
-              type="button"
-              onClick={() => setShowSettings(true)}
-            >
+            <button className="text-action" type="button" onClick={() => setShowSettings(true)}>
               <Icon name="settings" size={16} /> API settings
             </button>
           </div>
@@ -1591,9 +1441,7 @@ export default function Home() {
                   <span className="step-number">
                     <Icon name="check" size={13} />
                   </span>
-                  <span>
-                    {activeForm === "student" ? "Student" : "Teacher"} details
-                  </span>
+                  <span>{activeForm === "student" ? "Student" : "Teacher"} details</span>
                 </div>
                 <span className="progress-line" />
                 <div className="progress-step upcoming-step">
@@ -1609,10 +1457,7 @@ export default function Home() {
           {notice && (
             <div className={`notice ${notice.kind}`} role="status">
               <span className="notice-icon">
-                <Icon
-                  name={notice.kind === "success" ? "check" : "alert"}
-                  size={18}
-                />
+                <Icon name={notice.kind === "success" ? "check" : "alert"} size={18} />
               </span>
               <span className="notice-copy">
                 <strong>{notice.title}</strong>
@@ -1631,14 +1476,22 @@ export default function Home() {
 
           {activeForm === "ai-assistant" ? (
             <AdminAiAssistant
-              apiRequest={(url, options) =>
-                authorizedApiRequest(`${apiUrl}${url}`, options)
-              }
+              apiRequest={(url, options) => authorizedApiRequest(`${apiUrl}${url}`, options)}
             />
           ) : activeForm === "reports" ? (
             <ReportsAnalytics
-              students={recentStudents.map((student) => ({ id: student.id, name: student.name, email: student.email, grade: student.grade, phoneNumber: student.phoneNumber }))}
-              teachers={recentTeachers.map((teacher) => ({ id: teacher.id, name: teacher.name, email: teacher.email }))}
+              students={recentStudents.map((student) => ({
+                id: student.id,
+                name: student.name,
+                email: student.email,
+                grade: student.grade,
+                phoneNumber: student.phoneNumber,
+              }))}
+              teachers={recentTeachers.map((teacher) => ({
+                id: teacher.id,
+                name: teacher.name,
+                email: teacher.email,
+              }))}
               courses={liveCourses}
               enrollmentCount={dashboardEnrollmentCount}
               groupCount={dashboardGroupCount}
@@ -1685,9 +1538,7 @@ export default function Home() {
               students={communicationStudents}
               loading={communicationLoading}
               error={communicationError}
-              onRetry={() =>
-                setCommunicationReloadKey((current) => current + 1)
-              }
+              onRetry={() => setCommunicationReloadKey((current) => current + 1)}
               onCreate={createCommunicationGroup}
               onAddStudent={addStudentToCommunicationGroup}
               onArchive={archiveCommunicationGroup}
@@ -1697,7 +1548,14 @@ export default function Home() {
           ) : activeForm === "materials" ? (
             <AdminMaterialsWorkspace apiUrl={apiUrl} authenticated={Boolean(adminUser)} />
           ) : activeForm === "calendar" ? (
-            <CalendarWorkspace apiUrl={apiUrl} authenticated={Boolean(adminUser)} courses={liveCourses.map((course) => ({ id: course.id, courseName: course.courseName }))} />
+            <CalendarWorkspace
+              apiUrl={apiUrl}
+              authenticated={Boolean(adminUser)}
+              courses={liveCourses.map((course) => ({
+                id: course.id,
+                courseName: course.courseName,
+              }))}
+            />
           ) : activeForm === "course" ? (
             <>
               <CourseCatalog
@@ -1707,10 +1565,18 @@ export default function Home() {
                 onRetry={() => setCoursesReloadKey((current) => current + 1)}
                 onCreate={() => openCourseForm()}
                 onEdit={(selectedCourse) => {
-                  setNotice({ kind: "error", title: "Course editing API not connected", body: `The backend does not currently expose an update endpoint for ${selectedCourse.courseName}.` });
+                  setNotice({
+                    kind: "error",
+                    title: "Course editing API not connected",
+                    body: `The backend does not currently expose an update endpoint for ${selectedCourse.courseName}.`,
+                  });
                 }}
                 onDelete={(selectedCourse) => {
-                  setNotice({ kind: "error", title: "Course deletion API not connected", body: `The backend does not currently expose a delete endpoint for ${selectedCourse.courseName}.` });
+                  setNotice({
+                    kind: "error",
+                    title: "Course deletion API not connected",
+                    body: `The backend does not currently expose a delete endpoint for ${selectedCourse.courseName}.`,
+                  });
                 }}
               />
               {showCourseForm && (
@@ -1718,8 +1584,7 @@ export default function Home() {
                   className="modal-backdrop course-form-backdrop"
                   role="presentation"
                   onMouseDown={(event) => {
-                    if (event.target === event.currentTarget)
-                      setShowCourseForm(false);
+                    if (event.target === event.currentTarget) setShowCourseForm(false);
                   }}
                 >
                   <section
@@ -1730,14 +1595,9 @@ export default function Home() {
                   >
                     <div className="course-form-modal-heading">
                       <div>
-                        <span className="catalog-kicker">
-                          ACADEMIC MANAGEMENT
-                        </span>
+                        <span className="catalog-kicker">ACADEMIC MANAGEMENT</span>
                         <h2 id="course-form-title">Create a course</h2>
-                        <p>
-                          Set up a course, assign a teacher, and choose its
-                          visibility.
-                        </p>
+                        <p>Set up a course, assign a teacher, and choose its visibility.</p>
                       </div>
                       <button
                         className="notice-dismiss"
@@ -1760,10 +1620,7 @@ export default function Home() {
                           </div>
                           <div>
                             <h2>Course details</h2>
-                            <p>
-                              Give the course a clear name and description for
-                              learners.
-                            </p>
+                            <p>Give the course a clear name and description for learners.</p>
                           </div>
                           <span className="section-index">01</span>
                         </div>
@@ -1777,9 +1634,7 @@ export default function Home() {
                               maxLength={150}
                               value={course.courseName}
                               placeholder="e.g. Grade 10 Mathematics"
-                              onChange={(event) =>
-                                changeCourse("courseName", event.target.value)
-                              }
+                              onChange={(event) => changeCourse("courseName", event.target.value)}
                             />
                           </label>
                           <label className="field">
@@ -1791,9 +1646,7 @@ export default function Home() {
                               maxLength={100}
                               value={course.subject}
                               placeholder="e.g. Mathematics"
-                              onChange={(event) =>
-                                changeCourse("subject", event.target.value)
-                              }
+                              onChange={(event) => changeCourse("subject", event.target.value)}
                             />
                           </label>
                           <label className="field course-description-field">
@@ -1808,10 +1661,7 @@ export default function Home() {
                               value={course.courseDescription}
                               placeholder="Describe what students will learn in this course…"
                               onChange={(event) =>
-                                changeCourse(
-                                  "courseDescription",
-                                  event.target.value,
-                                )
+                                changeCourse("courseDescription", event.target.value)
                               }
                             />
                             <span className="field-hint">
@@ -1819,19 +1669,14 @@ export default function Home() {
                             </span>
                           </label>
                           <label className="field">
-                            <span className="field-label">
-                              Course thumbnail URL
-                            </span>
+                            <span className="field-label">Course thumbnail URL</span>
                             <input
                               type="url"
                               maxLength={255}
                               value={course.courseThumbnail}
                               placeholder="https://example.com/course-image.jpg"
                               onChange={(event) =>
-                                changeCourse(
-                                  "courseThumbnail",
-                                  event.target.value,
-                                )
+                                changeCourse("courseThumbnail", event.target.value)
                               }
                             />
                             <span className="field-hint">
@@ -1847,10 +1692,7 @@ export default function Home() {
                           </div>
                           <div>
                             <h2>Grade &amp; instructor</h2>
-                            <p>
-                              Assign an existing grade and a teacher to this
-                              course.
-                            </p>
+                            <p>Assign an existing grade and a teacher to this course.</p>
                           </div>
                           <span className="section-index">02</span>
                         </div>
@@ -1862,9 +1704,7 @@ export default function Home() {
                             <select
                               required
                               value={course.gradeId}
-                              onChange={(event) =>
-                                changeCourse("gradeId", event.target.value)
-                              }
+                              onChange={(event) => changeCourse("gradeId", event.target.value)}
                             >
                               <option value="">
                                 {gradesLoading
@@ -1882,8 +1722,8 @@ export default function Home() {
                                 ))}
                             </select>
                             <span className="field-hint">
-                              Select a grade from the live grade service. Create
-                              one from the Grades section if it is missing.
+                              Select a grade from the live grade service. Create one from the Grades
+                              section if it is missing.
                             </span>
                           </label>
                           <div className="field">
@@ -1898,7 +1738,11 @@ export default function Home() {
                               onChange={(event) => {
                                 changeCourse("assignedTeacherId", event.target.value);
                                 setTeacherVerified(Boolean(event.target.value));
-                                setTeacherVerification(event.target.value ? "Teacher selected and ready for course assignment." : "");
+                                setTeacherVerification(
+                                  event.target.value
+                                    ? "Teacher selected and ready for course assignment."
+                                    : "",
+                                );
                               }}
                             >
                               <option value="">
@@ -1911,50 +1755,45 @@ export default function Home() {
                               ))}
                             </select>
                             {/* The selected option displays the name; its value remains the teacher UUID for the API. */}
-                            {false && <div className="verify-input-row">
-                              <input
-                                aria-label="Assigned teacher UUID"
-                                list="recent-teacher-ids"
-                                required
-                                pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F}{12}"
-                                title="Enter the UUID for an existing teacher."
-                                value={course.assignedTeacherId}
-                                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                onChange={(event) =>
-                                  changeCourse(
-                                    "assignedTeacherId",
-                                    event.target.value,
-                                  )
-                                }
-                              />
-                              <datalist id="recent-teacher-ids">
-                                {recentTeachers.map((teacher) => (
-                                  <option
-                                    key={teacher.id}
-                                    value={teacher.id}
-                                    label={`${teacher.name} · ${teacher.email}`}
-                                  />
-                                ))}
-                              </datalist>
-                              <button
-                                className="secondary-button verify-button"
-                                type="button"
-                                disabled={
-                                  verifyingTeacher ||
-                                  !course.assignedTeacherId.trim()
-                                }
-                                onClick={() => void verifyTeacher()}
-                              >
-                                {verifyingTeacher ? (
-                                  <>
-                                    <span className="spinner spinner-dark" />{" "}
-                                    Checking
-                                  </>
-                                ) : (
-                                  "Verify ID"
-                                )}
-                              </button>
-                            </div>}
+                            {false && (
+                              <div className="verify-input-row">
+                                <input
+                                  aria-label="Assigned teacher UUID"
+                                  list="recent-teacher-ids"
+                                  required
+                                  pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F}{12}"
+                                  title="Enter the UUID for an existing teacher."
+                                  value={course.assignedTeacherId}
+                                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                                  onChange={(event) =>
+                                    changeCourse("assignedTeacherId", event.target.value)
+                                  }
+                                />
+                                <datalist id="recent-teacher-ids">
+                                  {recentTeachers.map((teacher) => (
+                                    <option
+                                      key={teacher.id}
+                                      value={teacher.id}
+                                      label={`${teacher.name} · ${teacher.email}`}
+                                    />
+                                  ))}
+                                </datalist>
+                                <button
+                                  className="secondary-button verify-button"
+                                  type="button"
+                                  disabled={verifyingTeacher || !course.assignedTeacherId.trim()}
+                                  onClick={() => void verifyTeacher()}
+                                >
+                                  {verifyingTeacher ? (
+                                    <>
+                                      <span className="spinner spinner-dark" /> Checking
+                                    </>
+                                  ) : (
+                                    "Verify ID"
+                                  )}
+                                </button>
+                              </div>
+                            )}
                             <span
                               className={`field-hint ${teacherVerification ? (teacherVerified ? "verified-hint" : "invalid-hint") : ""}`}
                             >
@@ -1973,10 +1812,7 @@ export default function Home() {
                           </div>
                           <div>
                             <h2>Pricing &amp; availability</h2>
-                            <p>
-                              Choose the monthly fee, delivery mode, and
-                              publishing options.
-                            </p>
+                            <p>Choose the monthly fee, delivery mode, and publishing options.</p>
                           </div>
                           <span className="section-index">03</span>
                         </div>
@@ -1996,18 +1832,13 @@ export default function Home() {
                                 value={course.courseFeeMonthly}
                                 placeholder="2500.00"
                                 onChange={(event) =>
-                                  changeCourse(
-                                    "courseFeeMonthly",
-                                    event.target.value,
-                                  )
+                                  changeCourse("courseFeeMonthly", event.target.value)
                                 }
                               />
                             </div>
                           </label>
                           <label className="field">
-                            <span className="field-label">
-                              Discount offer (%)
-                            </span>
+                            <span className="field-label">Discount offer (%)</span>
                             <input
                               type="number"
                               min="0"
@@ -2015,25 +1846,17 @@ export default function Home() {
                               step="0.01"
                               value={course.discountOfferPercent}
                               onChange={(event) =>
-                                changeCourse(
-                                  "discountOfferPercent",
-                                  event.target.value,
-                                )
+                                changeCourse("discountOfferPercent", event.target.value)
                               }
                             />
-                            <span className="field-hint">
-                              Enter a value between 0 and 100.
-                            </span>
+                            <span className="field-hint">Enter a value between 0 and 100.</span>
                           </label>
                           <label className="field">
                             <span className="field-label">Delivery mode</span>
                             <select
                               value={course.isOnline ? "online" : "in-person"}
                               onChange={(event) =>
-                                changeCourse(
-                                  "isOnline",
-                                  event.target.value === "online",
-                                )
+                                changeCourse("isOnline", event.target.value === "online")
                               }
                             >
                               <option value="online">Online</option>
@@ -2046,10 +1869,7 @@ export default function Home() {
                               value={course.courseEnrollmentId}
                               placeholder="Optional UUID"
                               onChange={(event) =>
-                                changeCourse(
-                                  "courseEnrollmentId",
-                                  event.target.value,
-                                )
+                                changeCourse("courseEnrollmentId", event.target.value)
                               }
                             />
                             <span className="field-hint">
@@ -2061,16 +1881,12 @@ export default function Home() {
                           <label className="toggle-row">
                             <span className="toggle-copy">
                               <strong>Visible to students</strong>
-                              <small>
-                                Allow students to discover this course.
-                              </small>
+                              <small>Allow students to discover this course.</small>
                             </span>
                             <input
                               type="checkbox"
                               checked={course.isVisible}
-                              onChange={(event) =>
-                                changeCourse("isVisible", event.target.checked)
-                              }
+                              onChange={(event) => changeCourse("isVisible", event.target.checked)}
                             />
                             <span className="toggle-control" />
                           </label>
@@ -2087,10 +1903,7 @@ export default function Home() {
                               type="checkbox"
                               checked={course.isPublished}
                               onChange={(event) =>
-                                changeCourse(
-                                  "isPublished",
-                                  event.target.checked,
-                                )
+                                changeCourse("isPublished", event.target.checked)
                               }
                             />
                             <span className="toggle-control" />
@@ -2099,8 +1912,8 @@ export default function Home() {
                       </section>
                       <div className="form-footer">
                         <span className="required-note">
-                          <span className="required">*</span> Required fields ·
-                          Select an existing teacher
+                          <span className="required">*</span> Required fields · Select an existing
+                          teacher
                         </span>
                         <div className="form-actions">
                           <button
@@ -2116,11 +1929,7 @@ export default function Home() {
                           >
                             Clear form
                           </button>
-                          <button
-                            className="primary-button"
-                            type="submit"
-                            disabled={busy}
-                          >
+                          <button className="primary-button" type="submit" disabled={busy}>
                             {busy ? (
                               <>
                                 <span className="spinner" /> Creating…
@@ -2159,8 +1968,8 @@ export default function Home() {
                     <span>
                       <strong>Sample course catalog</strong>
                       <small>
-                        Grade-based demo courses and enrollment changes are
-                        saved for this browser session.
+                        Grade-based demo courses and enrollment changes are saved for this browser
+                        session.
                       </small>
                     </span>
                     <span className="sample-mode-tag">DEMO DATA</span>
@@ -2168,10 +1977,7 @@ export default function Home() {
                   <div className="grade-picker-heading">
                     <div>
                       <h2>Browse by grade</h2>
-                      <p>
-                        Select a grade to view its students, courses, and
-                        enrollment activity.
-                      </p>
+                      <p>Select a grade to view its students, courses, and enrollment activity.</p>
                     </div>
                     <button
                       type="button"
@@ -2181,14 +1987,8 @@ export default function Home() {
                       <Icon name="plus" size={15} /> Register student
                     </button>
                   </div>
-                  <div
-                    className="grade-tabs"
-                    role="tablist"
-                    aria-label="Grades"
-                  >
-                    {Array.from({ length: 13 }, (_, index) =>
-                      String(index + 1),
-                    ).map((grade) => {
+                  <div className="grade-tabs" role="tablist" aria-label="Grades">
+                    {Array.from({ length: 13 }, (_, index) => String(index + 1)).map((grade) => {
                       const count = recentStudents.filter(
                         (student) => (student.grade || "1") === grade,
                       ).length;
@@ -2231,8 +2031,7 @@ export default function Home() {
                             gradeStudents.filter((student) =>
                               sampleEnrollments.some(
                                 (item) =>
-                                  item.studentId === student.id &&
-                                  item.courseIds.length > 0,
+                                  item.studentId === student.id && item.courseIds.length > 0,
                               ),
                             ).length
                           }
@@ -2260,8 +2059,7 @@ export default function Home() {
                               (student) =>
                                 !sampleEnrollments.some(
                                   (item) =>
-                                    item.studentId === student.id &&
-                                    item.courseIds.length > 0,
+                                    item.studentId === student.id && item.courseIds.length > 0,
                                 ),
                             ).length
                           }
@@ -2276,9 +2074,7 @@ export default function Home() {
                           <h2>Grade {enrollmentGrade} students</h2>
                           <p>Choose a student to review or add courses.</p>
                         </div>
-                        <span className="roster-count">
-                          {gradeStudents.length}
-                        </span>
+                        <span className="roster-count">{gradeStudents.length}</span>
                       </div>
                       {gradeStudents.length ? (
                         <div className="roster-list">
@@ -2317,13 +2113,8 @@ export default function Home() {
                           <span className="empty-roster-icon">
                             <Icon name="users" size={21} />
                           </span>
-                          <strong>
-                            No students in Grade {enrollmentGrade} yet
-                          </strong>
-                          <p>
-                            Register a student and they’ll appear here
-                            automatically.
-                          </p>
+                          <strong>No students in Grade {enrollmentGrade} yet</strong>
+                          <p>Register a student and they’ll appear here automatically.</p>
                           <button
                             type="button"
                             className="primary-button"
@@ -2336,40 +2127,30 @@ export default function Home() {
                     </section>
                     <section className="student-enrollment-card">
                       {selectedEnrollmentStudent &&
-                      (selectedEnrollmentStudent!.grade || "1") ===
-                        enrollmentGrade ? (
+                      (selectedEnrollmentStudent!.grade || "1") === enrollmentGrade ? (
                         <>
                           <div className="student-detail-heading">
                             <span className="student-detail-avatar">
-                              {selectedEnrollmentStudent!.name
-                                .trim()
-                                .charAt(0)
-                                .toUpperCase()}
+                              {selectedEnrollmentStudent!.name.trim().charAt(0).toUpperCase()}
                             </span>
                             <div>
-                              <span className="detail-kicker">
-                                STUDENT PROFILE
-                              </span>
+                              <span className="detail-kicker">STUDENT PROFILE</span>
                               <h2>{selectedEnrollmentStudent!.name}</h2>
                               <p>{selectedEnrollmentStudent!.email}</p>
                             </div>
-                            <span className="grade-pill">
-                              Grade {enrollmentGrade}
-                            </span>
+                            <span className="grade-pill">Grade {enrollmentGrade}</span>
                           </div>
                           <div className="student-detail-facts">
                             <div>
                               <small>Phone</small>
                               <strong>
-                                {selectedEnrollmentStudent!.phoneNumber ||
-                                  "Not provided"}
+                                {selectedEnrollmentStudent!.phoneNumber || "Not provided"}
                               </strong>
                             </div>
                             <div>
                               <small>Attendance</small>
                               <strong>
-                                {selectedEnrollmentStudent!.attendanceMode ||
-                                  "Not provided"}
+                                {selectedEnrollmentStudent!.attendanceMode || "Not provided"}
                               </strong>
                             </div>
                             <div>
@@ -2387,29 +2168,21 @@ export default function Home() {
                                 <h3>Current courses</h3>
                                 <p>Courses already assigned to this student.</p>
                               </div>
-                              <span>
-                                {selectedEnrollment?.courseIds.length || 0}
-                              </span>
+                              <span>{selectedEnrollment?.courseIds.length || 0}</span>
                             </div>
                             {selectedEnrollment?.courseIds.length ? (
                               <div className="current-course-chips">
-                                {selectedEnrollment!.courseIds.map(
-                                  (courseId) => {
-                                    const item = sampleCourses.find(
-                                      (sampleCourse) =>
-                                        sampleCourse.id === courseId,
-                                    );
-                                    return (
-                                      <span
-                                        className="current-course-chip"
-                                        key={courseId}
-                                      >
-                                        <Icon name="check" size={13} />
-                                        {item?.name || courseId}
-                                      </span>
-                                    );
-                                  },
-                                )}
+                                {selectedEnrollment!.courseIds.map((courseId) => {
+                                  const item = sampleCourses.find(
+                                    (sampleCourse) => sampleCourse.id === courseId,
+                                  );
+                                  return (
+                                    <span className="current-course-chip" key={courseId}>
+                                      <Icon name="check" size={13} />
+                                      {item?.name || courseId}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             ) : (
                               <p className="no-courses-copy">
@@ -2428,13 +2201,9 @@ export default function Home() {
                             <div className="sample-course-list">
                               {gradeCourses.map((item) => {
                                 const enrolled = Boolean(
-                                  selectedEnrollment?.courseIds.includes(
-                                    item.id,
-                                  ),
+                                  selectedEnrollment?.courseIds.includes(item.id),
                                 );
-                                const selected = selectedSampleCourses.includes(
-                                  item.id,
-                                );
+                                const selected = selectedSampleCourses.includes(item.id);
                                 return (
                                   <article
                                     key={item.id}
@@ -2449,9 +2218,7 @@ export default function Home() {
                                           setSelectedSampleCourses((current) =>
                                             event.target.checked
                                               ? [...current, item.id]
-                                              : current.filter(
-                                                  (id) => id !== item.id,
-                                                ),
+                                              : current.filter((id) => id !== item.id),
                                           )
                                         }
                                       />
@@ -2468,14 +2235,8 @@ export default function Home() {
                                     <p>{item.description}</p>
                                     <div className="sample-course-meta">
                                       <span>{item.schedule}</span>
-                                      <strong>
-                                        LKR {item.fee.toLocaleString()} / month
-                                      </strong>
-                                      {enrolled && (
-                                        <span className="added-tag">
-                                          ENROLLED
-                                        </span>
-                                      )}
+                                      <strong>LKR {item.fee.toLocaleString()} / month</strong>
+                                      {enrolled && <span className="added-tag">ENROLLED</span>}
                                     </div>
                                   </article>
                                 );
@@ -2503,12 +2264,10 @@ export default function Home() {
                           <span className="empty-roster-icon">
                             <Icon name="book" size={21} />
                           </span>
-                          <strong>
-                            Select a Grade {enrollmentGrade} student
-                          </strong>
+                          <strong>Select a Grade {enrollmentGrade} student</strong>
                           <p>
-                            Student information, current courses, and available
-                            courses will appear here.
+                            Student information, current courses, and available courses will appear
+                            here.
                           </p>
                         </div>
                       )}
@@ -2525,17 +2284,29 @@ export default function Home() {
                 loading={directoryLoading}
                 error={directoryError}
                 onRetry={() => setDirectoryReloadKey((current) => current + 1)}
-                onRegister={() => { setRegistrationStep(1); setShowRegistrationForm(true); }}
+                onRegister={() => {
+                  setRegistrationStep(1);
+                  setShowRegistrationForm(true);
+                }}
                 onAddCourse={
                   activeForm === "teacher"
-                    ? (teacher) => openCourseForm({ id: teacher.id, name: teacher.name, email: teacher.email })
+                    ? (teacher) =>
+                        openCourseForm({ id: teacher.id, name: teacher.name, email: teacher.email })
                     : undefined
                 }
                 onEdit={(user) => {
-                  setNotice({ kind: "error", title: "User editing API not connected", body: `The backend does not currently expose an update endpoint for ${user.name}.` });
+                  setNotice({
+                    kind: "error",
+                    title: "User editing API not connected",
+                    body: `The backend does not currently expose an update endpoint for ${user.name}.`,
+                  });
                 }}
                 onDelete={(user) => {
-                  setNotice({ kind: "error", title: "User deletion API not connected", body: `The backend does not currently expose a delete endpoint for ${user.name}.` });
+                  setNotice({
+                    kind: "error",
+                    title: "User deletion API not connected",
+                    body: `The backend does not currently expose a delete endpoint for ${user.name}.`,
+                  });
                 }}
               />
               {showRegistrationForm && (
@@ -2543,8 +2314,7 @@ export default function Home() {
                   className="modal-backdrop registration-form-backdrop"
                   role="presentation"
                   onMouseDown={(event) => {
-                    if (event.target === event.currentTarget)
-                      setShowRegistrationForm(false);
+                    if (event.target === event.currentTarget) setShowRegistrationForm(false);
                   }}
                 >
                   <section
@@ -2555,15 +2325,11 @@ export default function Home() {
                   >
                     <div className="course-form-modal-heading">
                       <div>
-                        <span className="catalog-kicker">
-                          PEOPLE MANAGEMENT
-                        </span>
+                        <span className="catalog-kicker">PEOPLE MANAGEMENT</span>
                         <h2 id="registration-form-title">
                           {activeForm === "student" ? "Register New Student" : "Register a teacher"}
                         </h2>
-                        <p>
-                          Add the account details and send a secure invitation.
-                        </p>
+                        <p>Add the account details and send a secure invitation.</p>
                       </div>
                       <button
                         className="notice-dismiss"
@@ -2574,9 +2340,47 @@ export default function Home() {
                         <Icon name="close" size={18} />
                       </button>
                     </div>
-                    {(activeForm === "student" || activeForm === "teacher") && <div className="registration-levels" aria-label="Registration progress"><div className={`registration-level ${registrationStep >= 1 ? "complete" : ""} ${registrationStep === 1 ? "current" : ""}`}><span>01</span><strong>Personal Information</strong></div><i/><div className={`registration-level ${registrationStep >= 2 ? "complete" : ""} ${registrationStep === 2 ? "current" : ""}`}><span>02</span><strong>{activeForm === "student" ? "Academic Profile" : "Academic Credentials"}</strong></div><i/><div className={`registration-level ${registrationStep >= 3 ? "complete" : ""} ${registrationStep === 3 ? "current" : ""}`}><span>03</span><strong>{activeForm === "student" ? "Guardian & Emergency" : "Caseload & Rates"}</strong></div>{activeForm === "student" && <><i/><div className="registration-level"><span>04</span><strong>Access &amp; Learning Tier</strong></div></>}</div>}
+                    {(activeForm === "student" || activeForm === "teacher") && (
+                      <div className="registration-levels" aria-label="Registration progress">
+                        <div
+                          className={`registration-level ${registrationStep >= 1 ? "complete" : ""} ${registrationStep === 1 ? "current" : ""}`}
+                        >
+                          <span>01</span>
+                          <strong>Personal Information</strong>
+                        </div>
+                        <i />
+                        <div
+                          className={`registration-level ${registrationStep >= 2 ? "complete" : ""} ${registrationStep === 2 ? "current" : ""}`}
+                        >
+                          <span>02</span>
+                          <strong>
+                            {activeForm === "student" ? "Academic Profile" : "Academic Credentials"}
+                          </strong>
+                        </div>
+                        <i />
+                        <div
+                          className={`registration-level ${registrationStep >= 3 ? "complete" : ""} ${registrationStep === 3 ? "current" : ""}`}
+                        >
+                          <span>03</span>
+                          <strong>
+                            {activeForm === "student" ? "Guardian & Emergency" : "Caseload & Rates"}
+                          </strong>
+                        </div>
+                        {activeForm === "student" && (
+                          <>
+                            <i />
+                            <div className="registration-level">
+                              <span>04</span>
+                              <strong>Access &amp; Learning Tier</strong>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                     <form className="form-card" onSubmit={registerAccount}>
-                      <section className={`form-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 1 ? "registration-step-hidden" : "registration-step-active"}`}>
+                      <section
+                        className={`form-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 1 ? "registration-step-hidden" : "registration-step-active"}`}
+                      >
                         <div className="section-heading">
                           <div className="section-icon">
                             <Icon name="users" size={18} />
@@ -2647,11 +2451,7 @@ export default function Home() {
                                 ["", "Select grade"],
                                 ...Array.from(
                                   { length: 13 },
-                                  (_, i) =>
-                                    [String(i + 1), `Grade ${i + 1}`] as [
-                                      string,
-                                      string,
-                                    ],
+                                  (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string],
                                 ),
                               ]}
                               values={values}
@@ -2679,7 +2479,9 @@ export default function Home() {
                         </div>
                       </section>
                       {activeForm === "student" ? (
-                        <section className={`form-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 2 ? "registration-step-hidden" : "registration-step-active"}`}>
+                        <section
+                          className={`form-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 2 ? "registration-step-hidden" : "registration-step-active"}`}
+                        >
                           <div className="section-heading">
                             <div className="section-icon lavender">
                               <Icon name="users" size={18} />
@@ -2687,8 +2489,7 @@ export default function Home() {
                             <div>
                               <h2>Guardian &amp; attendance</h2>
                               <p>
-                                Keep a guardian contact on file and choose how
-                                the student attends.
+                                Keep a guardian contact on file and choose how the student attends.
                               </p>
                             </div>
                             <span className="section-index">02</span>
@@ -2722,8 +2523,7 @@ export default function Home() {
                                 onChange={change}
                               />
                               <span className="field-hint">
-                                You can update this later in the student
-                                profile.
+                                You can update this later in the student profile.
                               </span>
                             </div>
                           </div>
@@ -2736,10 +2536,7 @@ export default function Home() {
                             </div>
                             <div>
                               <h2>Teaching specializations</h2>
-                              <p>
-                                Add the subjects or areas this teacher can
-                                teach.
-                              </p>
+                              <p>Add the subjects or areas this teacher can teach.</p>
                             </div>
                             <span className="section-index">02</span>
                           </div>
@@ -2753,9 +2550,7 @@ export default function Home() {
                                 <input
                                   value={specializationInput}
                                   placeholder="Type a subject and press Enter"
-                                  onChange={(event) =>
-                                    setSpecializationInput(event.target.value)
-                                  }
+                                  onChange={(event) => setSpecializationInput(event.target.value)}
                                   onKeyDown={(event) => {
                                     if (event.key === "Enter") {
                                       event.preventDefault();
@@ -2763,15 +2558,10 @@ export default function Home() {
                                       if (
                                         next &&
                                         !specializations.some(
-                                          (item) =>
-                                            item.toLowerCase() ===
-                                            next.toLowerCase(),
+                                          (item) => item.toLowerCase() === next.toLowerCase(),
                                         )
                                       )
-                                        setSpecializations((current) => [
-                                          ...current,
-                                          next,
-                                        ]);
+                                        setSpecializations((current) => [...current, next]);
                                       setSpecializationInput("");
                                     }
                                   }}
@@ -2784,15 +2574,10 @@ export default function Home() {
                                     if (
                                       next &&
                                       !specializations.some(
-                                        (item) =>
-                                          item.toLowerCase() ===
-                                          next.toLowerCase(),
+                                        (item) => item.toLowerCase() === next.toLowerCase(),
                                       )
                                     )
-                                      setSpecializations((current) => [
-                                        ...current,
-                                        next,
-                                      ]);
+                                      setSpecializations((current) => [...current, next]);
                                     setSpecializationInput("");
                                   }}
                                 >
@@ -2800,8 +2585,7 @@ export default function Home() {
                                 </button>
                               </div>
                               <span className="field-hint">
-                                Add at least one specialization. You can include
-                                several.
+                                Add at least one specialization. You can include several.
                               </span>
                             </label>
                             {specializations.length > 0 && (
@@ -2810,19 +2594,14 @@ export default function Home() {
                                 aria-label="Selected specializations"
                               >
                                 {specializations.map((subject) => (
-                                  <span
-                                    className="specialization-chip"
-                                    key={subject}
-                                  >
+                                  <span className="specialization-chip" key={subject}>
                                     {subject}
                                     <button
                                       type="button"
                                       aria-label={`Remove ${subject}`}
                                       onClick={() =>
                                         setSpecializations((current) =>
-                                          current.filter(
-                                            (item) => item !== subject,
-                                          ),
+                                          current.filter((item) => item !== subject),
                                         )
                                       }
                                     >
@@ -2835,7 +2614,9 @@ export default function Home() {
                           </div>
                         </section>
                       )}
-                      <section className={`form-section address-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 3 ? "registration-step-hidden" : "registration-step-active"}`}>
+                      <section
+                        className={`form-section address-section registration-step-panel ${(activeForm === "student" || activeForm === "teacher") && registrationStep !== 3 ? "registration-step-hidden" : "registration-step-active"}`}
+                      >
                         <div className="section-heading">
                           <div className="section-icon mint">
                             <Icon name="pin" size={18} />
@@ -2843,10 +2624,7 @@ export default function Home() {
                           <div>
                             <h2>Home address</h2>
                             <p>
-                              Add the{" "}
-                              {activeForm === "student"
-                                ? "student’s"
-                                : "teacher’s"}{" "}
+                              Add the {activeForm === "student" ? "student’s" : "teacher’s"}{" "}
                               residential address.
                             </p>
                           </div>
@@ -2910,8 +2688,41 @@ export default function Home() {
                           >
                             Clear form
                           </button>
-                          {(activeForm === "student" || activeForm === "teacher") && registrationStep > 1 && <button className="secondary-button registration-back" type="button" onClick={() => setRegistrationStep((current) => current - 1)}><Icon name="chevron" size={15} /> Back</button>}
-                          {activeForm === "teacher" && registrationStep < 3 ? <button className="primary-button" type="button" onClick={() => setRegistrationStep((current) => current + 1)}>Continue <Icon name="arrow" size={16} /></button> : <button className="primary-button" type="submit" disabled={busy}>{busy ? <><span className="spinner" /> Registering…</> : <>Complete {activeForm === "student" ? "Student Registration" : "Teacher Registration"} <Icon name="arrow" size={16} /></>}</button>}
+                          {(activeForm === "student" || activeForm === "teacher") &&
+                            registrationStep > 1 && (
+                              <button
+                                className="secondary-button registration-back"
+                                type="button"
+                                onClick={() => setRegistrationStep((current) => current - 1)}
+                              >
+                                <Icon name="chevron" size={15} /> Back
+                              </button>
+                            )}
+                          {activeForm === "teacher" && registrationStep < 3 ? (
+                            <button
+                              className="primary-button"
+                              type="button"
+                              onClick={() => setRegistrationStep((current) => current + 1)}
+                            >
+                              Continue <Icon name="arrow" size={16} />
+                            </button>
+                          ) : (
+                            <button className="primary-button" type="submit" disabled={busy}>
+                              {busy ? (
+                                <>
+                                  <span className="spinner" /> Registering…
+                                </>
+                              ) : (
+                                <>
+                                  Complete{" "}
+                                  {activeForm === "student"
+                                    ? "Student Registration"
+                                    : "Teacher Registration"}{" "}
+                                  <Icon name="arrow" size={16} />
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </form>
@@ -2934,8 +2745,8 @@ export default function Home() {
                     {createdCourse.id ? ` · ID ${createdCourse.id}` : ""}
                   </p>
                   <small>
-                    The course record is created. Modules, lessons, and learning
-                    materials can be added next.
+                    The course record is created. Modules, lessons, and learning materials can be
+                    added next.
                   </small>
                 </div>
                 <button
@@ -2957,9 +2768,8 @@ export default function Home() {
                 <div>
                   <strong>Course content comes next</strong>
                   <p>
-                    The backend creates the course record here. Its separate
-                    module, lesson, and material endpoints can be connected once
-                    the course has been created.
+                    The backend creates the course record here. Its separate module, lesson, and
+                    material endpoints can be connected once the course has been created.
                   </p>
                 </div>
                 <span className="invitation-lock">
@@ -2975,10 +2785,9 @@ export default function Home() {
               <div>
                 <strong>Sample enrollment workspace</strong>
                 <p>
-                  Course assignments here use sample records saved in this
-                  browser session. The live enrollment API needs real course
-                  UUIDs, but the backend currently has no grade-based course
-                  catalog endpoint to provide them.
+                  Course assignments here use sample records saved in this browser session. The live
+                  enrollment API needs real course UUIDs, but the backend currently has no
+                  grade-based course catalog endpoint to provide them.
                 </p>
               </div>
               <span className="invitation-lock">
@@ -2996,9 +2805,8 @@ export default function Home() {
               <div>
                 <strong>What happens next?</strong>
                 <p>
-                  The {activeForm} will receive a secure email invitation to
-                  verify their address and set a password. You don&apos;t need
-                  to create one for them.
+                  The {activeForm} will receive a secure email invitation to verify their address
+                  and set a password. You don&apos;t need to create one for them.
                 </p>
               </div>
               <span className="invitation-lock">
@@ -3016,15 +2824,34 @@ export default function Home() {
       </main>
 
       {!aiDrawerOpen && (
-        <button className="global-ai-launcher" type="button" onClick={() => setAiDrawerOpen(true)} aria-label="Open Mentify AI assistant" title="Ask Mentify AI">
+        <button
+          className="global-ai-launcher"
+          type="button"
+          onClick={() => setAiDrawerOpen(true)}
+          aria-label="Open Mentify AI assistant"
+          title="Ask Mentify AI"
+        >
           <Icon name="sparkles" size={21} />
           <span className="global-ai-launcher-pulse" />
         </button>
       )}
       {aiDrawerOpen && (
-        <div className="ai-drawer-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAiDrawerOpen(false); }}>
+        <div
+          className="ai-drawer-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setAiDrawerOpen(false);
+          }}
+        >
           <aside className="ai-drawer" aria-label="Mentify AI assistant">
-            <button className="ai-drawer-close" type="button" onClick={() => setAiDrawerOpen(false)} aria-label="Close Mentify AI assistant"><Icon name="close" size={18} /></button>
+            <button
+              className="ai-drawer-close"
+              type="button"
+              onClick={() => setAiDrawerOpen(false)}
+              aria-label="Close Mentify AI assistant"
+            >
+              <Icon name="close" size={18} />
+            </button>
             <AdminAiAssistant
               apiUrl={apiUrl}
               token={token}
@@ -3061,9 +2888,7 @@ export default function Home() {
                 <Icon name="close" size={17} />
               </button>
             </div>
-            <h2 id="settings-title">
-              {adminUser ? "Admin account" : "Sign in to Mentify"}
-            </h2>
+            <h2 id="settings-title">{adminUser ? "Admin account" : "Sign in to Mentify"}</h2>
             <p className="modal-description">
               {adminUser
                 ? `You’re signed in as ${adminUser.email}. Your session is stored in this browser tab.`
@@ -3109,19 +2934,15 @@ export default function Home() {
                     }}
                   />
                   <span className="field-hint">
-                    Your password is sent directly to your Mentify API and is
-                    never saved in this browser.
+                    Your password is sent directly to your Mentify API and is never saved in this
+                    browser.
                   </span>
                 </label>
               </>
             )}
             <div className="modal-actions">
               {adminUser && (
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => void signOut()}
-                >
+                <button className="secondary-button" type="button" onClick={() => void signOut()}>
                   Sign out
                 </button>
               )}

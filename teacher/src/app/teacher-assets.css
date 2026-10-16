@@ -1,1 +1,7 @@
-.teacher-profile-pill{padding-left:48px;background-image:url('/figma/teacher-profile.jpg');background-repeat:no-repeat;background-position:12px center;background-size:30px 30px}
+.teacher-profile-pill {
+  padding-left: 48px;
+  background-image: url("/figma/teacher-profile.jpg");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 30px 30px;
+}
