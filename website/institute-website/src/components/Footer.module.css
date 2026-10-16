@@ -1,0 +1,189 @@
+
+/* Footer container */
+.footer {
+  margin-top: auto;
+  background: var(--color-surface-soft);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Main footer layout */
+.container {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.85fr);
+  gap: 40px;
+  width: min(100% - 48px, var(--content-width));
+  margin: 0 auto;
+  padding: 64px 0 56px;
+}
+
+.container section {
+  min-width: 0;
+}
+
+/* Section headings */
+.container h2 {
+  margin: 0 0 16px;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.container h3 {
+  margin: 0 0 12px;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Footer descriptions */
+.container p {
+  margin: 0 0 16px;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+/* General footer links */
+.container a {
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: color 160ms ease;
+}
+
+.container a:hover {
+  color: #927018;
+}
+
+.container a:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+/* Introduction section's YouTube link */
+.introduction > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.introduction > a:hover {
+  color: #927018;
+}
+
+/* Quick links and legal links */
+.linkList {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.linkList li {
+  min-width: 0;
+}
+
+.linkList a {
+  display: inline-block;
+  color: var(--color-text-muted);
+}
+
+.linkList a:hover {
+  color: #927018;
+  transform: translateX(2px);
+}
+
+/* Contact information spacing */
+.container section h3:not(:first-child) {
+  margin-top: 24px;
+}
+
+/* Copyright strip */
+.copyright {
+  padding: 20px 24px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-background);
+  text-align: center;
+}
+
+.copyright p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+
+/* Tablet */
+@media (max-width: 1000px) {
+  .container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 36px 48px;
+    padding: 52px 0;
+  }
+}
+
+/* Mobile */
+@media (max-width: 560px) {
+  .container {
+    width: calc(100% - 40px);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
+    padding: 40px 0;
+  }
+
+  .container h2 {
+    font-size: 1.2rem;
+  }
+
+  .container h3 {
+    font-size: 0.93rem;
+  }
+
+  .container p {
+    font-size: 0.9rem;
+  }
+
+  .linkList {
+    gap: 10px;
+  }
+
+  .container section h3:not(:first-child) {
+    margin-top: 20px;
+  }
+
+  .copyright {
+    padding: 18px 20px;
+  }
+
+  .copyright p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .container a {
+    transition: none;
+  }
+
+  .linkList a:hover {
+    transform: none;
+  }
+}

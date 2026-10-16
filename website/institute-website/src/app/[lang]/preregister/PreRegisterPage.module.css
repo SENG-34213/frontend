@@ -1,0 +1,70 @@
+.page {
+  padding: 80px 24px 96px;
+  background: var(--color-background);
+}
+
+.container {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 56px;
+  width: min(100%, 1100px);
+  margin: 0 auto;
+}
+
+.introduction {
+  padding-top: 20px;
+}
+
+.introduction h1 {
+  margin: 0 0 22px;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: clamp(2.6rem, 5vw, 4rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.introduction > p:last-child {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.85;
+  text-wrap: pretty;
+}
+
+@media (max-width: 850px) {
+  .page {
+    padding: 64px 24px 80px;
+  }
+
+  .container {
+    gap: 36px;
+  }
+}
+
+@media (max-width: 750px) {
+  .page {
+    padding: 48px 20px 64px;
+  }
+
+  .container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .introduction {
+    padding-top: 0;
+  }
+
+  .introduction h1 {
+    font-size: clamp(2.35rem, 10vw, 3.2rem);
+  }
+
+  .introduction > p:last-child {
+    font-size: 1rem;
+  }
+}

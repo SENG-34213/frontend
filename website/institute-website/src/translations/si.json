@@ -1,0 +1,381 @@
+
+{
+  "site": {
+    "name": "ආයතනයේ නම",
+    "tagline": "අධ්‍යාපනය, දැනුම සහ වර්ධනය"
+  },
+  "nav": {
+    "home": "මුල් පිටුව",
+    "about": "අප ගැන",
+    "services": "පන්ති සොයන්න",
+    "resources": "සම්පත්",
+    "contact": "අමතන්න",
+    "preregister": "පූර්ව ලියාපදිංචිය",
+    "openMenu": "සංචාලන මෙනුව විවෘත කරන්න",
+    "mainNavigation": "ප්‍රධාන සංචාලනය",
+    "selectLanguage": "භාෂාව තෝරන්න"
+  },
+  "footer": {
+    "description": "අධ්‍යාපනය, මඟපෙන්වීම සහ පොදු ඉගෙනුම් සම්පත් මඟින් ඉගෙනීම දිරිමත් කරමු.",
+    "addressLabel": "ලිපිනය",
+    "address": "123 උදාහරණ වීදිය, කොළඹ, ශ්‍රී ලංකාව",
+    "phoneLabel": "දුරකථනය",
+    "phone": "+94 11 234 5678",
+    "emailLabel": "විද්‍යුත් තැපෑල",
+    "email": "info@example.org",
+    "quickLinks": "ඉක්මන් සබැඳි",
+    "legal": "නීතිමය තොරතුරු",
+    "privacy": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+    "terms": "භාවිත නියමයන්",
+    "youtube": "YouTube නාලිකාව",
+    "copyright": "සියලු හිමිකම් ඇවිරිණි."
+  },
+  "home": {
+    "eyebrow": "අපගේ ආයතනයට සාදරයෙන් පිළිගනිමු",
+    "title": "ඉගෙන ගන්න, දියුණු වන්න, ඔබේ අනාගතය ගොඩනඟන්න.",
+    "description": "අපගේ වැඩසටහන් හඳුනාගෙන, අධ්‍යාපනික සම්පත් ගවේෂණය කර, අපගේ කණ්ඩායම අමතන්න.",
+    "servicesButton": "අපගේ සේවාවන් බලන්න",
+    "resourcesButton": "සම්පත් බලන්න",
+    "servicesEyebrow": "WHAT WE OFFER",
+    "servicesHeading": "Tuition Classes for Every Learner",
+    "servicesDescription": "Explore on-site and online tuition across multiple subjects for Grades 1–11 and Advanced Level.",
+    "viewAllServices": "Explore Our Classes",
+    "serviceCards": {
+      "onsite": {
+        "title": "ස්ථානීය පන්ති",
+        "description": "සහායක පන්තිකාමර පරිසරයක මුහුණට මුහුණ මඟපෙන්වීම සමඟ ඉගෙන ගන්න."
+      },
+      "online": {
+        "title": "මාර්ගගත පන්ති",
+        "description": "ඔබ සිටින ස්ථානයේ සිටම මාර්ගගතව ඉගෙන ගන්න."
+      },
+      "grades": {
+        "title": "1–11 ශ්‍රේණි සහ උසස් පෙළ",
+        "description": "පාසල් සිසුන්ට සහ උසස් පෙළ සිසුන්ට ගැළපෙන පන්ති සොයා ගන්න."
+      }
+    },
+    "resourcesHeading": "Explore Our Resources",
+    "resourcesDescription": "Browse educational materials to support your learning and personal development.",
+    "ctaHeading": "Ready to Get Started?",
+    "ctaDescription": "Take the next step and register your interest in our programmes.",
+    "ctaButton": "Pre-register Now"
+
+  },
+  
+  "pages": {
+    "about": {
+      "title": "අප ගැන",
+      "description": "අපගේ ආයතනය, එහි අරමුණ සහ අධ්‍යාපනය සඳහා ඇති කැපවීම පිළිබඳව දැනගන්න."
+    },
+    "services": {
+      "title": "පන්තියක් සොයන්න",
+      "description": "1–11 ශ්‍රේණි සහ උසස් පෙළ සඳහා විවිධ විෂයයන් යටතේ පැවැත්වෙන ස්ථානීය සහ මාර්ගගත උපකාරක පන්ති සොයා ගන්න."
+    },
+    "resources": {
+      "title": "ඉගෙනුම් සම්පත්",
+      "description": "අපගේ ආයතනය හරහා ලබාගත හැකි අධ්‍යාපනික ද්‍රව්‍ය සහ ඉගෙනුම් සම්පත් බලන්න."
+    },
+    "contact": {
+      "title": "අප අමතන්න",
+      "description": "ප්‍රශ්නයක් තිබේද? අපගේ සම්බන්ධතා තොරතුරු ලබාගෙන අපගේ කණ්ඩායම අමතන්න."
+    },
+    "preregister": {
+      "title": "පූර්ව ලියාපදිංචිය",
+      "description": "අපගේ වැඩසටහන් සඳහා ඔබේ උනන්දුව ලියාපදිංචි කරන්න. වැඩිදුර තොරතුරු පසුව මෙහි ලබාදෙනු ඇත."
+    },
+    "privacy-policy": {
+      "title": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+      "description": "මෙම වෙබ් අඩවිය හරහා ඉදිරිපත් කරන පුද්ගලික තොරතුරු හැසිරවීමට අප අදහස් කරන ආකාරය දැනගන්න."
+    },
+    "terms-of-use": {
+      "title": "භාවිත නියමයන්",
+      "description": "මෙම වෙබ් අඩවිය සහ එහි අධ්‍යාපනික සම්පත් භාවිත කිරීමේ පොදු නියමයන් කියවන්න."
+    }
+  },
+  "shared": {
+    "sampleHeading": "වැඩිදුර තොරතුරු ඉක්මනින්",
+    "sampleText": "මෙය තාවකාලික අන්තර්ගතයකි. ආයතනයේ තහවුරු කළ තොරතුරු පසුව එක් කරනු ලැබේ.",
+    "backHome": "මුල් පිටුවට ආපසු යන්න"
+  },
+  "notFound": {
+    "title": "පිටුව හමු නොවීය",
+    "message": "කණගාටුයි, ඔබ සොයන පිටුව සොයාගත නොහැක. එය වෙනස් කර තිබිය හැකිය, නැතහොත් ලිපිනය වැරදි විය හැකිය.",
+    "homeButton": "මුල් පිටුවට ආපසු යන්න"
+  },
+"classDirectory": {
+  "eyebrow": "T.I.T. යාපනය · උපකාරක පන්ති",
+  "heroTags": {
+    "onsite": "ස්ථානීය පන්ති",
+    "online": "මාර්ගගත පන්ති",
+    "subjects": "විවිධ විෂයයන්"
+  },
+  "sectionEyebrow": "අපගේ පන්ති ගවේෂණය කරන්න",
+  "heading": "පන්තියක් සොයන්න",
+  "intro": "ඔබට සුදුසු පන්තියක් සොයා ගැනීමට ශ්‍රේණිය, විෂයය හෝ ඉගෙනුම් ක්‍රමය අනුව තෝරන්න.",
+  "filters": {
+    "grade": "ශ්‍රේණිය",
+    "allGrades": "සියලුම ශ්‍රේණි",
+    "subject": "විෂයය",
+    "allSubjects": "සියලුම විෂයයන්",
+    "format": "පන්ති ක්‍රමය",
+    "allFormats": "සියලුම ක්‍රම",
+    "onsite": "ස්ථානීය පන්ති",
+    "online": "මාර්ගගත පන්ති",
+    "reset": "තේරීම් යළි සකසන්න"
+  },
+  "results": {
+    "one": "පන්තියක් හමු විය",
+    "many": "පන්ති හමු විය",
+    "onsiteFirst": "ස්ථානීය පන්ති පළමුව පෙන්වනු ලැබේ"
+  },
+  "badges": {
+    "onsite": "ස්ථානීය",
+    "online": "මාර්ගගත"
+  },
+  "details": {
+    "schedule": "පන්ති වේලාව",
+    "teacher": "ගුරුවරයා",
+    "location": "ස්ථානය",
+    "format": "ක්‍රමය",
+    "fee": "පන්ති ගාස්තුව"
+  },
+  "enquire": "පන්තිය පිළිබඳ විමසන්න",
+  "empty": {
+    "heading": "ගැළපෙන පන්ති හමු නොවීය",
+    "description": "ඔබ තෝරාගත් පෙරහන්වලට ගැළපෙන පන්තියක් දැනට ලැයිස්තුගත කර නොමැත. වෙනත් තේරීම් උත්සාහ කරන්න හෝ වැඩි විස්තර සඳහා ආයතනය අමතන්න.",
+    "reset": "ලැයිස්තුගත සියලුම පන්ති බලන්න"
+  },
+  "grades": {
+    "grade": "ශ්‍රේණිය",
+    "advancedLevel": "උසස් පෙළ",
+    "toBeConfirmed": "ශ්‍රේණිය තහවුරු කර නැත"
+  },
+  "subjects": {
+    "english": "ඉංග්‍රීසි",
+    "mathematics": "ගණිතය",
+    "science": "විද්‍යාව",
+    "history": "ඉතිහාසය",
+    "tamil": "දෙමළ",
+    "sinhala": "සිංහල"
+  },
+  "classTitleSuffix": "උපකාරක පන්තිය",
+  "placeholders": {
+    "teacher": "ගුරුවරයා තහවුරු කර නැත",
+    "days": "දින තහවුරු කර නැත",
+    "time": "වේලාව තහවුරු කර නැත",
+    "location": "පන්ති කාමරය",
+    "onlineLocation": "මාර්ගගත — වේදිකාව තහවුරු කර නැත",
+    "fee": "ගාස්තු සඳහා විමසන්න",
+    "availability": "තවම තහවුරු කර නැත",
+    "onlineAvailability": "කාලසටහන තහවුරු කර නැත"
+  },
+  "descriptions": {
+    "grade6Mathematics": "6 ශ්‍රේණියේ සිසුන් සඳහා ස්ථානීය ගණිත පන්තිය.",
+    "grade8Science": "8 ශ්‍රේණියේ සිසුන් සඳහා ස්ථානීය විද්‍යා පන්තිය.",
+    "advancedLevelEnglishOnline": "උසස් පෙළ සිසුන් සඳහා මාර්ගගත ඉංග්‍රීසි පන්තිය."
+  }
+},
+"resourcesLibrary": {
+  "eyebrow": "සැමට දැනුම",
+  "title": "සම්පත් පුස්තකාලය",
+  "description": "අධ්‍යාපනික ද්‍රව්‍ය සහ ප්‍රයෝජනවත් ඉගෙනුම් සම්පත් ගවේෂණය කරන්න.",
+  "searchLabel": "සම්පත් සොයන්න",
+  "searchPlaceholder": "මාතෘකාව හෝ විස්තරය අනුව සොයන්න...",
+  "categoryLabel": "කාණ්ඩය අනුව පෙරහන් කරන්න",
+  "allCategories": "සියලුම කාණ්ඩ",
+  "categories": {
+    "study-skills": "අධ්‍යයන කුසලතා",
+    "learning": "ඉගෙනීම",
+    "reference": "යොමු ද්‍රව්‍ය"
+  },
+  "fileType": "ගොනු වර්ගය",
+  "fileSize": "ගොනු ප්‍රමාණය",
+  "free": "නොමිලේ ලබාගත හැකි සම්පත",
+  "paid": "ගෙවීම් සහිත සම්පත",
+  "viewDetails": "විස්තර බලන්න",
+  "noResults": "ඔබගේ සෙවුමට ගැළපෙන සම්පත් නොමැත.",
+  "backToResources": "සම්පත් වෙත ආපසු යන්න",
+  "download": "සම්පත බාගන්න",
+  "downloadUnavailable": "බාගැනීම් තවමත් ලබාගත නොහැක.",
+  "paidNotice": "මෙම සම්පත ලබාගැනීමට ගෙවීමක් අවශ්‍ය වේ. මාර්ගගත ගෙවීම් පහසුකම පසුව හඳුන්වා දෙනු ඇත.",
+  "sampleNotice": "නියැදි සම්පත් ලැයිස්තුව — සැබෑ සම්පත් පසුව එක් කරනු ඇත."
+},
+
+"contactForm": {
+  "name": "සම්පූර්ණ නම",
+  "email": "විද්‍යුත් තැපැල් ලිපිනය",
+  "subject": "මාතෘකාව",
+  "message": "ඔබේ පණිවිඩය",
+  "namePlaceholder": "ඔබේ සම්පූර්ණ නම ඇතුළත් කරන්න",
+  "emailPlaceholder": "you@example.com",
+  "subjectPlaceholder": "ඔබේ විමසීම කුමක් පිළිබඳවද?",
+  "messagePlaceholder": "ඔබේ පණිවිඩය මෙහි ලියන්න...",
+  "consent": "මගේ තොරතුරු හැසිරවීම පිළිබඳ පෞද්ගලිකත්ව ප්‍රතිපත්තිය කියවා එයට එකඟ වෙමි.",
+  "submit": "පණිවිඩය යවන්න",
+  "sending": "යවමින් පවතී...",
+  "required": "කරුණාකර මෙම ක්ෂේත්‍රය පුරවන්න.",
+  "invalidEmail": "වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
+  "consentRequired": "ඉදිරියට යාමට පෙර පෞද්ගලිකත්ව ප්‍රතිපත්තියට එකඟ වන්න.",
+  "setupNotice": "විද්‍යුත් තැපැල් යැවීම තවම සකසා නැත. ඔබේ පණිවිඩය යවා නැත. ඔබ ඇතුළත් කළ තොරතුරු පෝරමයේ පවතිනු ඇත.",
+  "success": "ඔබේ පණිවිඩය සාර්ථකව ඉදිරිපත් කර ඇත.",
+  "failure": "ඔබේ පණිවිඩය යැවීමට නොහැකි විය. නැවත උත්සාහ කරන්න හෝ පහත සම්බන්ධතා තොරතුරු භාවිත කරන්න.",
+  "privacyLink": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය"
+},
+
+"preRegisterForm": {
+  "intro": "Pre-register your interest in classes. Enrolment is subject to approval before payment.",
+  "name": "Full name",
+  "email": "Email address",
+  "phone": "Phone number",
+  "role": "Who are you?",
+  "roles": {
+    "student": "Student",
+    "parent": "Parent / Guardian"
+  },
+  "district": "District",
+  "city": "City / town (optional)",
+  "classFormat": "Preferred class format",
+  "formats": {
+    "online": "Online",
+    "onsite": "Onsite / physical classes",
+    "either": "Either is suitable"
+  },
+  "grade": "Grade",
+  "al": "Advanced Level (A/L)",
+  "subjects": "Preferred subjects (select all that apply)",
+  "selectGradeFirst": "Select a grade to see the available subjects.",
+  "contactMethod": "Preferred contact method",
+  "methods": {
+    "whatsapp": "WhatsApp",
+    "phone": "Phone call",
+    "email": "Email"
+  },
+  "selectOption": "Select an option",
+  "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
+  "submit": "Submit pre-registration",
+  "sending": "Submitting...",
+  "required": "Please complete this field.",
+  "invalidEmail": "Enter a valid email address.",
+  "invalidPhone": "Enter a valid phone number.",
+  "consentRequired": "Please agree to the Privacy Policy before continuing.",
+  "success": "Your pre-registration has been submitted successfully.",
+  "failure": "We could not submit your pre-registration. Please try again or contact us using the details below.",
+  "privacyLink": "Privacy Policy"
+},
+
+"aboutPage": {
+  "introduction": "We are an educational institution committed to making knowledge, learning opportunities, and practical resources accessible to our community.",
+  "sections": {
+    "mission": {
+      "title": "Our Mission",
+      "description": "To support lifelong learning by providing accessible educational programmes, useful resources, and opportunities for personal development."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "To build a community where people can develop their knowledge, strengthen their abilities, and pursue meaningful opportunities."
+    },
+    "values": {
+      "title": "Our Values",
+      "description": "We value accessibility, integrity, respect, continuous improvement, and a commitment to the learning needs of our community."
+    }
+  }
+},
+
+"servicesPage": {
+  "introduction": "Explore the educational programmes, guidance, and learning resources available through our institute. The details below are sample content and will be updated to reflect our actual services.",
+  "items": {
+    "education": {
+      "title": "Educational Programmes",
+      "description": "Sample programmes designed to help learners develop knowledge, practical skills, and confidence."
+    },
+    "consultation": {
+      "title": "Guidance and Consultation",
+      "description": "Sample guidance services to help individuals identify learning goals and explore suitable opportunities."
+    },
+    "resources": {
+      "title": "Learning Resources",
+      "description": "Educational materials and reference resources to support independent study and continued learning."
+    }
+  }
+},
+
+"legalPage": {
+  "reviewNotice": "Draft content for review. Please confirm that this policy accurately describes the institute's actual practices before publication.",
+  "privacy": {
+    "introduction": "This draft explains how the institute intends to handle information associated with visits to this website and enquiries made through its forms. The final policy must be checked against the website's actual operation.",
+    "sections": {
+      "information": {
+        "title": "Information We May Collect",
+        "content": "Visitors may provide their name, email address, phone number, selected programme, and enquiry details when using our forms. Technical information may also be processed by the website hosting provider, depending on the hosting and analytics services enabled."
+      },
+      "usage": {
+        "title": "How Information Is Used",
+        "content": "Information may be used to respond to enquiries, follow up on programme interests, provide requested information, and maintain website security. The institute should document any additional purposes before collecting information for them."
+      },
+      "forms": {
+        "title": "Contact and Pre-registration Forms",
+        "content": "At present, the forms are demonstration interfaces. They validate entries in the visitor's browser but do not send the submitted details to the institute or save them in an institute database. This statement must be updated when server-side submission and email delivery are implemented."
+      },
+      "sharing": {
+        "title": "Sharing of Information",
+        "content": "The institute does not intend to sell visitors' personal information. If third-party hosting, email, analytics, or other services process information, the final policy should identify the relevant services and explain the applicable arrangements."
+      },
+      "security": {
+        "title": "Data Security and Retention",
+        "content": "Reasonable safeguards should be used to protect personal information. Retention periods, access controls, backup practices, and procedures for handling security incidents must be established and documented before the website begins collecting personal information."
+      },
+      "rights": {
+        "title": "Your Privacy Choices",
+        "content": "Depending on applicable law and the circumstances, visitors may have rights to request access to, correction of, or deletion of their personal information, or to object to certain processing. The institute should provide an appropriate process for handling such requests."
+      },
+      "contact": {
+        "title": "Contact Us About Privacy",
+        "content": "For privacy-related questions, contact the institute using the contact details published on this website. Replace this general statement with the institute's designated privacy contact before publication."
+      }
+    }
+  },
+  
+"terms": {
+  "introduction": "These draft terms describe the intended conditions for using the institute's website and public resources. They should be reviewed and approved before publication.",
+  "sections": {
+    "acceptance": {
+      "title": "Acceptance of These Terms",
+      "content": "By using this website, visitors are expected to use it lawfully and responsibly. The institute should confirm the final terms and how acceptance will be communicated before publication."
+    },
+    "websiteUse": {
+      "title": "Permitted Use",
+      "content": "Visitors may browse public pages and use available features for lawful purposes. Visitors must not attempt to disrupt the website, bypass access restrictions, interfere with other users, or misuse website content or services."
+    },
+    "resources": {
+      "title": "Educational Resources and Downloads",
+      "content": "Resource descriptions and access labels are provided to explain the materials offered. Free resources may be downloaded when the download feature is available. Resources marked as paid are not available for free download. Any future purchase, licence, or access conditions must be displayed clearly before payment or access is granted."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "content": "Unless otherwise stated, website text, branding, and educational materials may be protected by intellectual property laws. Visitors must obtain the appropriate permission before reproducing, redistributing, or commercially using protected materials, except where applicable law permits such use."
+    },
+    "accuracy": {
+      "title": "Information and Availability",
+      "content": "Website content may be updated, corrected, or removed. Sample text, sample programmes, and demonstration resources are illustrative only and should not be treated as confirmed institutional offerings."
+    },
+    "externalLinks": {
+      "title": "External Websites",
+      "content": "This website may link to third-party services or websites. The institute does not control their content or practices and should not be assumed to endorse them solely because a link is provided."
+    },
+    "liability": {
+      "title": "Limitations and Responsibilities",
+      "content": "The website is provided for general informational and educational purposes. Any limitations of responsibility must be drafted and reviewed in accordance with applicable law; this draft does not establish a legally enforceable exclusion of liability."
+    },
+    "changes": {
+      "title": "Changes to These Terms",
+      "content": "The institute may revise these terms when its website or services change. The published version should display an appropriate effective or last-updated date and explain how material changes will be communicated where necessary."
+    },
+    "contact": {
+      "title": "Questions About These Terms",
+      "content": "For questions about these terms, contact the institute using the contact details published on this website."
+    }
+  }
+}
+}
+}
+

@@ -1,0 +1,379 @@
+
+{
+  "site": {
+    "name": "Institute Name",
+    "tagline": "Education, knowledge and growth"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "services": "Find a Class",
+    "resources": "Resources",
+    "contact": "Contact",
+    "preregister": "Pre-register",
+    "openMenu": "Open navigation menu",
+    "mainNavigation": "Main navigation",
+    "selectLanguage": "Select language"
+  },
+  "footer": {
+    "description": "Supporting learning through education, guidance and accessible public resources.",
+    "addressLabel": "Address",
+    "address": "Jaffna, Sri Lanka",
+    "phoneLabel": "Phone",
+    "phone": "+94 11 234 5678",
+    "emailLabel": "Email",
+    "email": "info@example.org",
+    "quickLinks": "Quick links",
+    "legal": "Legal information",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "youtube": "YouTube channel",
+    "copyright": "All rights reserved."
+  },
+  "home": {
+    "eyebrow": "Welcome to TiT Education",
+    "title": "Learn, grow, and build your future.",
+    "description": "Discover our programmes, explore educational resources, and get in touch with our team.",
+    "servicesButton": "Explore our services",
+    "resourcesButton": "Browse resources",   
+    "servicesEyebrow": "WHAT WE OFFER",
+    "servicesHeading": "Tuition Classes for Every Learner",
+    "servicesDescription": "Explore on-site and online tuition across multiple subjects for Grades 1–11 and Advanced Level.",
+    "viewAllServices": "Explore Our Classes",
+    "serviceCards": {
+      "onsite": {
+        "title": "On-site Tuition",
+        "description": "Learn in a supportive classroom environment with in-person guidance."
+      },
+      "online": {
+        "title": "Online Classes",
+        "description": "Access tuition from wherever you are through online learning."
+      },
+      "grades": {
+        "title": "Grades 1–11 & Advanced Level",
+        "description": "Find tuition options for school students and Advanced Level learners."
+      }
+    },
+    "resourcesHeading": "Explore Our Resources",
+    "resourcesDescription": "Browse educational materials to support your learning and personal development.",
+    "ctaHeading": "Ready to Get Started?",
+    "ctaDescription": "Take the next step and register your interest in our programmes.",
+    "ctaButton": "Pre-register Now"
+
+  },  
+  "pages": {
+    "about": {
+      "title": "About Us",
+      "description": "Learn about our institute, our purpose, and our commitment to education."
+    },
+    "services": {
+      "title": "Find a Class",
+      "description": "Explore on-site and online tuition classes for Grades 1–11 and Advanced Level across a range of subjects."
+    },
+    "resources": {
+      "title": "Learning Resources",
+      "description": "Browse educational materials and learning resources available through our institute."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "description": "Have a question? Find our contact details and get in touch with our team."
+    },
+    "preregister": {
+      "title": "Pre-registration",
+      "description": "Register your interest in our programmes. Further details will be available here."
+    },
+    "privacy-policy": {
+      "title": "Privacy Policy",
+      "description": "Learn how we intend to handle personal information submitted through this website."
+    },
+    "terms-of-use": {
+      "title": "Terms of Use",
+      "description": "Review the general terms for using this website and its educational resources."
+    }
+  },
+"classDirectory": {
+  "eyebrow": "T.I.T. JAFFNA · TUITION CLASSES",
+  "heroTags": {
+    "onsite": "On-site tuition",
+    "online": "Online classes",
+    "subjects": "Multiple subjects"
+  },
+  "sectionEyebrow": "EXPLORE OUR CLASSES",
+  "heading": "Find a class",
+  "intro": "Filter by grade, subject, or learning format to find a suitable class.",
+  "filters": {
+    "grade": "Grade",
+    "allGrades": "All grades",
+    "subject": "Subject",
+    "allSubjects": "All subjects",
+    "format": "Class format",
+    "allFormats": "All formats",
+    "onsite": "On-site classes",
+    "online": "Online classes",
+    "reset": "Reset filters"
+  },
+  "results": {
+    "one": "class found",
+    "many": "classes found",
+    "onsiteFirst": "On-site classes appear first"
+  },
+  "badges": {
+    "onsite": "ON-SITE",
+    "online": "ONLINE"
+  },
+  "details": {
+    "schedule": "Schedule",
+    "teacher": "Teacher",
+    "location": "Location",
+    "format": "Format",
+    "fee": "Class fee"
+  },
+  "enquire": "Enquire about class",
+  "empty": {
+    "heading": "No matching classes yet",
+    "description": "We haven't added a class matching these filters. Try another selection or contact the institute for more information.",
+    "reset": "View all listed classes"
+  },
+  "grades": {
+    "grade": "Grade",
+    "advancedLevel": "Advanced Level"
+  },
+  "subjects": {
+    "english": "English",
+    "mathematics": "Mathematics",
+    "science": "Science",
+    "history": "History",
+    "tamil": "Tamil",
+    "sinhala": "Sinhala"
+  },
+  "classTitleSuffix": "Tuition Class",
+  "placeholders": {
+    "teacher": "Teacher to be confirmed",
+    "days": "Days to be confirmed",
+    "time": "Time to be confirmed",
+    "location": "Institute classroom",
+    "onlineLocation": "Online — platform to be confirmed",
+    "fee": "Contact for fees",
+    "availability": "To be confirmed",
+    "onlineAvailability": "Schedule to be confirmed"
+  },
+  "descriptions": {
+    "grade6Mathematics": "On-site Mathematics tuition for Grade 6 students.",
+    "grade8Science": "On-site Science tuition for Grade 8 students.",
+    "advancedLevelEnglishOnline": "Online English tuition for Advanced Level students."
+  }
+},
+  "shared": {
+    "sampleHeading": "More information coming soon",
+    "sampleText": "This section is a placeholder. We will add the institute's confirmed information and details in a later step.",
+    "backHome": "Return to Home"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "message": "Sorry, we couldn't find the page you were looking for. It may have moved or the address may be incorrect.",
+    "homeButton": "Return to Home"
+  },
+  
+"resourcesLibrary": {
+  "eyebrow": "Knowledge for everyone",
+  "title": "Resource Library",
+  "description": "Explore educational materials and practical learning resources.",
+  "searchLabel": "Search resources",
+  "searchPlaceholder": "Search by title or description...",
+  "categoryLabel": "Filter by category",
+  "allCategories": "All categories",
+  "categories": {
+    "study-skills": "Study skills",
+    "learning": "Learning",
+    "reference": "Reference materials"
+  },
+  "fileType": "File type",
+  "fileSize": "File size",
+  "free": "Free resource",
+  "paid": "Paid resource",
+  "viewDetails": "View details",
+  "noResults": "No resources match your search.",
+  "backToResources": "Back to resources",
+  "download": "Download resource",
+  "downloadUnavailable": "Downloads are not available yet.",
+  "paidNotice": "This resource requires payment. Online payment and access will be introduced later.",
+  "sampleNotice": "Sample catalogue content — actual resources will be added later."
+},
+
+"contactForm": {
+  "name": "Full name",
+  "email": "Email address",
+  "subject": "Subject",
+  "message": "Your message",
+  "namePlaceholder": "Enter your full name",
+  "emailPlaceholder": "you@example.com",
+  "subjectPlaceholder": "What is your enquiry about?",
+  "messagePlaceholder": "Write your message here...",
+  "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
+  "submit": "Send message",
+  "sending": "Sending...",
+  "required": "Please complete this field.",
+  "invalidEmail": "Enter a valid email address.",
+  "consentRequired": "Please agree to the Privacy Policy before continuing.",
+  "setupNotice": "Email delivery has not been configured yet. Your message has not been sent. Your entries will remain in the form.",
+  "success": "Your message has been submitted successfully.",
+  "failure": "We could not send your message. Please try again or contact us using the details below.",
+  "privacyLink": "Privacy Policy"
+},
+
+"preRegisterForm": {
+  "intro": "Pre-register your interest in classes. Enrolment is subject to approval before payment.",
+  "name": "Full name",
+  "email": "Email address",
+  "phone": "Phone number",
+  "role": "Who are you?",
+  "roles": {
+    "student": "Student",
+    "parent": "Parent / Guardian"
+  },
+  "district": "District",
+  "city": "City / town (optional)",
+  "classFormat": "Preferred class format",
+  "formats": {
+    "online": "Online",
+    "onsite": "Onsite / physical classes",
+    "either": "Either is suitable"
+  },
+  "grade": "Grade",
+  "al": "Advanced Level (A/L)",
+  "subjects": "Preferred subjects (select all that apply)",
+  "selectGradeFirst": "Select a grade to see the available subjects.",
+  "contactMethod": "Preferred contact method",
+  "methods": {
+    "whatsapp": "WhatsApp",
+    "phone": "Phone call",
+    "email": "Email"
+  },
+  "selectOption": "Select an option",
+  "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
+  "submit": "Submit pre-registration",
+  "sending": "Submitting...",
+  "required": "Please complete this field.",
+  "invalidEmail": "Enter a valid email address.",
+  "invalidPhone": "Enter a valid phone number.",
+  "consentRequired": "Please agree to the Privacy Policy before continuing.",
+  "success": "Your pre-registration has been submitted successfully.",
+  "failure": "We could not submit your pre-registration. Please try again or contact us using the details below.",
+  "privacyLink": "Privacy Policy"
+},
+
+"aboutPage": {
+  "introduction": "We are an educational institution committed to making knowledge, learning opportunities, and practical resources accessible to our community.",
+  "sections": {
+    "mission": {
+      "title": "Our Mission",
+      "description": "To support lifelong learning by providing accessible educational programmes, useful resources, and opportunities for personal development."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "To build a community where people can develop their knowledge, strengthen their abilities, and pursue meaningful opportunities."
+    },
+    "values": {
+      "title": "Our Values",
+      "description": "We value accessibility, integrity, respect, continuous improvement, and a commitment to the learning needs of our community."
+    }
+  }
+},
+
+"servicesPage": {
+  "introduction": "Explore the educational programmes, guidance, and learning resources available through our institute. The details below are sample content and will be updated to reflect our actual services.",
+  "items": {
+    "education": {
+      "title": "Educational Programmes",
+      "description": "Sample programmes designed to help learners develop knowledge, practical skills, and confidence."
+    },
+    "consultation": {
+      "title": "Guidance and Consultation",
+      "description": "Sample guidance services to help individuals identify learning goals and explore suitable opportunities."
+    },
+    "resources": {
+      "title": "Learning Resources",
+      "description": "Educational materials and reference resources to support independent study and continued learning."
+    }
+  }
+},
+
+"legalPage": {
+  "reviewNotice": "Draft content for review. Please confirm that this policy accurately describes the institute's actual practices before publication.",
+  "privacy": {
+    "introduction": "This draft explains how the institute intends to handle information associated with visits to this website and enquiries made through its forms. The final policy must be checked against the website's actual operation.",
+    "sections": {
+      "information": {
+        "title": "Information We May Collect",
+        "content": "Visitors may provide their name, email address, phone number, selected programme, and enquiry details when using our forms. Technical information may also be processed by the website hosting provider, depending on the hosting and analytics services enabled."
+      },
+      "usage": {
+        "title": "How Information Is Used",
+        "content": "Information may be used to respond to enquiries, follow up on programme interests, provide requested information, and maintain website security. The institute should document any additional purposes before collecting information for them."
+      },
+      "forms": {
+        "title": "Contact and Pre-registration Forms",
+        "content": "At present, the forms are demonstration interfaces. They validate entries in the visitor's browser but do not send the submitted details to the institute or save them in an institute database. This statement must be updated when server-side submission and email delivery are implemented."
+      },
+      "sharing": {
+        "title": "Sharing of Information",
+        "content": "The institute does not intend to sell visitors' personal information. If third-party hosting, email, analytics, or other services process information, the final policy should identify the relevant services and explain the applicable arrangements."
+      },
+      "security": {
+        "title": "Data Security and Retention",
+        "content": "Reasonable safeguards should be used to protect personal information. Retention periods, access controls, backup practices, and procedures for handling security incidents must be established and documented before the website begins collecting personal information."
+      },
+      "rights": {
+        "title": "Your Privacy Choices",
+        "content": "Depending on applicable law and the circumstances, visitors may have rights to request access to, correction of, or deletion of their personal information, or to object to certain processing. The institute should provide an appropriate process for handling such requests."
+      },
+      "contact": {
+        "title": "Contact Us About Privacy",
+        "content": "For privacy-related questions, contact the institute using the contact details published on this website. Replace this general statement with the institute's designated privacy contact before publication."
+      }
+    }
+  },
+  
+"terms": {
+  "introduction": "These draft terms describe the intended conditions for using the institute's website and public resources. They should be reviewed and approved before publication.",
+  "sections": {
+    "acceptance": {
+      "title": "Acceptance of These Terms",
+      "content": "By using this website, visitors are expected to use it lawfully and responsibly. The institute should confirm the final terms and how acceptance will be communicated before publication."
+    },
+    "websiteUse": {
+      "title": "Permitted Use",
+      "content": "Visitors may browse public pages and use available features for lawful purposes. Visitors must not attempt to disrupt the website, bypass access restrictions, interfere with other users, or misuse website content or services."
+    },
+    "resources": {
+      "title": "Educational Resources and Downloads",
+      "content": "Resource descriptions and access labels are provided to explain the materials offered. Free resources may be downloaded when the download feature is available. Resources marked as paid are not available for free download. Any future purchase, licence, or access conditions must be displayed clearly before payment or access is granted."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "content": "Unless otherwise stated, website text, branding, and educational materials may be protected by intellectual property laws. Visitors must obtain the appropriate permission before reproducing, redistributing, or commercially using protected materials, except where applicable law permits such use."
+    },
+    "accuracy": {
+      "title": "Information and Availability",
+      "content": "Website content may be updated, corrected, or removed. Sample text, sample programmes, and demonstration resources are illustrative only and should not be treated as confirmed institutional offerings."
+    },
+    "externalLinks": {
+      "title": "External Websites",
+      "content": "This website may link to third-party services or websites. The institute does not control their content or practices and should not be assumed to endorse them solely because a link is provided."
+    },
+    "liability": {
+      "title": "Limitations and Responsibilities",
+      "content": "The website is provided for general informational and educational purposes. Any limitations of responsibility must be drafted and reviewed in accordance with applicable law; this draft does not establish a legally enforceable exclusion of liability."
+    },
+    "changes": {
+      "title": "Changes to These Terms",
+      "content": "The institute may revise these terms when its website or services change. The published version should display an appropriate effective or last-updated date and explain how material changes will be communicated where necessary."
+    },
+    "contact": {
+      "title": "Questions About These Terms",
+      "content": "For questions about these terms, contact the institute using the contact details published on this website."
+    }
+  }
+}
+}
+}
