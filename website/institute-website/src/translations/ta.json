@@ -18,16 +18,16 @@
   "footer": {
     "description": "கல்வி, வழிகாட்டுதல் மற்றும் பொதுவான கற்றல் வளங்கள் மூலம் கற்றலை ஆதரிக்கிறோம்.",
     "addressLabel": "முகவரி",
-    "address": "123 எடுத்துக்காட்டு வீதி, கொழும்பு, இலங்கை",
+    "address": "யாழ்ப்பாணம், இலங்கை",
     "phoneLabel": "தொலைபேசி",
-    "phone": "+94 11 234 5678",
+    "phone": "+94 77 015 8446",
     "emailLabel": "மின்னஞ்சல்",
-    "email": "info@example.org",
+    "email": "admin@titjaffna.lk",
     "quickLinks": "விரைவு இணைப்புகள்",
     "legal": "சட்டத் தகவல்கள்",
     "privacy": "தனியுரிமைக் கொள்கை",
     "terms": "பயன்பாட்டு விதிமுறைகள்",
-    "youtube": "YouTube சேனல்",
+    "youtube": "YouTube Channel",
     "copyright": "அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை."
   },
   "home": {
@@ -35,10 +35,10 @@
     "title": "கற்று, வளர்ந்து, உங்கள் எதிர்காலத்தை உருவாக்குங்கள்.",
     "description": "எங்கள் நிகழ்ச்சிகளை அறிந்து, கல்வி வளங்களை ஆராய்ந்து, எங்கள் குழுவைத் தொடர்புகொள்ளுங்கள்.",
     "servicesButton": "எங்கள் சேவைகளைப் பாருங்கள்",
-    "servicesEyebrow": "WHAT WE OFFER",
-    "servicesHeading": "Tuition Classes for Every Learner",
-    "servicesDescription": "Explore on-site and online tuition across multiple subjects for Grades 1–11 and Advanced Level.",
-    "viewAllServices": "Explore Our Classes",
+    "servicesEyebrow": "நாங்கள் வழங்குபவை",
+    "servicesHeading": "ஒவ்வொரு மாணவருக்குமான பயிற்சி வகுப்புகள்",
+    "servicesDescription": "தரம் 1-11 மற்றும் உயர் தரத்திற்கான பல்வேறு பாடங்களிலான நேரடி மற்றும் இணையவழி பயிற்சி வகுப்புகளை ஆராயுங்கள்.",
+    "viewAllServices": "எமது வகுப்புகளை ஆராயுங்கள்",
     "serviceCards": {
       "onsite": {
         "title": "நேரடி வகுப்புகள்",
@@ -53,11 +53,11 @@
         "description": "பள்ளி மாணவர்களுக்கும் உயர்தர மாணவர்களுக்கும் பொருத்தமான வகுப்புகளைத் தேடுங்கள்."
       }
     },
-    "resourcesHeading": "Explore Our Resources",
-    "resourcesDescription": "Browse educational materials to support your learning and personal development.",
-    "ctaHeading": "Ready to Get Started?",
-    "ctaDescription": "Take the next step and register your interest in our programmes.",
-    "ctaButton": "Pre-register Now"
+    "resourcesHeading": "எமது கற்றல் வளங்களை ஆராயுங்கள்",
+    "resourcesDescription": "உங்கள் கற்றல் மற்றும் தனிப்பட்ட வளர்ச்சியை மேம்படுத்துவதற்கான கல்விப் பொருட்களைப் பார்வையிடுங்கள்.",
+    "ctaHeading": "தொடங்கத் தயாரா?",
+    "ctaDescription": "அடுத்த அடியை எடுத்து வைத்து, எமது பாடநெறிகளுக்கான உங்கள் ஆர்வத்தைப் பதிவுசெய்யுங்கள்.",
+    "ctaButton": "இப்பொழுதே முன்பதிவு செய்யுங்கள்"
 
   },
   
@@ -222,158 +222,156 @@
 },
 
 "preRegisterForm": {
-  "intro": "Pre-register your interest in classes. Enrolment is subject to approval before payment.",
-  "name": "Full name",
-  "email": "Email address",
-  "phone": "Phone number",
-  "role": "Who are you?",
+  "intro": "வகுப்புகளுக்கான உங்கள் ஆர்வத்தை முன்பதிவு செய்யுங்கள். சேர்க்கையானது கட்டணம் செலுத்துவதற்கு முன்னர் ஒப்புதலுக்கு உட்பட்டது.",
+  "name": "முழுப் பெயர்",
+  "email": "மின்னஞ்சல் முகவரி",
+  "phone": "தொலைபேசி எண்",
+  "role": "நீங்கள் ஒரு பெற்றோரா அல்லது மாணவரா?",
   "roles": {
-    "student": "Student",
-    "parent": "Parent / Guardian"
+    "student": "மாணவர்",
+    "parent": "பெற்றோர் / பாதுகாவலர்"
   },
-  "district": "District",
-  "city": "City / town (optional)",
-  "classFormat": "Preferred class format",
+  "district": "மாவட்டம்",
+  "city": "நகரம் / ஊர் (விருப்பத்திற்குரியது)",
+  "classFormat": "விரும்பும் வகுப்பு முறை",
   "formats": {
-    "online": "Online",
-    "onsite": "Onsite / physical classes",
-    "either": "Either is suitable"
+    "online": "இணையவழி (Online)",
+    "onsite": "நேரடி வகுப்புகள் (Physical)",
+    "either": "இரண்டில் எதுவும் பரவாயில்லை"
   },
-  "grade": "Grade",
-  "al": "Advanced Level (A/L)",
-  "subjects": "Preferred subjects (select all that apply)",
-  "selectGradeFirst": "Select a grade to see the available subjects.",
-  "contactMethod": "Preferred contact method",
+  "grade": "தரம்",
+  "al": "உயர்தரம் (A/L)",
+  "subjects": "விரும்பும் பாடங்கள் (பொருந்தக்கூடிய அனைத்தையும் தேர்ந்தெடுக்கவும்)",
+  "selectGradeFirst": "கிடைக்கக்கூடிய பாடங்களைக் காண முதலில் ஒரு தரத்தைத் தேர்ந்தெடுக்கவும்.",
+  "contactMethod": "தொடர்பு கொள்ள விரும்பும் முறை",
   "methods": {
-    "whatsapp": "WhatsApp",
-    "phone": "Phone call",
-    "email": "Email"
+    "whatsapp": "வாட்ஸ்அப் (WhatsApp)",
+    "phone": "தொலைபேசி அழைப்பு",
+    "email": "மின்னஞ்சல்"
   },
-  "selectOption": "Select an option",
-  "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
-  "submit": "Submit pre-registration",
-  "sending": "Submitting...",
-  "required": "Please complete this field.",
-  "invalidEmail": "Enter a valid email address.",
-  "invalidPhone": "Enter a valid phone number.",
-  "consentRequired": "Please agree to the Privacy Policy before continuing.",
-  "success": "Your pre-registration has been submitted successfully.",
-  "failure": "We could not submit your pre-registration. Please try again or contact us using the details below.",
-  "privacyLink": "Privacy Policy"
+  "selectOption": "ஒரு தேர்வைத் தேர்ந்தெடுக்கவும்",
+  "consent": "எனது தகவல்களைக் கையாளுவது தொடர்பான தனியுரிமைக் கொள்கையை நான் படித்து ஏற்றுக்கொள்கிறேன்.",
+  "submit": "முன்பதிவைச் சமர்ப்பிக்கவும்",
+  "sending": "சமர்ப்பிக்கப்படுகிறது...",
+  "required": "தயவுசெய்து இந்தப் புலத்தைப் பூர்த்தி செய்யவும்.",
+  "invalidEmail": "செல்லுபடியாகும் மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
+  "invalidPhone": "செல்லுபடியாகும் தொலைபேசி எண்ணை உள்ளிடவும்.",
+  "consentRequired": "தொடர்வதற்கு முன் தயவுசெய்து தனியுரிமைக் கொள்கையை ஏற்றுக்கொள்க.",
+  "success": "உங்கள் முன்பதிவு வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது.",
+  "failure": "உங்கள் முன்பதிவைச் சமர்ப்பிக்க முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும் அல்லது கீழே உள்ள விவரங்களைப் பயன்படுத்தி எங்களைத் தொடர்பு கொள்ளவும்.",
+  "privacyLink": "தனியுரிமைக் கொள்கை"
 },
 
 "aboutPage": {
-  "introduction": "We are an educational institution committed to making knowledge, learning opportunities, and practical resources accessible to our community.",
+  "introduction": "நாங்கள் எமது சமூகத்திற்கு அறிவு, கற்றல் வாய்ப்புகள் மற்றும் நடைமுறை வளங்களை எளிதில் அணுகக் கூடியதாக மாற்றுவதற்கு அர்ப்பணிக்கப்பட்ட ஓர் கல்வி நிறுவனமாவோம்.",
   "sections": {
     "mission": {
-      "title": "Our Mission",
-      "description": "To support lifelong learning by providing accessible educational programmes, useful resources, and opportunities for personal development."
+      "title": "எமது பணி",
+      "description": "எளிதில் அணுகக்கூடிய கல்வித் திட்டங்கள், பயனுள்ள வளங்கள் மற்றும் தனிப்பட்ட வளர்ச்சிக்கான வாய்ப்புகளை வழங்குவதன் மூலம் வாழ்நாள் முழுவதுமான கற்றலை ஆதரித்தல்."
     },
     "vision": {
-      "title": "Our Vision",
-      "description": "To build a community where people can develop their knowledge, strengthen their abilities, and pursue meaningful opportunities."
+      "title": "எமது தொலைநோக்கு",
+      "description": "மக்கள் தங்கள் அறிவை வளர்த்துக் கொள்ளவும், ஆற்றல்களை வலுப்படுத்தவும், அர்த்தமுள்ள வாய்ப்புகளைத் தொடரவும் கூடிய ஒரு சமூகத்தை உருவாக்குதல்."
     },
     "values": {
-      "title": "Our Values",
-      "description": "We value accessibility, integrity, respect, continuous improvement, and a commitment to the learning needs of our community."
+      "title": "எமது விழுமியங்கள்",
+      "description": "எளிதில் அணுகும் வசதி, நேர்மை, மரியாதை, தொடர்ச்சியான மேம்பாடு மற்றும் எமது சமூகத்தின் கற்றல் தேவைகளுக்கான அர்ப்பணிப்பு ஆகியவற்றை நாங்கள் முக்கிய விழுமியங்களாகக் கருதுகிறோம்."
     }
   }
 },
-
-"servicesPage": {
-  "introduction": "Explore the educational programmes, guidance, and learning resources available through our institute. The details below are sample content and will be updated to reflect our actual services.",
-  "items": {
-    "education": {
-      "title": "Educational Programmes",
-      "description": "Sample programmes designed to help learners develop knowledge, practical skills, and confidence."
-    },
-    "consultation": {
-      "title": "Guidance and Consultation",
-      "description": "Sample guidance services to help individuals identify learning goals and explore suitable opportunities."
-    },
-    "resources": {
-      "title": "Learning Resources",
-      "description": "Educational materials and reference resources to support independent study and continued learning."
+  "servicesPage": {
+    "introduction": "எமது நிறுவனத்தின் மூலம் கிடைக்கக்கூடிய கல்வித் திட்டங்கள், வழிகாட்டுதல்கள் மற்றும் கற்றல் வளங்களை ஆராயுங்கள். கீழே உள்ள விவரங்கள் மாதிரிக்காக வழங்கப்பட்டவை, அவை எமது உண்மையான சேவைகளைப் பிரதிபலிக்கும் வகையில் யாவற்றிலும் புதுப்பிக்கப்படும்.",
+    "items": {
+      "education": {
+        "title": "கல்வித் திட்டங்கள்",
+        "description": "கற்போரின் அறிவு, நடைமுறைத் திறன்கள் மற்றும் நம்பிக்கையை வளர்க்க வடிவமைக்கப்பட்ட மாதிரித் திட்டங்கள்."
+      },
+      "consultation": {
+        "title": "வழிகாட்டல் மற்றும் ஆலோசனை",
+        "description": "நபர்கள் தங்களது கற்றல் இலக்குகளை அடையாளம் காணவும் பொருத்தமான வாய்ப்புகளை ஆராயவும் உதவும் மாதிரி வழிகாட்டல் சேவைகள்."
+      },
+      "resources": {
+        "title": "கற்றல் வளங்கள்",
+        "description": "சுய கற்றல் மற்றும் தொடர்ச்சியான படிப்பை ஆதரிப்பதற்கான கல்விப் பொருட்கள் மற்றும் குறிப்பு வளங்கள்."
+      }
     }
-  }
-},
-
-"legalPage": {
-  "reviewNotice": "Draft content for review. Please confirm that this policy accurately describes the institute's actual practices before publication.",
-  "privacy": {
-    "introduction": "This draft explains how the institute intends to handle information associated with visits to this website and enquiries made through its forms. The final policy must be checked against the website's actual operation.",
-    "sections": {
-      "information": {
-        "title": "Information We May Collect",
-        "content": "Visitors may provide their name, email address, phone number, selected programme, and enquiry details when using our forms. Technical information may also be processed by the website hosting provider, depending on the hosting and analytics services enabled."
-      },
-      "usage": {
-        "title": "How Information Is Used",
-        "content": "Information may be used to respond to enquiries, follow up on programme interests, provide requested information, and maintain website security. The institute should document any additional purposes before collecting information for them."
-      },
-      "forms": {
-        "title": "Contact and Pre-registration Forms",
-        "content": "At present, the forms are demonstration interfaces. They validate entries in the visitor's browser but do not send the submitted details to the institute or save them in an institute database. This statement must be updated when server-side submission and email delivery are implemented."
-      },
-      "sharing": {
-        "title": "Sharing of Information",
-        "content": "The institute does not intend to sell visitors' personal information. If third-party hosting, email, analytics, or other services process information, the final policy should identify the relevant services and explain the applicable arrangements."
-      },
-      "security": {
-        "title": "Data Security and Retention",
-        "content": "Reasonable safeguards should be used to protect personal information. Retention periods, access controls, backup practices, and procedures for handling security incidents must be established and documented before the website begins collecting personal information."
-      },
-      "rights": {
-        "title": "Your Privacy Choices",
-        "content": "Depending on applicable law and the circumstances, visitors may have rights to request access to, correction of, or deletion of their personal information, or to object to certain processing. The institute should provide an appropriate process for handling such requests."
-      },
-      "contact": {
-        "title": "Contact Us About Privacy",
-        "content": "For privacy-related questions, contact the institute using the contact details published on this website. Replace this general statement with the institute's designated privacy contact before publication."
+  },
+  "legalPage": {
+    "reviewNotice": "மதிப்பாய்விற்கான மாதிரி உள்ளடக்கம். வெளியிடுவதற்கு முன் இந்தத் தளக் கொள்கையானது நிறுவனத்தின் உண்மையான நடைமுறைகளைத் துல்லியமாக விவரிக்கிறதா என்பதை உறுதிப்படுத்தவும்.",
+    "privacy": {
+      "introduction": "இந்த இணையதளத்திற்கு வருகை தருவது மற்றும் படிவங்கள் மூலமாக மேற்கொள்ளப்படும் விசாரணைகளுடன் தொடர்புடைய தகவல்களை நிறுவனம் எவ்வாறு கையாள உத்தேசித்துள்ளது என்பதை இந்த மாதிரி அறிக்கை விவரிக்கிறது. இறுதித் தனியுரிமைக் கொள்கையானது இணையதளத்தின் உண்மையான செயல்பாட்டுடன் சரிபார்க்கப்பட வேண்டும்.",
+      "sections": {
+        "information": {
+          "title": "நாங்கள் சேகரிக்கக்கூடிய தகவல்கள்",
+          "content": "எமது படிவங்களைப் பயன்படுத்தும் போது பார்வையாளர்கள் தங்களது பெயர், மின்னஞ்சல் முகவரி, தொலைபேசி எண், தேர்ந்தெடுக்கப்பட்ட பாடநெறி மற்றும் விசாரணை விவரங்களை வழங்கலாம். இணையதளத்தை ஹோஸ்ட் செய்யும் சேவை வழங்குநரால், இயக்கப்பட்ட பகுப்பாய்வு சேவைகளைப் பொறுத்து தொழில்நுட்பத் தகவல்களும் செயலாக்கப்படலாம்."
+        },
+        "usage": {
+          "title": "தகவல்கள் எவ்வாறு பயன்படுத்தப்படுகின்றன",
+          "content": "விசாரணைகளுக்குப் பதிலளிக்கவும், பாடநெறி ஆர்வங்களைப் பின்தொடரவும், கோரப்பட்ட தகவல்களை வழங்கவும், இணையதளப் பாதுகாப்பைப் பராமரிக்கவும் தகவல்கள் பயன்படுத்தப்படலாம். தகவல்களைச் சேகரிப்பதற்கு முன், ஏதேனும் கூடுதல் நோக்கங்கள் இருந்தால் நிறுவனம் ஆவணப்படுத்த வேண்டும்."
+        },
+        "forms": {
+          "title": "தொடர்பு மற்றும் முன்-பதிவுப் படிவங்கள்",
+          "content": "தற்போது, இந்தப் படிவங்கள் மாதிரி இடைமுகங்களாக மட்டுமே உள்ளன. அவை பார்வையாளரின் உலாவிக்குள்ளேயே (browser) உள்ளீடுகளைச் சரிபார்க்கின்றன, ஆனால் சமர்ப்பிக்கப்பட்ட விவரங்களை நிறுவனத்திற்கு அனுப்பவோ நிறுவனத்தின் தரவுத்தளத்தில் (database) சேமிக்கவோ செய்யாது. சேவையக அடிப்படையிலான சமர்ப்பிப்பு மற்றும் மின்னஞ்சல் அனுப்புதல் செயல்படுத்தப்படும் போது இந்த அறிக்கை புதுப்பிக்கப்பட வேண்டும்."
+        },
+        "sharing": {
+          "title": "தகவல்களைப் பகிர்ந்துகொள்ளுதல்",
+          "content": "பார்வையாளர்களின் தனிப்பட்ட தகவல்களை விற்க நிறுவனம் உத்தேசிக்கவில்லை. மூன்றாம் தரப்பு ஹோஸ்டிங், மின்னஞ்சல், பகுப்பாய்வு அல்லது பிற சேவைகள் தகவல்களைச் செயலாக்கினால், இறுதி கொள்கை தொடர்புடைய சேவைகளைக் கண்டறிந்து பொருந்தக்கூடிய ஏற்பாடுகளை விளக்க வேண்டும்."
+        },
+        "security": {
+          "title": "தரவுப் பாதுகாப்பு மற்றும் தக்கவைப்பு",
+          "content": "தனிப்பட்ட தகவல்களைப் பாதுகாக்க நியாயமான பாதுகாப்பு நடவடிக்கைகள் பயன்படுத்தப்பட வேண்டும். இணையதளம் தனிப்பட்ட தகவல்களைச் சேகரிக்கத் தொடங்கும் முன், தரவு தக்கவைப்புக் காலங்கள், அணுகல் கட்டுப்பாடுகள், காப்புப்பிரதி (backup) நடைமுறைகள் மற்றும் பாதுகாப்புச் சம்பவங்களைக் കൈையாள்வதற்கான நடைமுறைகள் நிறுவப்பட்டு ஆவணப்படுத்தப்பட வேண்டும்."
+        },
+        "rights": {
+          "title": "உங்கள் தனியுரிமைத் தேர்வுகள்",
+          "content": "பொருந்தக்கூடிய சட்டம் மற்றும் சூழ்நிலைகளைப் பொறுத்து, பார்வையாளர்கள் தங்களது தனிப்பட்ட தகவல்களை அணுகுவதற்கோ, திருத்துவதற்கோ அல்லது நீக்குவதற்கோ கோருவதற்கும், அல்லது சில செயலாக்கங்களுக்கு எதிர்ப்புத் தெரிவிப்பதற்கும் உரிமைகளைக் கொண்டிருக்கலாம். இதுபோன்ற கோரிக்கைகளைக் கையாள்வதற்கு நிறுவனம் பொருத்தமான செயல்முறையை வழங்க வேண்டும்."
+        },
+        "contact": {
+          "title": "தனியுரிமை பற்றி எங்களைத் தொடர்பு கொள்ளவும்",
+          "content": "தனியுரிமை தொடர்பான கேள்விகளுக்கு, இந்த இணையதளத்தில் வெளியிடப்பட்டுள்ள தொடர்பு விவரங்களைப் பயன்படுத்தி நிறுவனத்தைத் தொடர்பு கொள்ளவும். வெளியிடுவதற்கு முன் இந்த பொதுவான அறிக்கையை நிறுவனத்தின் நியமிக்கப்பட்ட தனியுரிமை தொடர்பு விவரங்களுடன் மாற்றவும்."
+        }
       }
     }
   },
   
 "terms": {
-  "introduction": "These draft terms describe the intended conditions for using the institute's website and public resources. They should be reviewed and approved before publication.",
+  "introduction": "இந்தக் කෙட்டெழுத்து நிபந்தனைகள் நிறுவனத்தின் இணையதளம் மற்றும் பொது வளங்களைப் பயன்படுத்துவதற்கான உத்தேசிக்கப்பட்ட நிபந்தனைகளை விவரிக்கின்றன. வெளியிடுவதற்கு முன் இவை மதிப்பாய்வு செய்யப்பட்டு அங்கீகரிக்கப்பட வேண்டும்.",
   "sections": {
     "acceptance": {
-      "title": "Acceptance of These Terms",
-      "content": "By using this website, visitors are expected to use it lawfully and responsibly. The institute should confirm the final terms and how acceptance will be communicated before publication."
+      "title": "இந்த நிபந்தனைகளை ஏற்றுக்கொள்ளுதல்",
+      "content": "இந்த இணையதளத்தைப் பயன்படுத்துவதன் மூலம், பார்வையாளர்கள் அதனைச் சட்டப்பூர்வமாகவும் பொறுப்புடனும் பயன்படுத்துவார்கள் என்று எதிர்பார்க்கப்படுகிறது. வெளியிடுவதற்கு முன் இறுதி நிபந்தனைகளையும், ஏற்பு எவ்வாறு தெரிவிக்கப்படும் என்பதையும் நிறுவனம் உறுதிப்படுத்த வேண்டும்."
     },
     "websiteUse": {
-      "title": "Permitted Use",
-      "content": "Visitors may browse public pages and use available features for lawful purposes. Visitors must not attempt to disrupt the website, bypass access restrictions, interfere with other users, or misuse website content or services."
+      "title": "அனுமதிக்கப்பட்ட பயன்பாடு",
+      "content": "பார்வையாளர்கள் பொதுப் பக்கங்களை உலாவுவதற்கும், சட்டப்பூர்வமான நோக்கங்களுக்காகக் கிடைக்கும் அம்சங்களைப் பயன்படுத்துவதற்கும் அனுமதி உண்டு. பார்வையாளர்கள் இணையதளத்திற்கு இடையூறு விளைவிக்கவோ, அணுகல் கட்டுப்பாடுகளைத் தவிர்க்கவோ, பிற பயனர்களுக்குத் தடை ஏற்படுத்தவோ, அல்லது இணையதள உள்ளடக்கத்தையோ சேவைகளையோ தவறாகப் பயன்படுத்தவோ முயற்சிக்கக் கூடாது."
     },
     "resources": {
-      "title": "Educational Resources and Downloads",
-      "content": "Resource descriptions and access labels are provided to explain the materials offered. Free resources may be downloaded when the download feature is available. Resources marked as paid are not available for free download. Any future purchase, licence, or access conditions must be displayed clearly before payment or access is granted."
+      "title": "கல்வி வளங்கள் மற்றும் பதிவிறக்கங்கள் (Downloads)",
+      "content": "வழங்கப்படும் பொருட்களை விளக்குவதற்காக வளங்களின் விவரங்களும் அணுகல் லேபிள்களும் வழங்கப்பட்டுள்ளன. பதிவிறக்க அம்சம் கிடைக்கும் போது இலவச வளங்களைப் பதிவிறக்கம் செய்து கொள்ளலாம். கட்டணம் செலுத்தப்பட்டவை எனக் குறிக்கப்பட்ட வளங்கள் இலவசமாகப் பதிவிறக்கம் செய்யக் கிடைக்காது. எதிர்காலத்தில் மேற்கொள்ளப்படும் எந்தவொரு கொள்முதல், உரிமம் அல்லது அணுகல் நிபந்தனைகளும் கட்டணம் செலுத்துவதற்கு அல்லது அணுகல் வழங்குவதற்கு முன்பாகத் தெளிவாகக் காட்டப்பட வேண்டும்."
     },
     "intellectualProperty": {
-      "title": "Intellectual Property",
-      "content": "Unless otherwise stated, website text, branding, and educational materials may be protected by intellectual property laws. Visitors must obtain the appropriate permission before reproducing, redistributing, or commercially using protected materials, except where applicable law permits such use."
+      "title": "அறிவுசார் சொத்துரிமை",
+      "content": "வேறுவிதமாகக் குறிப்பிடப்பட்டாலன்றி, இணையதளத்தின் உரை, பிராண்டிங் மற்றும் கல்விப் பொருட்கள் அறிவுசார் சொத்துரிமைச் சட்டங்களால் பாதுகாக்கப்படலாம். பொருந்தக்கூடிய சட்டம் அத்தகைய பயன்பாட்டை அனுமதிக்கும் சந்தர்ப்பங்களைத் தவிர, பாதுகாக்கப்பட்ட பொருட்களை நகலெடுக்க, மறுபகிர்வு செய்ய அல்லது வணிக ரீதியாகப் பயன்படுத்துவதற்கு முன்பு பார்வையாளர்கள் உரிய அனுமதியைப் பெற வேண்டும்."
     },
     "accuracy": {
-      "title": "Information and Availability",
-      "content": "Website content may be updated, corrected, or removed. Sample text, sample programmes, and demonstration resources are illustrative only and should not be treated as confirmed institutional offerings."
+      "title": "தத்தகவல்களும் கிடைக்கும் தன்மையும்",
+      "content": "இணையதள உள்ளடக்கம் புதுப்பிக்கப்படலாம், திருத்தப்படலாம் அல்லது நீக்கப்படலாம். மாதிரி உரைகள், மாதிரித் திட்டங்கள் மற்றும் ஆர்ப்பாட்ட வளங்கள் விளக்க நோக்கங்களுக்காக மட்டுமே தவிர, அவை உறுதிப்படுத்தப்பட்ட நிறுவனத் தரப்பினரின் சலுகைகளாகக் கருதப்படக் கூடாது."
     },
     "externalLinks": {
-      "title": "External Websites",
-      "content": "This website may link to third-party services or websites. The institute does not control their content or practices and should not be assumed to endorse them solely because a link is provided."
+      "title": "வெளிப்புற இணையதளங்கள்",
+      "content": "இந்த இணையதளம் மூன்றாம் தரப்பு சேவைகள் அல்லது இணையதளங்களுடன் இணைக்கப்பட்டிருக்கலாம். நிறுவனம் அவற்றின் உள்ளடக்கம் அல்லது நடைமுறைகளைக் கட்டுப்படுத்தாது, மேலும் ஒரு இணைப்பு வழங்கப்பட்டுள்ளது என்பதற்காக மட்டுமே அவற்றை ஆமோதிக்கிறது என்று கருதக்கூடாது."
     },
     "liability": {
-      "title": "Limitations and Responsibilities",
-      "content": "The website is provided for general informational and educational purposes. Any limitations of responsibility must be drafted and reviewed in accordance with applicable law; this draft does not establish a legally enforceable exclusion of liability."
+      "title": "வரம்புகளும் பொறுப்புகளும்",
+      "content": "இந்த இணையதளம் பொதுவான தகவல் மற்றும் கல்வி நோக்கங்களுக்காக மட்டுமே வழங்கப்படுகிறது. பொருந்தக்கூடிய சட்டத்திற்கு இணங்க எந்தவொரு பொறுப்பு வரம்புகளும் வரைவு செய்யப்பட்டு மதிப்பாய்வு செய்யப்பட வேண்டும்; இந்த வரைவு சட்டப்பூர்வமாக நடைமுறைப்படுத்தக்கூடிய பொறுப்பு விலக்கை உருவாக்கவில்லை."
     },
     "changes": {
-      "title": "Changes to These Terms",
-      "content": "The institute may revise these terms when its website or services change. The published version should display an appropriate effective or last-updated date and explain how material changes will be communicated where necessary."
+      "title": "இந்த நிபந்தனைகளில் செய்யப்படும் மாற்றங்கள்",
+      "content": "நிறுவனத்தின் இணையதளம் அல்லது சேவைகள் மாறும்போது நிறுவனம் இந்த நிபந்தனைகளைத் திருத்தலாம். வெளியிடப்பட்ட பதிப்பானது பொருத்தமான நடைமுறை அல்லது கடைசியாகப் புதுப்பிக்கப்பட்ட தேதியைக் காட்ட வேண்டும் மற்றும் அவசியமான இடங்களில் பொருள்சார் மாற்றங்கள் எவ்வாறு தெரிவிக்கப்படும் என்பதை விளக்க வேண்டும்."
     },
     "contact": {
-      "title": "Questions About These Terms",
-      "content": "For questions about these terms, contact the institute using the contact details published on this website."
+      "title": "இந்த நிபந்தனைகள் பற்றிய கேள்விகள்",
+      "content": "இந்த நிபந்தனைகள் குறித்த கேள்விகளுக்கு, இந்த இணையதளத்தில் வெளியிடப்பட்டுள்ள தொடர்பு விவரங்களைப் பயன்படுத்தி நிறுவனத்தைத் தொடர்பு கொள்ளவும்."
     }
   }
-}
 }
 }

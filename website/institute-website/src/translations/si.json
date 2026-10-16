@@ -18,16 +18,16 @@
   "footer": {
     "description": "අධ්‍යාපනය, මඟපෙන්වීම සහ පොදු ඉගෙනුම් සම්පත් මඟින් ඉගෙනීම දිරිමත් කරමු.",
     "addressLabel": "ලිපිනය",
-    "address": "123 උදාහරණ වීදිය, කොළඹ, ශ්‍රී ලංකාව",
+    "address": "යාපනය, ශ්‍රී ලංකාව",
     "phoneLabel": "දුරකථනය",
-    "phone": "+94 11 234 5678",
+    "phone": "+94 77 015 8446",
     "emailLabel": "විද්‍යුත් තැපෑල",
-    "email": "info@example.org",
+    "email": "admin@titjaffna.lk",
     "quickLinks": "ඉක්මන් සබැඳි",
     "legal": "නීතිමය තොරතුරු",
     "privacy": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
     "terms": "භාවිත නියමයන්",
-    "youtube": "YouTube නාලිකාව",
+    "youtube": "YouTube Channel",
     "copyright": "සියලු හිමිකම් ඇවිරිණි."
   },
   "home": {
@@ -36,10 +36,10 @@
     "description": "අපගේ වැඩසටහන් හඳුනාගෙන, අධ්‍යාපනික සම්පත් ගවේෂණය කර, අපගේ කණ්ඩායම අමතන්න.",
     "servicesButton": "අපගේ සේවාවන් බලන්න",
     "resourcesButton": "සම්පත් බලන්න",
-    "servicesEyebrow": "WHAT WE OFFER",
-    "servicesHeading": "Tuition Classes for Every Learner",
-    "servicesDescription": "Explore on-site and online tuition across multiple subjects for Grades 1–11 and Advanced Level.",
-    "viewAllServices": "Explore Our Classes",
+    "servicesEyebrow": "අපගේ පාඨමාලා",
+    "servicesHeading": "සෑම සිසුවෙකුටම උපකාරක පන්ති",
+    "servicesDescription": "1 සිට 11 ශ්‍රේණි සහ උසස් පෙළ සඳහා විෂයයන් රැසක් ආවරණය වන උපකාරක පන්ති සොයා බලන්න.",
+    "viewAllServices": "අපගේ පන්ති ගවේෂණය කරන්න",
     "serviceCards": {
       "onsite": {
         "title": "ස්ථානීය පන්ති",
@@ -54,11 +54,11 @@
         "description": "පාසල් සිසුන්ට සහ උසස් පෙළ සිසුන්ට ගැළපෙන පන්ති සොයා ගන්න."
       }
     },
-    "resourcesHeading": "Explore Our Resources",
-    "resourcesDescription": "Browse educational materials to support your learning and personal development.",
-    "ctaHeading": "Ready to Get Started?",
-    "ctaDescription": "Take the next step and register your interest in our programmes.",
-    "ctaButton": "Pre-register Now"
+    "resourcesHeading": "අපගේ සම්පත් ගවේෂණය කරන්න",
+    "resourcesDescription": "ඔබේ ඉගෙනීමට සහ පෞද්ගලික සංවර්ධනයට සහාය වන අධ්‍යාපනික ද්‍රව්‍ය ගවේෂණය කරන්න.",
+    "ctaHeading": "ආරම්භ කිරීමට සූදානම්ද?",
+    "ctaDescription": "ඊළඟ පියවර ගෙන අපගේ වැඩසටහන් සඳහා ලියාපදිංචි වන්න.",
+    "ctaButton": "දැන්ම ලියාපදිංචි වන්න"
 
   },
   
@@ -223,159 +223,161 @@
 },
 
 "preRegisterForm": {
-  "intro": "Pre-register your interest in classes. Enrolment is subject to approval before payment.",
-  "name": "Full name",
-  "email": "Email address",
-  "phone": "Phone number",
-  "role": "Who are you?",
+  "intro": "පන්ති සඳහා ඔබේ කැමැත්ත කල්තියා ලියාපදිංචි කරන්න. ගෙවීම් සිදු කිරීමට පෙර, ඇතුළත් වීම අනුමැතියට යටත් වේ.",
+  "name": "සම්පූර්ණ නම",
+  "email": "ඊතැපැල් ලිපිනය",
+  "phone": "දුරකථන අංකය",
+  "role": "ඔබ ශිෂ්‍යයෙක්ද නැතහොත් දෙමාපියෙක්ද?",
   "roles": {
-    "student": "Student",
-    "parent": "Parent / Guardian"
+    "student": "ශිෂ්‍යයා",
+    "parent": "දෙමාපිය/භාරකරු"
   },
-  "district": "District",
-  "city": "City / town (optional)",
-  "classFormat": "Preferred class format",
+
+  "district": "දිස්ත්‍රික්කය",
+  "city": "නගරය / ප්‍රදේශය (විකල්පයකි)",
+  "classFormat": "අභිමත පන්ති ආකෘතිය",
   "formats": {
-    "online": "Online",
-    "onsite": "Onsite / physical classes",
-    "either": "Either is suitable"
+    "online": "මාර්ගගත පන්ති",
+    "onsite": "භෞතික පන්ති (පන්ති ස්ථානයේදී)",
+    "either": "ඕනෑම ආකාරයක පන්තියක් සුදුසුය"
   },
-  "grade": "Grade",
-  "al": "Advanced Level (A/L)",
-  "subjects": "Preferred subjects (select all that apply)",
-  "selectGradeFirst": "Select a grade to see the available subjects.",
-  "contactMethod": "Preferred contact method",
+  "grade": "ශ්‍රේණිය",
+  "al": "උසස් පෙළ (A/L)",
+  "subjects": "අභිමත විෂයයන් (අදාළ සියල්ල තෝරන්න)",
+  "selectGradeFirst": "ලබා ගත හැකි විෂයයන් බැලීමට පළමුව ශ්‍රේණියක් තෝරන්න.",
+  "contactMethod": "අභිමත සම්බන්ධතා ක්‍රමය",
   "methods": {
     "whatsapp": "WhatsApp",
-    "phone": "Phone call",
-    "email": "Email"
-  },
-  "selectOption": "Select an option",
-  "consent": "I have read and agree to the Privacy Policy regarding the handling of my information.",
-  "submit": "Submit pre-registration",
-  "sending": "Submitting...",
-  "required": "Please complete this field.",
-  "invalidEmail": "Enter a valid email address.",
-  "invalidPhone": "Enter a valid phone number.",
-  "consentRequired": "Please agree to the Privacy Policy before continuing.",
-  "success": "Your pre-registration has been submitted successfully.",
-  "failure": "We could not submit your pre-registration. Please try again or contact us using the details below.",
-  "privacyLink": "Privacy Policy"
+    "phone": "දුරකථන ඇමතුම",
+    "email": "විද්‍යුත් තැපෑල"
+  }
 },
+  "selectOption": "විකල්පයක් තෝරන්න",
+  "consent": "මගේ තොරතුරු හසුරුවන ආකාරය පිළිබඳ රහස්‍යතා ප්‍රතිපත්තිය කියවා එයට එකඟ වෙමි.",
+  "submit": "පූර්ව ලියාපදිංචිය ඉදිරිපත් කරන්න",
+  "sending": "ඉදිරිපත් කරමින්...",
+  "required": "කරුණාකර මෙම ක්ෂේත්‍රය පුරවන්න.",
+  "invalidEmail": "කරුණාකර නිවැරදි විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
+  "invalidPhone": "කරුණාකර නිවැරදි දුරකථන අංකයක් ඇතුළත් කරන්න.",
+  "consentRequired": "ඉදිරියට යාමට පෙර කරුණාකර රහස්‍යතා ප්‍රතිපත්තියට එකඟ වන්න.",
+  "success": "ඔබගේ පූර්ව ලියාපදිංචිය සාර්ථකව ඉදිරිපත් කර ඇත.",
+  "failure": "ඔබගේ පූර්ව ලියාපදිංචිය ඉදිරිපත් කිරීමට නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න, නැතහොත් පහත සඳහන් විස්තර භාවිතයෙන් අප හා සම්බන්ධ වන්න.",
+  "privacyLink": "රහස්‍යතා ප්‍රතිපත්තිය"
+,
 
 "aboutPage": {
-  "introduction": "We are an educational institution committed to making knowledge, learning opportunities, and practical resources accessible to our community.",
+  "introduction": "අපගේ ප්‍රජාවට දැනුම, ඉගෙනුම් අවස්ථා සහ ප්‍රායෝගික සම්පත් පහසුවෙන් ලබාගත හැකි වන පරිදි කටයුතු කිරීමට කැපවී සිටින අධ්‍යාපන ආයතනයක් අපි වෙමු.",
   "sections": {
     "mission": {
-      "title": "Our Mission",
-      "description": "To support lifelong learning by providing accessible educational programmes, useful resources, and opportunities for personal development."
+      "title": "අපගේ මෙහෙවර",
+      "description": "පහසුවෙන් ප්‍රවේශ විය හැකි අධ්‍යාපනික වැඩසටහන්, ප්‍රයෝජනවත් සම්පත් සහ පෞද්ගලික සංවර්ධනය සඳහා අවස්ථා ලබා දෙමින් ජීවිත කාලය පුරා අඛණ්ඩ ඉගෙනුමට සහාය වීම."
     },
     "vision": {
-      "title": "Our Vision",
-      "description": "To build a community where people can develop their knowledge, strengthen their abilities, and pursue meaningful opportunities."
+      "title": "අපගේ දැක්ම",
+      "description": "මිනිසුන්ට තම දැනුම වර්ධනය කර ගැනීමටත්, හැකියාවන් ශක්තිමත් කර ගැනීමටත්, අර්ථවත් අවස්ථා කරා ගමන් කිරීමටත් හැකි ප්‍රජාවක් ගොඩනැගීම."
     },
     "values": {
-      "title": "Our Values",
-      "description": "We value accessibility, integrity, respect, continuous improvement, and a commitment to the learning needs of our community."
+      "title": "අපගේ වටිනාකම්",
+      "description": "ප්‍රවේශ පහසුව, අවංකභාවය, අන්‍යෝන්‍ය ගෞරවය, අඛණ්ඩ වැඩිදියුණු කිරීම සහ අපගේ ප්‍රජාවේ ඉගෙනුම් අවශ්‍යතා වෙනුවෙන් කැපවීම අපි අගය කරමු."
     }
   }
 },
 
 "servicesPage": {
-  "introduction": "Explore the educational programmes, guidance, and learning resources available through our institute. The details below are sample content and will be updated to reflect our actual services.",
+  "introduction": "අපගේ ආයතනය මගින් පිරිනමනු ලබන අධ්‍යාපනික වැඩසටහන්, උපදෙස් සහ අධ්‍යයන සම්පත් පිළිබඳව ගවේෂණය කරන්න. පහත දක්වා ඇත්තේ ආදර්ශවත් අන්තර්ගතයන් වන අතර, අපගේ සැබෑ සේවාවන් නිරූපණය වන පරිදි මේවා යාවත්කාලීන කරනු ලැබේ.",
   "items": {
     "education": {
-      "title": "Educational Programmes",
-      "description": "Sample programmes designed to help learners develop knowledge, practical skills, and confidence."
+      "title": "අධ්‍යාපනික වැඩසටහන්",
+      "description": "ලබාගන්නන්ගේ දැනුම, ප්‍රායෝගික කුසලතා සහ විශ්වාසය වර්ධනය කිරීම සඳහා නිර්මාණය කරන ලද ආදර්ශවත් වැඩසටහන්."
     },
     "consultation": {
-      "title": "Guidance and Consultation",
-      "description": "Sample guidance services to help individuals identify learning goals and explore suitable opportunities."
+      "title": "මගපෙන්වීම සහ උපදේශනය",
+      "description": "පුද්ගලයන්ට තම අධ්‍යයන ඉලක්ක හඳුනා ගැනීමට සහ සුදුසු අවස්ථාවන් ගවේෂණය කිරීමට උපකාර වන ආදර්ශවත් මගපෙන්වීමේ සේවාවන්."
     },
     "resources": {
-      "title": "Learning Resources",
-      "description": "Educational materials and reference resources to support independent study and continued learning."
+      "title": "අධ්‍යයන සම්පත්",
+      "description": "ස්වයං අධ්‍යයනයට සහ අඛණ්ඩ ඉගෙනීමට උපකාර වන අධ්‍යාපනික ද්‍රව්‍ය සහ ආශ්‍රිත සම්පත්."
     }
   }
 },
 
 "legalPage": {
-  "reviewNotice": "Draft content for review. Please confirm that this policy accurately describes the institute's actual practices before publication.",
+  "reviewNotice": "සමලෝචනය සඳහා වන කෙටුම්පත් අන්තර්ගතය. ප්‍රකාශනය කිරීමට පෙර, මෙම ප්‍රතිපත්තිය මගින් ආයතනයේ සැබෑ ක්‍රියාකාරකම් නිවැරදිව විස්තර කරන්නේදැයි කරුණාකර තහවුරු කරන්න.",
   "privacy": {
-    "introduction": "This draft explains how the institute intends to handle information associated with visits to this website and enquiries made through its forms. The final policy must be checked against the website's actual operation.",
+    "introduction": "මෙම වෙබ් අඩවියට පිවිසීම් සහ එහි පෝරම හරහා කරනු ලබන විමසීම් හා සම්බන්ධ තොරතුරු ආයතනය විසින් හසුරුවනු ලබන්නේ කෙසේද යන්න මෙම කෙටුම්පත මගින් පැහැදිලි කරයි. අවසාන ප්‍රතිපත්තිය වෙබ් අඩවියේ සැබෑ ක්‍රියාකාරිත්වයට අනුකූලව පරීක්ෂා කර තහවුරු කළ යුතුය.",
     "sections": {
       "information": {
-        "title": "Information We May Collect",
-        "content": "Visitors may provide their name, email address, phone number, selected programme, and enquiry details when using our forms. Technical information may also be processed by the website hosting provider, depending on the hosting and analytics services enabled."
+        "title": "අප විසින් රැස් කරනු ලැබිය හැකි තොරතුරු",
+        "content": "අපගේ පෝරම භාවිතා කිරීමේදී පිවිසෙන්නන් හට ඔවුන්ගේ නම, විද්‍යුත් තැපැල් ලිපිනය, දුරකථන අංකය, තෝරාගත් වැඩසටහන සහ විමසීමේ විස්තර ලබා දිය හැක. සක්‍රීය කර ඇති හෝස්ටිං (hosting) සහ විශ්ලේෂණ සේවාවන් මත පදනම්ව, වෙබ් අඩවි හෝස්ටිං සපයන්නා විසින් තාක්ෂණික තොරතුරු ද ක්‍රියාවලියට ලක් කරනු ලැබිය හැක."
       },
       "usage": {
-        "title": "How Information Is Used",
-        "content": "Information may be used to respond to enquiries, follow up on programme interests, provide requested information, and maintain website security. The institute should document any additional purposes before collecting information for them."
+        "title": "තොරතුරු භාවිතා කරනු ලබන ආකාරය",
+        "content": "විමසීම්වලට පිළිතුරු සැපයීමට, වැඩසටහන් කෙරෙහි ඇති උනන්දුව පිළිබඳව වැඩිදුර සොයා බැලීමට, ඉල්ලා සිටින තොරතුරු සැපයීමට සහ වෙබ් අඩවියේ ආරක්ෂාව පවත්වා ගැනීමට තොරතුරු භාවිතා කළ හැක. තොරතුරු රැස් කිරීමට පෙර ආයතනය විසින් වෙනත් ඕනෑම අමතර අරමුණක් ලේඛනගත කළ යුතුය."
       },
       "forms": {
-        "title": "Contact and Pre-registration Forms",
-        "content": "At present, the forms are demonstration interfaces. They validate entries in the visitor's browser but do not send the submitted details to the institute or save them in an institute database. This statement must be updated when server-side submission and email delivery are implemented."
+        "title": "සම්බන්ධ කර ගැනීමේ සහ පූර්ව ලියාපදිංචි වීමේ පෝරම",
+        "content": "වර්තමානයේ, පෝරමයන් නිරූපණ අතුරුමුහුණත් (demonstration interfaces) වේ. ඒවා පිවිසෙන්නාගේ බ්‍රවුසරය තුළ ඇතුළත් කිරීම් වලංගු කරන නමුත්, යොමු කළ විස්තර ආයතනය වෙත යැවීම හෝ ආයතනයේ දත්ත සමුදායක (database) සුරැකීම සිදු නොකරයි. සර්වර් පාර්ශවීය යොමු කිරීම් (server-side submission) සහ විද්‍යුත් තැපැල් බෙදා හැරීම ක්‍රියාත්මක කළ පසු මෙම ප්‍රකාශය යාවත්කාලීන කළ යුතුය."
       },
       "sharing": {
-        "title": "Sharing of Information",
-        "content": "The institute does not intend to sell visitors' personal information. If third-party hosting, email, analytics, or other services process information, the final policy should identify the relevant services and explain the applicable arrangements."
+        "title": "තොරතුරු හුවමාරු කර ගැනීම",
+        "content": "පිවිසෙන්නන්ගේ පෞද්ගලික තොරතුරු විකිණීමට ආයතනය අදහස් නොකරයි. තෙවන පාර්ශවීය හෝස්ටිං, විද්‍යුත් තැපෑල, විශ්ලේෂණ හෝ වෙනත් සේවාවන් මගින් තොරතුරු ක්‍රියාවලියට ලක් කරන්නේ නම්, අවසාන ප්‍රතිපත්තිය මගින් අදාළ සේවාවන් හඳුනාගෙන අදාළ කටයුතු පැහැදිලි කළ යුතුය."
       },
       "security": {
-        "title": "Data Security and Retention",
-        "content": "Reasonable safeguards should be used to protect personal information. Retention periods, access controls, backup practices, and procedures for handling security incidents must be established and documented before the website begins collecting personal information."
+        "title": "දත්ත ආරක්ෂාව සහ රඳවා තබා ගැනීම",
+        "content": "පෞද්ගලික තොරතුරු ආරක්ෂා කිරීම සඳහා සාධාරණ ආරක්ෂණ පියවරයන් භාවිතා කළ යුතුය. වෙබ් අඩවිය පෞද්ගලික තොරතුරු රැස් කිරීම ආරම්භ කිරීමට පෙර රඳවා තබා ගැනීමේ කාලසීමාවන්, ප්‍රවේශ පාලනයන්, උපස්ථ (backup) ක්‍රමවේදයන් සහ ආරක්ෂක සිදුවීම් හැසිරවීමේ පටිපාටි ස්ථාපිත කර ලේඛනගත කළ යුතුය."
       },
       "rights": {
-        "title": "Your Privacy Choices",
-        "content": "Depending on applicable law and the circumstances, visitors may have rights to request access to, correction of, or deletion of their personal information, or to object to certain processing. The institute should provide an appropriate process for handling such requests."
+        "title": "ඔබගේ පුද්ගලිකත්ව තේරීම්",
+        "content": "අදාළ නීතිය සහ වෙනත් කරුණු මත පදනම්ව, පිවිසෙන්නන්ට තමන්ගේ පෞද්ගලික තොරතුරු වෙත ප්‍රවේශ වීමට, නිවැරදි කිරීමට, හෝ මකා දැමීමට ඉල්ලීමට, හෝ ඇතැම් දත්ත ක්‍රියාවලියන්ට විරුද්ධ වීමට අයිතියක් තිබිය හැක. එවැනි ඉල්ලීම් හැසිරවීම සඳහා ආයතනය සුදුසු ක්‍රියාවලියක් සැපයිය යුතුය."
       },
       "contact": {
-        "title": "Contact Us About Privacy",
-        "content": "For privacy-related questions, contact the institute using the contact details published on this website. Replace this general statement with the institute's designated privacy contact before publication."
+        "title": "පුද්ගලිකත්වය පිළිබඳව අප හා සම්බන්ධ වන්න",
+        "content": "පුද්ගලිකත්වයට අදාළ ප්‍රශ්න සඳහා, මෙම වෙබ් අඩවියේ පළ කර ඇති තොරතුරු භාවිතා කර ආයතනය හා සම්බන්ධ වන්න. ප්‍රකාශනය කිරීමට පෙර මෙම සාමාන්‍ය ප්‍රකාශය වෙනුවට ආයතනයේ පෞද්ගලිකත්වය සඳහා වන නිල සම්බන්ධතා තොරතුරු ඇතුළත් කරන්න."
       }
     }
-  },
+  }
+},
   
 "terms": {
-  "introduction": "These draft terms describe the intended conditions for using the institute's website and public resources. They should be reviewed and approved before publication.",
+  "introduction": "මෙම කෙටුම්පත් කොන්දේසි මගින් ආයතනයේ වෙබ් අඩවිය සහ පොදු සම්පත් භාවිතය සඳහා වන අපේක්ෂිත කොන්දේසි විස්තර කරයි. ප්‍රකාශනය කිරීමට පෙර මේවා සමාලෝචනය කර අනුමත කළ යුතුය.",
   "sections": {
     "acceptance": {
-      "title": "Acceptance of These Terms",
-      "content": "By using this website, visitors are expected to use it lawfully and responsibly. The institute should confirm the final terms and how acceptance will be communicated before publication."
+      "title": "මෙම කොන්දේසි පිළිගැනීම",
+      "content": "මෙම වෙබ් අඩවිය භාවිතා කිරීමෙන්, පිවිසෙන්නන් එය නීත්‍යානුකූලව සහ වගකීමෙන් යුතුව භාවිතා කරනු ඇතැයි අපේක්ෂා කෙරේ. ප්‍රකාශනය කිරීමට පෙර අවසාන කොන්දේසි සහ එය පිළිගැනීම සන්නිවේදනය කරන්නේ කෙසේද යන්න ආයතනය විසින් තහවුරු කළ යුතුය."
     },
     "websiteUse": {
-      "title": "Permitted Use",
-      "content": "Visitors may browse public pages and use available features for lawful purposes. Visitors must not attempt to disrupt the website, bypass access restrictions, interfere with other users, or misuse website content or services."
+      "title": "අනුමත භාවිතය",
+      "content": "පිවිසෙන්නන්ට නීත්‍යානුකූල අරමුණු සඳහා පොදු පිටු ගවේෂණය කිරීමට සහ පවතින විශේෂාංග භාවිතා කිරීමට හැක. පිවිසෙන්නන් වෙබ් අඩවියට බාධා කිරීමට, ප්‍රවේශ සීමාවන් මගහැරීමට, වෙනත් පරිශීලකයින්ට බාධා කිරීමට, හෝ වෙබ් අඩවියේ අන්තර්ගතය හෝ සේවාවන් අවභාවිත කිරීමට උත්සාහ නොකළ යුතුය."
     },
     "resources": {
-      "title": "Educational Resources and Downloads",
-      "content": "Resource descriptions and access labels are provided to explain the materials offered. Free resources may be downloaded when the download feature is available. Resources marked as paid are not available for free download. Any future purchase, licence, or access conditions must be displayed clearly before payment or access is granted."
+      "title": "අධ්‍යාපනික සම්පත් සහ බාගැනීම් (Downloads)",
+      "content": "පිරිනමනු ලබන ද්‍රව්‍ය පිළිබඳව පැහැදිලි කිරීම සඳහා සම්පත් විස්තර සහ ප්‍රවේශ ලේබලයන් සපයා ඇත. බාගැනීමේ විශේෂාංගය පවතින විට නොමිලේ ලබා දෙන සම්පත් බාගත කරගත හැක. ගෙවීම් සහිත ලෙස සලකුණු කර ඇති සම්පත් නොමිලේ බාගැනීමට නොහැක. අනාගතයේ සිදුවන ඕනෑම මිලදී ගැනීමක්, බලපත්‍රයක් හෝ ප්‍රවේශ කොන්දේසි ගෙවීමට හෝ ප්‍රවේශය ලබා දීමට පෙර පැහැදිලිව ප්‍රදර්ශනය කළ යුතුය."
     },
     "intellectualProperty": {
-      "title": "Intellectual Property",
-      "content": "Unless otherwise stated, website text, branding, and educational materials may be protected by intellectual property laws. Visitors must obtain the appropriate permission before reproducing, redistributing, or commercially using protected materials, except where applicable law permits such use."
+      "title": "බුද්ධිමය දේපළ",
+      "content": "වෙනත් ආකාරයකින් සඳහන් කර නොමැති නම්, වෙබ් අඩවියේ පෙළ, සන්නාමකරණය සහ අධ්‍යාපනික ද්‍රව්‍ය බුද්ධිමය දේපළ නීති මගින් ආරක්ෂා කර තිබිය හැක. අදාළ නීතියෙන් අවසර ලබා දී ඇති අවස්ථාවල හැර, ආරක්ෂිත ද්‍රව්‍ය නැවත නිෂ්පාදනය කිරීමට, නැවත බෙදා හැරීමට හෝ වාණිජමය වශයෙන් භාවිතා කිරීමට පෙර පිවිසෙන්නන් සුදුසු අවසරය ලබා ගත යුතුය."
     },
     "accuracy": {
-      "title": "Information and Availability",
-      "content": "Website content may be updated, corrected, or removed. Sample text, sample programmes, and demonstration resources are illustrative only and should not be treated as confirmed institutional offerings."
+      "title": "තොරතුරු සහ ලබාගැනීමේ හැකියාව",
+      "content": "වෙබ් අඩවියේ අන්තර්ගතය යාවත්කාලීන කිරීම, නිවැරදි කිරීම හෝ ඉවත් කිරීම සිදු කළ හැක. ආදර්ශවත් පෙළ, ආදර්ශවත් වැඩසටහන් සහ නිරූපණ සම්පත් නිදර්ශන සඳහා පමණක් වන අතර ඒවා තහවුරු කරන ලද ආයතනික පිරිනැමීම් ලෙස නොසැලකිය යුතුය."
     },
     "externalLinks": {
-      "title": "External Websites",
-      "content": "This website may link to third-party services or websites. The institute does not control their content or practices and should not be assumed to endorse them solely because a link is provided."
+      "title": "බාහිර වෙබ් අඩවි",
+      "content": "මෙම වෙබ් අඩවිය තෙවන පාර්ශවීය සේවාවන් හෝ වෙබ් අඩවි වෙත යොමු විය හැක. ආයතනය ඒවායේ අන්තර්ගතය හෝ ක්‍රියාකාරකම් පාලනය නොකරන අතර, සබැඳියක් සපයා ඇති පමණින් ඒවා අනුමත කරන බව උපකල්පනය නොකළ යුතුය."
     },
     "liability": {
-      "title": "Limitations and Responsibilities",
-      "content": "The website is provided for general informational and educational purposes. Any limitations of responsibility must be drafted and reviewed in accordance with applicable law; this draft does not establish a legally enforceable exclusion of liability."
+      "title": "සීමාවන් සහ වගකීම්",
+      "content": "වෙබ් අඩවිය සපයා ඇත්තේ සාමාන්‍ය තොරතුරු සහ අධ්‍යාපනික අරමුණු සඳහා පමණි. වගකීම්වල ඕනෑම සීමා කිරීමක් අදාළ නීතියට අනුකූලව සකස් කර සමාලෝචනය කළ යුතුය; මෙම කෙටුම්පත නීතිමය වශයෙන් බලාත්මක කළ හැකි වගකීම් බැහැර කිරීමක් පිහිටුවන්නේ නැත."
     },
     "changes": {
-      "title": "Changes to These Terms",
-      "content": "The institute may revise these terms when its website or services change. The published version should display an appropriate effective or last-updated date and explain how material changes will be communicated where necessary."
+      "title": "මෙම කොන්දේසිවල සිදුවන වෙනස්කම්",
+      "content": "ආයතනයේ වෙබ් අඩවිය හෝ සේවාවන් වෙනස් වන විට ආයතනය විසින් මෙම කොන්දේසි සංශෝධනය කළ හැක. ප්‍රකාශිත සංස්කරණයේ සුදුසු සක්‍රීය හෝ අවසාන වශයෙන් යාවත්කාලීන කළ දිනය ප්‍රදර්ශනය කළ යුතු අතර, අවශ්‍ය අවස්ථාවලදී ප්‍රධාන වෙනස්කම් සන්නිවේදනය කරන්නේ කෙසේදැයි පැහැදිලි කළ යුතුය."
     },
     "contact": {
-      "title": "Questions About These Terms",
-      "content": "For questions about these terms, contact the institute using the contact details published on this website."
+      "title": "මෙම කොන්දේසි පිළිබඳ ගැටලු/ප්‍රශ්න",
+      "content": "මෙම කොන්දේසි පිළිබඳව ප්‍රශ්න ඇත්නම්, මෙම වෙබ් අඩවියේ පළ කර ඇති සම්බන්ධතා තොරතුරු භාවිතා කර ආයතනය හා සම්බන්ධ වන්න."
     }
   }
-}
 }
 }
 

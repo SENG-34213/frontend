@@ -86,8 +86,8 @@ export default function Footer() {
 
       <div className={styles.copyright}>
         <p>
-          © 2026 {translate(language, "site.name")}.{" "}
-          {translate(language, "footer.copyright")}
+          © 2026 TiT Education.{" "}
+          All Rights Reserved
         </p>
       </div>
     </footer>

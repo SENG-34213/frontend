@@ -14,7 +14,7 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: "Institute Name | Education and Resources",
+  title: "TiT Education",
   description:
     "Explore our programmes, services, and public educational resources.",
 };
