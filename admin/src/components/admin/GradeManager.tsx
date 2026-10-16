@@ -4,10 +4,26 @@ import type { DirectoryUser, GradeRecord, LiveCourse } from "@/features/admin/ty
 
 type GradeDraft = { name: string; description: string };
 
-export function GradeManager({ grades, students, courses, loading, error, onRetry, onCreate, onUpdate, onDelete }: {
-  grades: GradeRecord[]; loading: boolean; error: string; onRetry: () => void;
-  students: DirectoryUser[]; courses: LiveCourse[];
-  onCreate: (draft: GradeDraft) => Promise<void>; onUpdate: (id: string, draft: GradeDraft) => Promise<void>; onDelete: (id: string) => Promise<void>;
+export function GradeManager({
+  grades,
+  students,
+  courses,
+  loading,
+  error,
+  onRetry,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: {
+  grades: GradeRecord[];
+  loading: boolean;
+  error: string;
+  onRetry: () => void;
+  students: DirectoryUser[];
+  courses: LiveCourse[];
+  onCreate: (draft: GradeDraft) => Promise<void>;
+  onUpdate: (id: string, draft: GradeDraft) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const [query, setQuery] = useState("");
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
@@ -15,20 +31,333 @@ export function GradeManager({ grades, students, courses, loading, error, onRetr
   const [draft, setDraft] = useState<GradeDraft>({ name: "", description: "" });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
-  const filteredGrades = useMemo(() => { const value = query.trim().toLowerCase(); return grades.filter((grade) => !value || `${grade.name} ${grade.description || ""}`.toLowerCase().includes(value)); }, [grades, query]);
+  const filteredGrades = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    return grades.filter(
+      (grade) => !value || `${grade.name} ${grade.description || ""}`.toLowerCase().includes(value),
+    );
+  }, [grades, query]);
   const activeCount = grades.filter((grade) => grade.active !== false).length;
   const inactiveCount = grades.length - activeCount;
-  function openCreate() { setSelected(null); setDraft({ name: "", description: "" }); setFormError(""); setModalMode("create"); }
-  function openEdit(grade: GradeRecord) { setSelected(grade); setDraft({ name: grade.name, description: grade.description || "" }); setFormError(""); setModalMode("edit"); }
-  async function submit(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); setSaving(true); setFormError(""); try { if (modalMode === "edit" && selected) await onUpdate(selected.id, draft); else await onCreate(draft); setModalMode(null); } catch (submitError) { setFormError(submitError instanceof Error ? submitError.message : "Could not save the grade."); } finally { setSaving(false); } }
-  async function remove(grade: GradeRecord) { if (!window.confirm(`Delete ${grade.name}? This is only possible when no course uses it.`)) return; setSaving(true); setFormError(""); try { await onDelete(grade.id); } catch (deleteError) { setFormError(deleteError instanceof Error ? deleteError.message : "Could not delete the grade."); } finally { setSaving(false); } }
+  function openCreate() {
+    setSelected(null);
+    setDraft({ name: "", description: "" });
+    setFormError("");
+    setModalMode("create");
+  }
+  function openEdit(grade: GradeRecord) {
+    setSelected(grade);
+    setDraft({ name: grade.name, description: grade.description || "" });
+    setFormError("");
+    setModalMode("edit");
+  }
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setFormError("");
+    try {
+      if (modalMode === "edit" && selected) await onUpdate(selected.id, draft);
+      else await onCreate(draft);
+      setModalMode(null);
+    } catch (submitError) {
+      setFormError(
+        submitError instanceof Error ? submitError.message : "Could not save the grade.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function remove(grade: GradeRecord) {
+    if (!window.confirm(`Delete ${grade.name}? This is only possible when no course uses it.`))
+      return;
+    setSaving(true);
+    setFormError("");
+    try {
+      await onDelete(grade.id);
+    } catch (deleteError) {
+      setFormError(
+        deleteError instanceof Error ? deleteError.message : "Could not delete the grade.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
-  return <section className="grade-manager professional-grade-manager" aria-labelledby="grade-manager-title">
-    <div className="grade-manager-heading"><div><span className="catalog-kicker">ACADEMIC SETUP</span><h2 id="grade-manager-title">Course level management</h2><p>Organize the grade levels used across student profiles, courses, and enrollment.</p></div><button className="primary-button" type="button" onClick={openCreate}><Icon name="plus" size={16}/> Create level</button></div>
-    <div className="grade-insight-grid"><div className="grade-insight-card indigo"><i><Icon name="graduation" size={18}/></i><span>Total levels</span><strong>{grades.length}</strong><small>Configured in Mentify</small></div><div className="grade-insight-card green"><i><Icon name="check" size={18}/></i><span>Active levels</span><strong>{activeCount}</strong><small>Ready for academy use</small></div><div className="grade-insight-card amber"><i><Icon name="alert" size={18}/></i><span>Needs review</span><strong>{inactiveCount}</strong><small>Inactive or archived</small></div><div className="grade-insight-card blue"><i><Icon name="courses" size={18}/></i><span>Course structure</span><strong>{grades.length ? "Ready" : "Start"}</strong><small>Levels power your catalog</small></div></div>
-    <div className="grade-manager-toolbar"><div><strong>{filteredGrades.length} level{filteredGrades.length === 1 ? "" : "s"}</strong><span>Maintain your academy structure</span></div><div className="grade-toolbar-actions"><button type="button" className="secondary-button" onClick={onRetry}><Icon name="calendar" size={14}/> Refresh</button><input className="course-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search levels…" aria-label="Search grades" /></div></div>
-    {formError && !modalMode && <div className="modal-error" role="alert"><Icon name="alert" size={16}/><span>{formError}</span></div>}
-    {loading ? <div className="catalog-state"><span className="spinner spinner-dark"/><strong>Loading course levels…</strong><p>Fetching grades from the course service.</p></div> : error ? <div className="catalog-state catalog-error"><span className="empty-roster-icon"><Icon name="alert" size={20}/></span><strong>Couldn’t load course levels</strong><p>{error}</p><button className="secondary-button" type="button" onClick={onRetry}>Try again</button></div> : filteredGrades.length ? <><div className="data-table-head grade-table-head" aria-hidden="true"><span>Course level</span><span>Students</span><span>Courses</span><span>Service record</span><span>Actions</span></div><div className="grade-manager-grid">{filteredGrades.map((grade, index) => { const gradeNumber = grade.name.replace(/[^0-9]/g, ""); const levelStudents = students.filter((student) => student.grade === gradeNumber || student.grade === grade.name); const levelCourses = courses.filter((course) => String(course.gradeId || "") === String(grade.id) || String(course.gradeId || "") === grade.name); const publishedCourses = levelCourses.filter((course) => course.isPublished || course.courseStatus === "PUBLISHED").length; return <article className="grade-manager-card professional-grade-card" key={grade.id}><div className="grade-number">{String(index + 1).padStart(2, "0")}</div><div className="grade-manager-copy"><div className="grade-manager-card-top"><h3>{grade.name}</h3><span className={grade.active === false ? "inactive" : "active"}>{grade.active === false ? "Inactive" : "Active"}</span></div><p>{grade.description || "No description provided yet. Add context to make this level easier to manage."}</p><div className="grade-level-metrics"><span><Icon name="student" size={13}/><strong>{levelStudents.length}</strong> students</span><span><Icon name="courses" size={13}/><strong>{levelCourses.length}</strong> courses</span><span><Icon name="check" size={13}/><strong>{publishedCourses}</strong> published</span></div><small>{grade.id}</small></div><div className="grade-manager-actions"><button type="button" className="secondary-button" onClick={() => openEdit(grade)}><Icon name="settings" size={14}/> Edit</button><button type="button" className="icon-button danger-icon" disabled={saving} onClick={() => void remove(grade)} aria-label={`Delete ${grade.name}`}><Icon name="close" size={16}/></button></div></article>; })}</div></> : <div className="catalog-state"><span className="empty-roster-icon"><Icon name="graduation" size={20}/></span><strong>{grades.length ? "No matching levels" : "No course levels configured"}</strong><p>{grades.length ? "Try another search term." : "Create your first level to use it in student registration and course setup."}</p>{!grades.length && <button className="primary-button" type="button" onClick={openCreate}><Icon name="plus" size={15}/> Create level</button>}</div>}
-    {modalMode && <div className="modal-backdrop detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalMode(null); }}><section className="detail-modal grade-form-modal" role="dialog" aria-modal="true" aria-labelledby="grade-form-title"><div className="detail-modal-heading"><div><span className="catalog-kicker">ACADEMIC SETUP</span><h2 id="grade-form-title">{modalMode === "edit" ? "Edit course level" : "Create course level"}</h2><p>Keep your academy structure clear for students, staff, and course setup.</p></div><button className="notice-dismiss" type="button" onClick={() => setModalMode(null)} aria-label="Close grade form"><Icon name="close" size={18}/></button></div><form className="detail-modal-body grade-form" onSubmit={submit}>{formError && <div className="modal-error" role="alert"><Icon name="alert" size={16}/><span>{formError}</span></div>}<label className="field"><span className="field-label">Level name<span className="required"> *</span></span><input required maxLength={100} value={draft.name} placeholder="e.g. Grade 10" onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}/></label><label className="field"><span className="field-label">Description</span><textarea maxLength={1000} rows={4} value={draft.description} placeholder="Describe this course level…" onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}/><span className="field-hint">{draft.description.length}/1000 characters</span></label><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setModalMode(null)}>Cancel</button><button type="submit" className="primary-button" disabled={saving}>{saving ? <><span className="spinner"/> Saving…</> : <>Save level <Icon name="arrow" size={15}/></>}</button></div></form></section></div>}
-  </section>;
+  return (
+    <section
+      className="grade-manager professional-grade-manager"
+      aria-labelledby="grade-manager-title"
+    >
+      <div className="grade-manager-heading">
+        <div>
+          <span className="catalog-kicker">ACADEMIC SETUP</span>
+          <h2 id="grade-manager-title">Course level management</h2>
+          <p>Organize the grade levels used across student profiles, courses, and enrollment.</p>
+        </div>
+        <button className="primary-button" type="button" onClick={openCreate}>
+          <Icon name="plus" size={16} /> Create level
+        </button>
+      </div>
+      <div className="grade-insight-grid">
+        <div className="grade-insight-card indigo">
+          <i>
+            <Icon name="graduation" size={18} />
+          </i>
+          <span>Total levels</span>
+          <strong>{grades.length}</strong>
+          <small>Configured in Mentify</small>
+        </div>
+        <div className="grade-insight-card green">
+          <i>
+            <Icon name="check" size={18} />
+          </i>
+          <span>Active levels</span>
+          <strong>{activeCount}</strong>
+          <small>Ready for academy use</small>
+        </div>
+        <div className="grade-insight-card amber">
+          <i>
+            <Icon name="alert" size={18} />
+          </i>
+          <span>Needs review</span>
+          <strong>{inactiveCount}</strong>
+          <small>Inactive or archived</small>
+        </div>
+        <div className="grade-insight-card blue">
+          <i>
+            <Icon name="courses" size={18} />
+          </i>
+          <span>Course structure</span>
+          <strong>{grades.length ? "Ready" : "Start"}</strong>
+          <small>Levels power your catalog</small>
+        </div>
+      </div>
+      <div className="grade-manager-toolbar">
+        <div>
+          <strong>
+            {filteredGrades.length} level{filteredGrades.length === 1 ? "" : "s"}
+          </strong>
+          <span>Maintain your academy structure</span>
+        </div>
+        <div className="grade-toolbar-actions">
+          <button type="button" className="secondary-button" onClick={onRetry}>
+            <Icon name="calendar" size={14} /> Refresh
+          </button>
+          <input
+            className="course-search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search levels…"
+            aria-label="Search grades"
+          />
+        </div>
+      </div>
+      {formError && !modalMode && (
+        <div className="modal-error" role="alert">
+          <Icon name="alert" size={16} />
+          <span>{formError}</span>
+        </div>
+      )}
+      {loading ? (
+        <div className="catalog-state">
+          <span className="spinner spinner-dark" />
+          <strong>Loading course levels…</strong>
+          <p>Fetching grades from the course service.</p>
+        </div>
+      ) : error ? (
+        <div className="catalog-state catalog-error">
+          <span className="empty-roster-icon">
+            <Icon name="alert" size={20} />
+          </span>
+          <strong>Couldn’t load course levels</strong>
+          <p>{error}</p>
+          <button className="secondary-button" type="button" onClick={onRetry}>
+            Try again
+          </button>
+        </div>
+      ) : filteredGrades.length ? (
+        <>
+          <div className="data-table-head grade-table-head" aria-hidden="true">
+            <span>Course level</span>
+            <span>Students</span>
+            <span>Courses</span>
+            <span>Service record</span>
+            <span>Actions</span>
+          </div>
+          <div className="grade-manager-grid">
+            {filteredGrades.map((grade, index) => {
+              const gradeNumber = grade.name.replace(/[^0-9]/g, "");
+              const levelStudents = students.filter(
+                (student) => student.grade === gradeNumber || student.grade === grade.name,
+              );
+              const levelCourses = courses.filter(
+                (course) =>
+                  String(course.gradeId || "") === String(grade.id) ||
+                  String(course.gradeId || "") === grade.name,
+              );
+              const publishedCourses = levelCourses.filter(
+                (course) => course.isPublished || course.courseStatus === "PUBLISHED",
+              ).length;
+              return (
+                <article className="grade-manager-card professional-grade-card" key={grade.id}>
+                  <div className="grade-number">{String(index + 1).padStart(2, "0")}</div>
+                  <div className="grade-manager-copy">
+                    <div className="grade-manager-card-top">
+                      <h3>{grade.name}</h3>
+                      <span className={grade.active === false ? "inactive" : "active"}>
+                        {grade.active === false ? "Inactive" : "Active"}
+                      </span>
+                    </div>
+                    <p>
+                      {grade.description ||
+                        "No description provided yet. Add context to make this level easier to manage."}
+                    </p>
+                    <div className="grade-level-metrics">
+                      <span>
+                        <Icon name="student" size={13} />
+                        <strong>{levelStudents.length}</strong> students
+                      </span>
+                      <span>
+                        <Icon name="courses" size={13} />
+                        <strong>{levelCourses.length}</strong> courses
+                      </span>
+                      <span>
+                        <Icon name="check" size={13} />
+                        <strong>{publishedCourses}</strong> published
+                      </span>
+                    </div>
+                    <small>{grade.id}</small>
+                  </div>
+                  <div className="grade-manager-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => openEdit(grade)}
+                    >
+                      <Icon name="settings" size={14} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button danger-icon"
+                      disabled={saving}
+                      onClick={() => void remove(grade)}
+                      aria-label={`Delete ${grade.name}`}
+                    >
+                      <Icon name="close" size={16} />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="catalog-state">
+          <span className="empty-roster-icon">
+            <Icon name="graduation" size={20} />
+          </span>
+          <strong>{grades.length ? "No matching levels" : "No course levels configured"}</strong>
+          <p>
+            {grades.length
+              ? "Try another search term."
+              : "Create your first level to use it in student registration and course setup."}
+          </p>
+          {!grades.length && (
+            <button className="primary-button" type="button" onClick={openCreate}>
+              <Icon name="plus" size={15} /> Create level
+            </button>
+          )}
+        </div>
+      )}
+      {modalMode && (
+        <div
+          className="modal-backdrop detail-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setModalMode(null);
+          }}
+        >
+          <section
+            className="detail-modal grade-form-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="grade-form-title"
+          >
+            <div className="detail-modal-heading">
+              <div>
+                <span className="catalog-kicker">ACADEMIC SETUP</span>
+                <h2 id="grade-form-title">
+                  {modalMode === "edit" ? "Edit course level" : "Create course level"}
+                </h2>
+                <p>Keep your academy structure clear for students, staff, and course setup.</p>
+              </div>
+              <button
+                className="notice-dismiss"
+                type="button"
+                onClick={() => setModalMode(null)}
+                aria-label="Close grade form"
+              >
+                <Icon name="close" size={18} />
+              </button>
+            </div>
+            <form className="detail-modal-body grade-form" onSubmit={submit}>
+              {formError && (
+                <div className="modal-error" role="alert">
+                  <Icon name="alert" size={16} />
+                  <span>{formError}</span>
+                </div>
+              )}
+              <label className="field">
+                <span className="field-label">
+                  Level name<span className="required"> *</span>
+                </span>
+                <input
+                  required
+                  maxLength={100}
+                  value={draft.name}
+                  placeholder="e.g. Grade 10"
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, name: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">Description</span>
+                <textarea
+                  maxLength={1000}
+                  rows={4}
+                  value={draft.description}
+                  placeholder="Describe this course level…"
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, description: event.target.value }))
+                  }
+                />
+                <span className="field-hint">{draft.description.length}/1000 characters</span>
+              </label>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setModalMode(null)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="primary-button" disabled={saving}>
+                  {saving ? (
+                    <>
+                      <span className="spinner" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      Save level <Icon name="arrow" size={15} />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+    </section>
+  );
 }

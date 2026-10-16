@@ -1,1 +1,174 @@
-:root{--mentify-indigo:#4f46e5;--mentify-indigo-dark:#4338ca;--mentify-soft:#eef2ff;--mentify-canvas:#f9f9ff;--mentify-ink:#141b2b;--mentify-muted:#64748b;--mentify-line:#e2e8f0}body{background:var(--mentify-canvas);color:var(--mentify-ink);font-family:var(--font-geist-sans),Arial,sans-serif}.sidebar{width:220px;background:#fff;border-right:1px solid var(--mentify-line);padding:24px 16px}.main-area{margin-left:220px;background:linear-gradient(90deg,#f9f9ff,#fff)}.brand{margin:0 0 40px 4px}.brand-mark{width:32px;height:32px;border-radius:8px;background:var(--mentify-indigo-dark);box-shadow:none}.brand-name{color:var(--mentify-indigo-dark);font-size:20px}.brand-name span{color:var(--mentify-indigo)}.workspace-picker{border-color:#eef0f5;border-radius:12px}.workspace-avatar{background:var(--mentify-soft);color:var(--mentify-indigo)}.nav-group{margin-top:28px;gap:3px}.nav-link{height:36px;border-radius:8px;color:var(--mentify-muted);font-size:13px}.nav-link:hover{background:#f8fafc;color:var(--mentify-indigo-dark)}.nav-link.active{background:var(--mentify-soft);color:var(--mentify-indigo-dark);box-shadow:inset 2px 0 var(--mentify-indigo)}.nav-link.active>svg{color:var(--mentify-indigo)}.sub-link.selected{color:var(--mentify-indigo)}.sub-dot{background:var(--mentify-indigo)}.topbar{height:64px;background:#ffffffcc;border-bottom-color:var(--mentify-line);backdrop-filter:blur(8px);padding:0 32px}.breadcrumb{font-size:12px}.content-wrap{width:min(100% - 64px,1180px);padding:32px 0 50px}.page-heading{margin-bottom:28px}.page-heading h1{font-size:32px;letter-spacing:-.7px;color:var(--mentify-ink)}.page-description{font-size:14px;line-height:1.6;color:#454556}.eyebrow,.catalog-kicker{color:var(--mentify-indigo);letter-spacing:1.2px}.dashboard-stat-card,.dashboard-panel,.form-card,.course-catalog,.user-directory,.enrollment-workspace,.grade-manager{border-color:var(--mentify-line);border-radius:12px;box-shadow:0 4px 6px #00000008}.dashboard-stat-card:hover{border-color:#c7d2fe;box-shadow:0 10px 25px #4f46e51a;transform:translateY(-1px)}.dashboard-stat-icon.violet,.dashboard-action-icon.violet{background:#eef2ff;color:var(--mentify-indigo)}.secondary-button,.primary-button,.form-actions .primary,.dashboard-actions button:hover{border-radius:8px}.primary-button,.form-actions .primary,.dashboard-actions button:hover{background:var(--mentify-indigo);color:#fff}.text-action{color:var(--mentify-indigo);}.form-section{padding:24px 28px}.section-icon{background:var(--mentify-soft);color:var(--mentify-indigo)}.field input:focus,.field select:focus,.field textarea:focus{border-color:#a5b4fc;box-shadow:0 0 0 3px #4f46e51a}.profile-avatar,.top-avatar{background:var(--mentify-soft);color:var(--mentify-indigo-dark)}@media(max-width:760px){.sidebar{width:100%}.main-area{margin-left:0}.content-wrap{width:calc(100% - 32px)}}
+:root {
+  --mentify-indigo: #4f46e5;
+  --mentify-indigo-dark: #4338ca;
+  --mentify-soft: #eef2ff;
+  --mentify-canvas: #f9f9ff;
+  --mentify-ink: #141b2b;
+  --mentify-muted: #64748b;
+  --mentify-line: #e2e8f0;
+}
+body {
+  background: var(--mentify-canvas);
+  color: var(--mentify-ink);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+.sidebar {
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid var(--mentify-line);
+  padding: 24px 16px;
+}
+.main-area {
+  margin-left: 220px;
+  background: linear-gradient(90deg, #f9f9ff, #fff);
+}
+.brand {
+  margin: 0 0 40px 4px;
+}
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--mentify-indigo-dark);
+  box-shadow: none;
+}
+.brand-name {
+  color: var(--mentify-indigo-dark);
+  font-size: 20px;
+}
+.brand-name span {
+  color: var(--mentify-indigo);
+}
+.workspace-picker {
+  border-color: #eef0f5;
+  border-radius: 12px;
+}
+.workspace-avatar {
+  background: var(--mentify-soft);
+  color: var(--mentify-indigo);
+}
+.nav-group {
+  margin-top: 28px;
+  gap: 3px;
+}
+.nav-link {
+  height: 36px;
+  border-radius: 8px;
+  color: var(--mentify-muted);
+  font-size: 13px;
+}
+.nav-link:hover {
+  background: #f8fafc;
+  color: var(--mentify-indigo-dark);
+}
+.nav-link.active {
+  background: var(--mentify-soft);
+  color: var(--mentify-indigo-dark);
+  box-shadow: inset 2px 0 var(--mentify-indigo);
+}
+.nav-link.active > svg {
+  color: var(--mentify-indigo);
+}
+.sub-link.selected {
+  color: var(--mentify-indigo);
+}
+.sub-dot {
+  background: var(--mentify-indigo);
+}
+.topbar {
+  height: 64px;
+  background: #ffffffcc;
+  border-bottom-color: var(--mentify-line);
+  backdrop-filter: blur(8px);
+  padding: 0 32px;
+}
+.breadcrumb {
+  font-size: 12px;
+}
+.content-wrap {
+  width: min(100% - 64px, 1180px);
+  padding: 32px 0 50px;
+}
+.page-heading {
+  margin-bottom: 28px;
+}
+.page-heading h1 {
+  font-size: 32px;
+  letter-spacing: -0.7px;
+  color: var(--mentify-ink);
+}
+.page-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #454556;
+}
+.eyebrow,
+.catalog-kicker {
+  color: var(--mentify-indigo);
+  letter-spacing: 1.2px;
+}
+.dashboard-stat-card,
+.dashboard-panel,
+.form-card,
+.course-catalog,
+.user-directory,
+.enrollment-workspace,
+.grade-manager {
+  border-color: var(--mentify-line);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px #00000008;
+}
+.dashboard-stat-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 10px 25px #4f46e51a;
+  transform: translateY(-1px);
+}
+.dashboard-stat-icon.violet,
+.dashboard-action-icon.violet {
+  background: #eef2ff;
+  color: var(--mentify-indigo);
+}
+.secondary-button,
+.primary-button,
+.form-actions .primary,
+.dashboard-actions button:hover {
+  border-radius: 8px;
+}
+.primary-button,
+.form-actions .primary,
+.dashboard-actions button:hover {
+  background: var(--mentify-indigo);
+  color: #fff;
+}
+.text-action {
+  color: var(--mentify-indigo);
+}
+.form-section {
+  padding: 24px 28px;
+}
+.section-icon {
+  background: var(--mentify-soft);
+  color: var(--mentify-indigo);
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px #4f46e51a;
+}
+.profile-avatar,
+.top-avatar {
+  background: var(--mentify-soft);
+  color: var(--mentify-indigo-dark);
+}
+@media (max-width: 760px) {
+  .sidebar {
+    width: 100%;
+  }
+  .main-area {
+    margin-left: 0;
+  }
+  .content-wrap {
+    width: calc(100% - 32px);
+  }
+}
