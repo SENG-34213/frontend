@@ -73,9 +73,14 @@ export default function TeacherMaterialsWorkspace({ courses }: { courses: Teache
     }
   };
   // Material loading intentionally starts after the selected course is known.
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => {
-    if (courseId) void load(courseId);
+    if (courseId) {
+      // The loader updates the request state after the selected course changes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void load(courseId);
+    }
+    // The loader is intentionally tied only to the selected course.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
   const types = useMemo(() => Array.from(new Set(materials.map(materialType))).sort(), [materials]);
   const filtered = useMemo(

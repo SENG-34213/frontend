@@ -43,6 +43,8 @@ export default function TeacherCalendarWorkspace({ courses }: { courses: Teacher
     }
   };
   useEffect(() => {
+    // The loader updates the request state after the component mounts.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadEvents();
   }, []);
   const run = async (action: () => Promise<void>, success: string) => {

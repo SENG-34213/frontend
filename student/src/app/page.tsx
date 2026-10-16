@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
   configuredCourseIds,
@@ -16,7 +16,9 @@ import {
   type Material,
   type Payment,
   type Quiz,
+  type QuizQuestion,
   type Student,
+  type StudentQuiz,
   type Submission,
 } from "../lib/studentApi";
 import StudentMaterialsWorkspace from "../components/StudentMaterialsWorkspace";
@@ -337,7 +339,7 @@ function AssignmentPanel({
 
 function QuizPanel({ quizzes }: { quizzes: Quiz[] }) {
   const [selected, setSelected] = useState<Quiz | null>(null);
-  const [quiz, setQuiz] = useState<any>(null);
+  const [quiz, setQuiz] = useState<StudentQuiz | null>(null);
   const [attemptId, setAttemptId] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -386,10 +388,10 @@ function QuizPanel({ quizzes }: { quizzes: Quiz[] }) {
           <>
             <span className="eyebrow">QUIZ ATTEMPT</span>
             <h2>{selected.title}</h2>
-            {quiz.questions?.map((question: any) => (
+            {quiz.questions?.map((question: QuizQuestion) => (
               <div className="quiz-question" key={question.id}>
                 <strong>{question.questionText}</strong>
-                {question.options?.map((option: any) => (
+                {question.options?.map((option) => (
                   <label key={option.id}>
                     <input
                       type="radio"

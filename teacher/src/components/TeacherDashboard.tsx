@@ -80,6 +80,8 @@ function TeacherHome({
             {courses.slice(0, 2).map((course) => (
               <article className="teacher-home-course" key={course.id}>
                 {course.courseThumbnail ? (
+                  // Course thumbnails may come from a configured remote media service.
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={course.courseThumbnail} alt="" />
                 ) : (
                   <div className="teacher-course-art">{course.courseName.charAt(0)}</div>

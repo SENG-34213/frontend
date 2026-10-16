@@ -91,9 +91,12 @@ export default function TeacherAttendanceWorkspace({ courses }: { courses: Teach
     }
   };
   // Data loading is intentionally triggered when the assigned course list becomes available.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    if (courses[0]?.id) void loadCourseData(courses[0].id);
+    if (courses[0]?.id) {
+      // The loader updates the request state after the course list is available.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void loadCourseData(courses[0].id);
+    }
   }, [courses]);
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === courseId),

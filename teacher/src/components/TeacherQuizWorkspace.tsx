@@ -60,10 +60,12 @@ export default function TeacherQuizWorkspace({ courses }: Props) {
     }
   }
   // Quiz loading is intentionally triggered when the teacher course list becomes available.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    if (!courses.length) return;
-    void loadQuizzes();
+    if (courses.length) {
+      // The loader updates the request state after the course list is available.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void loadQuizzes();
+    }
   }, [courses.length]);
   function resetEditor() {
     setEditingQuizId(null);

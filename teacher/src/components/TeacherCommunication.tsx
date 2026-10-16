@@ -90,9 +90,12 @@ export default function TeacherCommunication({
   }
 
   // Load the current user's groups after the client session is available.
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => {
+    // The loader updates the request state after the client session is available.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadGroups();
+    // The loader is intentionally run once when the client session is available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function createGroup(event: FormEvent) {
