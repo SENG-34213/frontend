@@ -31,6 +31,7 @@ interface TeacherNavbarProps {
   onToggleMobileMenu: () => void;
   teacher: TeacherProfile;
   unreadNotificationsCount: number;
+  onLogout: () => void | Promise<void>;
 }
 
 const tabTitles: Record<NavigationTab, { title: string; category: string }> = {
@@ -63,6 +64,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   onToggleMobileMenu,
   teacher,
   unreadNotificationsCount,
+  onLogout,
 }) => {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -318,6 +320,16 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                   Keycloak Session:{" "}
                   <span className="text-emerald-600 font-medium">Active (SSO)</span>
                 </div>
+                <button
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    void onLogout();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign out</span>
+                </button>
               </div>
             </div>
           )}

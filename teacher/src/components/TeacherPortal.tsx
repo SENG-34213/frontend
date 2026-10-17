@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavigationTab, Course } from "../teacher/types";
 import {
   mockTeacherProfile,
@@ -40,9 +40,13 @@ import { NotificationCenterView } from "../teacher/notifications/NotificationCen
 import { TeacherProfileView } from "../teacher/profile/TeacherProfileView";
 import { TeacherSettingsView } from "../teacher/settings/TeacherSettingsView";
 import { TeacherLoginView } from "../teacher/auth/TeacherLoginView";
+import { logoutTeacher } from "../teacher/api/auth";
+import { restoreTeacherSession } from "../teacher/api/client";
+import type { AuthSession } from "../teacher/auth/authTypes";
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [currentTab, setCurrentTab] = useState<NavigationTab>("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -67,6 +71,21 @@ export default function App() {
   );
   const unreadMessagesCount = mockConversations.reduce((acc, c) => acc + c.unreadCount, 0);
   const unreadNotificationsCount = mockNotifications.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    let cancelled = false;
+    restoreTeacherSession()
+      .then((restoredSession) => {
+        if (!cancelled) setSession(restoredSession);
+      })
+      .finally(() => {
+        if (!cancelled) setIsInitializing(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Navigation handler
   const handleNavigate = (tab: NavigationTab, param?: string) => {
@@ -125,7 +144,11 @@ export default function App() {
     }
   };
 
-  if (!isAuthenticated) return <TeacherLoginView onLogin={() => setIsAuthenticated(true)} />;
+  if (isInitializing) {
+    return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher session" />;
+  }
+
+  if (!session) return <TeacherLoginView onLogin={setSession} />;
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -138,6 +161,10 @@ export default function App() {
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
         teacher={mockTeacherProfile}
+        onLogout={async () => {
+          await logoutTeacher();
+          setSession(null);
+        }}
         pendingSubmissionsCount={pendingSubmissionsCount}
         unreadMessagesCount={unreadMessagesCount}
         unreadNotificationsCount={unreadNotificationsCount}
@@ -153,6 +180,10 @@ export default function App() {
           onOpenQuickCreate={handleOpenQuickCreate}
           onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
           teacher={mockTeacherProfile}
+          onLogout={async () => {
+            await logoutTeacher();
+            setSession(null);
+          }}
           unreadNotificationsCount={unreadNotificationsCount}
         />
 
