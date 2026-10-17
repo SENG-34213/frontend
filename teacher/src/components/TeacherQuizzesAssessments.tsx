@@ -12,7 +12,7 @@ type AssessmentRow = {
   title: string;
   code: string;
   category: Exclude<AssessmentCategory, "all">;
-  courseIndex: number;
+  courseId: string;
   structure: string;
   duration: string;
   submissions: string;
@@ -26,7 +26,7 @@ const previewAssessments: AssessmentRow[] = [
     title: "Unit 4 Checkpoint: Implicit & Related Rates",
     code: "MATH-402—C4",
     category: "unit",
-    courseIndex: 0,
+    courseId: "",
     structure: "15 Items (10 MCQ, 5 FRQ)",
     duration: "45 Mins",
     submissions: "31 / 32",
@@ -38,7 +38,7 @@ const previewAssessments: AssessmentRow[] = [
     title: "Newton's Second Law Dynamics Exam",
     code: "PHYS-301—E2",
     category: "unit",
-    courseIndex: 1,
+    courseId: "",
     structure: "20 Questions (Standard)",
     duration: "60 Mins",
     submissions: "28 / 28",
@@ -50,7 +50,7 @@ const previewAssessments: AssessmentRow[] = [
     title: "Eigenvalues & Diagonalization Pop Quiz",
     code: "MATH-305—Q3",
     category: "weekly",
-    courseIndex: 2,
+    courseId: "",
     structure: "5 Questions (Interactive)",
     duration: "15 Mins",
     submissions: "19 / 24 active",
@@ -62,7 +62,7 @@ const previewAssessments: AssessmentRow[] = [
     title: "Unit 3 Integration Techniques Midterm",
     code: "MATH-402—M1",
     category: "diagnostic",
-    courseIndex: 0,
+    courseId: "",
     structure: "25 Questions",
     duration: "90 Mins",
     submissions: "Locked",
@@ -74,7 +74,7 @@ const previewAssessments: AssessmentRow[] = [
     title: "Pandas DataFrame Querying Test",
     code: "CS-105—AI",
     category: "exit",
-    courseIndex: 3,
+    courseId: "",
     structure: "10 Code Challenge Items",
     duration: "40 Mins",
     submissions: "Unpublished",
@@ -89,7 +89,7 @@ function quizToRow(quiz: TeacherQuiz, index: number): AssessmentRow {
     title: quiz.title,
     code: `ASSESS-${String(index + 1).padStart(2, "0")}`,
     category: index % 3 === 0 ? "unit" : index % 3 === 1 ? "weekly" : "diagnostic",
-    courseIndex: index,
+    courseId: quiz.courseId,
     structure: `${quiz.questions?.length || 0} Questions`,
     duration: `${quiz.durationMinutes} Mins`,
     submissions: quiz.status === "PUBLISHED" ? "Ready to review" : "Draft",
@@ -109,6 +109,7 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
   const [showEditor, setShowEditor] = useState(false);
   const [notice, setNotice] = useState("");
   const [prompt, setPrompt] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!courses.length) return;
@@ -116,10 +117,16 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
     teacherApi
       .quizzes()
       .then((items) => {
-        if (!cancelled) setQuizzes(items);
+        if (!cancelled) {
+          setQuizzes(items);
+          setError("");
+        }
       })
-      .catch(() => {
-        if (!cancelled) setQuizzes([]);
+      .catch((loadError) => {
+        if (!cancelled) {
+          setQuizzes([]);
+          setError(loadError instanceof Error ? loadError.message : "Unable to load assessments.");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -130,7 +137,7 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
   }, [courses.length]);
 
   const assessments = useMemo(
-    () => (quizzes.length ? quizzes.map(quizToRow) : previewAssessments),
+    () => (quizzes.length ? quizzes.map(quizToRow) : previewAssessments.filter(() => false)),
     [quizzes],
   );
   const filteredAssessments = useMemo(() => {
@@ -139,12 +146,17 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
       const matchesSearch =
         !search || `${assessment.title} ${assessment.code}`.toLowerCase().includes(search);
       const matchesCategory = category === "all" || assessment.category === category;
-      const matchesCourse = courseId === "all" || courses[assessment.courseIndex]?.id === courseId;
+      const matchesCourse = courseId === "all" || assessment.courseId === courseId;
       const matchesStatus = status === "all" || assessment.status === status;
       return matchesSearch && matchesCategory && matchesCourse && matchesStatus;
     });
-  }, [assessments, category, courseId, courses, query, status]);
+  }, [assessments, category, courseId, query, status]);
   const showLoading = loading && courses.length > 0;
+  const publishedCount = quizzes.filter((quiz) => quiz.status === "PUBLISHED").length;
+  const draftCount = quizzes.filter((quiz) => quiz.status !== "PUBLISHED").length;
+  const averageDuration = quizzes.length
+    ? Math.round(quizzes.reduce((sum, quiz) => sum + quiz.durationMinutes, 0) / quizzes.length)
+    : 0;
 
   function notify(message: string) {
     setNotice(message);
@@ -167,6 +179,11 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
       {notice && (
         <div className="teacher-quizzes-notice" role="status">
           {notice}
+        </div>
+      )}
+      {error && (
+        <div className="teacher-quizzes-notice" role="alert">
+          {error}
         </div>
       )}
       <div className="teacher-quizzes-heading">
@@ -199,27 +216,29 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
         <article>
           <div>
             <span>Active Assessments</span>
-            <b>28</b>
-            <small>cohort wide</small>
+            <b>{quizzes.length}</b>
+            <small>connected assessments</small>
           </div>
-          <strong>◉ 6 Live &nbsp; · &nbsp; 14 Quizzes &nbsp; · &nbsp; 8 Midterms</strong>
+          <strong>
+            ◉ {publishedCount} Published &nbsp; · &nbsp; {draftCount} Draft
+          </strong>
         </article>
         <article>
           <div>
             <span>Term Mean Score</span>
-            <b>84.6%</b>
-            <em>↗ 3.2%</em>
+            <b>{averageDuration ? `${averageDuration}m` : "—"}</b>
+            <em>average duration</em>
           </div>
           <strong className="kpi-chart">〰〰 Top 10% benchmark</strong>
         </article>
         <article>
           <div>
             <span>Pending Free Response</span>
-            <b className="danger">18</b>
-            <small>submissions</small>
+            <b className="danger">{draftCount}</b>
+            <small>draft assessments</small>
           </div>
           <strong>
-            2 tests awaiting review{" "}
+            {draftCount} assessments need publishing{" "}
             <button type="button" onClick={() => notify("Free response grading queue opened.")}>
               Grade Now →
             </button>
@@ -228,8 +247,10 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
         <article>
           <div>
             <span>AI Generated Checkpoints</span>
-            <b className="blue">12</b>
-            <small>this month</small>
+            <b className="blue">
+              {quizzes.filter((quiz) => quiz.creationMethod === "AI_GENERATED").length}
+            </b>
+            <small>AI generated</small>
           </div>
           <strong>● 8.4 hrs grading saved with AI rubrics</strong>
         </article>
@@ -294,14 +315,8 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
                       : "Exit Tickets"}{" "}
               <b>
                 {item === "all"
-                  ? 28
-                  : item === "unit"
-                    ? 6
-                    : item === "weekly"
-                      ? 14
-                      : item === "diagnostic"
-                        ? 5
-                        : 3}
+                  ? assessments.length
+                  : assessments.filter((assessment) => assessment.category === item).length}
               </b>
             </button>
           ))}
@@ -398,7 +413,7 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
         )}
         <div className="teacher-quizzes-footer">
           Showing 1 to {Math.min(filteredAssessments.length, 5)} of {assessments.length} assessments
-          across {Math.max(courses.length, 4)} enrolled subjects{" "}
+          across {courses.length} enrolled subjects{" "}
           <span>
             ‹ &nbsp; <b>1</b> &nbsp; 2 &nbsp; 3 &nbsp; … &nbsp; 6 &nbsp; ›
           </span>
@@ -431,11 +446,7 @@ export default function TeacherQuizzesAssessments({ courses }: { courses: Teache
 
 function courseLabel(courses: TeacherCourse[], assessment: AssessmentRow) {
   return (
-    courses[assessment.courseIndex]?.courseName ||
-    ["AP Calculus BC", "Physics Honors", "Linear Algebra", "Python Data Science"][
-      assessment.courseIndex
-    ] ||
-    "Assigned Course"
+    courses.find((course) => course.id === assessment.courseId)?.courseName || "Assigned Course"
   );
 }
 
@@ -495,7 +506,10 @@ function AssessmentTable({
               <td>
                 <strong>{courseLabel(courses, assessment)}</strong>
                 <small>
-                  Section 01 · {courses[assessment.courseIndex]?.numberOfStudents || 32} Students
+                  Section 01 ·{" "}
+                  {courses.find((course) => course.id === assessment.courseId)?.numberOfStudents ||
+                    0}{" "}
+                  Students
                 </small>
               </td>
               <td>
