@@ -20,11 +20,13 @@ import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { DetailDrawer } from "../components/DetailDrawer";
 import { AdministratorProfile, AdminRole } from "../types";
+import type { RegisterAdministratorRequest } from "../api/usersApi";
 
 interface AdminManagementProps {
   administrators: AdministratorProfile[];
   currentRole: AdminRole;
   onAddAdministrator: (admin: AdministratorProfile) => void;
+  onRegisterAdministrator: (request: RegisterAdministratorRequest) => Promise<AdministratorProfile>;
   onResendInvitation: (email: string, role: string) => void;
   onSwitchToSuperAdmin: () => void;
   showRegistrationWizardDirectly?: boolean;
@@ -34,6 +36,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   administrators,
   currentRole,
   onAddAdministrator,
+  onRegisterAdministrator,
   onResendInvitation,
   onSwitchToSuperAdmin,
   showRegistrationWizardDirectly = false,
@@ -133,31 +136,17 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
     }
   };
 
-  const handleFinalSubmit = () => {
-    const genCode = `ADM-105${Math.floor(2 + Math.random() * 20)}`;
-    const newAdmin: AdministratorProfile = {
-      id: `usr-adm-${Date.now()}`,
-      adminCode: genCode,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      role: "ADMIN",
-      status: "INVITED",
-      createdAt: new Date().toISOString(),
-      department: formData.department,
-      permissions: ["COURSE_OVERSIGHT", "STUDENT_MANAGEMENT", "TEACHER_MANAGEMENT"],
-      dob: formData.dob,
-      nic: formData.nic,
-      addressLine1: formData.addressLine1,
-      city: formData.city,
-      district: formData.district,
-      postalCode: formData.postalCode,
-    };
-
-    onAddAdministrator(newAdmin);
-    setCreatedAdminCode(genCode);
-    setCurrentStep(4);
+  const handleFinalSubmit = async () => {
+    try {
+      const createdAdmin = await onRegisterAdministrator(formData);
+      onAddAdministrator(createdAdmin);
+      setCreatedAdminCode(createdAdmin.adminCode);
+      setCurrentStep(4);
+    } catch (error) {
+      setFormErrors({
+        api: error instanceof Error ? error.message : "Unable to register administrator.",
+      });
+    }
   };
 
   const resetWizard = () => {
@@ -310,6 +299,12 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {formErrors.api && (
+              <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                {formErrors.api}
+              </p>
+            )}
 
             {currentStep < 4 && (
               <div className="py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">

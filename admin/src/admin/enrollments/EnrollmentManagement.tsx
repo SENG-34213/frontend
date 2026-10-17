@@ -1,23 +1,92 @@
 import React, { useState } from "react";
-import { Search, Filter, UserCheck, BookOpen, Clock, CheckCircle2 } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
-import { EnrollmentRecord, Course } from "../types";
+import { EnrollmentRecord, Course, StudentProfile } from "../types";
 
 interface EnrollmentManagementProps {
   enrollments: EnrollmentRecord[];
   courses: Course[];
+  students: StudentProfile[];
+  onCreateEnrollment: (studentId: string, courseIds: string[]) => Promise<unknown>;
   onUpdateEnrollmentStatus: (enrollmentId: string, status: any) => void;
 }
 
 export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
   enrollments,
   courses,
+  students,
+  onCreateEnrollment,
   onUpdateEnrollmentStatus,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [courseFilter, setCourseFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentGradeFilter, setStudentGradeFilter] = useState("ALL");
+  const [studentEnrollmentFilter, setStudentEnrollmentFilter] = useState<"UNENROLLED" | "ALL">(
+    "UNENROLLED",
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const studentGradeLabel = (student: StudentProfile) => {
+    const value = student.grade || "Not assigned";
+    return /^Grade\s/i.test(value) || value === "Not assigned" ? value : `Grade ${value}`;
+  };
+
+  const hasEnrollment = (studentId: string) =>
+    enrollments.some((enrollment) => enrollment.studentId === studentId);
+
+  const availableStudentGrades = Array.from(
+    new Set(students.map(studentGradeLabel).filter((grade) => grade !== "Not assigned")),
+  ).sort();
+
+  const filteredModalStudents = students.filter((student) => {
+    const query = studentSearch.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      `${student.firstName} ${student.lastName}`.toLowerCase().includes(query) ||
+      student.email.toLowerCase().includes(query) ||
+      student.studentId.toLowerCase().includes(query);
+    const matchesGrade =
+      studentGradeFilter === "ALL" || studentGradeLabel(student) === studentGradeFilter;
+    const matchesEnrollment = studentEnrollmentFilter === "ALL" || !hasEnrollment(student.id);
+    return matchesSearch && matchesGrade && matchesEnrollment;
+  });
+
+  const openEnrollModal = () => {
+    const firstUnenrolledStudent = students.find((student) => !hasEnrollment(student.id));
+    setSelectedStudentId(firstUnenrolledStudent?.id || students[0]?.id || "");
+    setSelectedCourseIds([]);
+    setStudentSearch("");
+    setStudentGradeFilter("ALL");
+    setStudentEnrollmentFilter("UNENROLLED");
+    setFormError("");
+    setIsEnrollModalOpen(true);
+  };
+
+  const handleEnroll = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedStudentId || selectedCourseIds.length === 0) {
+      setFormError("Select one student and at least one course.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError("");
+    try {
+      await onCreateEnrollment(selectedStudentId, selectedCourseIds);
+      setIsEnrollModalOpen(false);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Unable to enroll the student.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const filteredEnrollments = enrollments.filter((e) => {
     const matchesSearch =
@@ -40,7 +109,23 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
           { label: "Academic Management" },
           { label: "Enrollments" },
         ]}
+        actions={
+          <button
+            onClick={openEnrollModal}
+            disabled={students.length === 0 || courses.length === 0}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-xs transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Enroll Student</span>
+          </button>
+        }
       />
+
+      {(students.length === 0 || courses.length === 0) && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+          Create at least one registered student and one course before assigning enrollment.
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -163,6 +248,180 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
           </table>
         </div>
       </div>
+
+      {isEnrollModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Enroll Student in Courses
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Assign one or more active courses to a registered student.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEnrollModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEnroll} className="pt-5 space-y-5">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Find student
+                  </label>
+                  <span className="text-[11px] text-slate-400">
+                    {filteredModalStudents.length} matching
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 mb-3">
+                  <input
+                    value={studentSearch}
+                    onChange={(event) => setStudentSearch(event.target.value)}
+                    placeholder="Search name, email, or student ID..."
+                    className="px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  />
+                  <select
+                    value={studentGradeFilter}
+                    onChange={(event) => setStudentGradeFilter(event.target.value)}
+                    className="px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  >
+                    <option value="ALL">All grades</option>
+                    {availableStudentGrades.map((grade) => (
+                      <option key={grade} value={grade}>
+                        {grade}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={studentEnrollmentFilter}
+                    onChange={(event) =>
+                      setStudentEnrollmentFilter(event.target.value as "UNENROLLED" | "ALL")
+                    }
+                    className="px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  >
+                    <option value="UNENROLLED">Unenrolled only</option>
+                    <option value="ALL">All students</option>
+                  </select>
+                </div>
+                <div className="max-h-44 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredModalStudents.length === 0 ? (
+                    <div className="px-3 py-5 text-center text-xs text-slate-500">
+                      No students match these filters. Try “All students” or adjust the
+                      grade/search.
+                    </div>
+                  ) : (
+                    filteredModalStudents.map((student) => {
+                      const selected = selectedStudentId === student.id;
+                      const enrolled = hasEnrollment(student.id);
+                      return (
+                        <button
+                          type="button"
+                          key={student.id}
+                          onClick={() => setSelectedStudentId(student.id)}
+                          className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-3 transition-colors ${
+                            selected
+                              ? "bg-indigo-50 dark:bg-indigo-950/40"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                          }`}
+                        >
+                          <span className="min-w-0">
+                            <span className="block text-xs font-semibold text-slate-900 dark:text-white truncate">
+                              {student.firstName} {student.lastName}
+                            </span>
+                            <span className="block text-[11px] text-slate-500 truncate">
+                              {student.studentId} · {student.email}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-right">
+                            <span className="block text-[11px] font-medium text-indigo-600 dark:text-indigo-300">
+                              {studentGradeLabel(student)}
+                            </span>
+                            <span className="block text-[10px] text-slate-400">
+                              {enrolled ? "Already enrolled" : "Not enrolled"}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Courses
+                  </label>
+                  <span className="text-[11px] text-slate-400">
+                    {selectedCourseIds.length} selected
+                  </span>
+                </div>
+                <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
+                  {courses.map((course) => {
+                    const checked = selectedCourseIds.includes(course.id);
+                    return (
+                      <label
+                        key={course.id}
+                        className="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setSelectedCourseIds((previous) =>
+                              checked
+                                ? previous.filter((id) => id !== course.id)
+                                : [...previous, course.id],
+                            )
+                          }
+                          className="h-4 w-4 accent-indigo-600"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-slate-900 dark:text-white truncate">
+                            {course.title}
+                          </span>
+                          <span className="block text-[11px] text-slate-500">
+                            {course.code} ·{" "}
+                            {course.gradeName || course.grade || "Grade not specified"}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {formError && (
+                <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{formError}</p>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEnrollModalOpen(false)}
+                  className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white"
+                >
+                  {isSubmitting ? "Saving enrollment..." : "Confirm Enrollment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

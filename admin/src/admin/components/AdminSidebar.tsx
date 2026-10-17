@@ -46,6 +46,7 @@ export type AdminRoute =
   | "quizzes"
   | "examinations"
   | "grades"
+  | "results"
   | "attendance"
   | "materials"
   | "calendar"
@@ -133,7 +134,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         { id: "assignments" as AdminRoute, label: "Assignments", icon: FileCheck2 },
         { id: "quizzes" as AdminRoute, label: "Quizzes", icon: HelpCircle },
         { id: "examinations" as AdminRoute, label: "Examinations", icon: Award },
-        { id: "grades" as AdminRoute, label: "Grades & Results", icon: BarChart3 },
+        { id: "grades" as AdminRoute, label: "Grades", icon: Award },
+        { id: "results" as AdminRoute, label: "Results", icon: BarChart3 },
         { id: "attendance" as AdminRoute, label: "Attendance", icon: CalendarCheck2 },
       ],
     },

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   BookOpen,
   Search,
@@ -11,113 +11,411 @@ import {
   CheckCircle2,
   X,
   Eye,
-  BarChart2,
+  EyeOff,
+  Edit2,
+  Trash2,
+  Sparkles,
+  DollarSign,
+  Globe,
+  MapPin,
+  Tag,
+  AlertTriangle,
+  Info,
+  ExternalLink,
+  Check,
+  Copy,
+  CheckCircle,
+  FileText,
+  Image as ImageIcon,
+  HelpCircle,
+  ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
+import { ConfirmationDialog } from "../components/ConfirmationDialog";
 import { DetailDrawer } from "../components/DetailDrawer";
+import { UserAvatar } from "../components/UserAvatar";
 import {
   Course,
+  CreateCourseRequest,
+  Grade,
   TeacherProfile,
   EnrollmentRecord,
   CurriculumModule,
   LearningMaterial,
 } from "../types";
+import { createCourse, updateCourse } from "../api/coursesApi";
+
+const THUMBNAIL_PRESETS = [
+  {
+    name: "Advanced Mathematics",
+    subject: "Mathematics",
+    url: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Computer Science",
+    subject: "Computer Science",
+    url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Biology & Life Sciences",
+    subject: "Biology",
+    url: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Physics & Mechanics",
+    subject: "Physics",
+    url: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "World History & Arts",
+    subject: "Social Studies",
+    url: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=600&auto=format&fit=crop&q=80",
+  },
+];
+
+const COMMON_SUBJECTS = [
+  "Mathematics",
+  "Computer Science",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Social Studies",
+  "English Literature",
+  "Business Studies",
+];
+
+// Course Service validates assignedTeacherId against the teacher's Keycloak user ID,
+// while the admin users endpoint also exposes the database user ID as `id`.
+function teacherAssignmentId(teacher: TeacherProfile) {
+  return teacher.keycloakUserId || "";
+}
 
 interface CourseManagementProps {
   courses: Course[];
+  grades: Grade[];
   teachers: TeacherProfile[];
   enrollments: EnrollmentRecord[];
   curriculum: CurriculumModule[];
   materials: LearningMaterial[];
   onAddCourse: (newCourse: Course) => void;
+  onUpdateCourse?: (
+    courseId: string,
+    updatedCourse: Parameters<typeof updateCourse>[1],
+  ) => Promise<Course>;
+  onDeleteCourse?: (courseId: string) => Promise<{ success: boolean; error?: string }>;
   showCreateModalDirectly?: boolean;
+  preselectedGradeId?: string | null;
+  onNavigateToGrades?: () => void;
 }
 
 export const CourseManagement: React.FC<CourseManagementProps> = ({
   courses,
+  grades,
   teachers,
   enrollments,
   curriculum,
   materials,
   onAddCourse,
+  onUpdateCourse,
+  onDeleteCourse,
   showCreateModalDirectly = false,
+  preselectedGradeId = null,
+  onNavigateToGrades,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("ALL");
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [detailTab, setDetailTab] = useState<
-    "overview" | "curriculum" | "students" | "materials" | "performance"
-  >("overview");
+  const [gradeFilter, setGradeFilter] = useState("ALL");
+  const [modeFilter, setModeFilter] = useState<"ALL" | "ONLINE" | "PHYSICAL">("ALL");
+  const [publishFilter, setPublishFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT">("ALL");
+
+  // Modals & Drawers
   const [isCreateOpen, setIsCreateOpen] = useState(showCreateModalDirectly);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [deleteConfirmCourse, setDeleteConfirmCourse] = useState<Course | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<"overview" | "curriculum" | "students" | "materials">(
+    "overview",
+  );
 
-  // New course form
-  const [formData, setFormData] = useState({
-    code: "",
-    title: "",
-    teacherId: teachers[0]?.id || "",
-    grade: "Grade 12",
-    category: "Mathematics",
-    maxCapacity: 60,
-    description: "",
-    startDate: "2026-09-01",
-    endDate: "2027-01-25",
-  });
-
-  const filteredCourses = courses.filter((c) => {
-    const matchesSearch =
-      c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.teacherName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === "ALL" || c.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleCreateCourse = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.code || !formData.title) return;
-
-    const teacher = teachers.find((t) => t.id === formData.teacherId) || teachers[0];
-    const newCourse: Course = {
-      id: `crs-${Date.now()}`,
-      code: formData.code.toUpperCase(),
-      title: formData.title,
-      teacherId: teacher.id,
-      teacherName: `${teacher.firstName} ${teacher.lastName}`,
-      grade: formData.grade,
-      category: formData.category,
-      maxCapacity: Number(formData.maxCapacity),
-      enrollmentCount: 0,
-      modulesCount: 4,
-      status: "ACTIVE",
-      description: formData.description,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-    };
-
-    onAddCourse(newCourse);
-    setIsCreateOpen(false);
-    setFormData({
-      code: "",
-      title: "",
-      teacherId: teachers[0]?.id || "",
-      grade: "Grade 12",
-      category: "Mathematics",
-      maxCapacity: 60,
-      description: "",
-      startDate: "2026-09-01",
-      endDate: "2027-01-25",
-    });
+  // Course Form State (Matching latest Spring Boot CourseRequest contract)
+  const initialFormState: CreateCourseRequest = {
+    courseName: "",
+    courseDescription: "",
+    courseThumbnail: "",
+    gradeId: preselectedGradeId || grades[0]?.id || "",
+    assignedTeacherId: teachers[0] ? teacherAssignmentId(teachers[0]) : "",
+    subject: "Mathematics",
+    isOnline: true,
+    isVisible: true,
+    isPublished: true,
+    courseEnrollmentId: null,
   };
 
+  const [formData, setFormData] = useState<CreateCourseRequest>(initialFormState);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPayloadPreview, setShowPayloadPreview] = useState(false);
+  const [copiedJson, setCopiedJson] = useState(false);
+
+  // Sync preselected grade if passed
+  useEffect(() => {
+    if (grades.length === 0) return;
+
+    const selectedGradeStillExists = grades.some((grade) => grade.id === formData.gradeId);
+    const preselectedGradeStillExists = Boolean(
+      preselectedGradeId && grades.some((grade) => grade.id === preselectedGradeId),
+    );
+
+    // A grade can be deleted in another admin session while this page is open. Never
+    // carry that stale UUID into the Course Service request.
+    const nextGradeId = preselectedGradeStillExists
+      ? preselectedGradeId!
+      : selectedGradeStillExists
+        ? formData.gradeId
+        : grades[0].id;
+
+    if (nextGradeId !== formData.gradeId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFormData((prev) => ({ ...prev, gradeId: nextGradeId }));
+    }
+
+    if (preselectedGradeStillExists) {
+      setIsCreateOpen(true);
+    }
+  }, [formData.gradeId, grades, preselectedGradeId]);
+
+  // Form Reset
+  const resetForm = () => {
+    setFormData({
+      courseName: "",
+      courseDescription: "",
+      courseThumbnail: "",
+      gradeId: grades[0]?.id || "",
+      assignedTeacherId: teachers[0] ? teacherAssignmentId(teachers[0]) : "",
+      subject: "Mathematics",
+      isOnline: true,
+      isVisible: true,
+      isPublished: true,
+      courseEnrollmentId: null,
+    });
+    setFormErrors({});
+    setIsSubmitting(false);
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setIsCreateOpen(true);
+  };
+
+  const openEditModal = (course: Course) => {
+    setFormData({
+      courseName: course.courseName || course.title || "",
+      courseDescription: course.courseDescription || course.description || "",
+      courseThumbnail: course.courseThumbnail || "",
+      gradeId: course.gradeId || grades[0]?.id || "",
+      assignedTeacherId:
+        course.assignedTeacherId ||
+        course.teacherId ||
+        (teachers[0] ? teacherAssignmentId(teachers[0]) : ""),
+      subject: course.subject || course.category || "Mathematics",
+      isOnline: course.isOnline ?? course.online ?? true,
+      isVisible: course.isVisible ?? course.visible ?? true,
+      isPublished: course.isPublished ?? true,
+      courseEnrollmentId: course.courseEnrollmentId || null,
+    });
+    setFormErrors({});
+    setEditingCourse(course);
+  };
+
+  // Validation strictly adhering to Spring Boot @Valid constraints
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.courseName.trim()) {
+      errors.courseName = "Course name is required";
+    } else if (formData.courseName.length > 150) {
+      errors.courseName = "Course name must not exceed 150 characters";
+    }
+
+    if (!formData.courseDescription.trim()) {
+      errors.courseDescription = "Course description is required";
+    } else if (formData.courseDescription.length > 2000) {
+      errors.courseDescription = "Course description must not exceed 2000 characters";
+    }
+
+    if (!formData.subject.trim()) {
+      errors.subject = "Subject classification is required";
+    } else if (formData.subject.length > 100) {
+      errors.subject = "Subject must not exceed 100 characters";
+    }
+
+    const selectedGrade = grades.find((grade) => grade.id === formData.gradeId);
+    if (!formData.gradeId) {
+      errors.gradeId = "Target Grade selection is required";
+    } else if (!selectedGrade) {
+      errors.gradeId =
+        "The selected grade is no longer available. Refresh and select an existing grade.";
+    }
+
+    const selectedTeacher = teachers.find(
+      (teacher) => teacherAssignmentId(teacher) === formData.assignedTeacherId,
+    );
+    if (!formData.assignedTeacherId || !selectedTeacher?.keycloakUserId) {
+      errors.assignedTeacherId =
+        "Select a teacher with a valid Keycloak identity before creating the course";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Selected grade and faculty in real time
+  const formSelectedGrade = grades.find((g) => g.id === formData.gradeId);
+  const formSelectedTeacher = teachers.find(
+    (teacher) => teacherAssignmentId(teacher) === formData.assignedTeacherId,
+  );
+
+  // Submit the same form through the real Course Service API.
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setFormErrors({});
+
+    try {
+      const selectedGrade = grades.find((grade) => grade.id === formData.gradeId);
+      if (!selectedGrade) {
+        setFormErrors({
+          gradeId:
+            "The selected grade is no longer available. Refresh and select an existing grade.",
+        });
+        return;
+      }
+      const payload = {
+        courseName: formData.courseName.trim(),
+        courseDescription: formData.courseDescription.trim(),
+        courseThumbnail: formData.courseThumbnail?.trim() || undefined,
+        courseFeeMonthly: selectedGrade?.monthlyFee || 1,
+        gradeId: formData.gradeId,
+        assignedTeacherId: formData.assignedTeacherId,
+        subject: formData.subject.trim(),
+        isOnline: Boolean(formData.isOnline),
+        isVisible: Boolean(formData.isVisible),
+        isPublished: Boolean(formData.isPublished),
+        courseEnrollmentId: formData.courseEnrollmentId || null,
+      };
+
+      const saved = editingCourse
+        ? onUpdateCourse
+          ? await onUpdateCourse(editingCourse.id, payload)
+          : await updateCourse(editingCourse.id, payload)
+        : await createCourse(payload);
+
+      if (!editingCourse) {
+        onAddCourse({
+          ...saved,
+          gradeName: selectedGrade.name,
+          grade: selectedGrade.name,
+          teacherName: formSelectedTeacher
+            ? `${formSelectedTeacher.firstName} ${formSelectedTeacher.lastName}`
+            : saved.teacherName,
+          teacherCode: formSelectedTeacher?.teacherCode,
+          title: formData.courseName.trim(),
+          description: formData.courseDescription.trim(),
+          category: formData.subject.trim(),
+          gradeId: formData.gradeId,
+          maxCapacity: 60,
+        });
+      }
+      setIsCreateOpen(false);
+      setEditingCourse(null);
+      resetForm();
+    } catch (error) {
+      setFormErrors({
+        api: error instanceof Error ? error.message : "Unable to create the course.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Delete Course
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmCourse) return;
+
+    if (
+      (deleteConfirmCourse.studentCount ?? 0) > 0 ||
+      (deleteConfirmCourse.enrollmentCount && deleteConfirmCourse.enrollmentCount > 0)
+    ) {
+      setDeleteError(
+        `Cannot delete course: ${deleteConfirmCourse.studentCount} active students are currently enrolled. Reassign or unenroll students first.`,
+      );
+      return;
+    }
+
+    if (onDeleteCourse) {
+      const res = await onDeleteCourse(deleteConfirmCourse.id);
+      if (!res.success) {
+        setDeleteError(res.error || "Failed to delete course");
+        return;
+      }
+    } else {
+      const idx = courses.findIndex((c) => c.id === deleteConfirmCourse.id);
+      if (idx !== -1) courses.splice(idx, 1);
+    }
+
+    setDeleteConfirmCourse(null);
+    setDeleteError(null);
+  };
+
+  // Filtered courses
+  const filteredCourses = useMemo(() => {
+    return courses.filter((c) => {
+      const name = (c.courseName || c.title || "").toLowerCase();
+      const subject = (c.subject || c.category || "").toLowerCase();
+      const teacher = (c.teacherName || "").toLowerCase();
+      const code = (c.code || "").toLowerCase();
+      const query = searchQuery.toLowerCase();
+
+      const matchesSearch =
+        name.includes(query) ||
+        subject.includes(query) ||
+        teacher.includes(query) ||
+        code.includes(query);
+
+      const matchesGrade =
+        gradeFilter === "ALL" || c.gradeId === gradeFilter || c.gradeName === gradeFilter;
+
+      const isOnlineCourse = c.isOnline ?? c.online ?? true;
+      const matchesMode =
+        modeFilter === "ALL" ? true : modeFilter === "ONLINE" ? isOnlineCourse : !isOnlineCourse;
+
+      const isPublished = c.isPublished ?? (c.status === "PUBLISHED" || c.status === "ACTIVE");
+      const matchesPublish =
+        publishFilter === "ALL" ? true : publishFilter === "PUBLISHED" ? isPublished : !isPublished;
+
+      return matchesSearch && matchesGrade && matchesMode && matchesPublish;
+    });
+  }, [courses, searchQuery, gradeFilter, modeFilter, publishFilter]);
+
+  // Course Relations for Detail Drawer
   const courseEnrollments = selectedCourse
     ? enrollments.filter(
-        (e) => e.courseId === selectedCourse.id || e.courseCode === selectedCourse.code,
+        (e) =>
+          e.courseId === selectedCourse.id ||
+          (selectedCourse.code && e.courseCode === selectedCourse.code),
       )
     : [];
 
   const courseMaterials = selectedCourse
-    ? materials.filter((m) => m.courseCode === selectedCourse.code)
+    ? materials.filter(
+        (m) =>
+          m.courseId === selectedCourse.id ||
+          (selectedCourse.code && m.courseCode === selectedCourse.code),
+      )
     : [];
 
   const courseCurriculum = selectedCourse
@@ -128,388 +426,1364 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     <div className="space-y-6">
       <PageHeader
         title="Course Management"
-        description="Comprehensive curriculum structures, teacher assignments, student capacities, and institutional syllabi."
+        description="Comprehensive academic course catalogue, faculty allocations, delivery modes, and catalog governance."
         breadcrumbs={[{ label: "Admin" }, { label: "Academic Management" }, { label: "Courses" }]}
         actions={
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Course</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {grades.length === 0 && onNavigateToGrades && (
+              <button
+                onClick={onNavigateToGrades}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 transition-colors"
+              >
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <span>Create Grade First</span>
+              </button>
+            )}
+            <button
+              onClick={openCreateModal}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Course</span>
+            </button>
+          </div>
         }
       />
 
-      {/* Search and Filters */}
-      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+      {/* Warning Notice if No Grades Exist */}
+      {grades.length === 0 && (
+        <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 flex items-start justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-amber-900 dark:text-amber-200">
+                Grade Requirement Notice
+              </p>
+              <p className="text-amber-700 dark:text-amber-400 mt-0.5">
+                Every course in the Mentify backend must link to an existing Grade ID to inherit its
+                monthly fee. Please define at least one Grade level before creating new academic
+                courses.
+              </p>
+            </div>
+          </div>
+          {onNavigateToGrades && (
+            <button
+              onClick={onNavigateToGrades}
+              className="px-3 py-1.5 rounded-lg bg-amber-600 text-white font-medium shrink-0 hover:bg-amber-700"
+            >
+              Go to Grades
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Search and Filters Bar */}
+      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by course title, code (e.g. MATH-401), or faculty..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
+            placeholder="Search by course name, subject, faculty, or code..."
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Grade filter */}
           <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            value={gradeFilter}
+            onChange={(e) => setGradeFilter(e.target.value)}
             className="px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
-            <option value="ALL">All Categories</option>
-            <option value="Mathematics">Mathematics</option>
-            <option value="Computer Science">Computer Science</option>
-            <option value="Biological Sciences">Biological Sciences</option>
-            <option value="Physics">Physics</option>
-            <option value="Social Studies">Social Studies</option>
+            <option value="ALL">All Grades</option>
+            {grades.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
           </select>
 
-          <span className="text-xs text-slate-400 tabular-nums">
-            {filteredCourses.length} active courses
+          {/* Delivery Mode filter */}
+          <select
+            value={modeFilter}
+            onChange={(e) => setModeFilter(e.target.value as any)}
+            className="px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <option value="ALL">All Modes</option>
+            <option value="ONLINE">Online</option>
+            <option value="PHYSICAL">Physical / Campus</option>
+          </select>
+
+          {/* Publish status filter */}
+          <select
+            value={publishFilter}
+            onChange={(e) => setPublishFilter(e.target.value as any)}
+            className="px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="DRAFT">Draft</option>
+          </select>
+
+          <span className="text-xs text-slate-400 tabular-nums ml-1">
+            {filteredCourses.length} courses
           </span>
         </div>
       </div>
 
-      {/* Courses Grid / Table */}
+      {/* Courses Directory Table */}
       <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                <th className="py-3 px-4 font-semibold">Course Code</th>
-                <th className="py-3 px-4 font-semibold">Title & Category</th>
+                <th className="py-3 px-4 font-semibold">Course & Subject</th>
+                <th className="py-3 px-4 font-semibold">Grade Level</th>
+                <th className="py-3 px-4 font-semibold">Inherited Monthly Tuition</th>
                 <th className="py-3 px-4 font-semibold">Assigned Faculty</th>
-                <th className="py-3 px-4 font-semibold">Grade</th>
-                <th className="py-3 px-4 font-semibold">Enrollment / Capacity</th>
-                <th className="py-3 px-4 font-semibold">Modules</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
+                <th className="py-3 px-4 font-semibold">Delivery Mode</th>
+                <th className="py-3 px-4 font-semibold">Catalog Status</th>
+                <th className="py-3 px-4 font-semibold">Enrolled</th>
                 <th className="py-3 px-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredCourses.map((course) => {
-                const fillPercent = Math.round((course.enrollmentCount / course.maxCapacity) * 100);
+              {filteredCourses.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <BookOpen className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                    <p className="font-medium text-slate-700 dark:text-slate-300">
+                      No courses found
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Try adjusting your search criteria or create a new course.
+                    </p>
+                    <button
+                      onClick={openCreateModal}
+                      className="mt-3 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                      Create First Course
+                    </button>
+                  </td>
+                </tr>
+              ) : (
+                filteredCourses.map((course) => {
+                  const isOnlineCourse = course.isOnline ?? course.online ?? true;
+                  const isPublishedCourse =
+                    course.isPublished ??
+                    (course.status === "PUBLISHED" || course.status === "ACTIVE");
+                  const feeValue = course.gradeMonthlyFee ?? course.courseFeeMonthly ?? 5000;
+                  const feeCurrency = course.gradeCurrencyCode || "LKR";
 
-                return (
-                  <tr
-                    key={course.id}
-                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="py-3 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                      {course.code}
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <span className="font-semibold text-slate-900 dark:text-white block">
-                        {course.title}
-                      </span>
-                      <span className="text-[11px] text-slate-400">{course.category}</span>
-                    </td>
-
-                    <td className="py-3 px-4 text-slate-700 dark:text-slate-300 font-medium">
-                      {course.teacherName}
-                    </td>
-
-                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400">{course.grade}</td>
-
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-900 dark:text-white tabular-nums">
-                          {course.enrollmentCount} / {course.maxCapacity}
-                        </span>
-                        <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${
-                              fillPercent > 90 ? "bg-amber-500" : "bg-indigo-600"
-                            }`}
-                            style={{ width: `${Math.min(fillPercent, 100)}%` }}
-                          />
+                  return (
+                    <tr
+                      key={course.id}
+                      className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      {/* Course Title & Subject */}
+                      <td className="py-3.5 px-4 max-w-xs">
+                        <div className="flex items-center gap-3">
+                          {course.courseThumbnail ? (
+                            <img
+                              src={course.courseThumbnail}
+                              alt={course.courseName || course.title}
+                              className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold text-sm shrink-0">
+                              {(course.courseName || course.title || "C").charAt(0)}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <span className="font-semibold text-slate-900 dark:text-white block truncate">
+                              {course.courseName || course.title}
+                            </span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+                                {course.subject || course.category}
+                              </span>
+                              {course.code && (
+                                <span className="font-mono text-[10px] text-slate-400">
+                                  · {course.code}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-3 px-4 tabular-nums text-slate-600 dark:text-slate-300">
-                      {course.modulesCount} modules
-                    </td>
+                      {/* Grade */}
+                      <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px]">
+                          <GraduationCap className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                          <span>{course.gradeName || course.grade || "Unassigned"}</span>
+                        </span>
+                      </td>
 
-                    <td className="py-3 px-4">
-                      <StatusBadge status={course.status} />
-                    </td>
+                      {/* Inherited Monthly Fee from Grade */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="inline-flex flex-col">
+                          <div className="flex items-baseline gap-1 text-slate-900 dark:text-white font-bold tabular-nums">
+                            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
+                              {feeCurrency}
+                            </span>
+                            <span>
+                              {feeValue.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-normal">/ mo</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">
+                            Tier: {course.gradeName || "Standard Grade"}
+                          </span>
+                        </div>
+                      </td>
 
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedCourse(course);
-                          setDetailTab("overview");
-                        }}
-                        className="px-2.5 py-1 text-xs font-medium rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-                      >
-                        Inspect
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      {/* Faculty */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <UserAvatar name={course.teacherName || "Faculty"} size="sm" />
+                          <div>
+                            <span className="font-medium text-slate-900 dark:text-white block">
+                              {course.teacherName || "Assigned Faculty"}
+                            </span>
+                            {course.teacherCode && (
+                              <span className="font-mono text-[10px] text-slate-400 block">
+                                {course.teacherCode}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Delivery Mode */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        {isOnlineCourse ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                            <Globe className="w-3 h-3" />
+                            <span>Online Live</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            <MapPin className="w-3 h-3" />
+                            <span>Campus Physical</span>
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="space-y-1">
+                          <StatusBadge status={isPublishedCourse ? "PUBLISHED" : "DRAFT"} />
+                          {course.isVisible ? (
+                            <span className="block text-[10px] text-slate-400">
+                              Publicly Listed
+                            </span>
+                          ) : (
+                            <span className="block text-[10px] text-amber-500">Unlisted</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Enrolled Students */}
+                      <td className="py-3.5 px-4 tabular-nums text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{course.studentCount ?? course.enrollmentCount ?? 0} students</span>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => {
+                              setSelectedCourse(course);
+                              setDetailTab("overview");
+                            }}
+                            title="Inspect Details"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditModal(course)}
+                            title="Edit Course"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDeleteError(null);
+                              setDeleteConfirmCourse(course);
+                            }}
+                            title="Delete Course"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* CREATE COURSE MODAL */}
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 my-8 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Create Academic Course
-              </h3>
+      {/* ========================================================================= */}
+      {/* CREATE / EDIT COURSE MODAL — PROFESSIONAL ALIGNED FORM & UX               */}
+      {/* ========================================================================= */}
+      {(isCreateOpen || editingCourse) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/65 backdrop-blur-sm overflow-hidden">
+          <div className="w-full max-w-5xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>{editingCourse ? "Edit Academic Course" : "Create Academic Course"}</span>
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-medium">
+                      {editingCourse ? "PUT /api/v1/course" : "POST /api/v1/course"}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Configure institutional curriculum attributes, grade assignment, and faculty
+                    ownership.
+                  </p>
+                </div>
+              </div>
               <button
-                onClick={() => setIsCreateOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                type="button"
+                onClick={() => {
+                  setIsCreateOpen(false);
+                  setEditingCourse(null);
+                }}
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-2 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                title="Close dialog"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCourse} className="py-4 space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Course Code *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    placeholder="e.g. CHEM-301"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+            {/* Modal Scrollable Body */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+                {/* LEFT COLUMN: Structured Form Inputs (Span 7) */}
+                <div className="lg:col-span-7 space-y-6 text-xs">
+                  {/* SECTION 1: COURSE IDENTITY */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
+                        1
+                      </span>
+                      <h4 className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+                        Course Identity & Classification
+                      </h4>
+                    </div>
+
+                    {/* Course Name */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="font-semibold text-slate-800 dark:text-slate-200">
+                          Course Title <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 tabular-nums">
+                          {formData.courseName.length} / 150
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          maxLength={150}
+                          value={formData.courseName}
+                          onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
+                          placeholder="e.g. Advanced Calculus & Analytic Geometry"
+                          className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
+                            formErrors.courseName
+                              ? "border-rose-400 focus:ring-rose-400/20"
+                              : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          }`}
+                        />
+                      </div>
+                      {formErrors.courseName ? (
+                        <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          <span>{formErrors.courseName}</span>
+                        </p>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 mt-1 block">
+                          Official institutional course title as displayed in syllabus and
+                          transcripts.
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Subject Classification with quick chips */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="font-semibold text-slate-800 dark:text-slate-200">
+                          Subject Domain <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 tabular-nums">
+                          {formData.subject.length} / 100
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          maxLength={100}
+                          value={formData.subject}
+                          onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                          placeholder="e.g. Mathematics"
+                          className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
+                            formErrors.subject
+                              ? "border-rose-400 focus:ring-rose-400/20"
+                              : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          }`}
+                        />
+                      </div>
+                      {formErrors.subject && (
+                        <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          <span>{formErrors.subject}</span>
+                        </p>
+                      )}
+
+                      {/* Quick Subject Suggestion Chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        <span className="text-[10px] text-slate-400">Suggestions:</span>
+                        {COMMON_SUBJECTS.map((sub) => (
+                          <button
+                            key={sub}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, subject: sub })}
+                            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                              formData.subject === sub
+                                ? "bg-indigo-600 text-white"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            }`}
+                          >
+                            {sub}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Thumbnail URL with Inline Preview and Presets */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="font-semibold text-slate-800 dark:text-slate-200">
+                          Course Cover Thumbnail{" "}
+                          <span className="text-slate-400 font-normal">(Optional URL)</span>
+                        </label>
+                        {formData.courseThumbnail && (
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, courseThumbnail: "" })}
+                            className="text-[10px] text-rose-500 hover:underline"
+                          >
+                            Clear image
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {/* Thumbnail Square Box */}
+                        <div className="w-14 h-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+                          {formData.courseThumbnail ? (
+                            <img
+                              src={formData.courseThumbnail}
+                              alt="Thumbnail preview"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <ImageIcon className="w-6 h-6 text-slate-400" />
+                          )}
+                        </div>
+
+                        {/* URL text input */}
+                        <div className="flex-1">
+                          <input
+                            type="url"
+                            value={formData.courseThumbnail || ""}
+                            onChange={(e) =>
+                              setFormData({ ...formData, courseThumbnail: e.target.value })
+                            }
+                            placeholder="https://images.unsplash.com/photo-..."
+                            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 1-Click Curated Presets */}
+                      <div className="mt-2.5">
+                        <span className="text-[10px] text-slate-400 block mb-1.5 font-medium">
+                          Or select an educational cover photo preset:
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                          {THUMBNAIL_PRESETS.map((p) => (
+                            <button
+                              key={p.name}
+                              type="button"
+                              onClick={() =>
+                                setFormData({
+                                  ...formData,
+                                  courseThumbnail: p.url,
+                                  subject: formData.subject || p.subject,
+                                })
+                              }
+                              className={`group relative rounded-lg overflow-hidden border p-1 text-left transition-all ${
+                                formData.courseThumbnail === p.url
+                                  ? "border-indigo-600 ring-2 ring-indigo-500/30"
+                                  : "border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                              }`}
+                            >
+                              <img
+                                src={p.url}
+                                alt={p.name}
+                                className="w-full h-10 object-cover rounded"
+                              />
+                              <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 block truncate mt-1">
+                                {p.name.split(" ")[0]}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 2: ACADEMIC HIERARCHY & FACULTY */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
+                        2
+                      </span>
+                      <h4 className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+                        Academic Hierarchy & Faculty Assignment
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Target Grade Level */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5 h-4">
+                          <label className="font-semibold text-slate-800 dark:text-slate-200">
+                            Target Grade Level <span className="text-rose-500">*</span>
+                          </label>
+                          {onNavigateToGrades && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCreateOpen(false);
+                                onNavigateToGrades();
+                              }}
+                              className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5"
+                            >
+                              <span>Manage Grades</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </button>
+                          )}
+                        </div>
+                        <select
+                          value={formData.gradeId}
+                          onChange={(e) => setFormData({ ...formData, gradeId: e.target.value })}
+                          className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
+                            formErrors.gradeId
+                              ? "border-rose-400 focus:ring-rose-400/20"
+                              : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          }`}
+                        >
+                          <option value="">Select target grade level...</option>
+                          {grades.map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.name} {!g.active ? "(Inactive)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.gradeId && (
+                          <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 shrink-0" />
+                            <span>{formErrors.gradeId}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Assigned Faculty Teacher */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5 h-4">
+                          <label className="font-semibold text-slate-800 dark:text-slate-200">
+                            Lead Faculty Teacher <span className="text-rose-500">*</span>
+                          </label>
+                          <span className="text-[10px] text-slate-400">
+                            {teachers.length} faculty available
+                          </span>
+                        </div>
+                        <select
+                          value={formData.assignedTeacherId}
+                          onChange={(e) =>
+                            setFormData({ ...formData, assignedTeacherId: e.target.value })
+                          }
+                          className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
+                            formErrors.assignedTeacherId
+                              ? "border-rose-400 focus:ring-rose-400/20"
+                              : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
+                          }`}
+                        >
+                          <option value="">Select lead faculty teacher...</option>
+                          {teachers.map((t) => (
+                            <option key={t.id} value={teacherAssignmentId(t)}>
+                              {t.teacherCode} — {t.firstName} {t.lastName} ({t.email})
+                            </option>
+                          ))}
+                        </select>
+                        {formErrors.assignedTeacherId && (
+                          <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 shrink-0" />
+                            <span>{formErrors.assignedTeacherId}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 3: SYLLABUS & DESCRIPTION */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
+                          3
+                        </span>
+                        <h4 className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+                          Syllabus & Course Objectives
+                        </h4>
+                      </div>
+                      <span className="text-[10px] text-slate-400 tabular-nums">
+                        {formData.courseDescription.length} / 2000
+                      </span>
+                    </div>
+
+                    <div>
+                      <textarea
+                        rows={4}
+                        maxLength={2000}
+                        value={formData.courseDescription}
+                        onChange={(e) =>
+                          setFormData({ ...formData, courseDescription: e.target.value })
+                        }
+                        placeholder="Comprehensive academic course description covering syllabus overview, prerequisites, textbook readings, and practical laboratory components..."
+                        className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs leading-relaxed focus:outline-none focus:ring-2 ${
+                          formErrors.courseDescription
+                            ? "border-rose-400 focus:ring-rose-400/20"
+                            : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
+                        }`}
+                      />
+                      {formErrors.courseDescription && (
+                        <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          <span>{formErrors.courseDescription}</span>
+                        </p>
+                      )}
+
+                      {/* Quick Template Fill Buttons */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[10px] text-slate-400">Insert template:</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              courseDescription: `Comprehensive ${formData.subject || "curriculum"} course designed for ${formSelectedGrade?.name || "secondary"} students. Focuses on theoretical foundations, analytical problem-solving, structured modular lessons, and continuous academic assessment with weekly quizzes and final examination.`,
+                            })
+                          }
+                          className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] hover:bg-slate-200 transition-colors"
+                        >
+                          Standard Academic Template
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 4: DELIVERY & PUBLICATION GOVERNANCE */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                      <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
+                        4
+                      </span>
+                      <h4 className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+                        Delivery Mode & Catalog Governance
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Delivery Mode Segmented Switch */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 block text-[11px]">
+                          Delivery Format
+                        </span>
+                        <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-200/60 dark:bg-slate-800">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, isOnline: true })}
+                            className={`py-1.5 px-2 rounded-md font-medium text-[11px] flex items-center justify-center gap-1 transition-all ${
+                              formData.isOnline
+                                ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-2xs font-semibold"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            }`}
+                          >
+                            <Globe className="w-3.5 h-3.5" />
+                            <span>Online</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, isOnline: false })}
+                            className={`py-1.5 px-2 rounded-md font-medium text-[11px] flex items-center justify-center gap-1 transition-all ${
+                              !formData.isOnline
+                                ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-2xs font-semibold"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            }`}
+                          >
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span>Campus</span>
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block">
+                          {formData.isOnline
+                            ? "Virtual Zoom / Meet live classes"
+                            : "Physical in-person campus lectures"}
+                        </span>
+                      </div>
+
+                      {/* Catalog Visibility Segmented Switch */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 block text-[11px]">
+                          Catalog Visibility
+                        </span>
+                        <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-200/60 dark:bg-slate-800">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, isVisible: true })}
+                            className={`py-1.5 px-2 rounded-md font-medium text-[11px] flex items-center justify-center gap-1 transition-all ${
+                              formData.isVisible
+                                ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-2xs font-semibold"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            }`}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Listed</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, isVisible: false })}
+                            className={`py-1.5 px-2 rounded-md font-medium text-[11px] flex items-center justify-center gap-1 transition-all ${
+                              !formData.isVisible
+                                ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 shadow-2xs font-semibold"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            }`}
+                          >
+                            <EyeOff className="w-3.5 h-3.5" />
+                            <span>Hidden</span>
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block">
+                          {formData.isVisible
+                            ? "Searchable in student directory"
+                            : "Hidden from public student catalog"}
+                        </span>
+                      </div>
+
+                      {/* Publication State Segmented Switch */}
+                      <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-2">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 block text-[11px]">
+                          Publication State
+                        </span>
+                        <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-slate-200/60 dark:bg-slate-800">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, isPublished: true })}
+                            className={`py-1.5 px-2 rounded-md font-medium text-[11px] flex items-center justify-center gap-1 transition-all ${
+                              formData.isPublished
+                                ? "bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-2xs font-semibold"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            }`}
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            <span>Live</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, isPublished: false })}
+                            className={`py-1.5 px-2 rounded-md font-medium text-[11px] flex items-center justify-center gap-1 transition-all ${
+                              !formData.isPublished
+                                ? "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 shadow-2xs font-semibold"
+                                : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                            }`}
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Draft</span>
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block">
+                          {formData.isPublished
+                            ? "Open for enrollment & classwork"
+                            : "Under preparation by instructors"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Target Grade
-                  </label>
-                  <select
-                    value={formData.grade}
-                    onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  >
-                    <option value="Grade 10">Grade 10</option>
-                    <option value="Grade 11">Grade 11</option>
-                    <option value="Grade 12">Grade 12</option>
-                  </select>
-                </div>
+                {/* RIGHT COLUMN: Sticky Real-Time Student Preview & API Inspector (Span 5) */}
+                <div className="lg:col-span-5 sticky top-0 space-y-5">
+                  {/* LIVE STUDENT CARD PREVIEW */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>Live Student Portal View</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400">Realistic Preview</span>
+                    </div>
 
-                <div className="col-span-2">
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Course Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. Organic Chemistry & Polymer Synthesis"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
-                </div>
+                    {/* Rendered Student Card */}
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 overflow-hidden shadow-xs">
+                      {/* Image header */}
+                      <div className="relative h-36 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        {formData.courseThumbnail ? (
+                          <img
+                            src={formData.courseThumbnail}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 flex items-center justify-center text-white font-extrabold text-3xl">
+                            {(formData.courseName || "M").charAt(0).toUpperCase()}
+                          </div>
+                        )}
 
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Department Category
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  >
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Biological Sciences">Biological Sciences</option>
-                    <option value="Physics">Physics</option>
-                    <option value="Social Studies">Social Studies</option>
-                  </select>
-                </div>
+                        {/* Badges on card */}
+                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                          <span className="px-2 py-0.5 rounded-md bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white text-[10px] font-bold shadow-xs backdrop-blur-xs">
+                            {formData.subject || "Subject"}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md bg-indigo-600/90 text-white text-[10px] font-semibold shadow-xs backdrop-blur-xs">
+                            {formSelectedGrade ? formSelectedGrade.name : "Grade Level"}
+                          </span>
+                        </div>
 
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Assigned Lead Faculty
-                  </label>
-                  <select
-                    value={formData.teacherId}
-                    onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  >
-                    {teachers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.firstName} {t.lastName} ({t.teacherCode})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                        <div className="absolute top-2.5 right-2.5">
+                          {formData.isOnline ? (
+                            <span className="px-2 py-0.5 rounded-md bg-sky-500/90 text-white text-[10px] font-medium shadow-xs backdrop-blur-xs flex items-center gap-1">
+                              <Globe className="w-2.5 h-2.5" />
+                              <span>Online</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md bg-amber-500/90 text-white text-[10px] font-medium shadow-xs backdrop-blur-xs flex items-center gap-1">
+                              <MapPin className="w-2.5 h-2.5" />
+                              <span>Campus</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Max Student Capacity
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="150"
-                    value={formData.maxCapacity}
-                    onChange={(e) =>
-                      setFormData({ ...formData, maxCapacity: Number(e.target.value) })
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
-                </div>
+                      {/* Card Content */}
+                      <div className="p-4 space-y-3">
+                        <h5 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">
+                          {formData.courseName || "Course Title Preview"}
+                        </h5>
 
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
-                </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                          {formData.courseDescription ||
+                            "Course description and academic syllabus objectives will be presented to prospective students here."}
+                        </p>
 
-                <div className="col-span-2">
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Syllabus Overview / Description
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Enter course curriculum goals, prerequisites, and learning objectives..."
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <UserAvatar
+                              name={
+                                formSelectedTeacher
+                                  ? `${formSelectedTeacher.firstName} ${formSelectedTeacher.lastName}`
+                                  : "Faculty"
+                              }
+                              size="sm"
+                            />
+                            <div className="min-w-0">
+                              <span className="text-xs font-semibold text-slate-900 dark:text-white block truncate">
+                                {formSelectedTeacher
+                                  ? `${formSelectedTeacher.firstName} ${formSelectedTeacher.lastName}`
+                                  : "Assigned Faculty"}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block font-mono">
+                                {formSelectedTeacher?.teacherCode || "TCH-0000"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-400 block">Grade</span>
+                            <div className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
+                              {formSelectedGrade?.name || "Not selected"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SPRING BOOT MICROSERVICE READINESS CHECKLIST */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>Backend Contract Health</span>
+                      </span>
+                      {formData.courseName.trim() &&
+                      formData.subject.trim() &&
+                      formData.gradeId &&
+                      formData.assignedTeacherId &&
+                      formData.courseDescription.trim() ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold">
+                          Valid Payload
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 text-[10px] font-semibold">
+                          Incomplete
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5 text-[11px]">
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-slate-600 dark:text-slate-400">
+                          Course Title (3-150 chars)
+                        </span>
+                        {formData.courseName.trim().length >= 3 ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                            <Check className="w-3 h-3" /> Ready
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Required</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-slate-600 dark:text-slate-400">
+                          Subject Classification
+                        </span>
+                        {formData.subject.trim().length >= 2 ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                            <Check className="w-3 h-3" /> Ready
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Required</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-slate-600 dark:text-slate-400">
+                          Target Grade Level UUID
+                        </span>
+                        {formData.gradeId ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                            <Check className="w-3 h-3" /> Linked
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Select Grade</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-slate-600 dark:text-slate-400">
+                          Lead Faculty Teacher UUID
+                        </span>
+                        {formData.assignedTeacherId ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                            <Check className="w-3 h-3" /> Assigned
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Select Faculty</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between py-1">
+                        <span className="text-slate-600 dark:text-slate-400">
+                          Syllabus Description
+                        </span>
+                        {formData.courseDescription.trim().length >= 10 ? (
+                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
+                            <Check className="w-3 h-3" /> Detailed
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Required</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SPRING BOOT API PAYLOAD INSPECTOR */}
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-4 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
+                        POST /api/v1/course Request DTO
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const payload = {
+                            courseName: formData.courseName || "Advanced Calculus",
+                            courseDescription:
+                              formData.courseDescription || "Curriculum description...",
+                            courseThumbnail: formData.courseThumbnail || null,
+                            gradeId: formData.gradeId || "SELECTED_GRADE_UUID",
+                            assignedTeacherId:
+                              formData.assignedTeacherId || "SELECTED_TEACHER_UUID",
+                            subject: formData.subject || "Mathematics",
+                            isOnline: Boolean(formData.isOnline),
+                            isVisible: Boolean(formData.isVisible),
+                            isPublished: Boolean(formData.isPublished),
+                            courseEnrollmentId: formData.courseEnrollmentId || null,
+                          };
+                          navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+                          setCopiedJson(true);
+                          setTimeout(() => setCopiedJson(false), 2000);
+                        }}
+                        className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{copiedJson ? "Copied!" : "Copy JSON"}</span>
+                      </button>
+                    </div>
+
+                    <pre className="p-3 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-[10px] text-slate-800 dark:text-slate-200 overflow-x-auto max-h-40">
+                      {JSON.stringify(
+                        {
+                          courseName: formData.courseName || "Advanced Calculus",
+                          courseDescription:
+                            formData.courseDescription || "Curriculum description...",
+                          courseThumbnail: formData.courseThumbnail || null,
+                          gradeId: formData.gradeId || "SELECTED_GRADE_UUID",
+                          assignedTeacherId: formData.assignedTeacherId || "SELECTED_TEACHER_UUID",
+                          subject: formData.subject || "Mathematics",
+                          isOnline: Boolean(formData.isOnline),
+                          isVisible: Boolean(formData.isVisible),
+                          isPublished: Boolean(formData.isPublished),
+                          courseEnrollmentId: formData.courseEnrollmentId || null,
+                        },
+                        null,
+                        2,
+                      )}
+                    </pre>
+                    <span className="text-[10px] text-slate-400 block">
+                      Note: Per backend commit 9968370, pricing is owned by Grade entity (
+                      <code className="font-mono text-indigo-500">gradeMonthlyFee</code>).
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                  Create Course
-                </button>
+              {/* STICKY MODAL FOOTER */}
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>
+                    Ready to dispatch to Course Microservice with Grade inherited tuition standard.
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreateOpen(false);
+                      setEditingCourse(null);
+                    }}
+                    className="px-4 py-2 font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2 font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <span>Submitting to Microservice...</span>
+                    ) : (
+                      <span>{editingCourse ? "Save Course Changes" : "Create Course"}</span>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* COURSE DETAILS DRAWER */}
+      {/* ========================================================================= */}
+      {/* DELETE CONFIRMATION DIALOG                                                */}
+      {/* ========================================================================= */}
+      {deleteConfirmCourse && (
+        <ConfirmationDialog
+          isOpen={!!deleteConfirmCourse}
+          title={`Delete Course "${deleteConfirmCourse.courseName || deleteConfirmCourse.title}"?`}
+          description={
+            deleteError ||
+            `Are you sure you want to delete this course? This invokes DELETE /api/v1/course/${deleteConfirmCourse.id}.`
+          }
+          consequences={[
+            "The course record will be permanently purged from the Course Service registry.",
+            "Cannot be deleted if active student enrollments exist.",
+          ]}
+          confirmText="Confirm Delete"
+          variant="danger"
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => {
+            setDeleteConfirmCourse(null);
+            setDeleteError(null);
+          }}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* COURSE DETAIL SLIDE-OVER DRAWER                                           */}
+      {/* ========================================================================= */}
       {selectedCourse && (
         <DetailDrawer
           isOpen={!!selectedCourse}
-          title={`${selectedCourse.code}: ${selectedCourse.title}`}
-          subtitle={`${selectedCourse.teacherName} · ${selectedCourse.grade}`}
+          title={selectedCourse.courseName || selectedCourse.title || "Course Details"}
+          subtitle={`${selectedCourse.code || "CRS"} · ${selectedCourse.subject || selectedCourse.category || "Academic"}`}
           onClose={() => setSelectedCourse(null)}
-          width="xl"
+          width="lg"
         >
-          <div className="space-y-5">
-            {/* Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">
-              {(["overview", "curriculum", "students", "materials", "performance"] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setDetailTab(tab)}
-                    className={`flex-1 py-1.5 font-medium rounded-md capitalize transition-colors ${
-                      detailTab === tab
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ),
-              )}
+          <div className="space-y-6 text-xs">
+            {/* Drawer Tabs */}
+            <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 pb-2">
+              <button
+                onClick={() => setDetailTab("overview")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  detailTab === "overview"
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setDetailTab("curriculum")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  detailTab === "curriculum"
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Curriculum ({courseCurriculum.length})
+              </button>
+              <button
+                onClick={() => setDetailTab("students")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  detailTab === "students"
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Students ({courseEnrollments.length})
+              </button>
+              <button
+                onClick={() => setDetailTab("materials")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  detailTab === "materials"
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                Materials ({courseMaterials.length})
+              </button>
             </div>
 
-            {/* Overview */}
+            {/* TAB: OVERVIEW */}
             {detailTab === "overview" && (
-              <div className="space-y-4 text-xs">
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
-                  <span className="text-[11px] font-semibold uppercase text-slate-400">
-                    Syllabus Description
+              <div className="space-y-4">
+                {/* Thumbnail Header */}
+                {selectedCourse.courseThumbnail && (
+                  <div className="relative h-44 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                    <img
+                      src={selectedCourse.courseThumbnail}
+                      alt="Thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Status & Pricing Card */}
+                <div className="p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/30 flex items-start justify-between">
+                  <div>
+                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 uppercase font-semibold block">
+                      Inherited Monthly Tuition Standard
+                    </span>
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                      <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+                        {(
+                          selectedCourse.gradeMonthlyFee ??
+                          selectedCourse.courseFeeMonthly ??
+                          0
+                        ).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase">
+                        {selectedCourse.gradeCurrencyCode || "LKR"}
+                      </span>
+                      <span className="text-xs text-slate-400">/ month</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
+                      Configured via Grade Level ({selectedCourse.gradeName || "Standard"})
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 text-right">
+                    <StatusBadge
+                      status={
+                        (selectedCourse.isPublished ??
+                        (selectedCourse.status === "PUBLISHED" ||
+                          selectedCourse.status === "ACTIVE"))
+                          ? "PUBLISHED"
+                          : "DRAFT"
+                      }
+                    />
+                    <span className="block text-[10px] text-slate-400">
+                      {selectedCourse.isVisible ? "Catalog Visible" : "Unlisted"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Grid Info */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <span className="text-[10px] text-slate-400 font-medium block">
+                      Grade Level
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-white text-sm">
+                      {selectedCourse.gradeName || selectedCourse.grade || "Unassigned"}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <span className="text-[10px] text-slate-400 font-medium block">
+                      Delivery Mode
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-white text-sm">
+                      {(selectedCourse.isOnline ?? selectedCourse.online) ? "Online" : "Physical"}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <span className="text-[10px] text-slate-400 font-medium block">
+                      Enrolled Students
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-white text-sm tabular-nums">
+                      {selectedCourse.studentCount ?? selectedCourse.enrollmentCount ?? 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Assigned Faculty Section */}
+                <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                    Assigned Lead Faculty
                   </span>
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                    {selectedCourse.description}
+                  <div className="flex items-center gap-3">
+                    <UserAvatar name={selectedCourse.teacherName || "Faculty"} size="md" />
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">
+                        {selectedCourse.teacherName || "Assigned Faculty"}
+                      </span>
+                      <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400">
+                        {selectedCourse.teacherCode}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Course Description */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">
+                    Course Description & Objectives
+                  </span>
+                  <p className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {selectedCourse.courseDescription ||
+                      selectedCourse.description ||
+                      "No description provided."}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <span className="text-slate-400 block mb-0.5">Faculty Lead</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {selectedCourse.teacherName}
+                {/* Audit & Timestamps */}
+                <div className="grid grid-cols-2 gap-3 text-slate-500">
+                  <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span className="block text-[10px] text-slate-400">Created At</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200 tabular-nums">
+                      {selectedCourse.createdAt
+                        ? new Date(selectedCourse.createdAt).toLocaleString()
+                        : "N/A"}
                     </span>
                   </div>
-                  <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <span className="text-slate-400 block mb-0.5">Enrollment Status</span>
-                    <span className="font-semibold text-slate-900 dark:text-white tabular-nums">
-                      {selectedCourse.enrollmentCount} / {selectedCourse.maxCapacity} students
-                    </span>
-                  </div>
-                  <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <span className="text-slate-400 block mb-0.5">Term Dates</span>
-                    <span className="font-medium text-slate-900 dark:text-white tabular-nums">
-                      {selectedCourse.startDate} to {selectedCourse.endDate}
-                    </span>
-                  </div>
-                  <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <span className="text-slate-400 block mb-0.5">Category</span>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {selectedCourse.category}
+                  <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span className="block text-[10px] text-slate-400">Last Modified</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200 tabular-nums">
+                      {selectedCourse.updatedAt
+                        ? new Date(selectedCourse.updatedAt).toLocaleString()
+                        : "N/A"}
                     </span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Curriculum */}
+            {/* TAB: CURRICULUM */}
             {detailTab === "curriculum" && (
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3">
                 {courseCurriculum.length === 0 ? (
-                  <p className="text-slate-400 py-6 text-center">
-                    Standard 8-module syllabus template loaded for {selectedCourse.code}.
+                  <p className="py-8 text-center text-slate-400">
+                    No modules linked to this course yet.
                   </p>
                 ) : (
                   courseCurriculum.map((mod) => (
                     <div
                       key={mod.id}
-                      className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 space-y-2"
+                      className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2"
                     >
-                      <h5 className="font-semibold text-slate-900 dark:text-white">{mod.title}</h5>
-                      <div className="space-y-1.5 pl-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {mod.title}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          {mod.lessons.length} lessons
+                        </span>
+                      </div>
+                      <div className="divide-y divide-slate-100 dark:divide-slate-800">
                         {mod.lessons.map((les) => (
                           <div
                             key={les.id}
-                            className="flex items-center justify-between p-2 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800"
+                            className="py-2 flex items-center justify-between text-[11px]"
                           >
-                            <span className="text-slate-800 dark:text-slate-200">{les.title}</span>
+                            <span className="text-slate-700 dark:text-slate-300">{les.title}</span>
                             <span className="text-slate-400 tabular-nums">
-                              {les.durationMinutes} mins ·{" "}
-                              {les.hasQuiz ? "Quiz Attached" : "Lecture"}
+                              {les.durationMinutes} mins
                             </span>
                           </div>
                         ))}
@@ -520,79 +1794,62 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               </div>
             )}
 
-            {/* Students */}
+            {/* TAB: ENROLLED STUDENTS */}
             {detailTab === "students" && (
-              <div className="space-y-2 text-xs">
-                {courseEnrollments.map((enr) => (
-                  <div
-                    key={enr.id}
-                    className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between"
-                  >
-                    <div>
-                      <span className="font-semibold text-slate-900 dark:text-white block">
-                        {enr.studentName}
-                      </span>
-                      <span className="text-slate-400 font-mono text-[11px]">{enr.studentId}</span>
+              <div className="space-y-2">
+                {courseEnrollments.length === 0 ? (
+                  <p className="py-8 text-center text-slate-400">No students currently enrolled.</p>
+                ) : (
+                  courseEnrollments.map((enr) => (
+                    <div
+                      key={enr.id}
+                      className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-white block">
+                          {enr.studentName}
+                        </span>
+                        <span className="font-mono text-[10px] text-slate-400">
+                          {enr.studentId}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="tabular-nums font-medium text-slate-700 dark:text-slate-300">
+                          {enr.progressPercentage}%
+                        </span>
+                        <StatusBadge status={enr.status} />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-emerald-600">
-                        Grade: {enr.grade || "—"}
-                      </span>
-                      <StatusBadge status={enr.status} />
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
 
-            {/* Materials */}
+            {/* TAB: MATERIALS */}
             {detailTab === "materials" && (
-              <div className="space-y-2 text-xs">
-                {courseMaterials.map((mat) => (
-                  <div
-                    key={mat.id}
-                    className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between"
-                  >
-                    <div>
-                      <span className="font-semibold text-slate-900 dark:text-white block">
-                        {mat.title}
-                      </span>
-                      <span className="text-slate-400 text-[11px] font-mono">
-                        {(mat.fileSizeBytes / 1024 / 1024).toFixed(1)} MB · S3 Encrypted
+              <div className="space-y-2">
+                {courseMaterials.length === 0 ? (
+                  <p className="py-8 text-center text-slate-400">
+                    No learning materials uploaded to AWS S3 yet.
+                  </p>
+                ) : (
+                  courseMaterials.map((mat) => (
+                    <div
+                      key={mat.id}
+                      className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-white block">
+                          {mat.title}
+                        </span>
+                        <span className="font-mono text-[10px] text-slate-400">{mat.s3Key}</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-medium text-slate-700 dark:text-slate-300">
+                        {mat.fileType}
                       </span>
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
-                      {mat.fileType}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Performance */}
-            {detailTab === "performance" && (
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs space-y-3">
-                <span className="font-semibold text-slate-900 dark:text-white block">
-                  Cohort Evaluation Statistics
-                </span>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="p-2.5 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Mean Score</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-sm tabular-nums">
-                      88.2%
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Submission Rate</span>
-                    <span className="font-bold text-slate-900 dark:text-white text-sm tabular-nums">
-                      94.5%
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                    <span className="text-slate-400 block text-[11px]">Pass Rate</span>
-                    <span className="font-bold text-emerald-600 text-sm tabular-nums">97.1%</span>
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
             )}
           </div>

@@ -6,6 +6,8 @@ export type AccountStatus = "ACTIVE" | "INVITED" | "SUSPENDED" | "INACTIVE";
 
 export interface BaseUser {
   id: string;
+  /** Keycloak subject used by services when referencing a user. */
+  keycloakUserId?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -64,6 +66,46 @@ export interface AdministratorProfile extends BaseUser {
   permissions: string[];
 }
 
+export interface Grade {
+  id: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  createdBy?: string;
+  lastModifiedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  courseCount?: number;
+  // Kept for UI compatibility. The current backend does not persist these fields.
+  monthlyFee?: number;
+  currencyCode?: string;
+}
+
+export interface CreateCourseRequest {
+  courseName: string;
+  courseDescription: string;
+  courseThumbnail?: string;
+  gradeId: string;
+  assignedTeacherId: string;
+  subject: string;
+  isOnline?: boolean;
+  isVisible?: boolean;
+  isPublished?: boolean;
+  courseEnrollmentId?: string | null;
+  courseFeeMonthly?: number;
+}
+
+export interface CreateGradeRequest {
+  name: string;
+  description?: string;
+  monthlyFee?: number;
+  currencyCode?: string;
+}
+
+export interface UpdateGradeRequest extends CreateGradeRequest {
+  active?: boolean;
+}
+
 export interface Course {
   id: string;
   code: string;
@@ -73,12 +115,35 @@ export interface Course {
   grade: string;
   enrollmentCount: number;
   maxCapacity: number;
-  status: "ACTIVE" | "ARCHIVED" | "UPCOMING";
+  status: "ACTIVE" | "ARCHIVED" | "UPCOMING" | "PUBLISHED" | "DRAFT";
   description: string;
   modulesCount: number;
   category: string;
   startDate: string;
   endDate: string;
+  courseName?: string;
+  courseDescription?: string;
+  courseThumbnail?: string;
+  gradeId?: string;
+  assignedTeacherId?: string;
+  subject?: string;
+  isOnline?: boolean;
+  online?: boolean;
+  isVisible?: boolean;
+  visible?: boolean;
+  isPublished?: boolean;
+  courseEnrollmentId?: string | null;
+  studentCount?: number;
+  numberOfStudents?: number;
+  publishedDate?: string | null;
+  courseStatus?: "PUBLISHED" | "DRAFT" | "ARCHIVED";
+  gradeMonthlyFee?: number;
+  gradeCurrencyCode?: string;
+  gradeName?: string;
+  teacherCode?: string;
+  courseFeeMonthly?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface EnrollmentRecord {
@@ -93,6 +158,7 @@ export interface EnrollmentRecord {
   status: "ACTIVE" | "COMPLETED" | "PENDING_APPROVAL" | "DROPPED";
   grade?: string;
   progressPercentage: number;
+  enrollmentId?: string;
 }
 
 export interface CurriculumModule {
