@@ -90,6 +90,7 @@ import {
   type EnrollmentApiResponse,
 } from "./admin/api/enrollmentsApi";
 import { createGrade, deleteGrade, fetchGrades, updateGrade } from "./admin/api/gradesApi";
+import { createCalendarEvent, fetchCalendarEvents } from "./admin/api/calendarApi";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -239,6 +240,40 @@ export default function App() {
     void loadRegistrationOverview();
   }, [isAuthenticated]);
 
+  const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
+    const newToast: ToastMessage = {
+      id: `toast-${Date.now()}-${Math.random()}`,
+      type,
+      title,
+      description,
+    };
+    setToasts((prev) => [...prev, newToast]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
+    }, 4500);
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const loadCalendarEvents = async () => {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      try {
+        setEvents(await fetchCalendarEvents(start, end));
+      } catch (error) {
+        addToast(
+          "error",
+          "Calendar Unavailable",
+          error instanceof Error ? error.message : "Unable to load calendar events.",
+        );
+      }
+    };
+
+    void loadCalendarEvents();
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) {
     return (
       <AdminLoginView
@@ -252,19 +287,6 @@ export default function App() {
 
   const handleLogout = () => {
     void logoutAdmin().finally(() => setIsAuthenticated(false));
-  };
-
-  const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
-    const newToast: ToastMessage = {
-      id: `toast-${Date.now()}-${Math.random()}`,
-      type,
-      title,
-      description,
-    };
-    setToasts((prev) => [...prev, newToast]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
-    }, 4500);
   };
 
   const handleDismissToast = (id: string) => {
@@ -459,9 +481,10 @@ export default function App() {
     );
   };
 
-  const handleAddEvent = (newEvent: AcademicEvent) => {
-    setEvents((prev) => [newEvent, ...prev]);
-    addToast("success", "Event Scheduled", `Added "${newEvent.title}" to institutional calendar.`);
+  const handleAddEvent = async (request: Parameters<typeof createCalendarEvent>[0]) => {
+    const created = await createCalendarEvent(request);
+    setEvents((prev) => [created, ...prev.filter((event) => event.id !== created.id)]);
+    addToast("success", "Event Scheduled", `Added "${created.title}" to institutional calendar.`);
   };
 
   const handleMarkNotificationRead = (id: string) => {
@@ -666,7 +689,9 @@ export default function App() {
         />
       )}
 
-      {currentRoute === "calendar" && <AdminCalendar events={events} onAddEvent={handleAddEvent} />}
+      {currentRoute === "calendar" && (
+        <AdminCalendar events={events} courses={courses} onAddEvent={handleAddEvent} />
+      )}
 
       {currentRoute === "communication" && <CommunicationManagement />}
 

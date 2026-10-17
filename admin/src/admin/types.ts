@@ -271,6 +271,16 @@ export interface AcademicEvent {
   location: string;
   courseCode?: string;
   status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  description?: string;
+  eventType?: string;
+  startDateTime?: string;
+  endDateTime?: string | null;
+  allDay?: boolean;
+  courseId?: string | null;
+  visibility?: "PRIVATE" | "COURSE" | "ROLE" | "GLOBAL";
+  targetRole?: "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN" | null;
+  canEdit?: boolean;
+  canCancel?: boolean;
 }
 
 export interface NotificationItem {
