@@ -13,7 +13,21 @@
 }
 
 @layer base {
-  body { min-height: 100%; font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif; }
-  button, input, textarea, select { font-family: inherit; }
-  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #4f46e51a; outline-offset: 2px; }
+  body {
+    min-height: 100%;
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 3px solid #4f46e51a;
+    outline-offset: 2px;
+  }
 }

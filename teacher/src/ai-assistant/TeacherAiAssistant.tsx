@@ -1,14 +1,201 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { conversations, create, messages, sendDestination, subscription, wsUrl, type Conversation, type Message } from "./aiAssistantService";
-const prompts = ["How did my students perform?", "Analyze my recent quizzes", "Which students may need attention?", "Summarize my class performance", "Help me prepare a lesson"];
-function stomp(command: string, headers: Record<string, string>, body = "") { return `${command}\n${Object.entries(headers).map(([key, value]) => `${key}:${value}`).join("\n")}\n\n${body}\0`; }
-function parse(raw: string) { const split = raw.indexOf("\n\n"); if (split < 0) return null; const head = raw.slice(0, split).split("\n"); try { return { command: head[0], body: JSON.parse(raw.slice(split + 2).replace(/\0$/, "")) as Record<string, unknown> }; } catch { return null; } }
-export default function TeacherAiAssistant() { const [items, setItems] = useState<Conversation[]>([]); const [active, setActive] = useState<Conversation | null>(null); const [list, setList] = useState<Message[]>([]); const [input, setInput] = useState(""); const [busy, setBusy] = useState(false); const [status, setStatus] = useState("Connecting…"); const ws = useRef<WebSocket | null>(null); const activeIdRef = useRef<string | undefined>(undefined); const end = useRef<HTMLDivElement>(null);
-  useEffect(() => { void conversations().then((data) => { setItems(data); if (data[0]) setActive(data[0]); }).catch(() => setStatus("Sign in to use Mentify AI")); }, []);
-  useEffect(() => { activeIdRef.current = active?.id; if (!active) return; void messages(active.id).then(setList).catch(() => setList([])); }, [active]);
-  useEffect(() => { const token = typeof window !== "undefined" ? sessionStorage.getItem("mentify_access_token") || "" : ""; if (!token) return; const socket = new WebSocket(wsUrl()); ws.current = socket; socket.onopen = () => { socket.send(stomp("CONNECT", { "accept-version": "1.2", Authorization: `Bearer ${token}` })); }; socket.onmessage = (event) => { const parsed = parse(String(event.data)); if (!parsed) return; if (parsed.command === "CONNECTED") { setStatus("Connected"); socket.send(stomp("SUBSCRIBE", { id: "teacher-ai", destination: subscription })); return; } if (parsed.command !== "MESSAGE") return; const data = parsed.body; const type = String(data.type ?? data.status ?? "").toUpperCase(); if (type === "PROCESSING") setBusy(true); if (type === "ERROR") { setBusy(false); setStatus(String(data.message || "Mentify AI could not answer.")); } if (type === "COMPLETED" || type === "COMPLETE") { setBusy(false); if (activeIdRef.current) void messages(activeIdRef.current).then(setList); } }; socket.onerror = () => setStatus("Could not connect to Mentify AI"); socket.onclose = () => setStatus("Connection lost"); return () => socket.close(); }, []);
-  useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [list, busy]);
-  async function newChat() { const item = await create(); setItems((current) => [item, ...current]); setActive(item); setList([]); }
-  function send(value = input) { const text = value.trim(); if (!text || !active || !ws.current || busy || status !== "Connected") return; setList((current) => [...current, { id: String(Date.now()), role: "USER", content: text }]); setInput(""); setBusy(true); ws.current.send(stomp("SEND", { destination: sendDestination, "content-type": "application/json" }, JSON.stringify({ conversationId: active.id, message: text }))); }
-  return <main className="teacher-ai-shell"><aside className="teacher-ai-sidebar"><div className="teacher-brand"><span>m</span> mentify.</div><button className="teacher-new-chat" onClick={() => void newChat()}>＋ New chat</button><small>CONVERSATIONS</small>{items.map((item) => <button className={`teacher-conversation ${active?.id === item.id ? "active" : ""}`} key={item.id} onClick={() => setActive(item)}>{item.title || item.name}</button>)}</aside><section className="teacher-ai-main"><header><div><small>MENTIFY INTELLIGENCE</small><h1>Mentify AI Assistant</h1><p>Your teaching copilot, connected to your class context.</p></div><span className={status === "Connected" ? "online" : "offline"}>● {status}</span></header><div className="teacher-messages">{!list.length ? <div className="teacher-welcome"><div className="teacher-sparkle">✦</div><h2>How can I help you today?</h2><p>Ask about your students, quizzes, or lesson planning.</p><div className="teacher-prompts">{prompts.map((prompt) => <button key={prompt} onClick={() => send(prompt)}>{prompt} <span>↗</span></button>)}</div></div> : list.map((message) => <article className={message.role === "USER" ? "teacher-message user" : "teacher-message"} key={message.id}><b>{message.role === "USER" ? "You" : "Mentify AI"}</b><p>{message.content}</p></article>)}{busy && <div className="teacher-thinking">Mentify AI is thinking…</div>}<div ref={end} /></div><form className="teacher-composer" onSubmit={(event) => { event.preventDefault(); send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(); } }} placeholder="Ask Mentify AI…" disabled={!active || busy} /><button disabled={!input.trim() || busy}>Send ↗</button></form></section></main>; }
+import {
+  conversations,
+  create,
+  messages,
+  sendDestination,
+  subscription,
+  wsUrl,
+  type Conversation,
+  type Message,
+} from "./aiAssistantService";
+const prompts = [
+  "How did my students perform?",
+  "Analyze my recent quizzes",
+  "Which students may need attention?",
+  "Summarize my class performance",
+  "Help me prepare a lesson",
+];
+function stomp(command: string, headers: Record<string, string>, body = "") {
+  return `${command}\n${Object.entries(headers)
+    .map(([key, value]) => `${key}:${value}`)
+    .join("\n")}\n\n${body}\0`;
+}
+function parse(raw: string) {
+  const split = raw.indexOf("\n\n");
+  if (split < 0) return null;
+  const head = raw.slice(0, split).split("\n");
+  try {
+    return {
+      command: head[0],
+      body: JSON.parse(raw.slice(split + 2).replace(/\0$/, "")) as Record<string, unknown>,
+    };
+  } catch {
+    return null;
+  }
+}
+export default function TeacherAiAssistant() {
+  const [items, setItems] = useState<Conversation[]>([]);
+  const [active, setActive] = useState<Conversation | null>(null);
+  const [list, setList] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("Connecting…");
+  const ws = useRef<WebSocket | null>(null);
+  const activeIdRef = useRef<string | undefined>(undefined);
+  const end = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    void conversations()
+      .then((data) => {
+        setItems(data);
+        if (data[0]) setActive(data[0]);
+      })
+      .catch(() => setStatus("Sign in to use Mentify AI"));
+  }, []);
+  useEffect(() => {
+    activeIdRef.current = active?.id;
+    if (!active) return;
+    void messages(active.id)
+      .then(setList)
+      .catch(() => setList([]));
+  }, [active]);
+  useEffect(() => {
+    const token =
+      typeof window !== "undefined" ? sessionStorage.getItem("mentify_access_token") || "" : "";
+    if (!token) return;
+    const socket = new WebSocket(wsUrl());
+    ws.current = socket;
+    socket.onopen = () => {
+      socket.send(stomp("CONNECT", { "accept-version": "1.2", Authorization: `Bearer ${token}` }));
+    };
+    socket.onmessage = (event) => {
+      const parsed = parse(String(event.data));
+      if (!parsed) return;
+      if (parsed.command === "CONNECTED") {
+        setStatus("Connected");
+        socket.send(stomp("SUBSCRIBE", { id: "teacher-ai", destination: subscription }));
+        return;
+      }
+      if (parsed.command !== "MESSAGE") return;
+      const data = parsed.body;
+      const type = String(data.type ?? data.status ?? "").toUpperCase();
+      if (type === "PROCESSING") setBusy(true);
+      if (type === "ERROR") {
+        setBusy(false);
+        setStatus(String(data.message || "Mentify AI could not answer."));
+      }
+      if (type === "COMPLETED" || type === "COMPLETE") {
+        setBusy(false);
+        if (activeIdRef.current) void messages(activeIdRef.current).then(setList);
+      }
+    };
+    socket.onerror = () => setStatus("Could not connect to Mentify AI");
+    socket.onclose = () => setStatus("Connection lost");
+    return () => socket.close();
+  }, []);
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth" });
+  }, [list, busy]);
+  async function newChat() {
+    const item = await create();
+    setItems((current) => [item, ...current]);
+    setActive(item);
+    setList([]);
+  }
+  function send(value = input) {
+    const text = value.trim();
+    if (!text || !active || !ws.current || busy || status !== "Connected") return;
+    setList((current) => [...current, { id: String(Date.now()), role: "USER", content: text }]);
+    setInput("");
+    setBusy(true);
+    ws.current.send(
+      stomp(
+        "SEND",
+        { destination: sendDestination, "content-type": "application/json" },
+        JSON.stringify({ conversationId: active.id, message: text }),
+      ),
+    );
+  }
+  return (
+    <main className="teacher-ai-shell">
+      <aside className="teacher-ai-sidebar">
+        <div className="teacher-brand">
+          <span>m</span> mentify.
+        </div>
+        <button className="teacher-new-chat" onClick={() => void newChat()}>
+          ＋ New chat
+        </button>
+        <small>CONVERSATIONS</small>
+        {items.map((item) => (
+          <button
+            className={`teacher-conversation ${active?.id === item.id ? "active" : ""}`}
+            key={item.id}
+            onClick={() => setActive(item)}
+          >
+            {item.title || item.name}
+          </button>
+        ))}
+      </aside>
+      <section className="teacher-ai-main">
+        <header>
+          <div>
+            <small>MENTIFY INTELLIGENCE</small>
+            <h1>Mentify AI Assistant</h1>
+            <p>Your teaching copilot, connected to your class context.</p>
+          </div>
+          <span className={status === "Connected" ? "online" : "offline"}>● {status}</span>
+        </header>
+        <div className="teacher-messages">
+          {!list.length ? (
+            <div className="teacher-welcome">
+              <div className="teacher-sparkle">✦</div>
+              <h2>How can I help you today?</h2>
+              <p>Ask about your students, quizzes, or lesson planning.</p>
+              <div className="teacher-prompts">
+                {prompts.map((prompt) => (
+                  <button key={prompt} onClick={() => send(prompt)}>
+                    {prompt} <span>↗</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            list.map((message) => (
+              <article
+                className={message.role === "USER" ? "teacher-message user" : "teacher-message"}
+                key={message.id}
+              >
+                <b>{message.role === "USER" ? "You" : "Mentify AI"}</b>
+                <p>{message.content}</p>
+              </article>
+            ))
+          )}
+          {busy && <div className="teacher-thinking">Mentify AI is thinking…</div>}
+          <div ref={end} />
+        </div>
+        <form
+          className="teacher-composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            send();
+          }}
+        >
+          <textarea
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                send();
+              }
+            }}
+            placeholder="Ask Mentify AI…"
+            disabled={!active || busy}
+          />
+          <button disabled={!input.trim() || busy}>Send ↗</button>
+        </form>
+      </section>
+    </main>
+  );
+}

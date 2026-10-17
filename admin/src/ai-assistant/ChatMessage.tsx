@@ -1,4 +1,30 @@
 import { Icon } from "@/components/admin/Icon";
 import type { ChatMessage as Message } from "./service/aiAssistantService";
-function renderContent(content: string) { return content.split(/\n\n+/).map((part, index) => <p key={`${index}-${part.slice(0, 8)}`}>{part}</p>); }
-export function ChatMessage({ message }: { message: Message }) { const assistant = message.role !== "USER"; return <article className={`ai-chat-message ${assistant ? "is-assistant" : "is-admin"}`}><div className="ai-chat-avatar"><Icon name={assistant ? "sparkles" : "users"} size={16} /></div><div className="ai-chat-message-content"><div className="ai-chat-message-meta"><strong>{assistant ? "Mentify AI" : "You"}</strong>{message.createdAt && <time>{new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(new Date(message.createdAt))}</time>}</div><div className="ai-chat-bubble">{renderContent(message.content)}</div></div></article>; }
+function renderContent(content: string) {
+  return content
+    .split(/\n\n+/)
+    .map((part, index) => <p key={`${index}-${part.slice(0, 8)}`}>{part}</p>);
+}
+export function ChatMessage({ message }: { message: Message }) {
+  const assistant = message.role !== "USER";
+  return (
+    <article className={`ai-chat-message ${assistant ? "is-assistant" : "is-admin"}`}>
+      <div className="ai-chat-avatar">
+        <Icon name={assistant ? "sparkles" : "users"} size={16} />
+      </div>
+      <div className="ai-chat-message-content">
+        <div className="ai-chat-message-meta">
+          <strong>{assistant ? "Mentify AI" : "You"}</strong>
+          {message.createdAt && (
+            <time>
+              {new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(
+                new Date(message.createdAt),
+              )}
+            </time>
+          )}
+        </div>
+        <div className="ai-chat-bubble">{renderContent(message.content)}</div>
+      </div>
+    </article>
+  );
+}
