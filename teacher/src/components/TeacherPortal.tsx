@@ -43,6 +43,7 @@ import { logoutTeacher } from "../teacher/api/auth";
 import { restoreTeacherSession } from "../teacher/api/client";
 import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
+import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -62,6 +63,7 @@ export default function App() {
   const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("asg-01");
   const [aiPreloadedPrompt, setAiPreloadedPrompt] = useState<string>("");
   const shellData = useTeacherShellData(Boolean(session));
+  const teacherCourses = useTeacherCourses(Boolean(session));
 
   // Course state
   const [courses, setCourses] = useState<Course[]>(mockCourses);
@@ -84,6 +86,35 @@ export default function App() {
         setIsInitializing(false);
       });
   }, []);
+
+  useEffect(() => {
+    if (!teacherCourses.isLoading && !teacherCourses.error) {
+      setCourses(
+        teacherCourses.courses.map((course) => ({
+          id: course.id,
+          code: course.subject || "COURSE",
+          title: course.courseName,
+          description: course.courseDescription || "No course description available.",
+          category: course.subject || "Academic Course",
+          level: "Undergraduate",
+          semester: "Current Semester",
+          academicYear: "",
+          enrolledCount: course.numberOfStudents ?? 0,
+          maxCapacity: course.numberOfStudents ?? 0,
+          status:
+            course.courseStatus === "PUBLISHED"
+              ? "Active"
+              : course.courseStatus === "ARCHIVED"
+                ? "Archived"
+                : "Draft",
+          coverTheme: "indigo",
+          modulesCount: 0,
+          assignmentsCount: 0,
+          averageGrade: 0,
+        })),
+      );
+    }
+  }, [teacherCourses.courses, teacherCourses.error, teacherCourses.isLoading]);
 
   // Navigation handler
   const handleNavigate = (tab: NavigationTab, param?: string) => {
@@ -244,7 +275,28 @@ export default function App() {
             />
           )}
 
+          {currentTab === "courses" && teacherCourses.error && (
+            <section className="mx-auto max-w-3xl rounded-xl border border-rose-200 bg-rose-50 p-8 text-center">
+              <h1 className="text-lg font-bold text-rose-900">Courses are unavailable</h1>
+              <p className="mt-2 text-sm text-rose-700">{teacherCourses.error.message}</p>
+              <button
+                onClick={teacherCourses.retry}
+                className="mt-5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              >
+                Try again
+              </button>
+            </section>
+          )}
+
+          {currentTab === "courses" && teacherCourses.isLoading && (
+            <div className="mx-auto max-w-7xl rounded-xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">
+              Loading your courses...
+            </div>
+          )}
+
           {currentTab === "courses" &&
+            !teacherCourses.isLoading &&
+            !teacherCourses.error &&
             (selectedCourseForDetail ? (
               <CourseDetailsView
                 course={selectedCourseForDetail}
@@ -290,6 +342,7 @@ export default function App() {
 
           {currentTab === "quizzes" && (
             <QuizDashboardView
+              teacherCourses={courses}
               onOpenCreateQuiz={() => handleOpenQuickCreate("quiz")}
               onNavigate={handleNavigate}
               onOpenAIWithPrompt={handleOpenAIWithPrompt}
