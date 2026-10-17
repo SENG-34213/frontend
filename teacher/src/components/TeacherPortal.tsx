@@ -44,6 +44,7 @@ import { restoreTeacherSession } from "../teacher/api/client";
 import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
+import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -53,6 +54,7 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
 
   // Quick Create Modal state
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
@@ -64,6 +66,7 @@ export default function App() {
   const [aiPreloadedPrompt, setAiPreloadedPrompt] = useState<string>("");
   const shellData = useTeacherShellData(Boolean(session));
   const teacherCourses = useTeacherCourses(Boolean(session));
+  const recentNotifications = useTeacherNotifications(Boolean(session), 4);
 
   // Course state
   const [courses, setCourses] = useState<Course[]>(mockCourses);
@@ -126,6 +129,10 @@ export default function App() {
       );
     }
   }, [teacherCourses.courses, teacherCourses.error, teacherCourses.isLoading]);
+
+  useEffect(() => {
+    setNotificationUnreadCount(shellData.unreadNotificationsCount);
+  }, [shellData.unreadNotificationsCount]);
 
   // Navigation handler
   const handleNavigate = (tab: NavigationTab, param?: string) => {
@@ -246,7 +253,7 @@ export default function App() {
         }}
         pendingSubmissionsCount={pendingSubmissionsCount}
         unreadMessagesCount={unreadMessagesCount}
-        unreadNotificationsCount={shellData.unreadNotificationsCount}
+        unreadNotificationsCount={notificationUnreadCount}
       />
 
       {/* 2. Main Content Viewport */}
@@ -263,7 +270,7 @@ export default function App() {
             await logoutTeacher();
             setSession(null);
           }}
-          unreadNotificationsCount={shellData.unreadNotificationsCount}
+          unreadNotificationsCount={notificationUnreadCount}
         />
 
         {/* View Routing */}
@@ -283,6 +290,8 @@ export default function App() {
               onNavigate={handleNavigate}
               onGradeAssignment={handleOpenGradeAssignment}
               onOpenAIWithPrompt={handleOpenAIWithPrompt}
+              recentNotifications={recentNotifications.notifications}
+              notificationsLoading={recentNotifications.isLoading}
             />
           )}
 
@@ -378,7 +387,12 @@ export default function App() {
 
           {currentTab === "analytics" && <TeacherAnalyticsView onNavigate={handleNavigate} />}
 
-          {currentTab === "notifications" && <NotificationCenterView onNavigate={handleNavigate} />}
+          {currentTab === "notifications" && (
+            <NotificationCenterView
+              onNavigate={handleNavigate}
+              onUnreadCountChange={setNotificationUnreadCount}
+            />
+          )}
 
           {currentTab === "profile" && (
             <TeacherProfileView teacher={teacherProfile} onNavigate={handleNavigate} />

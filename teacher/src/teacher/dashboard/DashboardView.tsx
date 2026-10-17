@@ -17,13 +17,8 @@ import {
   UserCheck,
   Send,
 } from "lucide-react";
-import {
-  mockCourses,
-  mockAssignments,
-  mockCalendarEvents,
-  mockNotifications,
-} from "../data/mockData";
-import { NavigationTab, TeacherProfile } from "../types";
+import { mockCourses, mockAssignments, mockCalendarEvents } from "../data/mockData";
+import { NavigationTab, NotificationItem, TeacherProfile } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 
 interface DashboardViewProps {
@@ -31,6 +26,8 @@ interface DashboardViewProps {
   onNavigate: (tab: NavigationTab, param?: string) => void;
   onGradeAssignment: (assignmentId: string) => void;
   onOpenAIWithPrompt: (prompt: string) => void;
+  recentNotifications: NotificationItem[];
+  notificationsLoading: boolean;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -38,6 +35,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigate,
   onGradeAssignment,
   onOpenAIWithPrompt,
+  recentNotifications,
+  notificationsLoading,
 }) => {
   const firstName = teacher.name.trim().split(/\s+/)[0] || "Professor";
   const activeCourses = mockCourses.filter((c) => c.status === "Active");
@@ -456,20 +455,26 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             <div className="mt-4 space-y-3">
-              {mockNotifications.slice(0, 4).map((notif) => (
-                <div
-                  key={notif.id}
-                  onClick={() => notif.actionUrl && onNavigate(notif.actionUrl)}
-                  className="flex items-start gap-2.5 text-xs cursor-pointer hover:bg-slate-50 p-1.5 rounded-lg transition-colors"
-                >
-                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                  <div>
-                    <p className="font-semibold text-slate-900">{notif.title}</p>
-                    <p className="text-slate-500 text-[11px] line-clamp-1">{notif.message}</p>
-                    <span className="text-[10px] text-slate-400">{notif.timestamp}</span>
+              {notificationsLoading ? (
+                <p className="text-xs text-slate-400">Loading recent activity...</p>
+              ) : recentNotifications.length === 0 ? (
+                <p className="text-xs text-slate-400">No recent notifications.</p>
+              ) : (
+                recentNotifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => notif.actionUrl && onNavigate(notif.actionUrl)}
+                    className="flex cursor-pointer items-start gap-2.5 rounded-lg p-1.5 text-xs transition-colors hover:bg-slate-50"
+                  >
+                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" />
+                    <div>
+                      <p className="font-semibold text-slate-900">{notif.title}</p>
+                      <p className="line-clamp-1 text-[11px] text-slate-500">{notif.message}</p>
+                      <span className="text-[10px] text-slate-400">{notif.timestamp}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
