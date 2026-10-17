@@ -4,13 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavigationTab, Course } from "../teacher/types";
 import {
   mockTeacherProfile,
   mockCourses,
   mockAssignments,
-  mockNotifications,
   mockConversations,
 } from "../teacher/data/mockData";
 import { TeacherSidebar } from "../teacher/components/TeacherSidebar";
@@ -43,10 +42,12 @@ import { TeacherLoginView } from "../teacher/auth/TeacherLoginView";
 import { logoutTeacher } from "../teacher/api/auth";
 import { restoreTeacherSession } from "../teacher/api/client";
 import type { AuthSession } from "../teacher/auth/authTypes";
+import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const restoreStartedRef = useRef(false);
   const [currentTab, setCurrentTab] = useState<NavigationTab>("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -60,6 +61,7 @@ export default function App() {
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<Course | null>(null);
   const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("asg-01");
   const [aiPreloadedPrompt, setAiPreloadedPrompt] = useState<string>("");
+  const shellData = useTeacherShellData(Boolean(session));
 
   // Course state
   const [courses, setCourses] = useState<Course[]>(mockCourses);
@@ -70,21 +72,17 @@ export default function App() {
     0,
   );
   const unreadMessagesCount = mockConversations.reduce((acc, c) => acc + c.unreadCount, 0);
-  const unreadNotificationsCount = mockNotifications.filter((n) => !n.read).length;
-
   useEffect(() => {
-    let cancelled = false;
+    if (restoreStartedRef.current) return;
+    restoreStartedRef.current = true;
+
     restoreTeacherSession()
       .then((restoredSession) => {
-        if (!cancelled) setSession(restoredSession);
+        setSession(restoredSession);
       })
       .finally(() => {
-        if (!cancelled) setIsInitializing(false);
+        setIsInitializing(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   // Navigation handler
@@ -150,6 +148,45 @@ export default function App() {
 
   if (!session) return <TeacherLoginView onLogin={setSession} />;
 
+  if (shellData.isLoading) {
+    return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher workspace" />;
+  }
+
+  if (shellData.error) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-slate-50 px-6">
+        <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-rose-600">
+            Workspace unavailable
+          </p>
+          <h1 className="mt-2 text-xl font-bold text-slate-900">
+            We could not load your teacher profile.
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">{shellData.error.message}</p>
+          <div className="mt-6 flex justify-center gap-3">
+            <button
+              onClick={shellData.retry}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              Try again
+            </button>
+            <button
+              onClick={async () => {
+                await logoutTeacher();
+                setSession(null);
+              }}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Sign out
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  const teacherProfile = shellData.teacherProfile ?? mockTeacherProfile;
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* 1. Global Teacher Sidebar */}
@@ -160,14 +197,14 @@ export default function App() {
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
-        teacher={mockTeacherProfile}
+        teacher={teacherProfile}
         onLogout={async () => {
           await logoutTeacher();
           setSession(null);
         }}
         pendingSubmissionsCount={pendingSubmissionsCount}
         unreadMessagesCount={unreadMessagesCount}
-        unreadNotificationsCount={unreadNotificationsCount}
+        unreadNotificationsCount={shellData.unreadNotificationsCount}
       />
 
       {/* 2. Main Content Viewport */}
@@ -179,18 +216,28 @@ export default function App() {
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenQuickCreate={handleOpenQuickCreate}
           onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
-          teacher={mockTeacherProfile}
+          teacher={teacherProfile}
           onLogout={async () => {
             await logoutTeacher();
             setSession(null);
           }}
-          unreadNotificationsCount={unreadNotificationsCount}
+          unreadNotificationsCount={shellData.unreadNotificationsCount}
         />
 
         {/* View Routing */}
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+          {shellData.notificationError && (
+            <div
+              role="status"
+              className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+              Notifications are temporarily unavailable. The rest of your workspace is still
+              available.
+            </div>
+          )}
           {currentTab === "dashboard" && (
             <DashboardView
+              teacher={teacherProfile}
               onNavigate={handleNavigate}
               onGradeAssignment={handleOpenGradeAssignment}
               onOpenAIWithPrompt={handleOpenAIWithPrompt}
@@ -269,9 +316,11 @@ export default function App() {
 
           {currentTab === "notifications" && <NotificationCenterView onNavigate={handleNavigate} />}
 
-          {currentTab === "profile" && <TeacherProfileView onNavigate={handleNavigate} />}
+          {currentTab === "profile" && (
+            <TeacherProfileView teacher={teacherProfile} onNavigate={handleNavigate} />
+          )}
 
-          {currentTab === "settings" && <TeacherSettingsView />}
+          {currentTab === "settings" && <TeacherSettingsView teacher={teacherProfile} />}
         </main>
       </div>
 

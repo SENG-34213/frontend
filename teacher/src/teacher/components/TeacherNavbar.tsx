@@ -68,6 +68,13 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
 }) => {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const teacherInitials = teacher.name
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   const quickCreateRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -276,10 +283,10 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
             className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold shadow-xs">
-              AR
+              {teacherInitials}
             </div>
             <span className="hidden md:inline text-xs font-semibold text-slate-800">
-              Dr. Alex Rivera
+              {teacher.name}
             </span>
             <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
           </button>

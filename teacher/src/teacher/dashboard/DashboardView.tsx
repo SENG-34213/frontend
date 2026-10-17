@@ -18,26 +18,28 @@ import {
   Send,
 } from "lucide-react";
 import {
-  mockTeacherProfile,
   mockCourses,
   mockAssignments,
   mockCalendarEvents,
   mockNotifications,
 } from "../data/mockData";
-import { NavigationTab } from "../types";
+import { NavigationTab, TeacherProfile } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 
 interface DashboardViewProps {
+  teacher: TeacherProfile;
   onNavigate: (tab: NavigationTab, param?: string) => void;
   onGradeAssignment: (assignmentId: string) => void;
   onOpenAIWithPrompt: (prompt: string) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
+  teacher,
   onNavigate,
   onGradeAssignment,
   onOpenAIWithPrompt,
 }) => {
+  const firstName = teacher.name.trim().split(/\s+/)[0] || "Professor";
   const activeCourses = mockCourses.filter((c) => c.status === "Active");
   const todayClasses = mockCalendarEvents.filter(
     (e) => e.date === "2026-10-17" && e.type === "Class",
@@ -59,7 +61,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs text-slate-500 font-medium">Saturday, October 17, 2026</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Good morning, Alex!
+            Good morning, {firstName}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Here's what's happening across your classes today. You have{" "}
