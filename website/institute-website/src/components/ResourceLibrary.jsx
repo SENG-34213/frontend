@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState } from "react";
@@ -15,8 +14,7 @@ export default function ResourceLibrary({ lang }) {
     const query = search.trim().toLowerCase();
 
     return resources.filter((resource) => {
-      const matchesCategory =
-        category === "all" || resource.category === category;
+      const matchesCategory = category === "all" || resource.category === category;
 
       const matchesSearch =
         !query ||
@@ -30,19 +28,13 @@ export default function ResourceLibrary({ lang }) {
   return (
     <section className={styles.page}>
       <div className={styles.container}>
-        <p className={styles.eyebrow}>
-          {translate(lang, "resourcesLibrary.eyebrow")}
-        </p>
+        <p className={styles.eyebrow}>{translate(lang, "resourcesLibrary.eyebrow")}</p>
 
         <h1>{translate(lang, "resourcesLibrary.title")}</h1>
 
-        <p className={styles.intro}>
-          {translate(lang, "resourcesLibrary.description")}
-        </p>
+        <p className={styles.intro}>{translate(lang, "resourcesLibrary.description")}</p>
 
-        <p className={styles.sampleNotice}>
-          {translate(lang, "resourcesLibrary.sampleNotice")}
-        </p>
+        <p className={styles.sampleNotice}>{translate(lang, "resourcesLibrary.sampleNotice")}</p>
 
         <div className={styles.filters}>
           <div className={styles.filterField}>
@@ -54,10 +46,7 @@ export default function ResourceLibrary({ lang }) {
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder={translate(
-                lang,
-                "resourcesLibrary.searchPlaceholder"
-              )}
+              placeholder={translate(lang, "resourcesLibrary.searchPlaceholder")}
             />
           </div>
 
@@ -74,10 +63,7 @@ export default function ResourceLibrary({ lang }) {
                 <option key={item} value={item}>
                   {item === "all"
                     ? translate(lang, "resourcesLibrary.allCategories")
-                    : translate(
-                        lang,
-                        `resourcesLibrary.categories.${item}`
-                      )}
+                    : translate(lang, `resourcesLibrary.categories.${item}`)}
                 </option>
               ))}
             </select>
@@ -89,42 +75,29 @@ export default function ResourceLibrary({ lang }) {
             {visibleResources.map((resource) => (
               <article className={styles.card} key={resource.id}>
                 <div className={styles.cardTop}>
-                  <span className={styles.fileType}>
-                    {resource.type}
-                  </span>
+                  <span className={styles.fileType}>{resource.type}</span>
                   <span
-                    className={
-                      resource.access === "paid"
-                        ? styles.paidBadge
-                        : styles.freeBadge
-                    }
+                    className={resource.access === "paid" ? styles.paidBadge : styles.freeBadge}
                   >
                     {translate(
                       lang,
                       resource.access === "paid"
                         ? "resourcesLibrary.paid"
-                        : "resourcesLibrary.free"
+                        : "resourcesLibrary.free",
                     )}
                   </span>
                 </div>
 
                 <h2>{resource.title}</h2>
-                <p className={styles.cardDescription}>
-                  {resource.description}
-                </p>
+                <p className={styles.cardDescription}>{resource.description}</p>
 
                 <p className={styles.metadata}>
-                  {translate(lang, "resourcesLibrary.fileType")}:{" "}
-                  {resource.type}
+                  {translate(lang, "resourcesLibrary.fileType")}: {resource.type}
                   <span aria-hidden="true"> · </span>
-                  {translate(lang, "resourcesLibrary.fileSize")}:{" "}
-                  {resource.size}
+                  {translate(lang, "resourcesLibrary.fileSize")}: {resource.size}
                 </p>
 
-                <Link
-                  className={styles.detailsLink}
-                  href={`/${lang}/resources/${resource.id}`}
-                >
+                <Link className={styles.detailsLink} href={`/${lang}/resources/${resource.id}`}>
                   {translate(lang, "resourcesLibrary.viewDetails")}
                   <span aria-hidden="true"> →</span>
                 </Link>

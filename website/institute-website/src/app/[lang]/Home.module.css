@@ -99,7 +99,7 @@
 
 .primaryButton {
   background: var(--color-primary);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .primaryButton:hover {
@@ -113,7 +113,7 @@
 }
 
 .secondaryButton:hover {
-  background: #FFFFFF;
+  background: #ffffff;
   border-color: var(--color-accent);
 }
 
@@ -167,7 +167,7 @@
   padding: 30px;
   border: 1px solid var(--color-border);
   border-radius: 24px;
-  background: #FFFFFF;
+  background: #ffffff;
   transition:
     transform 180ms ease,
     border-color 180ms ease;
@@ -276,7 +276,7 @@
   overflow: hidden;
   padding: 88px 24px;
   background: var(--color-primary);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .callToActionContent {
@@ -286,7 +286,7 @@
 }
 
 .callToAction h2 {
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .callToActionContent > p {
@@ -300,13 +300,13 @@
   padding: 13px 26px;
   border-color: var(--color-accent);
   background: var(--color-accent);
-  color: #1A1A1A;
+  color: #1a1a1a;
 }
 
 .callToAction .primaryButton:hover {
-  border-color: #FFFFFF;
-  background: #FFFFFF;
-  color: #1A1A1A;
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #1a1a1a;
 }
 
 /* Responsive layout */

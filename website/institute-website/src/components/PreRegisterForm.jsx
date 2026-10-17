@@ -71,11 +71,7 @@ export default function PreRegisterForm({ lang }) {
   const gradeNumber = Number(values.grade);
 
   const availableSubjects =
-    values.grade === "al"
-      ? alSubjects
-      : gradeNumber >= 10
-        ? seniorSubjects
-        : juniorSubjects;
+    values.grade === "al" ? alSubjects : gradeNumber >= 10 ? seniorSubjects : juniorSubjects;
 
   function updateField(event) {
     const { name, value, checked, type } = event.target;
@@ -141,13 +137,7 @@ export default function PreRegisterForm({ lang }) {
       nextErrors.phone = translate(lang, "preRegisterForm.invalidPhone");
     }
 
-    for (const field of [
-      "role",
-      "district",
-      "classFormat",
-      "grade",
-      "contactMethod",
-    ]) {
+    for (const field of ["role", "district", "classFormat", "grade", "contactMethod"]) {
       if (!values[field]) nextErrors[field] = required;
     }
 
@@ -201,20 +191,14 @@ export default function PreRegisterForm({ lang }) {
 
       if (!response.ok) {
         if (response.status === 400) {
-          throw new Error(
-            result.message || "Please check your details and try again.",
-          );
+          throw new Error(result.message || "Please check your details and try again.");
         }
 
         if (response.status === 429) {
-          throw new Error(
-            "Too many registration attempts. Please try again later.",
-          );
+          throw new Error("Too many registration attempts. Please try again later.");
         }
 
-        throw new Error(
-          "We could not submit your registration. Please try again later.",
-        );
+        throw new Error("We could not submit your registration. Please try again later.");
       }
 
       setSubmitSuccess(true);
@@ -224,9 +208,7 @@ export default function PreRegisterForm({ lang }) {
     } catch (error) {
       setSubmitSuccess(false);
       setNotice(
-        error instanceof Error
-          ? error.message
-          : translate(lang, "preRegisterForm.failure"),
+        error instanceof Error ? error.message : translate(lang, "preRegisterForm.failure"),
       );
     } finally {
       setIsSubmitting(false);
@@ -271,9 +253,7 @@ export default function PreRegisterForm({ lang }) {
       <p>{translate(lang, "preRegisterForm.intro")}</p>
 
       <div className={styles.field}>
-        <label htmlFor="preregister-name">
-          {translate(lang, "preRegisterForm.name")}
-        </label>
+        <label htmlFor="preregister-name">{translate(lang, "preRegisterForm.name")}</label>
         <input
           id="preregister-name"
           name="name"
@@ -288,9 +268,7 @@ export default function PreRegisterForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="preregister-email">
-          {translate(lang, "preRegisterForm.email")}
-        </label>
+        <label htmlFor="preregister-email">{translate(lang, "preRegisterForm.email")}</label>
         <input
           id="preregister-email"
           name="email"
@@ -306,9 +284,7 @@ export default function PreRegisterForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="preregister-phone">
-          {translate(lang, "preRegisterForm.phone")}
-        </label>
+        <label htmlFor="preregister-phone">{translate(lang, "preRegisterForm.phone")}</label>
         <input
           id="preregister-phone"
           name="phone"
@@ -324,9 +300,7 @@ export default function PreRegisterForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="preregister-role">
-          {translate(lang, "preRegisterForm.role")}
-        </label>
+        <label htmlFor="preregister-role">{translate(lang, "preRegisterForm.role")}</label>
         <select
           id="preregister-role"
           name="role"
@@ -335,23 +309,15 @@ export default function PreRegisterForm({ lang }) {
           required
           aria-invalid={Boolean(errors.role)}
         >
-          <option value="">
-            {translate(lang, "preRegisterForm.selectOption")}
-          </option>
-          <option value="student">
-            {translate(lang, "preRegisterForm.roles.student")}
-          </option>
-          <option value="parent">
-            {translate(lang, "preRegisterForm.roles.parent")}
-          </option>
+          <option value="">{translate(lang, "preRegisterForm.selectOption")}</option>
+          <option value="student">{translate(lang, "preRegisterForm.roles.student")}</option>
+          <option value="parent">{translate(lang, "preRegisterForm.roles.parent")}</option>
         </select>
         {fieldError("role")}
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="preregister-district">
-          {translate(lang, "preRegisterForm.district")}
-        </label>
+        <label htmlFor="preregister-district">{translate(lang, "preRegisterForm.district")}</label>
         <select
           id="preregister-district"
           name="district"
@@ -360,9 +326,7 @@ export default function PreRegisterForm({ lang }) {
           required
           aria-invalid={Boolean(errors.district)}
         >
-          <option value="">
-            {translate(lang, "preRegisterForm.selectOption")}
-          </option>
+          <option value="">{translate(lang, "preRegisterForm.selectOption")}</option>
           {districts.map((district) => (
             <option key={district} value={district}>
               {district}
@@ -373,9 +337,7 @@ export default function PreRegisterForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="preregister-city">
-          {translate(lang, "preRegisterForm.city")}
-        </label>
+        <label htmlFor="preregister-city">{translate(lang, "preRegisterForm.city")}</label>
         <input
           id="preregister-city"
           name="city"
@@ -399,26 +361,16 @@ export default function PreRegisterForm({ lang }) {
           required
           aria-invalid={Boolean(errors.classFormat)}
         >
-          <option value="">
-            {translate(lang, "preRegisterForm.selectOption")}
-          </option>
-          <option value="online">
-            {translate(lang, "preRegisterForm.formats.online")}
-          </option>
-          <option value="onsite">
-            {translate(lang, "preRegisterForm.formats.onsite")}
-          </option>
-          <option value="either">
-            {translate(lang, "preRegisterForm.formats.either")}
-          </option>
+          <option value="">{translate(lang, "preRegisterForm.selectOption")}</option>
+          <option value="online">{translate(lang, "preRegisterForm.formats.online")}</option>
+          <option value="onsite">{translate(lang, "preRegisterForm.formats.onsite")}</option>
+          <option value="either">{translate(lang, "preRegisterForm.formats.either")}</option>
         </select>
         {fieldError("classFormat")}
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="preregister-grade">
-          {translate(lang, "preRegisterForm.grade")}
-        </label>
+        <label htmlFor="preregister-grade">{translate(lang, "preRegisterForm.grade")}</label>
         <select
           id="preregister-grade"
           name="grade"
@@ -427,9 +379,7 @@ export default function PreRegisterForm({ lang }) {
           required
           aria-invalid={Boolean(errors.grade)}
         >
-          <option value="">
-            {translate(lang, "preRegisterForm.selectOption")}
-          </option>
+          <option value="">{translate(lang, "preRegisterForm.selectOption")}</option>
           {Array.from({ length: 11 }, (_, i) => String(i + 1)).map((grade) => (
             <option key={grade} value={grade}>
               Grade {grade}
@@ -475,18 +425,10 @@ export default function PreRegisterForm({ lang }) {
           required
           aria-invalid={Boolean(errors.contactMethod)}
         >
-          <option value="">
-            {translate(lang, "preRegisterForm.selectOption")}
-          </option>
-          <option value="whatsapp">
-            {translate(lang, "preRegisterForm.methods.whatsapp")}
-          </option>
-          <option value="phone">
-            {translate(lang, "preRegisterForm.methods.phone")}
-          </option>
-          <option value="email">
-            {translate(lang, "preRegisterForm.methods.email")}
-          </option>
+          <option value="">{translate(lang, "preRegisterForm.selectOption")}</option>
+          <option value="whatsapp">{translate(lang, "preRegisterForm.methods.whatsapp")}</option>
+          <option value="phone">{translate(lang, "preRegisterForm.methods.phone")}</option>
+          <option value="email">{translate(lang, "preRegisterForm.methods.email")}</option>
         </select>
         {fieldError("contactMethod")}
       </div>
@@ -510,23 +452,14 @@ export default function PreRegisterForm({ lang }) {
         {fieldError("consent")}
       </div>
 
-      <button
-        className={styles.submitButton}
-        type="submit"
-        disabled={isSubmitting}
-      >
+      <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
         {isSubmitting
           ? translate(lang, "preRegisterForm.sending")
           : translate(lang, "preRegisterForm.submit")}
       </button>
 
       {notice && (
-        <p
-          className={styles.notice}
-          role="status"
-          aria-live="polite"
-          data-success={submitSuccess}
-        >
+        <p className={styles.notice} role="status" aria-live="polite" data-success={submitSuccess}>
           {notice}
         </p>
       )}

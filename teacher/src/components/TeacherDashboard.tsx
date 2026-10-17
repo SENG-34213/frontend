@@ -8,6 +8,7 @@ import TeacherQuizWorkspace from "./TeacherQuizWorkspace";
 import TeacherAttendanceWorkspace from "./TeacherAttendanceWorkspace";
 import TeacherMaterialsWorkspace from "./TeacherMaterialsWorkspace";
 import TeacherCalendarWorkspace from "./TeacherCalendarWorkspace";
+import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
 import {
   teacherApi,
   type CourseLesson,
@@ -632,7 +633,7 @@ export default function TeacherDashboard() {
                           : activeView === "students"
                             ? "Student Management"
                             : activeView === "assignments"
-                              ? "Assignment Dashboard"
+                              ? "Assignments & Submissions"
                               : activeView === "attendance"
                                 ? "Attendance Management"
                                 : activeView === "notifications"
@@ -650,7 +651,9 @@ export default function TeacherDashboard() {
                         ? "Plan and review upcoming course events."
                         : activeView === "communication" || activeView === "messages"
                           ? "Keep your course community moving forward."
-                          : "Review the latest activity from your teaching workspace."}
+                          : activeView === "assignments"
+                            ? "Manage coursework, submissions, and grading priorities."
+                            : "Review the latest activity from your teaching workspace."}
               </p>
             </div>
             <div className="teacher-header-actions">
@@ -681,16 +684,12 @@ export default function TeacherDashboard() {
             <TeacherCalendarWorkspace courses={courses} />
           ) : activeView === "communication" || activeView === "messages" ? (
             <TeacherCommunication courses={courses} currentUserId={profile?.keycloakUserId} />
-          ) : ["students", "assignments", "notifications"].includes(activeView) ? (
+          ) : activeView === "assignments" ? (
+            <TeacherAssignmentSubmissions />
+          ) : ["students", "notifications"].includes(activeView) ? (
             <TeacherSamplePage
-              type={activeView as "students" | "assignments" | "notifications"}
-              title={
-                activeView === "students"
-                  ? "Student Management"
-                  : activeView === "assignments"
-                    ? "Assignment Dashboard"
-                    : "Notifications"
-              }
+              type={activeView as "students" | "notifications"}
+              title={activeView === "students" ? "Student Management" : "Notifications"}
               kicker={activeView.toUpperCase()}
               description="A Figma-inspired workspace for your teaching operations and class activity."
             />

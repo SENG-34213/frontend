@@ -15,16 +15,12 @@ const outfit = Outfit({
 
 export const metadata = {
   title: "Institute Name | Education and Resources",
-  description:
-    "Explore our programmes, services, and public educational resources.",
+  description: "Explore our programmes, services, and public educational resources.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="en"
-      className={`${syne.variable} ${outfit.variable}`}
-    >
+    <html lang="en" className={`${syne.variable} ${outfit.variable}`}>
       <body>{children}</body>
     </html>
   );

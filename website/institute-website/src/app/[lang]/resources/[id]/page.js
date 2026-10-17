@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { resources } from "../../../../data/resources";
@@ -10,7 +9,7 @@ export function generateStaticParams() {
     resources.map((resource) => ({
       lang,
       id: resource.id,
-    }))
+    })),
   );
 }
 
@@ -32,10 +31,7 @@ export default async function ResourceDetailPage({ params }) {
   return (
     <section className={styles.page}>
       <div className={styles.container}>
-        <Link
-          href={`/${lang}/resources`}
-          className={styles.backLink}
-        >
+        <Link href={`/${lang}/resources`} className={styles.backLink}>
           ← {translate(lang, "resourcesLibrary.backToResources")}
         </Link>
 
@@ -44,12 +40,7 @@ export default async function ResourceDetailPage({ params }) {
             <span className={styles.fileType}>{resource.type}</span>
 
             <span className={isPaid ? styles.paidBadge : styles.freeBadge}>
-              {translate(
-                lang,
-                isPaid
-                  ? "resourcesLibrary.paid"
-                  : "resourcesLibrary.free"
-              )}
+              {translate(lang, isPaid ? "resourcesLibrary.paid" : "resourcesLibrary.free")}
             </span>
           </div>
 
@@ -77,9 +68,7 @@ export default async function ResourceDetailPage({ params }) {
             </p>
           )}
 
-          <p className={styles.sampleNotice}>
-            {translate(lang, "resourcesLibrary.sampleNotice")}
-          </p>
+          <p className={styles.sampleNotice}>{translate(lang, "resourcesLibrary.sampleNotice")}</p>
         </div>
       </div>
     </section>
