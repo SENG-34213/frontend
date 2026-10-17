@@ -10,6 +10,7 @@ import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
 import TeacherAttendanceManagement from "./TeacherAttendanceManagement";
 import TeacherCourseDetailsCurriculum from "./TeacherCourseDetailsCurriculum";
 import TeacherLearningMaterialsLibrary from "./TeacherLearningMaterialsLibrary";
+import TeacherMentifyStudio from "./TeacherMentifyStudio";
 import {
   teacherApi,
   type CourseLesson,
@@ -265,6 +266,7 @@ export default function TeacherDashboard() {
     | "communication"
     | "quizzes"
     | "assistant"
+    | "studio"
   >("dashboard");
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
@@ -559,6 +561,14 @@ export default function TeacherDashboard() {
             </button>
             <button
               type="button"
+              className={activeView === "studio" ? "active" : ""}
+              onClick={() => setActiveView("studio")}
+            >
+              <span className="teacher-nav-icon">S</span>
+              <span>Mentify Studio</span>
+            </button>
+            <button
+              type="button"
               className={activeView === "attendance" ? "active" : ""}
               onClick={() => setActiveView("attendance")}
             >
@@ -633,15 +643,17 @@ export default function TeacherDashboard() {
                           ? "Calendar"
                           : activeView === "communication" || activeView === "messages"
                             ? "Messages & Communication"
-                            : activeView === "students"
-                              ? "Student Management"
-                              : activeView === "assignments"
-                                ? "Assignments & Submissions"
-                                : activeView === "attendance"
-                                  ? "Attendance Management"
-                                  : activeView === "notifications"
-                                    ? "Notifications"
-                                    : "Your intelligent teaching partner"}
+                            : activeView === "studio"
+                              ? "Mentify Studio"
+                              : activeView === "students"
+                                ? "Student Management"
+                                : activeView === "assignments"
+                                  ? "Assignments & Submissions"
+                                  : activeView === "attendance"
+                                    ? "Attendance Management"
+                                    : activeView === "notifications"
+                                      ? "Notifications"
+                                      : "Your intelligent teaching partner"}
               </h1>
               <p>
                 {activeView === "dashboard"
@@ -656,11 +668,13 @@ export default function TeacherDashboard() {
                           ? "Plan and review upcoming course events."
                           : activeView === "communication" || activeView === "messages"
                             ? "Keep your course community moving forward."
-                            : activeView === "assignments"
-                              ? "Manage coursework, submissions, and grading priorities."
-                              : activeView === "attendance"
-                                ? "Track daily attendance and review student absence patterns."
-                                : "Review the latest activity from your teaching workspace."}
+                            : activeView === "studio"
+                              ? "Plan, refine, and launch intelligent learning experiences."
+                              : activeView === "assignments"
+                                ? "Manage coursework, submissions, and grading priorities."
+                                : activeView === "attendance"
+                                  ? "Track daily attendance and review student absence patterns."
+                                  : "Review the latest activity from your teaching workspace."}
               </p>
             </div>
             <div className="teacher-header-actions">
@@ -681,6 +695,8 @@ export default function TeacherDashboard() {
             />
           ) : activeView === "assistant" ? (
             <TeacherAiAssistant />
+          ) : activeView === "studio" ? (
+            <TeacherMentifyStudio />
           ) : activeView === "quizzes" ? (
             <TeacherQuizWorkspace courses={courses} />
           ) : activeView === "attendance" ? (
