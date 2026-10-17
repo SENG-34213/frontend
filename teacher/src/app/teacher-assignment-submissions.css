@@ -3,6 +3,63 @@
   margin: 0 auto;
   color: #20283b;
 }
+.teacher-assignment-create-form {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+  border: 1px solid #dfe3ed;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+.teacher-assignment-create-form h3,
+.teacher-assignment-create-form p {
+  margin: 0;
+}
+.teacher-assignment-create-form input:not([type="checkbox"]),
+.teacher-assignment-create-form textarea,
+.teacher-assignment-create-form select {
+  width: 100%;
+  border: 1px solid #dfe3ed;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font: inherit;
+}
+.teacher-assignment-create-form textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+.teacher-assignment-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.teacher-assignment-form-grid label {
+  display: grid;
+  gap: 5px;
+  color: #697386;
+  font-size: 11px;
+  font-weight: 700;
+}
+.teacher-assignment-create-form button {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.teacher-assignment-create-form button.teacher-assignment-primary {
+  background: #4f46e5;
+  color: #fff;
+}
+@media (max-width: 700px) {
+  .teacher-course-create-form {
+    grid-template-columns: 1fr;
+  }
+  .teacher-assignment-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
 .teacher-assignment-notice {
   position: fixed;
   top: 24px;

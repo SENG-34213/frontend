@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { TeacherAssignment, TeacherCourse, TeacherSubmission } from "../lib/teacherApi";
+import type { FormEvent } from "react";
+import type {
+  CourseModule,
+  TeacherAssignment,
+  TeacherCourse,
+  TeacherSubmission,
+} from "../lib/teacherApi";
 import { teacherApi } from "../lib/teacherApi";
 
 type AssignmentView = TeacherAssignment & { courseName: string; submissions: TeacherSubmission[] };
@@ -35,6 +41,22 @@ export default function TeacherAssignmentSubmissions({ courses }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createCourseId, setCreateCourseId] = useState(courses[0]?.id || "");
+  const [createModules, setCreateModules] = useState<CourseModule[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [assignmentForm, setAssignmentForm] = useState({
+    title: "",
+    description: "",
+    instructions: "",
+    moduleId: "",
+    startDate: "",
+    dueDate: "",
+    maxMarks: "100",
+    allowedAttempts: "1",
+    allowLateSubmission: false,
+    latePenaltyPercentage: "0",
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +92,28 @@ export default function TeacherAssignmentSubmissions({ courses }: Props) {
     };
   }, [courses]);
 
+  useEffect(() => {
+    if (!createCourseId) return;
+    let cancelled = false;
+    teacherApi
+      .modules(createCourseId)
+      .then((items) => {
+        if (!cancelled) {
+          setCreateModules(items);
+          setAssignmentForm((current) => ({
+            ...current,
+            moduleId: current.moduleId || items[0]?.id || "",
+          }));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCreateModules([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [createCourseId]);
+
   const courseOptions = useMemo(
     () => ["All courses", ...new Set(assignments.map((item) => item.courseName))],
     [assignments],
@@ -97,6 +141,53 @@ export default function TeacherAssignmentSubmissions({ courses }: Props) {
   function showNotice(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2600);
+  }
+  async function createAssignment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!createCourseId || !assignmentForm.moduleId) {
+      showNotice("Choose a course and module first.");
+      return;
+    }
+    setCreating(true);
+    try {
+      const created = await teacherApi.createAssignment({
+        courseId: createCourseId,
+        moduleId: assignmentForm.moduleId,
+        title: assignmentForm.title.trim(),
+        description: assignmentForm.description.trim(),
+        instructions: assignmentForm.instructions.trim(),
+        startDate: new Date(assignmentForm.startDate).toISOString(),
+        dueDate: new Date(assignmentForm.dueDate).toISOString(),
+        maxMarks: Number(assignmentForm.maxMarks),
+        allowedAttempts: Number(assignmentForm.allowedAttempts),
+        allowLateSubmission: assignmentForm.allowLateSubmission,
+        latePenaltyPercentage: Number(assignmentForm.latePenaltyPercentage),
+      });
+      const selectedCourse = courses.find((item) => item.id === createCourseId);
+      setAssignments((current) => [
+        {
+          ...created,
+          courseName: selectedCourse?.courseName || "Assigned course",
+          submissions: [],
+        },
+        ...current,
+      ]);
+      setStatus("All");
+      setShowCreateForm(false);
+      setAssignmentForm((current) => ({
+        ...current,
+        title: "",
+        description: "",
+        instructions: "",
+      }));
+      showNotice("Assignment created successfully.");
+    } catch (createError) {
+      showNotice(
+        createError instanceof Error ? createError.message : "Unable to create the assignment.",
+      );
+    } finally {
+      setCreating(false);
+    }
   }
   function openAssignment(assignment: AssignmentView) {
     setSelected(assignment);
@@ -197,12 +288,144 @@ export default function TeacherAssignmentSubmissions({ courses }: Props) {
           <button
             type="button"
             className="teacher-assignment-primary"
-            onClick={() => showNotice("Create assignment is not available in this workspace yet.")}
+            onClick={() => setShowCreateForm((current) => !current)}
           >
             ＋ Create Assignment
           </button>
         </div>
       </div>
+      {showCreateForm && (
+        <form
+          className="teacher-assignment-create-form"
+          onSubmit={(event) => void createAssignment(event)}
+        >
+          <div>
+            <h3>Create Assignment</h3>
+            <p>Create a teacher-owned assignment using an existing course module.</p>
+          </div>
+          <select
+            required
+            value={createCourseId}
+            onChange={(event) => setCreateCourseId(event.target.value)}
+            aria-label="Assignment course"
+          >
+            <option value="">Select course</option>
+            {courses.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.courseName}
+              </option>
+            ))}
+          </select>
+          <select
+            required
+            value={assignmentForm.moduleId}
+            onChange={(event) =>
+              setAssignmentForm({ ...assignmentForm, moduleId: event.target.value })
+            }
+            aria-label="Assignment module"
+          >
+            <option value="">Select module</option>
+            {createModules.map((module) => (
+              <option key={module.id} value={module.id}>
+                {module.title}
+              </option>
+            ))}
+          </select>
+          <input
+            required
+            value={assignmentForm.title}
+            onChange={(event) =>
+              setAssignmentForm({ ...assignmentForm, title: event.target.value })
+            }
+            placeholder="Assignment title"
+            aria-label="Assignment title"
+          />
+          <textarea
+            required
+            value={assignmentForm.description}
+            onChange={(event) =>
+              setAssignmentForm({ ...assignmentForm, description: event.target.value })
+            }
+            placeholder="Description"
+            aria-label="Assignment description"
+          />
+          <textarea
+            required
+            value={assignmentForm.instructions}
+            onChange={(event) =>
+              setAssignmentForm({ ...assignmentForm, instructions: event.target.value })
+            }
+            placeholder="Instructions"
+            aria-label="Assignment instructions"
+          />
+          <div className="teacher-assignment-form-grid">
+            <label>
+              Start
+              <input
+                required
+                type="datetime-local"
+                value={assignmentForm.startDate}
+                onChange={(event) =>
+                  setAssignmentForm({ ...assignmentForm, startDate: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Due
+              <input
+                required
+                type="datetime-local"
+                value={assignmentForm.dueDate}
+                onChange={(event) =>
+                  setAssignmentForm({ ...assignmentForm, dueDate: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Max marks
+              <input
+                required
+                type="number"
+                min="1"
+                value={assignmentForm.maxMarks}
+                onChange={(event) =>
+                  setAssignmentForm({ ...assignmentForm, maxMarks: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Attempts
+              <input
+                required
+                type="number"
+                min="1"
+                value={assignmentForm.allowedAttempts}
+                onChange={(event) =>
+                  setAssignmentForm({ ...assignmentForm, allowedAttempts: event.target.value })
+                }
+              />
+            </label>
+          </div>
+          <label>
+            <input
+              type="checkbox"
+              checked={assignmentForm.allowLateSubmission}
+              onChange={(event) =>
+                setAssignmentForm({ ...assignmentForm, allowLateSubmission: event.target.checked })
+              }
+            />{" "}
+            Allow late submissions
+          </label>
+          <div>
+            <button type="submit" className="teacher-assignment-primary" disabled={creating}>
+              {creating ? "Creating…" : "Create assignment"}
+            </button>
+            <button type="button" onClick={() => setShowCreateForm(false)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
       <div className="teacher-assignment-stats">
         <article>
           <span className="teacher-assignment-stat-icon">!</span>

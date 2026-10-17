@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { teacherApi, type TeacherCourse } from "../lib/teacherApi";
 
 type CourseStatus = "active" | "draft" | "archived";
@@ -22,9 +23,13 @@ function formatStatus(status: CourseStatus) {
 export default function TeacherMyCourses({
   courses,
   onOpenCourse,
+  teacherId,
+  onCourseCreated,
 }: {
   courses: TeacherCourse[];
   onOpenCourse: (course: TeacherCourse) => void;
+  teacherId?: string;
+  onCourseCreated?: (course: TeacherCourse) => void;
 }) {
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("all");
@@ -33,6 +38,16 @@ export default function TeacherMyCourses({
   const [notice, setNotice] = useState("");
   const [moduleCounts, setModuleCounts] = useState<Record<string, number>>({});
   const [loadingModules, setLoadingModules] = useState(false);
+  const [showCourseForm, setShowCourseForm] = useState(false);
+  const [courseForm, setCourseForm] = useState({
+    courseName: "",
+    courseDescription: "",
+    subject: "",
+    gradeId: "",
+    courseFeeMonthly: "",
+    isOnline: true,
+  });
+  const [savingCourse, setSavingCourse] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +107,39 @@ export default function TeacherMyCourses({
     window.setTimeout(() => setNotice(""), 2600);
   }
 
+  async function createCourse(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!teacherId) {
+      notify("Your teacher profile is not ready. Refresh and try again.");
+      return;
+    }
+    setSavingCourse(true);
+    try {
+      const created = await teacherApi.createCourse({
+        ...courseForm,
+        courseFeeMonthly: Number(courseForm.courseFeeMonthly),
+        assignedTeacherId: teacherId,
+        isVisible: true,
+        isPublished: false,
+      });
+      onCourseCreated?.(created);
+      setCourseForm({
+        courseName: "",
+        courseDescription: "",
+        subject: "",
+        gradeId: "",
+        courseFeeMonthly: "",
+        isOnline: true,
+      });
+      setShowCourseForm(false);
+      notify("Course created successfully.");
+    } catch (createError) {
+      notify(createError instanceof Error ? createError.message : "Unable to create the course.");
+    } finally {
+      setSavingCourse(false);
+    }
+  }
+
   const totalStudents = courses.reduce((sum, course) => sum + (course.numberOfStudents || 0), 0);
 
   return (
@@ -123,13 +171,84 @@ export default function TeacherMyCourses({
             <button
               type="button"
               className="primary"
-              onClick={() => notify("Course creation is coming soon.")}
+              onClick={() => setShowCourseForm((current) => !current)}
             >
               <span aria-hidden="true">+</span>
               Create New Course
             </button>
           </div>
         </div>
+        {showCourseForm && (
+          <form
+            className="teacher-course-create-form"
+            onSubmit={(event) => void createCourse(event)}
+          >
+            <div>
+              <h3>Create New Course</h3>
+              <p>Teacher course creation requires an administrator role in the current backend.</p>
+            </div>
+            <input
+              required
+              value={courseForm.courseName}
+              onChange={(event) => setCourseForm({ ...courseForm, courseName: event.target.value })}
+              placeholder="Course name"
+              aria-label="Course name"
+            />
+            <input
+              required
+              value={courseForm.subject}
+              onChange={(event) => setCourseForm({ ...courseForm, subject: event.target.value })}
+              placeholder="Subject"
+              aria-label="Subject"
+            />
+            <input
+              required
+              value={courseForm.gradeId}
+              onChange={(event) => setCourseForm({ ...courseForm, gradeId: event.target.value })}
+              placeholder="Grade ID"
+              aria-label="Grade ID"
+            />
+            <input
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={courseForm.courseFeeMonthly}
+              onChange={(event) =>
+                setCourseForm({ ...courseForm, courseFeeMonthly: event.target.value })
+              }
+              placeholder="Monthly fee"
+              aria-label="Monthly fee"
+            />
+            <textarea
+              required
+              value={courseForm.courseDescription}
+              onChange={(event) =>
+                setCourseForm({ ...courseForm, courseDescription: event.target.value })
+              }
+              placeholder="Course description"
+              aria-label="Course description"
+            />
+            <label>
+              <input
+                type="checkbox"
+                checked={courseForm.isOnline}
+                onChange={(event) =>
+                  setCourseForm({ ...courseForm, isOnline: event.target.checked })
+                }
+              />{" "}
+              Online course
+            </label>
+            <div>
+              <button type="submit" className="primary" disabled={savingCourse}>
+                {savingCourse ? "Creating…" : "Create course"}
+              </button>
+              <button type="button" onClick={() => setShowCourseForm(false)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
         <div className="teacher-my-courses-kpis">
           <div>
             <strong>{counts.active}</strong>
