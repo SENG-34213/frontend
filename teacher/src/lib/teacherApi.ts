@@ -29,6 +29,19 @@ export type TeacherCourse = {
   courseStatus?: string;
   numberOfStudents?: number;
 };
+export type CreateCourseDraft = {
+  courseName: string;
+  courseDescription: string;
+  courseThumbnail?: string;
+  courseFeeMonthly: number;
+  gradeId: string;
+  assignedTeacherId: string;
+  subject: string;
+  isOnline: boolean;
+  discountOfferPercent?: number;
+  isVisible: boolean;
+  isPublished: boolean;
+};
 
 export type CourseModule = {
   id: string;
@@ -57,6 +70,20 @@ export type TeacherAssignment = {
   dueDate?: string;
   maxMarks?: number;
   status?: "DRAFT" | "PUBLISHED" | "CLOSED" | string;
+};
+export type CreateAssignmentDraft = {
+  courseId: string;
+  moduleId: string;
+  lessonId?: string;
+  title: string;
+  description?: string;
+  instructions?: string;
+  startDate: string;
+  dueDate: string;
+  maxMarks: number;
+  allowedAttempts: number;
+  allowLateSubmission: boolean;
+  latePenaltyPercentage?: number;
 };
 
 export type TeacherSubmission = {
@@ -297,6 +324,8 @@ async function upload<T>(path: string, formData: FormData) {
 export const teacherApi = {
   profile: () => request<TeacherProfile>("/api/v1/users/me"),
   courses: () => request<TeacherCourse[]>("/api/v1/course/my-courses"),
+  createCourse: (draft: CreateCourseDraft) =>
+    request<TeacherCourse>("/api/v1/course", { method: "POST", body: JSON.stringify(draft) }),
   enrolledStudentIds: (courseId: string) =>
     request<string[]>(`/api/v1/enrollments/courses/${encodeURIComponent(courseId)}/students`),
   studentAttendanceSummary: (studentId: string, courseId: string) =>
@@ -329,6 +358,11 @@ export const teacherApi = {
     ),
   assignments: (courseId: string) =>
     request<TeacherAssignment[]>(`/api/v1/courses/${encodeURIComponent(courseId)}/assignments`),
+  createAssignment: (draft: CreateAssignmentDraft) =>
+    request<TeacherAssignment>("/api/v1/assignments", {
+      method: "POST",
+      body: JSON.stringify(draft),
+    }),
   assignmentSubmissions: (assignmentId: string) =>
     request<TeacherSubmission[]>(
       `/api/v1/assignments/${encodeURIComponent(assignmentId)}/submissions`,

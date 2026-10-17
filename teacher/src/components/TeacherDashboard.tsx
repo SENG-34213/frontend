@@ -722,6 +722,8 @@ export default function TeacherDashboard() {
           ) : activeView === "courses" ? (
             <TeacherMyCourses
               courses={courses}
+              teacherId={profile?.id}
+              onCourseCreated={(course) => setCourses((current) => [...current, course])}
               onOpenCourse={(course) => {
                 setSelectedCourse(course);
                 setActiveView("course-details");
