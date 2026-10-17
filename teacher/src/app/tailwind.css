@@ -13,6 +13,7 @@
 @import "./teacher-pages.css" layer(components);
 @import "./teacher-assignment-submissions.css" layer(components);
 @import "./teacher-attendance-management.css" layer(components);
+@import "./teacher-course-details.css" layer(components);
 @import "../../../shared/materials/materials.css" layer(components);
 @import "./teacher-materials.css" layer(components);
 
