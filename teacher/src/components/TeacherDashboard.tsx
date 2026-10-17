@@ -5,11 +5,11 @@ import type { FormEvent } from "react";
 import TeacherAiAssistant from "../ai-assistant/TeacherAiAssistant";
 import TeacherCommunication from "./TeacherCommunication";
 import TeacherQuizWorkspace from "./TeacherQuizWorkspace";
-import TeacherMaterialsWorkspace from "./TeacherMaterialsWorkspace";
 import TeacherCalendarWorkspace from "./TeacherCalendarWorkspace";
 import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
 import TeacherAttendanceManagement from "./TeacherAttendanceManagement";
 import TeacherCourseDetailsCurriculum from "./TeacherCourseDetailsCurriculum";
+import TeacherLearningMaterialsLibrary from "./TeacherLearningMaterialsLibrary";
 import {
   teacherApi,
   type CourseLesson,
@@ -625,38 +625,42 @@ export default function TeacherDashboard() {
                   ? "Dashboard"
                   : activeView === "courses"
                     ? "Course Details & Curriculum"
-                    : activeView === "quizzes"
-                      ? "Quiz Management Hub"
-                      : activeView === "calendar"
-                        ? "Calendar"
-                        : activeView === "communication" || activeView === "messages"
-                          ? "Messages & Communication"
-                          : activeView === "students"
-                            ? "Student Management"
-                            : activeView === "assignments"
-                              ? "Assignments & Submissions"
-                              : activeView === "attendance"
-                                ? "Attendance Management"
-                                : activeView === "notifications"
-                                  ? "Notifications"
-                                  : "Your intelligent teaching partner"}
+                    : activeView === "materials"
+                      ? "Learning Materials & Media Library"
+                      : activeView === "quizzes"
+                        ? "Quiz Management Hub"
+                        : activeView === "calendar"
+                          ? "Calendar"
+                          : activeView === "communication" || activeView === "messages"
+                            ? "Messages & Communication"
+                            : activeView === "students"
+                              ? "Student Management"
+                              : activeView === "assignments"
+                                ? "Assignments & Submissions"
+                                : activeView === "attendance"
+                                  ? "Attendance Management"
+                                  : activeView === "notifications"
+                                    ? "Notifications"
+                                    : "Your intelligent teaching partner"}
               </h1>
               <p>
                 {activeView === "dashboard"
                   ? "A quick view of your courses, students, and teaching priorities."
                   : activeView === "courses"
                     ? "Explore course progress, curriculum modules, and lesson details."
-                    : activeView === "quizzes"
-                      ? "Create, review, and manage assessments for your students."
-                      : activeView === "calendar"
-                        ? "Plan and review upcoming course events."
-                        : activeView === "communication" || activeView === "messages"
-                          ? "Keep your course community moving forward."
-                          : activeView === "assignments"
-                            ? "Manage coursework, submissions, and grading priorities."
-                            : activeView === "attendance"
-                              ? "Track daily attendance and review student absence patterns."
-                              : "Review the latest activity from your teaching workspace."}
+                    : activeView === "materials"
+                      ? "Organize, share, and manage your teaching resources."
+                      : activeView === "quizzes"
+                        ? "Create, review, and manage assessments for your students."
+                        : activeView === "calendar"
+                          ? "Plan and review upcoming course events."
+                          : activeView === "communication" || activeView === "messages"
+                            ? "Keep your course community moving forward."
+                            : activeView === "assignments"
+                              ? "Manage coursework, submissions, and grading priorities."
+                              : activeView === "attendance"
+                                ? "Track daily attendance and review student absence patterns."
+                                : "Review the latest activity from your teaching workspace."}
               </p>
             </div>
             <div className="teacher-header-actions">
@@ -682,7 +686,7 @@ export default function TeacherDashboard() {
           ) : activeView === "attendance" ? (
             <TeacherAttendanceManagement />
           ) : activeView === "materials" ? (
-            <TeacherMaterialsWorkspace courses={courses} />
+            <TeacherLearningMaterialsLibrary courses={courses} />
           ) : activeView === "calendar" ? (
             <TeacherCalendarWorkspace courses={courses} />
           ) : activeView === "communication" || activeView === "messages" ? (
