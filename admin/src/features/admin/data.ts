@@ -23,6 +23,7 @@ export const initialRegistrationValues: RegistrationValues = {
   guardianName: "",
   guardianPhone: "",
   grade: "",
+  schoolName: "",
   attendanceMode: "PHYSICAL",
   nic: "",
   hireDate: "",

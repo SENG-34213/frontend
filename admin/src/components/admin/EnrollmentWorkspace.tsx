@@ -285,6 +285,7 @@ export function EnrollmentWorkspace({
                           </span>
                         </div>
                         <p>{student.email}</p>
+                        {student.schoolName && <small>School · {student.schoolName}</small>}
                         <div className="directory-facts">
                           <span>{student.code || "No student ID"}</span>
                           <span>

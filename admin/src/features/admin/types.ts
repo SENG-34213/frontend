@@ -18,6 +18,7 @@ export type RecentStudent = {
   name: string;
   email: string;
   grade?: string;
+  schoolName?: string;
   phoneNumber?: string;
   attendanceMode?: string;
   studentCode?: string;
@@ -81,6 +82,7 @@ export type RegistrationValues = {
   guardianName: string;
   guardianPhone: string;
   grade: string;
+  schoolName: string;
   attendanceMode: string;
   nic: string;
   hireDate: string;
@@ -99,6 +101,7 @@ export type DirectoryUser = {
   email: string;
   phoneNumber?: string;
   grade?: string;
+  schoolName?: string;
   code?: string;
   accountStatus?: string;
   specializations?: string[];
