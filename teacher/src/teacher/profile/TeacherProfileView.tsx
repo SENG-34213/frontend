@@ -13,14 +13,15 @@ import {
   Building,
 } from "lucide-react";
 import { TeacherProfile, NavigationTab } from "../types";
-import { mockTeacherProfile, mockCourses } from "../data/mockData";
+import { mockCourses } from "../data/mockData";
 
 interface TeacherProfileViewProps {
+  teacher: TeacherProfile;
   onNavigate: (tab: NavigationTab) => void;
 }
 
-export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ onNavigate }) => {
-  const [profile, setProfile] = useState<TeacherProfile>(mockTeacherProfile);
+export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ teacher, onNavigate }) => {
+  const [profile, setProfile] = useState<TeacherProfile>(teacher);
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(profile.name);
   const [title, setTitle] = useState(profile.title);
@@ -88,7 +89,13 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ onNaviga
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 mb-6">
             <div className="flex items-end gap-4">
               <div className="w-20 h-20 rounded-2xl bg-indigo-600 text-white font-bold text-2xl flex items-center justify-center ring-4 ring-white shadow-md">
-                AR
+                {profile.name
+                  .split(" ")
+                  .map((part) => part[0])
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase()}
               </div>
               <div className="mb-1">
                 <h2 className="text-lg font-bold text-slate-900">{profile.name}</h2>

@@ -66,6 +66,14 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   unreadNotificationsCount,
   onLogout,
 }) => {
+  const teacherInitials = teacher.name
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   const navGroups: NavGroup[] = [
     {
       groupName: "OVERVIEW",
@@ -261,7 +269,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           }`}
         >
           <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-xs">
-            AR
+            {teacherInitials}
           </div>
           {!isCollapsed && (
             <div className="truncate flex-1">

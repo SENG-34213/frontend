@@ -10,9 +10,13 @@ import {
   KeyRound,
   ExternalLink,
 } from "lucide-react";
-import { mockTeacherProfile } from "../data/mockData";
+import type { TeacherProfile } from "../types";
 
-export const TeacherSettingsView: React.FC = () => {
+interface TeacherSettingsViewProps {
+  teacher: TeacherProfile;
+}
+
+export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teacher }) => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [submissionPushes, setSubmissionPushes] = useState(true);
   const [dailyDigest, setDailyDigest] = useState(false);
@@ -119,8 +123,7 @@ export const TeacherSettingsView: React.FC = () => {
             <div>
               <span className="font-semibold text-slate-800 block">Email Notifications</span>
               <span className="text-slate-500">
-                Forward important student messages and department broadcasts to{" "}
-                {mockTeacherProfile.email}.
+                Forward important student messages and department broadcasts to {teacher.email}.
               </span>
             </div>
           </label>
