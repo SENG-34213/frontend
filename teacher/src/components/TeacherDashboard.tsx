@@ -12,6 +12,7 @@ import TeacherCourseDetailsCurriculum from "./TeacherCourseDetailsCurriculum";
 import TeacherLearningMaterialsLibrary from "./TeacherLearningMaterialsLibrary";
 import TeacherMentifyStudio from "./TeacherMentifyStudio";
 import TeacherMyCourses from "./TeacherMyCourses";
+import TeacherMyStudentsDirectory from "./TeacherMyStudentsDirectory";
 import {
   teacherApi,
   type CourseLesson,
@@ -545,7 +546,7 @@ export default function TeacherDashboard() {
               onClick={() => setActiveView("students")}
             >
               <span className="teacher-nav-icon">â™™</span>
-              <span>Students</span>
+              <span>My Students</span>
             </button>
             <button
               type="button"
@@ -652,7 +653,7 @@ export default function TeacherDashboard() {
                               : activeView === "studio"
                                 ? "Mentify Studio"
                                 : activeView === "students"
-                                  ? "Student Management"
+                                  ? "My Students"
                                   : activeView === "assignments"
                                     ? "Assignments & Submissions"
                                     : activeView === "attendance"
@@ -727,10 +728,12 @@ export default function TeacherDashboard() {
             <TeacherCourseDetailsCurriculum courses={courses} courseId={selectedCourse?.id} />
           ) : activeView === "assignments" ? (
             <TeacherAssignmentSubmissions />
-          ) : ["students", "notifications"].includes(activeView) ? (
+          ) : activeView === "students" ? (
+            <TeacherMyStudentsDirectory courses={courses} />
+          ) : activeView === "notifications" ? (
             <TeacherSamplePage
-              type={activeView as "students" | "notifications"}
-              title={activeView === "students" ? "Student Management" : "Notifications"}
+              type="notifications"
+              title="Notifications"
               kicker={activeView.toUpperCase()}
               description="A Figma-inspired workspace for your teaching operations and class activity."
             />
