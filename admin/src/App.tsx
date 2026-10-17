@@ -135,6 +135,8 @@ export default function App() {
   };
 
   useEffect(() => {
+    // This effect starts the async synchronization with the admin users API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isAuthenticated) void loadAdminUsers();
   }, [isAuthenticated]);
 
