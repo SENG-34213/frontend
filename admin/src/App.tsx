@@ -67,6 +67,7 @@ import { AuditAndActivity } from "./admin/audit/AuditAndActivity";
 import { AdminProfile } from "./admin/profile/AdminProfile";
 import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
+import { logoutAdmin } from "./admin/api/authApi";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -119,6 +120,10 @@ export default function App() {
       />
     );
   }
+
+  const handleLogout = () => {
+    void logoutAdmin().finally(() => setIsAuthenticated(false));
+  };
 
   const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
     const newToast: ToastMessage = {
@@ -301,6 +306,7 @@ export default function App() {
       toasts={toasts}
       onDismissToast={handleDismissToast}
       onQuickAction={handleQuickAction}
+      onLogout={handleLogout}
     >
       {/* Route Views */}
       {currentRoute === "dashboard" && (
