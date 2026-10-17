@@ -29,6 +29,16 @@ export interface LoginResponse {
   user: AdminUserSummary;
 }
 
+export interface TokenRefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  refreshExpiresIn: number;
+  scope?: string;
+  issuedAt?: string;
+}
+
 export interface AuthSession {
   accessToken: string;
   refreshToken: string;

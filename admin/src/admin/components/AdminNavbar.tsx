@@ -34,6 +34,7 @@ interface AdminNavbarProps {
   onOpenSearch: () => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
+  onLogout: () => void;
 }
 
 export const AdminNavbar: React.FC<AdminNavbarProps> = ({
@@ -48,6 +49,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   onOpenSearch,
   isDarkMode,
   onToggleTheme,
+  onLogout,
 }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -386,7 +388,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowUserMenu(false);
-                  onNavigate("settings");
+                  onLogout();
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-left"
               >

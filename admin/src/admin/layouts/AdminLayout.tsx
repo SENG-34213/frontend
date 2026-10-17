@@ -44,6 +44,7 @@ interface AdminLayoutProps {
   toasts: ToastMessage[];
   onDismissToast: (id: string) => void;
   onQuickAction: (action: string) => void;
+  onLogout: () => void;
   children: React.ReactNode;
 }
 
@@ -59,6 +60,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   toasts,
   onDismissToast,
   onQuickAction,
+  onLogout,
   children,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -161,6 +163,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           onOpenSearch={() => setIsSearchOpen(true)}
           isDarkMode={isDarkMode}
           onToggleTheme={onToggleTheme}
+          onLogout={onLogout}
         />
 
         {/* Viewport Content */}

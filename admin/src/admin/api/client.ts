@@ -1,4 +1,5 @@
-import { getAccessToken } from "../auth/authStorage";
+import { getAccessToken, getSession, saveSession } from "../auth/authStorage";
+import type { ApiResponse, TokenRefreshResponse } from "../auth/authTypes";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080").replace(
   /\/$/,
@@ -20,10 +21,17 @@ export class ApiError extends Error {
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   authenticated?: boolean;
+  retryOnUnauthorized?: boolean;
 };
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, authenticated = true, headers, ...requestInit } = options;
+  const {
+    body,
+    authenticated = true,
+    retryOnUnauthorized = true,
+    headers,
+    ...requestInit
+  } = options;
   const requestHeaders = new Headers(headers);
 
   requestHeaders.set("Accept", "application/json");
@@ -45,6 +53,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   });
 
   const responseBody = await response.json().catch(() => null);
+  if (response.status === 401 && authenticated && retryOnUnauthorized) {
+    const refreshed = await refreshStoredSession();
+    if (refreshed) {
+      return apiRequest<T>(path, { ...options, retryOnUnauthorized: false });
+    }
+  }
+
   if (!response.ok) {
     const message =
       responseBody?.message ||
@@ -54,4 +69,28 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   return responseBody as T;
+}
+
+export async function refreshStoredSession(): Promise<boolean> {
+  const currentSession = getSession();
+  if (!currentSession?.refreshToken) return false;
+
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: currentSession.refreshToken }),
+  });
+
+  const responseBody = (await response
+    .json()
+    .catch(() => null)) as ApiResponse<TokenRefreshResponse> | null;
+  if (!response.ok || !responseBody?.data) return false;
+
+  saveSession({
+    ...currentSession,
+    accessToken: responseBody.data.accessToken,
+    refreshToken: responseBody.data.refreshToken,
+    expiresAt: Date.now() + responseBody.data.expiresIn * 1000,
+  });
+  return true;
 }
