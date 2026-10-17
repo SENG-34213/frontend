@@ -2,8 +2,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useMemo, useState } from "react";
-import { createMaterialApi } from "../../../shared/materials/materialApi";
-import type { Material } from "../../../shared/materials/materialTypes";
+import { createMaterialApi } from "../../../../packages/shared/materials/materialApi";
+import type { Material } from "../../../../packages/shared/materials/materialTypes";
 
 const PAGE_SIZE = 8;
 const typeOf = (material: Material) =>

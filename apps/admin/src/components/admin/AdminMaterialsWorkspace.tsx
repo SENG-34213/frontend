@@ -4,8 +4,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Icon } from "./Icon";
-import { createMaterialApi } from "../../../../shared/materials/materialApi";
-import type { Material, MaterialApi } from "../../../../shared/materials/materialTypes";
+import { createMaterialApi } from "../../../../../packages/shared/materials/materialApi";
+import type { Material, MaterialApi } from "../../../../../packages/shared/materials/materialTypes";
 
 type AdminMaterial = Material & { uploader?: string; uploaderName?: string; uploadedBy?: string };
 type SortKey = "date" | "title" | "size" | "status";

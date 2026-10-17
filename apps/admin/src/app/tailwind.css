@@ -6,7 +6,7 @@
 @import "./globals.css" layer(components);
 @import "./mentify-theme.css" layer(components);
 @import "./admin-dashboard-theme.css" layer(components);
-@import "../../../shared/materials/materials.css" layer(components);
+@import "../../../../packages/shared/materials/materials.css" layer(components);
 @import "./admin-materials.css" layer(components);
 @import "./admin-figma-refactor.css" layer(components);
 @import "./admin-figma-pages.css" layer(components);
