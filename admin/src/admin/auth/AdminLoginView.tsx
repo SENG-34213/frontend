@@ -1,22 +1,33 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
+import { loginAdmin } from "../api/authApi";
 
-type Props = { onLogin: () => void };
+type Props = { onLogin: (session: Awaited<ReturnType<typeof loginAdmin>>) => void };
 
 export function AdminLoginView({ onLogin }: Props) {
   const [email, setEmail] = useState("alex.mercer@mentify.edu");
   const [password, setPassword] = useState("admin-demo");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!email.trim() || !password.trim()) {
       setError("Enter the sample admin email and password to continue.");
       return;
     }
+
     setError("");
-    onLogin();
+    setIsSubmitting(true);
+    try {
+      const session = await loginAdmin(email.trim(), password);
+      onLogin(session);
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -143,9 +154,11 @@ export function AdminLoginView({ onLogin }: Props) {
               </div>
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700"
               >
-                Sign in to Mentify <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? "Signing in…" : "Sign in to Mentify"}
+                {!isSubmitting && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>
             <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/70 p-3">
