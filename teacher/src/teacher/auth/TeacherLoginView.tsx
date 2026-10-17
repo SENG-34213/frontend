@@ -1,22 +1,36 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
+import { getCurrentUser, login } from "../api/auth";
 
 type Props = { onLogin: () => void };
 
 export function TeacherLoginView({ onLogin }: Props) {
-  const [email, setEmail] = useState("alex.rivera@mentify.edu");
-  const [password, setPassword] = useState("teacher-demo");
+  const [email, setEmail] = useState("teacher1@mentify.test");
+  const [password, setPassword] = useState("Sample@12345");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!email.trim() || !password.trim()) {
-      setError("Enter the sample teacher email and password to continue.");
+      setError("Enter your teacher identifier and password to continue.");
       return;
     }
     setError("");
-    onLogin();
+    setIsSubmitting(true);
+    try {
+      await login(email.trim(), password);
+      const currentUser = await getCurrentUser();
+      if (currentUser?.role !== "TEACHER") {
+        throw new Error("This account does not have teacher access.");
+      }
+      onLogin();
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -134,7 +148,7 @@ export function TeacherLoginView({ onLogin }: Props) {
                 <button
                   type="button"
                   onClick={() =>
-                    setError("For this UI demo, use the sample credentials shown below.")
+                    setError("Use the sample teacher credentials below for local verification.")
                   }
                   className="font-semibold text-indigo-600 hover:text-indigo-800"
                 >
@@ -143,9 +157,11 @@ export function TeacherLoginView({ onLogin }: Props) {
               </div>
               <button
                 type="submit"
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700"
+                disabled={isSubmitting}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"
               >
-                Sign in to Mentify <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? "Signing in…" : "Sign in to Mentify"}{" "}
+                <ArrowRight className="h-4 w-4" />
               </button>
             </form>
             <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/70 p-3">
