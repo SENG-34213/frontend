@@ -49,10 +49,29 @@ export type CourseLesson = {
 export type TeacherAssignment = {
   id: string;
   title: string;
+  description?: string;
+  instructions?: string;
   courseId?: string;
   moduleId?: string;
   lessonId?: string;
-  status?: string;
+  dueDate?: string;
+  maxMarks?: number;
+  status?: "DRAFT" | "PUBLISHED" | "CLOSED" | string;
+};
+
+export type TeacherSubmission = {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  attemptNumber?: number;
+  status: "DRAFT" | "SUBMITTED" | "UNDER_REVIEW" | "GRADED" | "RETURNED" | string;
+  content?: string;
+  isLate?: boolean;
+  submittedAt?: string;
+  marks?: number | string;
+  feedback?: string;
+  gradedAt?: string;
+  returnedAt?: string;
 };
 
 export type CommunicationGroup = {
@@ -287,6 +306,19 @@ export const teacherApi = {
     ),
   assignments: (courseId: string) =>
     request<TeacherAssignment[]>(`/api/v1/courses/${encodeURIComponent(courseId)}/assignments`),
+  assignmentSubmissions: (assignmentId: string) =>
+    request<TeacherSubmission[]>(
+      `/api/v1/assignments/${encodeURIComponent(assignmentId)}/submissions`,
+    ),
+  gradeSubmission: (submissionId: string, draft: { marks: number; feedback?: string }) =>
+    request<TeacherSubmission>(`/api/v1/submissions/${encodeURIComponent(submissionId)}/grade`, {
+      method: "POST",
+      body: JSON.stringify(draft),
+    }),
+  returnSubmission: (submissionId: string) =>
+    request<TeacherSubmission>(`/api/v1/submissions/${encodeURIComponent(submissionId)}/return`, {
+      method: "POST",
+    }),
   createLesson: (
     courseId: string,
     moduleId: string,

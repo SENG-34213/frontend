@@ -1,136 +1,169 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { TeacherAssignment, TeacherCourse, TeacherSubmission } from "../lib/teacherApi";
+import { teacherApi } from "../lib/teacherApi";
 
-type AssignmentStatus = "Needs grading" | "Active" | "Closed";
+type AssignmentView = TeacherAssignment & { courseName: string; submissions: TeacherSubmission[] };
+type Props = { courses: TeacherCourse[] };
+const statusFilters = ["All", "Needs grading", "Active", "Closed"] as const;
+type Filter = (typeof statusFilters)[number];
 
-type Assignment = {
-  id: string;
-  course: string;
-  title: string;
-  kind: string;
-  status: AssignmentStatus;
-  due: string;
-  submitted: number;
-  enrolled: number;
-  graded: number;
-  average: string;
-  accent: "primary" | "secondary" | "muted";
-  note: string;
-};
+function formatDate(value?: string) {
+  if (!value) return "No due date";
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
+}
+function shortId(value: string) {
+  return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
+}
+function viewStatus(assignment: AssignmentView): Exclude<Filter, "All"> {
+  if (assignment.submissions.some((item) => ["SUBMITTED", "UNDER_REVIEW"].includes(item.status)))
+    return "Needs grading";
+  return assignment.status === "CLOSED" ? "Closed" : "Active";
+}
 
-const assignments: Assignment[] = [
-  {
-    id: "calculus-problem-set",
-    course: "AP Calculus BC",
-    title: "Problem Set 4.4: Related Rates & Optimization",
-    kind: "Problem Set",
-    status: "Needs grading",
-    due: "Due today",
-    submitted: 29,
-    enrolled: 32,
-    graded: 15,
-    average: "86.4%",
-    accent: "primary",
-    note: "3 students have not submitted",
-  },
-  {
-    id: "physics-lab",
-    course: "Physics Honors",
-    title: "Lab Report: Conservation of Momentum",
-    kind: "Lab Report",
-    status: "Needs grading",
-    due: "Due Oct 28",
-    submitted: 22,
-    enrolled: 28,
-    graded: 16,
-    average: "89.1%",
-    accent: "secondary",
-    note: "6 submissions are in progress",
-  },
-  {
-    id: "python-notebook",
-    course: "Intro to Python",
-    title: "Jupyter Notebook: Data Cleaning with Pandas",
-    kind: "Practical Exercise",
-    status: "Closed",
-    due: "Closed yesterday",
-    submitted: 26,
-    enrolled: 26,
-    graded: 26,
-    average: "94.2%",
-    accent: "muted",
-    note: "Grades synced to the SIS gradebook",
-  },
-  {
-    id: "linear-algebra",
-    course: "Linear Algebra",
-    title: "Proofs: Vector Spaces & Spanning Sets",
-    kind: "Theoretical Proof",
-    status: "Active",
-    due: "Due Nov 8",
-    submitted: 4,
-    enrolled: 18,
-    graded: 0,
-    average: "—",
-    accent: "muted",
-    note: "14 students have viewed the prompt",
-  },
-];
-
-const queue = [
-  {
-    initials: "AT",
-    name: "Alex Turner",
-    detail: "AP Calculus BC · PS 4.4",
-    time: "2h ago",
-    tag: "Needs partial credit",
-  },
-  {
-    initials: "MP",
-    name: "Maya Patel",
-    detail: "Physics Honors · Lab 3",
-    time: "5h ago",
-    tag: "Ready for rubric scoring",
-  },
-  {
-    initials: "DK",
-    name: "David Kim",
-    detail: "Intro to Python · Pandas NB",
-    time: "Yesterday",
-    tag: "Resubmitted with late pass",
-  },
-];
-
-const statusFilters: Array<"All" | AssignmentStatus> = ["All", "Needs grading", "Active", "Closed"];
-
-export default function TeacherAssignmentSubmissions() {
+export default function TeacherAssignmentSubmissions({ courses }: Props) {
+  const [assignments, setAssignments] = useState<AssignmentView[]>([]);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<(typeof statusFilters)[number]>("Needs grading");
+  const [status, setStatus] = useState<Filter>("Needs grading");
   const [course, setCourse] = useState("All courses");
+  const [selected, setSelected] = useState<AssignmentView | null>(null);
+  const [selectedSubmission, setSelectedSubmission] = useState<TeacherSubmission | null>(null);
+  const [marks, setMarks] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const courses = useMemo(
-    () => ["All courses", ...new Set(assignments.map((assignment) => assignment.course))],
-    [],
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError("");
+      try {
+        const grouped = await Promise.all(
+          courses.map(async (teacherCourse) => {
+            const courseAssignments = await teacherApi.assignments(teacherCourse.id);
+            return Promise.all(
+              courseAssignments.map(async (assignment) => ({
+                ...assignment,
+                courseName: teacherCourse.courseName,
+                submissions: await teacherApi.assignmentSubmissions(assignment.id),
+              })),
+            );
+          }),
+        );
+        if (!cancelled) setAssignments(grouped.flat());
+      } catch (loadError) {
+        if (!cancelled) {
+          setAssignments([]);
+          setError(loadError instanceof Error ? loadError.message : "Unable to load assignments.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [courses]);
+
+  const courseOptions = useMemo(
+    () => ["All courses", ...new Set(assignments.map((item) => item.courseName))],
+    [assignments],
   );
   const filteredAssignments = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalized = query.trim().toLowerCase();
     return assignments.filter((assignment) => {
-      const matchesStatus = status === "All" || assignment.status === status;
-      const matchesCourse = course === "All courses" || assignment.course === course;
+      const matchesStatus = status === "All" || viewStatus(assignment) === status;
+      const matchesCourse = course === "All courses" || assignment.courseName === course;
       const matchesQuery =
-        !normalizedQuery ||
-        [assignment.course, assignment.title, assignment.kind].some((value) =>
-          value.toLowerCase().includes(normalizedQuery),
-        );
+        !normalized ||
+        `${assignment.courseName} ${assignment.title}`.toLowerCase().includes(normalized);
       return matchesStatus && matchesCourse && matchesQuery;
     });
-  }, [course, query, status]);
+  }, [assignments, course, query, status]);
+  const allSubmissions = assignments.flatMap((item) => item.submissions);
+  const awaiting = allSubmissions.filter((item) =>
+    ["SUBMITTED", "UNDER_REVIEW"].includes(item.status),
+  );
+  const graded = allSubmissions.filter((item) => item.marks !== undefined && item.marks !== null);
+  const average = graded.length
+    ? graded.reduce((sum, item) => sum + Number(item.marks), 0) / graded.length
+    : 0;
 
   function showNotice(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2600);
+  }
+  function openAssignment(assignment: AssignmentView) {
+    setSelected(assignment);
+    setSelectedSubmission(assignment.submissions[0] || null);
+    if (assignment.submissions[0]) selectSubmission(assignment.submissions[0]);
+  }
+  function selectSubmission(submission: TeacherSubmission) {
+    setSelectedSubmission(submission);
+    setMarks(submission.marks == null ? "" : String(submission.marks));
+    setFeedback(submission.feedback || "");
+  }
+  function updateSubmission(updated: TeacherSubmission) {
+    setSelectedSubmission(updated);
+    setAssignments((current) =>
+      current.map((assignment) => ({
+        ...assignment,
+        submissions: assignment.submissions.map((item) =>
+          item.id === updated.id ? updated : item,
+        ),
+      })),
+    );
+    setSelected((current) =>
+      current
+        ? {
+            ...current,
+            submissions: current.submissions.map((item) =>
+              item.id === updated.id ? updated : item,
+            ),
+          }
+        : current,
+    );
+  }
+  async function saveGrade() {
+    if (!selectedSubmission) return;
+    const numericMarks = Number(marks);
+    if (!Number.isFinite(numericMarks) || numericMarks < 0 || numericMarks > 100) {
+      showNotice("Enter a mark between 0 and 100.");
+      return;
+    }
+    setSaving(true);
+    try {
+      updateSubmission(
+        await teacherApi.gradeSubmission(selectedSubmission.id, {
+          marks: numericMarks,
+          feedback: feedback.trim() || undefined,
+        }),
+      );
+      showNotice("Grade saved.");
+    } catch (saveError) {
+      showNotice(saveError instanceof Error ? saveError.message : "Unable to save the grade.");
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function returnSubmission() {
+    if (!selectedSubmission) return;
+    setSaving(true);
+    try {
+      updateSubmission(await teacherApi.returnSubmission(selectedSubmission.id));
+      showNotice("Submission returned to the student.");
+    } catch (returnError) {
+      showNotice(
+        returnError instanceof Error ? returnError.message : "Unable to return the submission.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -147,63 +180,56 @@ export default function TeacherAssignmentSubmissions() {
         <div>
           <div className="teacher-assignment-title-row">
             <h2 id="assignment-submissions-title">Assignments &amp; Submissions</h2>
-            <span className="teacher-assignment-term">Term Q2 · Live</span>
+            <span className="teacher-assignment-term">Live data</span>
           </div>
           <p>
-            Manage coursework briefs, rubric configurations, student submissions, and grading
-            pipelines.
+            Review student work, grade submissions, and return feedback from your assigned courses.
           </p>
         </div>
         <div className="teacher-assignment-actions">
           <button
             type="button"
             className="teacher-assignment-secondary"
-            onClick={() => showNotice("Gradebook export is being prepared.")}
+            onClick={() => showNotice("Gradebook export is not available yet.")}
           >
             ↓ Export Gradebook
           </button>
           <button
             type="button"
             className="teacher-assignment-primary"
-            onClick={() =>
-              showNotice(
-                "Assignment creation will be available when the assessment API is connected.",
-              )
-            }
+            onClick={() => showNotice("Create assignment is not available in this workspace yet.")}
           >
             ＋ Create Assignment
           </button>
         </div>
       </div>
-
       <div className="teacher-assignment-stats">
         <article>
           <span className="teacher-assignment-stat-icon">!</span>
           <small>TO REVIEW</small>
-          <strong>24</strong>
+          <strong>{awaiting.length}</strong>
           <em>Submissions awaiting grading</em>
         </article>
         <article>
           <span className="teacher-assignment-stat-icon violet">◷</span>
           <small>ACTIVE ASSIGNMENTS</small>
-          <strong>8</strong>
-          <em>Across 4 courses</em>
+          <strong>{assignments.filter((item) => item.status !== "CLOSED").length}</strong>
+          <em>Across {courses.length} courses</em>
         </article>
         <article>
           <span className="teacher-assignment-stat-icon green">↗</span>
           <small>AVG. SCORE</small>
-          <strong>88.6%</strong>
-          <em className="positive">+3.1% vs. last month</em>
+          <strong>{graded.length ? `${average.toFixed(1)}%` : "—"}</strong>
+          <em>From graded submissions</em>
         </article>
       </div>
-
       <div className="teacher-assignment-toolbar">
         <label className="teacher-assignment-search">
           <span>⌕</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search assignments, courses, or rubrics..."
+            placeholder="Search assignments or courses..."
             aria-label="Search assignments"
           />
         </label>
@@ -216,7 +242,7 @@ export default function TeacherAssignmentSubmissions() {
               onClick={() => setStatus(filter)}
             >
               {filter}
-              {filter === "Needs grading" && <b>24</b>}
+              {filter === "Needs grading" && <b>{awaiting.length}</b>}
             </button>
           ))}
           <select
@@ -224,177 +250,200 @@ export default function TeacherAssignmentSubmissions() {
             onChange={(event) => setCourse(event.target.value)}
             aria-label="Filter by course"
           >
-            {courses.map((option) => (
+            {courseOptions.map((option) => (
               <option key={option}>{option}</option>
             ))}
           </select>
         </div>
       </div>
-
-      <div className="teacher-assignment-grid">
-        <div className="teacher-assignment-list">
-          {filteredAssignments.length ? (
-            filteredAssignments.map((assignment) => {
-              const coverage = Math.round((assignment.submitted / assignment.enrolled) * 100);
-              const grading = Math.round((assignment.graded / assignment.submitted) * 100);
-              return (
-                <article className="teacher-assignment-card" key={assignment.id}>
-                  <span className={`teacher-assignment-accent ${assignment.accent}`} />
-                  <div className="teacher-assignment-card-head">
-                    <div>
-                      <div className="teacher-assignment-meta">
-                        <span>{assignment.course}</span>
-                        <small>{assignment.due}</small>
-                        <small>· {assignment.kind}</small>
-                      </div>
-                      <h3>{assignment.title}</h3>
-                    </div>
-                    <strong
-                      className={`teacher-assignment-badge ${assignment.status.toLowerCase().replace(" ", "-")}`}
-                    >
-                      {assignment.status}
-                    </strong>
-                  </div>
-                  <div className="teacher-assignment-metrics">
-                    <div>
+      {loading && (
+        <div className="teacher-assignment-empty">Loading assignments and submissions…</div>
+      )}
+      {!loading && error && <div className="teacher-assignment-empty">{error}</div>}
+      {!loading && !error && !courses.length && (
+        <div className="teacher-assignment-empty">
+          No courses are assigned to your teacher account yet.
+        </div>
+      )}
+      {!loading && !error && courses.length > 0 && (
+        <div className="teacher-assignment-grid">
+          <div className="teacher-assignment-list">
+            {filteredAssignments.length ? (
+              filteredAssignments.map((assignment) => {
+                const assignmentStatus = viewStatus(assignment);
+                const submitted = assignment.submissions.filter(
+                  (item) => item.status !== "DRAFT",
+                ).length;
+                const gradedCount = assignment.submissions.filter(
+                  (item) => item.marks != null,
+                ).length;
+                const coverage =
+                  courses.find((item) => item.courseName === assignment.courseName)
+                    ?.numberOfStudents || submitted;
+                const percentage = coverage
+                  ? Math.min(100, Math.round((submitted / coverage) * 100))
+                  : 0;
+                return (
+                  <article className="teacher-assignment-card" key={assignment.id}>
+                    <span
+                      className={`teacher-assignment-accent ${assignmentStatus === "Needs grading" ? "primary" : assignmentStatus === "Active" ? "secondary" : "muted"}`}
+                    />
+                    <div className="teacher-assignment-card-head">
                       <div>
-                        <span>Submission coverage</span>
-                        <b>
-                          {assignment.submitted} / {assignment.enrolled} <i>({coverage}%)</i>
-                        </b>
+                        <div className="teacher-assignment-meta">
+                          <span>{assignment.courseName}</span>
+                          <small>{formatDate(assignment.dueDate)}</small>
+                          <small>· Assignment</small>
+                        </div>
+                        <h3>{assignment.title}</h3>
                       </div>
-                      <div className="teacher-assignment-progress">
-                        <span style={{ width: `${coverage}%` }} />
-                      </div>
+                      <strong
+                        className={`teacher-assignment-badge ${assignmentStatus.toLowerCase().replace(" ", "-")}`}
+                      >
+                        {assignmentStatus}
+                      </strong>
                     </div>
-                    <div>
+                    <div className="teacher-assignment-metrics">
                       <div>
-                        <span>
-                          {assignment.status === "Closed" ? "Cohort average" : "Grading pipeline"}
-                        </span>
-                        <b>
-                          {assignment.status === "Closed"
-                            ? assignment.average
-                            : `${assignment.graded} graded · ${assignment.submitted - assignment.graded} in queue`}
-                        </b>
+                        <div>
+                          <span>Submission coverage</span>
+                          <b>
+                            {submitted}
+                            {coverage ? ` / ${coverage}` : ""} <i>({percentage}%)</i>
+                          </b>
+                        </div>
+                        <div className="teacher-assignment-progress">
+                          <span style={{ width: `${percentage}%` }} />
+                        </div>
                       </div>
-                      <div className="teacher-assignment-progress">
-                        <span
-                          className={assignment.status === "Closed" ? "green" : "secondary"}
-                          style={{
-                            width: `${assignment.status === "Closed" ? assignment.average.replace("%", "") : grading}%`,
-                          }}
-                        />
+                      <div>
+                        <div>
+                          <span>Grading pipeline</span>
+                          <b>
+                            {gradedCount} graded · {Math.max(0, submitted - gradedCount)} in queue
+                          </b>
+                        </div>
+                        <div className="teacher-assignment-progress">
+                          <span
+                            className="secondary"
+                            style={{
+                              width: `${submitted ? Math.round((gradedCount / submitted) * 100) : 0}%`,
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="teacher-assignment-card-footer">
-                    <span>◈ {assignment.note}</span>
-                    <div>
+                    <div className="teacher-assignment-card-footer">
+                      <span>
+                        ◈{" "}
+                        {assignment.maxMarks
+                          ? `${assignment.maxMarks} marks`
+                          : "Review submissions"}
+                      </span>
+                      <div>
+                        <button type="button" onClick={() => openAssignment(assignment)}>
+                          Submissions ({assignment.submissions.length})
+                        </button>
+                        {assignment.submissions.length > gradedCount && (
+                          <button
+                            type="button"
+                            className="teacher-assignment-open"
+                            onClick={() => openAssignment(assignment)}
+                          >
+                            Open SpeedGrader ({assignment.submissions.length - gradedCount})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              <div className="teacher-assignment-empty">No assignments match these filters.</div>
+            )}
+          </div>
+          <aside className="teacher-assignment-side">
+            {selected ? (
+              <section className="teacher-assignment-queue">
+                <div className="teacher-assignment-side-heading">
+                  <h3>Submission Review</h3>
+                  <button type="button" onClick={() => setSelected(null)}>
+                    Close
+                  </button>
+                </div>
+                <p>{selected.title}</p>
+                <div className="teacher-assignment-queue-list">
+                  {selected.submissions.length ? (
+                    selected.submissions.map((submission) => (
                       <button
                         type="button"
-                        onClick={() => showNotice(`Opening submissions for ${assignment.title}.`)}
+                        key={submission.id}
+                        onClick={() => selectSubmission(submission)}
                       >
-                        Submissions
+                        <span className="teacher-assignment-avatar">
+                          {shortId(submission.studentId).slice(0, 2).toUpperCase()}
+                        </span>
+                        <span>
+                          <strong>{shortId(submission.studentId)}</strong>
+                          <small>
+                            {submission.status}
+                            {submission.isLate ? " · Late" : ""}
+                          </small>
+                          <em>
+                            {submission.marks == null
+                              ? "Needs grading"
+                              : `${submission.marks} marks`}
+                          </em>
+                        </span>
+                        <b>→</b>
                       </button>
-                      {assignment.status !== "Closed" && (
-                        <button
-                          type="button"
-                          className="teacher-assignment-open"
-                          onClick={() =>
-                            showNotice(
-                              `SpeedGrader opened for ${assignment.submitted - assignment.graded} submissions.`,
-                            )
-                          }
-                        >
-                          Open SpeedGrader ({assignment.submitted - assignment.graded})
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })
-          ) : (
-            <div className="teacher-assignment-empty">No assignments match these filters.</div>
-          )}
-        </div>
-
-        <aside className="teacher-assignment-side">
-          <section className="teacher-assignment-queue">
-            <div className="teacher-assignment-side-heading">
-              <div>
-                <span className="teacher-assignment-side-icon">ϟ</span>
-                <h3>SpeedGrader Queue</h3>
-              </div>
-              <b>24 urgent</b>
-            </div>
-            <p>Individual submissions flagged for teacher review or partial-credit evaluation.</p>
-            <div className="teacher-assignment-ai">
-              <strong>✦ AI Feedback Assistant</strong>
-              <p>Synthesize constructive, rubric-aligned feedback across the active queue.</p>
-              <button
-                type="button"
-                onClick={() =>
-                  showNotice("AI Feedback Assistant is ready for the connected assessment service.")
-                }
-              >
-                Launch AI Feedback Assistant →
-              </button>
-            </div>
-            <small className="teacher-assignment-label">PRIORITY QUEUE</small>
-            <div className="teacher-assignment-queue-list">
-              {queue.map((student) => (
-                <button
-                  type="button"
-                  key={student.name}
-                  onClick={() => showNotice(`Opening ${student.name}'s submission.`)}
-                >
-                  <span className="teacher-assignment-avatar">{student.initials}</span>
-                  <span>
-                    <strong>{student.name}</strong>
-                    <small>{student.detail}</small>
-                    <em>{student.tag}</em>
-                  </span>
-                  <time>{student.time}</time>
-                  <b>→</b>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              className="teacher-assignment-view-queue"
-              onClick={() => setStatus("Needs grading")}
-            >
-              View all 24 in queue →
-            </button>
-          </section>
-          <section className="teacher-assignment-velocity">
-            <div className="teacher-assignment-side-heading">
-              <h3>Grade Velocity</h3>
-              <span>⌁</span>
-            </div>
-            <p>Current quarter score spread across all 76 enrolled students.</p>
-            <div className="teacher-assignment-bars">
-              {[
-                [15, "&lt;70%"],
-                [35, "70–79"],
-                [70, "80–89"],
-                [95, "90–100"],
-              ].map(([height, label], index) => (
-                <div key={label as string}>
-                  <span className={`bar-${index}`} style={{ height: `${height}%` }} />
-                  <small>{label}</small>
+                    ))
+                  ) : (
+                    <span>No submissions yet.</span>
+                  )}
                 </div>
-              ))}
-            </div>
-            <div className="teacher-assignment-velocity-foot">
-              <span>Class mean: 88.6%</span>
-              <span>+2.4% vs Q1</span>
-            </div>
-          </section>
-        </aside>
-      </div>
+                {selectedSubmission && (
+                  <div className="teacher-assignment-review-form">
+                    <label>
+                      Marks
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={marks}
+                        onChange={(event) => setMarks(event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Feedback
+                      <textarea
+                        value={feedback}
+                        onChange={(event) => setFeedback(event.target.value)}
+                        rows={4}
+                      />
+                    </label>
+                    <button type="button" disabled={saving} onClick={saveGrade}>
+                      {saving ? "Saving…" : "Save grade"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving || selectedSubmission.marks == null}
+                      onClick={returnSubmission}
+                    >
+                      Return to student
+                    </button>
+                  </div>
+                )}
+              </section>
+            ) : (
+              <section className="teacher-assignment-queue">
+                <h3>Submission Review</h3>
+                <p>Select an assignment to review its submissions and grading status.</p>
+              </section>
+            )}
+          </aside>
+        </div>
+      )}
     </section>
   );
 }
