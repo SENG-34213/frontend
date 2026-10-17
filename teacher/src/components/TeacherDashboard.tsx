@@ -4,11 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import TeacherAiAssistant from "../ai-assistant/TeacherAiAssistant";
 import TeacherCommunication from "./TeacherCommunication";
-import TeacherQuizWorkspace from "./TeacherQuizWorkspace";
-import TeacherMaterialsWorkspace from "./TeacherMaterialsWorkspace";
+import TeacherQuizzesAssessments from "./TeacherQuizzesAssessments";
 import TeacherCalendarWorkspace from "./TeacherCalendarWorkspace";
 import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
 import TeacherAttendanceManagement from "./TeacherAttendanceManagement";
+import TeacherCourseDetailsCurriculum from "./TeacherCourseDetailsCurriculum";
+import TeacherDashboardHome from "./TeacherDashboardHome";
+import TeacherLearningMaterialsLibrary from "./TeacherLearningMaterialsLibrary";
+import TeacherMentifyStudio from "./TeacherMentifyStudio";
+import TeacherMyCourses from "./TeacherMyCourses";
+import TeacherMyStudentsDirectory from "./TeacherMyStudentsDirectory";
 import {
   teacherApi,
   type CourseLesson,
@@ -149,6 +154,8 @@ function TeacherHome({
   );
 }
 
+void TeacherHome;
+
 function TeacherSamplePage({
   title,
   kicker,
@@ -254,6 +261,7 @@ export default function TeacherDashboard() {
   const [activeView, setActiveView] = useState<
     | "dashboard"
     | "courses"
+    | "course-details"
     | "students"
     | "assignments"
     | "attendance"
@@ -264,6 +272,7 @@ export default function TeacherDashboard() {
     | "communication"
     | "quizzes"
     | "assistant"
+    | "studio"
   >("dashboard");
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
@@ -525,7 +534,9 @@ export default function TeacherDashboard() {
             </button>
             <button
               type="button"
-              className={activeView === "courses" ? "active" : ""}
+              className={
+                activeView === "courses" || activeView === "course-details" ? "active" : ""
+              }
               onClick={() => setActiveView("courses")}
             >
               <span className="teacher-nav-icon">âŒ‚</span>
@@ -538,7 +549,7 @@ export default function TeacherDashboard() {
               onClick={() => setActiveView("students")}
             >
               <span className="teacher-nav-icon">â™™</span>
-              <span>Students</span>
+              <span>My Students</span>
             </button>
             <button
               type="button"
@@ -555,6 +566,14 @@ export default function TeacherDashboard() {
             >
               <span className="teacher-nav-icon">â™™</span>
               <span>AI Insights</span>
+            </button>
+            <button
+              type="button"
+              className={activeView === "studio" ? "active" : ""}
+              onClick={() => setActiveView("studio")}
+            >
+              <span className="teacher-nav-icon">S</span>
+              <span>Mentify Studio</span>
             </button>
             <button
               type="button"
@@ -602,7 +621,7 @@ export default function TeacherDashboard() {
               onClick={() => setActiveView("quizzes")}
             >
               <span className="teacher-nav-icon">â–£</span>
-              <span>Quizzes</span>
+              <span>Quizzes &amp; Assessments</span>
             </button>
           </nav>
           <div className="teacher-sidebar-spacer" />
@@ -623,39 +642,51 @@ export default function TeacherDashboard() {
                 {activeView === "dashboard"
                   ? "Dashboard"
                   : activeView === "courses"
-                    ? `Welcome back, ${displayName}`
-                    : activeView === "quizzes"
-                      ? "Quiz Management Hub"
-                      : activeView === "calendar"
-                        ? "Calendar"
-                        : activeView === "communication" || activeView === "messages"
-                          ? "Messages & Communication"
-                          : activeView === "students"
-                            ? "Student Management"
-                            : activeView === "assignments"
-                              ? "Assignments & Submissions"
-                              : activeView === "attendance"
-                                ? "Attendance Management"
-                                : activeView === "notifications"
-                                  ? "Notifications"
-                                  : "Your intelligent teaching partner"}
+                    ? "My Courses"
+                    : activeView === "course-details"
+                      ? "Course Details & Curriculum"
+                      : activeView === "materials"
+                        ? "Learning Materials & Media Library"
+                        : activeView === "quizzes"
+                          ? "Quizzes & Assessments"
+                          : activeView === "calendar"
+                            ? "Calendar"
+                            : activeView === "communication" || activeView === "messages"
+                              ? "Messages & Communication"
+                              : activeView === "studio"
+                                ? "Mentify Studio"
+                                : activeView === "students"
+                                  ? "My Students"
+                                  : activeView === "assignments"
+                                    ? "Assignments & Submissions"
+                                    : activeView === "attendance"
+                                      ? "Attendance Management"
+                                      : activeView === "notifications"
+                                        ? "Notifications"
+                                        : "Your intelligent teaching partner"}
               </h1>
               <p>
                 {activeView === "dashboard"
                   ? "A quick view of your courses, students, and teaching priorities."
                   : activeView === "courses"
-                    ? "Manage your assigned courses and build learning content."
-                    : activeView === "quizzes"
-                      ? "Create, review, and manage assessments for your students."
-                      : activeView === "calendar"
-                        ? "Plan and review upcoming course events."
-                        : activeView === "communication" || activeView === "messages"
-                          ? "Keep your course community moving forward."
-                          : activeView === "assignments"
-                            ? "Manage coursework, submissions, and grading priorities."
-                            : activeView === "attendance"
-                              ? "Track daily attendance and review student absence patterns."
-                              : "Review the latest activity from your teaching workspace."}
+                    ? "Manage your courses, student cohorts, and teaching content."
+                    : activeView === "course-details"
+                      ? "Explore course progress, curriculum modules, and lesson details."
+                      : activeView === "materials"
+                        ? "Organize, share, and manage your teaching resources."
+                        : activeView === "quizzes"
+                          ? "Create, distribute, and analyze assessments for your students."
+                          : activeView === "calendar"
+                            ? "Plan and review upcoming course events."
+                            : activeView === "communication" || activeView === "messages"
+                              ? "Keep your course community moving forward."
+                              : activeView === "studio"
+                                ? "Plan, refine, and launch intelligent learning experiences."
+                                : activeView === "assignments"
+                                  ? "Manage coursework, submissions, and grading priorities."
+                                  : activeView === "attendance"
+                                    ? "Track daily attendance and review student absence patterns."
+                                    : "Review the latest activity from your teaching workspace."}
               </p>
             </div>
             <div className="teacher-header-actions">
@@ -669,29 +700,43 @@ export default function TeacherDashboard() {
             </div>
           </header>
           {activeView === "dashboard" ? (
-            <TeacherHome
+            <TeacherDashboardHome
               profile={profile}
               courses={courses}
               onNavigate={(view) => setActiveView(view)}
             />
           ) : activeView === "assistant" ? (
             <TeacherAiAssistant />
+          ) : activeView === "studio" ? (
+            <TeacherMentifyStudio />
           ) : activeView === "quizzes" ? (
-            <TeacherQuizWorkspace courses={courses} />
+            <TeacherQuizzesAssessments courses={courses} />
           ) : activeView === "attendance" ? (
             <TeacherAttendanceManagement />
           ) : activeView === "materials" ? (
-            <TeacherMaterialsWorkspace courses={courses} />
+            <TeacherLearningMaterialsLibrary courses={courses} />
           ) : activeView === "calendar" ? (
             <TeacherCalendarWorkspace courses={courses} />
           ) : activeView === "communication" || activeView === "messages" ? (
             <TeacherCommunication courses={courses} currentUserId={profile?.keycloakUserId} />
+          ) : activeView === "courses" ? (
+            <TeacherMyCourses
+              courses={courses}
+              onOpenCourse={(course) => {
+                setSelectedCourse(course);
+                setActiveView("course-details");
+              }}
+            />
+          ) : activeView === "course-details" ? (
+            <TeacherCourseDetailsCurriculum courses={courses} courseId={selectedCourse?.id} />
           ) : activeView === "assignments" ? (
             <TeacherAssignmentSubmissions />
-          ) : ["students", "notifications"].includes(activeView) ? (
+          ) : activeView === "students" ? (
+            <TeacherMyStudentsDirectory courses={courses} />
+          ) : activeView === "notifications" ? (
             <TeacherSamplePage
-              type={activeView as "students" | "notifications"}
-              title={activeView === "students" ? "Student Management" : "Notifications"}
+              type="notifications"
+              title="Notifications"
               kicker={activeView.toUpperCase()}
               description="A Figma-inspired workspace for your teaching operations and class activity."
             />
