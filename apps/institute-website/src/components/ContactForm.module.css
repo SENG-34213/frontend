@@ -9,7 +9,7 @@
   padding: clamp(24px, 4vw, 40px);
   border: 1px solid var(--color-border);
   border-radius: 28px;
-  background: #FFFFFF;
+  background: #ffffff;
   box-shadow: 0 10px 32px rgb(26 26 26 / 5%);
 }
 
@@ -71,7 +71,7 @@
 .field textarea:focus {
   outline: none;
   border-color: var(--color-accent);
-  background: #FFFFFF;
+  background: #ffffff;
   box-shadow: 0 0 0 3px rgb(212 175 55 / 16%);
 }
 
@@ -79,7 +79,7 @@
 
 .field input[aria-invalid="true"],
 .field textarea[aria-invalid="true"] {
-  border-color: #B42318;
+  border-color: #b42318;
 }
 
 .field input[aria-invalid="true"]:focus,
@@ -90,7 +90,7 @@
 .fieldError {
   margin: 0;
   padding-left: 4px;
-  color: #B42318;
+  color: #b42318;
   font-family: var(--font-body);
   font-size: 0.85rem;
   line-height: 1.5;
@@ -143,7 +143,7 @@
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-pill);
   background: var(--color-primary);
-  color: #FFFFFF;
+  color: #ffffff;
   font-family: var(--font-body);
   font-size: 0.98rem;
   font-weight: 700;
@@ -190,7 +190,7 @@
 }
 
 .notice[data-success="true"] {
-  border-left-color: #27804A;
+  border-left-color: #27804a;
 }
 
 /* Responsive adjustments */

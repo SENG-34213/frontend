@@ -1,4 +1,3 @@
-
 /*
  * Payment integration placeholder.
  *

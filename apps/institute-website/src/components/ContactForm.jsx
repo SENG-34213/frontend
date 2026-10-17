@@ -55,10 +55,7 @@ export default function ContactForm({ lang }) {
 
     if (!email) {
       nextErrors.email = translate(lang, "contactForm.required");
-    } else if (
-      email.length > 254 ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ) {
+    } else if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       nextErrors.email = translate(lang, "contactForm.invalidEmail");
     }
 
@@ -107,18 +104,14 @@ export default function ContactForm({ lang }) {
 
       if (!response.ok) {
         if (response.status === 400) {
-          throw new Error(
-            result.message || "Please check your details and try again.",
-          );
+          throw new Error(result.message || "Please check your details and try again.");
         }
 
         if (response.status === 429) {
           throw new Error("Too many submissions. Please try again later.");
         }
 
-        throw new Error(
-          "We could not send your message. Please try again later.",
-        );
+        throw new Error("We could not send your message. Please try again later.");
       }
 
       setSubmitSuccess(true);
@@ -135,11 +128,7 @@ export default function ContactForm({ lang }) {
       setErrors({});
     } catch (error) {
       setSubmitSuccess(false);
-      setNotice(
-        error instanceof Error
-          ? error.message
-          : translate(lang, "contactForm.failure"),
-      );
+      setNotice(error instanceof Error ? error.message : translate(lang, "contactForm.failure"));
     } finally {
       setIsSubmitting(false);
     }
@@ -175,9 +164,7 @@ export default function ContactForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="contact-name">
-          {translate(lang, "contactForm.name")}
-        </label>
+        <label htmlFor="contact-name">{translate(lang, "contactForm.name")}</label>
         <input
           id="contact-name"
           name="name"
@@ -197,9 +184,7 @@ export default function ContactForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="contact-email">
-          {translate(lang, "contactForm.email")}
-        </label>
+        <label htmlFor="contact-email">{translate(lang, "contactForm.email")}</label>
         <input
           id="contact-email"
           name="email"
@@ -220,9 +205,7 @@ export default function ContactForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="contact-subject">
-          {translate(lang, "contactForm.subject")}
-        </label>
+        <label htmlFor="contact-subject">{translate(lang, "contactForm.subject")}</label>
         <input
           id="contact-subject"
           name="subject"
@@ -231,9 +214,7 @@ export default function ContactForm({ lang }) {
           onChange={updateField}
           placeholder={translate(lang, "contactForm.subjectPlaceholder")}
           aria-invalid={Boolean(errors.subject)}
-          aria-describedby={
-            errors.subject ? "contact-subject-error" : undefined
-          }
+          aria-describedby={errors.subject ? "contact-subject-error" : undefined}
         />
         {errors.subject && (
           <p className={styles.fieldError} id="contact-subject-error">
@@ -243,9 +224,7 @@ export default function ContactForm({ lang }) {
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="contact-message">
-          {translate(lang, "contactForm.message")}
-        </label>
+        <label htmlFor="contact-message">{translate(lang, "contactForm.message")}</label>
         <textarea
           id="contact-message"
           name="message"
@@ -255,9 +234,7 @@ export default function ContactForm({ lang }) {
           onChange={updateField}
           placeholder={translate(lang, "contactForm.messagePlaceholder")}
           aria-invalid={Boolean(errors.message)}
-          aria-describedby={
-            errors.message ? "contact-message-error" : undefined
-          }
+          aria-describedby={errors.message ? "contact-message-error" : undefined}
         />
         {errors.message && (
           <p className={styles.fieldError} id="contact-message-error">
@@ -274,9 +251,7 @@ export default function ContactForm({ lang }) {
             checked={values.consent}
             onChange={updateField}
             aria-invalid={Boolean(errors.consent)}
-            aria-describedby={
-              errors.consent ? "contact-consent-error" : undefined
-            }
+            aria-describedby={errors.consent ? "contact-consent-error" : undefined}
           />
           <span>
             {translate(lang, "contactForm.consent")}{" "}
@@ -292,23 +267,14 @@ export default function ContactForm({ lang }) {
         )}
       </div>
 
-      <button
-        className={styles.submitButton}
-        type="submit"
-        disabled={isSubmitting}
-      >
+      <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
         {isSubmitting
           ? translate(lang, "contactForm.sending")
           : translate(lang, "contactForm.submit")}
       </button>
 
       {notice && (
-        <p
-          className={styles.notice}
-          role="status"
-          aria-live="polite"
-          data-success={submitSuccess}
-        >
+        <p className={styles.notice} role="status" aria-live="polite" data-success={submitSuccess}>
           {notice}
         </p>
       )}

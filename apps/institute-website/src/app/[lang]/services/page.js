@@ -3,11 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import {
-  classes,
-  classGrades,
-  classSubjects,
-} from "../../../data/classes";
+import { classes, classGrades, classSubjects } from "../../../data/classes";
 import { translate } from "../../../lib/translations";
 import styles from "./ServicesPage.module.css";
 
@@ -37,9 +33,7 @@ export default function ServicesPage() {
 
     const subjectKey = subjectKeys[subject];
 
-    return subjectKey
-      ? t(`subjects.${subjectKey}`)
-      : subject;
+    return subjectKey ? t(`subjects.${subjectKey}`) : subject;
   }
 
   // Translate grades without changing the values used by the filters.
@@ -62,15 +56,12 @@ export default function ServicesPage() {
     const descriptionKeys = {
       "grade-6-mathematics": "descriptions.grade6Mathematics",
       "grade-8-science": "descriptions.grade8Science",
-      "advanced-level-english-online":
-        "descriptions.advancedLevelEnglishOnline",
+      "advanced-level-english-online": "descriptions.advancedLevelEnglishOnline",
     };
 
     const descriptionKey = descriptionKeys[classItem.id];
 
-    return descriptionKey
-      ? t(descriptionKey)
-      : classItem.description;
+    return descriptionKey ? t(descriptionKey) : classItem.description;
   }
 
   // Translate placeholder values while preserving real class information.
@@ -81,21 +72,16 @@ export default function ServicesPage() {
   }
 
   function getDaysLabel(classItem) {
-    return classItem.days === "Days to be confirmed"
-      ? t("placeholders.days")
-      : classItem.days;
+    return classItem.days === "Days to be confirmed" ? t("placeholders.days") : classItem.days;
   }
 
   function getTimeLabel(classItem) {
-    return classItem.time === "Time to be confirmed"
-      ? t("placeholders.time")
-      : classItem.time;
+    return classItem.time === "Time to be confirmed" ? t("placeholders.time") : classItem.time;
   }
 
   function getLocationLabel(classItem) {
     if (classItem.mode === "online") {
-      return classItem.location ===
-        "Online — platform to be confirmed"
+      return classItem.location === "Online — platform to be confirmed"
         ? t("placeholders.onlineLocation")
         : classItem.location;
     }
@@ -106,16 +92,11 @@ export default function ServicesPage() {
   }
 
   function getFeeLabel(classItem) {
-    return classItem.fee === "Contact for fees"
-      ? t("placeholders.fee")
-      : classItem.fee;
+    return classItem.fee === "Contact for fees" ? t("placeholders.fee") : classItem.fee;
   }
 
   function getAvailabilityLabel(classItem) {
-    if (
-      classItem.availability ===
-      "Occasional classes — schedule to be confirmed"
-    ) {
+    if (classItem.availability === "Occasional classes — schedule to be confirmed") {
       return t("placeholders.onlineAvailability");
     }
 
@@ -126,17 +107,11 @@ export default function ServicesPage() {
 
   const filteredClasses = useMemo(() => {
     return classes.filter((classItem) => {
-      const matchesGrade =
-        selectedGrade === "all" ||
-        classItem.grade === selectedGrade;
+      const matchesGrade = selectedGrade === "all" || classItem.grade === selectedGrade;
 
-      const matchesSubject =
-        selectedSubject === "all" ||
-        classItem.subject === selectedSubject;
+      const matchesSubject = selectedSubject === "all" || classItem.subject === selectedSubject;
 
-      const matchesMode =
-        selectedMode === "all" ||
-        classItem.mode === selectedMode;
+      const matchesMode = selectedMode === "all" || classItem.mode === selectedMode;
 
       return matchesGrade && matchesSubject && matchesMode;
     });
@@ -160,9 +135,7 @@ export default function ServicesPage() {
     <main className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.heroContent}>
-          <p className={styles.eyebrow}>
-            {t("eyebrow")}
-          </p>
+          <p className={styles.eyebrow}>{t("eyebrow")}</p>
 
           <h1>{pageTitle}</h1>
 
@@ -178,9 +151,7 @@ export default function ServicesPage() {
 
       <section className={styles.directory}>
         <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>
-            {t("sectionEyebrow")}
-          </p>
+          <p className={styles.sectionEyebrow}>{t("sectionEyebrow")}</p>
 
           <h2>{t("heading")}</h2>
 
@@ -189,26 +160,17 @@ export default function ServicesPage() {
 
         <div className={styles.filterPanel}>
           <div className={styles.filterField}>
-            <label htmlFor="grade-filter">
-              {t("filters.grade")}
-            </label>
+            <label htmlFor="grade-filter">{t("filters.grade")}</label>
 
             <select
               id="grade-filter"
               value={selectedGrade}
-              onChange={(event) =>
-                setSelectedGrade(event.target.value)
-              }
+              onChange={(event) => setSelectedGrade(event.target.value)}
             >
-              <option value="all">
-                {t("filters.allGrades")}
-              </option>
+              <option value="all">{t("filters.allGrades")}</option>
 
               {classGrades.map((grade) => (
-                <option
-                  key={grade.value}
-                  value={grade.value}
-                >
+                <option key={grade.value} value={grade.value}>
                   {getGradeLabel(grade.value)}
                 </option>
               ))}
@@ -216,20 +178,14 @@ export default function ServicesPage() {
           </div>
 
           <div className={styles.filterField}>
-            <label htmlFor="subject-filter">
-              {t("filters.subject")}
-            </label>
+            <label htmlFor="subject-filter">{t("filters.subject")}</label>
 
             <select
               id="subject-filter"
               value={selectedSubject}
-              onChange={(event) =>
-                setSelectedSubject(event.target.value)
-              }
+              onChange={(event) => setSelectedSubject(event.target.value)}
             >
-              <option value="all">
-                {t("filters.allSubjects")}
-              </option>
+              <option value="all">{t("filters.allSubjects")}</option>
 
               {classSubjects.map((subject) => (
                 <option key={subject} value={subject}>
@@ -240,36 +196,22 @@ export default function ServicesPage() {
           </div>
 
           <div className={styles.filterField}>
-            <label htmlFor="mode-filter">
-              {t("filters.format")}
-            </label>
+            <label htmlFor="mode-filter">{t("filters.format")}</label>
 
             <select
               id="mode-filter"
               value={selectedMode}
-              onChange={(event) =>
-                setSelectedMode(event.target.value)
-              }
+              onChange={(event) => setSelectedMode(event.target.value)}
             >
-              <option value="all">
-                {t("filters.allFormats")}
-              </option>
+              <option value="all">{t("filters.allFormats")}</option>
 
-              <option value="onsite">
-                {t("filters.onsite")}
-              </option>
+              <option value="onsite">{t("filters.onsite")}</option>
 
-              <option value="online">
-                {t("filters.online")}
-              </option>
+              <option value="online">{t("filters.online")}</option>
             </select>
           </div>
 
-          <button
-            type="button"
-            className={styles.resetButton}
-            onClick={resetFilters}
-          >
+          <button type="button" className={styles.resetButton} onClick={resetFilters}>
             {t("filters.reset")}
           </button>
         </div>
@@ -277,9 +219,7 @@ export default function ServicesPage() {
         <div className={styles.resultsHeading}>
           <p aria-live="polite">
             <strong>{sortedClasses.length}</strong>{" "}
-            {sortedClasses.length === 1
-              ? t("results.one")
-              : t("results.many")}
+            {sortedClasses.length === 1 ? t("results.one") : t("results.many")}
           </p>
 
           <span>{t("results.onsiteFirst")}</span>
@@ -288,95 +228,63 @@ export default function ServicesPage() {
         {sortedClasses.length > 0 ? (
           <div className={styles.classGrid}>
             {sortedClasses.map((classItem) => {
-              const localizedSubject = getSubjectLabel(
-                classItem.subject
-              );
+              const localizedSubject = getSubjectLabel(classItem.subject);
 
-              const localizedGrade = getGradeLabel(
-                classItem.grade
-              );
+              const localizedGrade = getGradeLabel(classItem.grade);
 
               return (
-                <article
-                  className={styles.classCard}
-                  key={classItem.id}
-                >
+                <article className={styles.classCard} key={classItem.id}>
                   <div className={styles.cardTop}>
                     <span
                       className={
-                        classItem.mode === "onsite"
-                          ? styles.onsiteBadge
-                          : styles.onlineBadge
+                        classItem.mode === "onsite" ? styles.onsiteBadge : styles.onlineBadge
                       }
                     >
-                      {classItem.mode === "onsite"
-                        ? t("badges.onsite")
-                        : t("badges.online")}
+                      {classItem.mode === "onsite" ? t("badges.onsite") : t("badges.online")}
                     </span>
 
-                    <span className={styles.gradeBadge}>
-                      {localizedGrade}
-                    </span>
+                    <span className={styles.gradeBadge}>{localizedGrade}</span>
                   </div>
 
                   <div className={styles.cardTitle}>
-                    <p className={styles.subjectLabel}>
-                      {localizedSubject}
-                    </p>
+                    <p className={styles.subjectLabel}>{localizedSubject}</p>
 
                     <h3>
-                      {localizedSubject}{" "}
-                      {t("classTitleSuffix")}
+                      {localizedSubject} {t("classTitleSuffix")}
                     </h3>
 
-                    <p className={styles.description}>
-                      {getClassDescription(classItem)}
-                    </p>
+                    <p className={styles.description}>{getClassDescription(classItem)}</p>
                   </div>
 
                   <div className={styles.classDetails}>
                     <div className={styles.detailRow}>
-                      <span
-                        className={styles.detailIcon}
-                        aria-hidden="true"
-                      >
+                      <span className={styles.detailIcon} aria-hidden="true">
                         ◷
                       </span>
 
                       <div>
-                        <span className={styles.detailLabel}>
-                          {t("details.schedule")}
-                        </span>
+                        <span className={styles.detailLabel}>{t("details.schedule")}</span>
 
                         <p>
-                          {getDaysLabel(classItem)} ·{" "}
-                          {getTimeLabel(classItem)}
+                          {getDaysLabel(classItem)} · {getTimeLabel(classItem)}
                         </p>
                       </div>
                     </div>
 
                     <div className={styles.detailRow}>
-                      <span
-                        className={styles.detailIcon}
-                        aria-hidden="true"
-                      >
+                      <span className={styles.detailIcon} aria-hidden="true">
                         ♙
                       </span>
 
                       <div>
-                        <span className={styles.detailLabel}>
-                          {t("details.teacher")}
-                        </span>
+                        <span className={styles.detailLabel}>{t("details.teacher")}</span>
 
                         <p>{getTeacherLabel(classItem)}</p>
                       </div>
                     </div>
 
                     <div className={styles.detailRow}>
-                      <span
-                        className={styles.detailIcon}
-                        aria-hidden="true"
-                      >
+                      <span className={styles.detailIcon} aria-hidden="true">
                         ⌖
                       </span>
 
@@ -392,17 +300,12 @@ export default function ServicesPage() {
                     </div>
 
                     <div className={styles.detailRow}>
-                      <span
-                        className={styles.detailIcon}
-                        aria-hidden="true"
-                      >
+                      <span className={styles.detailIcon} aria-hidden="true">
                         ◈
                       </span>
 
                       <div>
-                        <span className={styles.detailLabel}>
-                          {t("details.fee")}
-                        </span>
+                        <span className={styles.detailLabel}>{t("details.fee")}</span>
 
                         <p>{getFeeLabel(classItem)}</p>
                       </div>
@@ -414,12 +317,11 @@ export default function ServicesPage() {
 
                     <Link
                       href={`/${lang}/contact?class=${encodeURIComponent(
-                        `${localizedGrade} - ${localizedSubject}`
+                        `${localizedGrade} - ${localizedSubject}`,
                       )}`}
                       className={styles.enquireButton}
                     >
-                      {t("enquire")}{" "}
-                      <span aria-hidden="true">→</span>
+                      {t("enquire")} <span aria-hidden="true">→</span>
                     </Link>
                   </div>
                 </article>
@@ -432,11 +334,7 @@ export default function ServicesPage() {
 
             <p>{t("empty.description")}</p>
 
-            <button
-              type="button"
-              className={styles.resetButton}
-              onClick={resetFilters}
-            >
+            <button type="button" className={styles.resetButton} onClick={resetFilters}>
               {t("empty.reset")}
             </button>
           </div>

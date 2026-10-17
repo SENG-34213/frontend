@@ -1,4 +1,3 @@
-
 import { notFound } from "next/navigation";
 import { supportedLanguages, translate } from "../../../lib/translations";
 import styles from "../privacy-policy/LegalPage.module.css";
@@ -26,37 +25,21 @@ export default async function TermsOfUsePage({ params }) {
     <section className={styles.page}>
       <article className={styles.container}>
         <header className={styles.introduction}>
-          <p className={styles.eyebrow}>
-            {translate(lang, "site.name")}
-          </p>
+          <p className={styles.eyebrow}>{translate(lang, "site.name")}</p>
 
           <h1>{translate(lang, "pages.terms-of-use.title")}</h1>
 
-          <p>
-            {translate(lang, "legalPage.terms.introduction")}
-          </p>
+          <p>{translate(lang, "legalPage.terms.introduction")}</p>
 
-          <p className={styles.reviewNotice}>
-            {translate(lang, "legalPage.reviewNotice")}
-          </p>
+          <p className={styles.reviewNotice}>{translate(lang, "legalPage.reviewNotice")}</p>
         </header>
 
         <div className={styles.sections}>
           {sectionIds.map((sectionId) => (
             <section className={styles.section} key={sectionId}>
-              <h2>
-                {translate(
-                  lang,
-                  `legalPage.terms.sections.${sectionId}.title`
-                )}
-              </h2>
+              <h2>{translate(lang, `legalPage.terms.sections.${sectionId}.title`)}</h2>
 
-              <p>
-                {translate(
-                  lang,
-                  `legalPage.terms.sections.${sectionId}.content`
-                )}
-              </p>
+              <p>{translate(lang, `legalPage.terms.sections.${sectionId}.content`)}</p>
             </section>
           ))}
         </div>

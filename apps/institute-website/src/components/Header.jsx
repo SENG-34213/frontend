@@ -13,15 +13,11 @@ export default function Header() {
 
   // Read the current language from the first URL segment.
   const segments = pathname.split("/").filter(Boolean);
-  const currentLanguage = supportedLanguages.includes(segments[0])
-    ? segments[0]
-    : "en";
+  const currentLanguage = supportedLanguages.includes(segments[0]) ? segments[0] : "en";
 
   // Remove the language segment to preserve the current page
   // when the visitor switches languages.
-  const pageSegments = supportedLanguages.includes(segments[0])
-    ? segments.slice(1)
-    : segments;
+  const pageSegments = supportedLanguages.includes(segments[0]) ? segments.slice(1) : segments;
 
   function getLocalizedPath(language, page = "") {
     const suffix = page ? `/${page}` : "";
@@ -83,11 +79,7 @@ export default function Header() {
   return (
     <header className={`${styles.header} ${isHidden ? styles.hidden : ""}`}>
       <div className={styles.container}>
-        <Link
-          href={getLocalizedPath(currentLanguage)}
-          className={styles.brand}
-          onClick={closeMenu}
-        >
+        <Link href={getLocalizedPath(currentLanguage)} className={styles.brand} onClick={closeMenu}>
           <Image
             src="/TiTJaffna-logo.jpeg"
             alt="Institute logo"
@@ -111,21 +103,14 @@ export default function Header() {
 
         <nav
           id="main-navigation"
-          className={`${styles.navigation} ${
-            menuOpen ? styles.navigationOpen : ""
-          }`}
+          className={`${styles.navigation} ${menuOpen ? styles.navigationOpen : ""}`}
           aria-label={translate(currentLanguage, "nav.mainNavigation")}
         >
           {navigationItems.map((item) => {
             const href = getLocalizedPath(currentLanguage, item.href);
 
             return (
-              <Link
-                key={item.key}
-                href={href}
-                className={styles.navLink}
-                onClick={closeMenu}
-              >
+              <Link key={item.key} href={href} className={styles.navLink} onClick={closeMenu}>
                 {translate(currentLanguage, `nav.${item.key}`)}
               </Link>
             );

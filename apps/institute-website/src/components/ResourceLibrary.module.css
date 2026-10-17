@@ -112,7 +112,7 @@
 .filterField select:focus {
   outline: none;
   border-color: var(--color-accent);
-  background: #FFFFFF;
+  background: #ffffff;
   box-shadow: 0 0 0 3px rgb(212 175 55 / 16%);
 }
 
@@ -175,13 +175,13 @@
 }
 
 .freeBadge {
-  background: #E6F3EB;
-  color: #205C3C;
+  background: #e6f3eb;
+  color: #205c3c;
 }
 
 .paidBadge {
-  background: #FFF0D8;
-  color: #80510B;
+  background: #fff0d8;
+  color: #80510b;
 }
 
 .card h2 {
