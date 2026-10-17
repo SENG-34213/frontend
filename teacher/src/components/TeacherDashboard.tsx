@@ -712,7 +712,7 @@ export default function TeacherDashboard() {
           ) : activeView === "quizzes" ? (
             <TeacherQuizzesAssessments courses={courses} />
           ) : activeView === "attendance" ? (
-            <TeacherAttendanceManagement />
+            <TeacherAttendanceManagement courses={courses} />
           ) : activeView === "materials" ? (
             <TeacherLearningMaterialsLibrary courses={courses} />
           ) : activeView === "calendar" ? (

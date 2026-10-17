@@ -1,179 +1,154 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import type { AttendanceSession, AttendanceStatus, TeacherCourse } from "../lib/teacherApi";
+import { teacherApi } from "../lib/teacherApi";
 
-type AttendanceStatus = "present" | "late" | "absent" | "excused";
+type Props = { courses: TeacherCourse[] };
+type SessionForm = { title: string; attendanceDate: string; startTime: string; endTime: string };
 
-type StudentAttendance = {
-  id: string;
-  name: string;
-  initials: string;
-  course: string;
-  status: AttendanceStatus;
-  timeIn: string;
-  rate: number;
-  absences: number;
-  note: string;
-  flagged?: boolean;
-};
+const emptyForm = (): SessionForm => ({
+  title: "",
+  attendanceDate: new Date().toISOString().slice(0, 10),
+  startTime: "09:00",
+  endTime: "10:00",
+});
 
-const initialStudents: StudentAttendance[] = [
-  {
-    id: "MNT-8902",
-    name: "Alex Turner",
-    initials: "AT",
-    course: "AP Calculus BC · Sec 01",
-    status: "late",
-    timeIn: "10:42 AM",
-    rate: 91,
-    absences: 2,
-    note: "",
-  },
-  {
-    id: "MNT-7411",
-    name: "Maya Patel",
-    initials: "MP",
-    course: "AP Calculus BC · Sec 01",
-    status: "absent",
-    timeIn: "-",
-    rate: 78,
-    absences: 5,
-    note: "Chronic absence review",
-    flagged: true,
-  },
-  {
-    id: "MNT-4318",
-    name: "David Kim",
-    initials: "DK",
-    course: "AP Calculus BC · Sec 01",
-    status: "present",
-    timeIn: "10:28 AM",
-    rate: 96,
-    absences: 1,
-    note: "",
-  },
-  {
-    id: "MNT-2819",
-    name: "Marcus Brody",
-    initials: "MB",
-    course: "AP Calculus BC · Sec 01",
-    status: "excused",
-    timeIn: "-",
-    rate: 94,
-    absences: 1,
-    note: "Dental surgery note",
-  },
-  {
-    id: "MNT-5022",
-    name: "Elena Rostova",
-    initials: "ER",
-    course: "AP Calculus BC · Sec 01",
-    status: "present",
-    timeIn: "10:29 AM",
-    rate: 98,
-    absences: 0,
-    note: "",
-  },
-  {
-    id: "MNT-6164",
-    name: "Jordan Lee",
-    initials: "JL",
-    course: "Linear Algebra · Sec 02",
-    status: "present",
-    timeIn: "10:31 AM",
-    rate: 100,
-    absences: 0,
-    note: "Perfect attendance",
-  },
-  {
-    id: "MNT-3907",
-    name: "Priya Shah",
-    initials: "PS",
-    course: "Linear Algebra · Sec 02",
-    status: "late",
-    timeIn: "10:46 AM",
-    rate: 89,
-    absences: 3,
-    note: "",
-  },
-];
+function courseName(courses: TeacherCourse[], courseId: string) {
+  return courses.find((course) => course.id === courseId)?.courseName || "Unknown course";
+}
 
-const statusLabels: Record<AttendanceStatus, string> = {
-  present: "Present",
-  late: "Late / Tardy",
-  absent: "Absent - Unexcused",
-  excused: "Absent - Excused",
-};
+function displayId(value: string) {
+  return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
+}
 
-export default function TeacherAttendanceManagement() {
-  const [students, setStudents] = useState(initialStudents);
-  const [course, setCourse] = useState("AP Calculus BC · Sec 01");
-  const [statusFilter, setStatusFilter] = useState("All statuses");
+export default function TeacherAttendanceManagement({ courses }: Props) {
+  const [courseId, setCourseId] = useState(courses[0]?.id || "");
+  const [sessions, setSessions] = useState<AttendanceSession[]>([]);
+  const [selectedSession, setSelectedSession] = useState<AttendanceSession | null>(null);
+  const [sessionForm, setSessionForm] = useState<SessionForm>(emptyForm);
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const courses = [
-    "All enrolled courses",
-    ...new Set(initialStudents.map((student) => student.course)),
-  ];
-  const visibleStudents = useMemo(
-    () =>
-      students.filter((student) => {
-        const search = query.trim().toLowerCase();
-        const matchesCourse = course === "All enrolled courses" || student.course === course;
-        const matchesStatus =
-          statusFilter === "All statuses" || statusLabels[student.status] === statusFilter;
-        const matchesQuery =
-          !search ||
-          `${student.name} ${student.id} ${student.course}`.toLowerCase().includes(search);
-        return matchesCourse && matchesStatus && matchesQuery;
-      }),
-    [course, query, statusFilter, students],
-  );
+  const activeCourseId = courseId || courses[0]?.id || "";
 
-  const presentCount = students.filter(
-    (student) => student.status === "present" || student.status === "late",
-  ).length;
-  const attendanceRate = Math.round((presentCount / students.length) * 1000) / 10;
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSessions() {
+      if (!activeCourseId) {
+        setSessions([]);
+        setSelectedSession(null);
+        return;
+      }
+      setLoading(true);
+      setError("");
+      try {
+        const loaded = await teacherApi.attendanceSessions(activeCourseId);
+        if (!cancelled) {
+          setSessions(loaded);
+          setSelectedSession(loaded[0] || null);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setSessions([]);
+          setSelectedSession(null);
+          setError(
+            loadError instanceof Error ? loadError.message : "Unable to load attendance sessions.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void loadSessions();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCourseId]);
+
+  const visibleRecords = useMemo(() => {
+    if (!selectedSession) return [];
+    const normalized = query.trim().toLowerCase();
+    return selectedSession.records.filter((record) => {
+      const matchesStatus = statusFilter === "ALL" || record.status === statusFilter;
+      return matchesStatus && (!normalized || record.studentId.toLowerCase().includes(normalized));
+    });
+  }, [query, selectedSession, statusFilter]);
+  const attended =
+    selectedSession?.records.filter((record) => ["PRESENT", "LATE"].includes(record.status))
+      .length || 0;
+  const total = selectedSession?.records.length || 0;
+  const attendanceRate = total ? Math.round((attended / total) * 100) : 0;
 
   function notify(message: string) {
     setNotice(message);
-    window.setTimeout(() => setNotice(""), 2600);
+    window.setTimeout(() => setNotice(""), 2800);
   }
-
-  function updateStatus(id: string, status: AttendanceStatus) {
-    setStudents((current) =>
-      current.map((student) =>
-        student.id === id
-          ? {
-              ...student,
-              status,
-              timeIn: status === "present" ? "10:30 AM" : status === "late" ? "10:42 AM" : "-",
-            }
-          : student,
-      ),
+  function replaceSession(updated: AttendanceSession) {
+    setSessions((current) =>
+      current.map((session) => (session.id === updated.id ? updated : session)),
     );
-    notify("Attendance status updated and saved locally.");
+    setSelectedSession(updated);
   }
-
-  function markAllPresent() {
-    setStudents((current) =>
-      current.map((student) => ({ ...student, status: "present", timeIn: "10:30 AM" })),
-    );
-    notify("All visible students marked present.");
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    setError("");
+    try {
+      await action();
+    } catch (actionError) {
+      setError(
+        actionError instanceof Error ? actionError.message : "The attendance request failed.",
+      );
+    } finally {
+      setBusy(false);
+    }
   }
-
-  function markSelected(status: AttendanceStatus) {
-    setStudents((current) =>
-      current.map((student) =>
-        selected.includes(student.id)
-          ? { ...student, status, timeIn: status === "present" ? "10:30 AM" : "-" }
-          : student,
-      ),
+  async function createSession(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!activeCourseId) return;
+    await run(async () => {
+      const created = await teacherApi.createAttendanceSession({
+        courseId: activeCourseId,
+        ...sessionForm,
+      });
+      setSessions((current) => [created, ...current]);
+      setSelectedSession(created);
+      setSessionForm(emptyForm());
+      notify("Attendance session created.");
+    });
+  }
+  async function saveAttendance() {
+    if (!selectedSession) return;
+    await run(async () => {
+      replaceSession(
+        await teacherApi.markAttendance(
+          selectedSession.id,
+          selectedSession.records.map((record) => ({
+            studentId: record.studentId,
+            status: record.status,
+            remarks: record.remarks,
+          })),
+        ),
+      );
+      notify("Attendance saved.");
+    });
+  }
+  function updateRecord(studentId: string, status: AttendanceStatus) {
+    setSelectedSession((current) =>
+      current
+        ? {
+            ...current,
+            records: current.records.map((record) =>
+              record.studentId === studentId ? { ...record, status } : record,
+            ),
+          }
+        : current,
     );
-    setSelected([]);
-    notify(`${statusLabels[status]} applied to selected students.`);
   }
 
   return (
@@ -190,327 +165,257 @@ export default function TeacherAttendanceManagement() {
         <div>
           <div className="teacher-attendance-title-row">
             <h2 id="attendance-management-title">Attendance Management</h2>
-            <span>Term Q2 2024-2025</span>
+            <span>Live attendance sessions</span>
           </div>
-          <p>Track daily attendance, review absence patterns, and keep student records current.</p>
+          <p>Create attendance sessions, mark enrolled students, and complete daily records.</p>
         </div>
         <div className="teacher-attendance-heading-actions">
-          <button type="button" onClick={markAllPresent}>
-            Mark All Present
+          <button
+            type="button"
+            onClick={() => void saveAttendance()}
+            disabled={busy || !selectedSession || selectedSession.status !== "OPEN"}
+          >
+            Save Attendance
           </button>
           <button
             type="button"
             className="primary"
-            onClick={() => notify("Attendance session created for the selected course.")}
+            onClick={() =>
+              document
+                .getElementById("attendance-session-form")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }
           >
             Take Attendance
           </button>
         </div>
       </div>
-
       <div className="teacher-attendance-stats">
         <article>
-          <small>PRESENT TODAY</small>
+          <small>ATTENDED</small>
           <strong>
-            {presentCount}
-            <i>/ {students.length}</i>
+            {attended}
+            <i>/ {total}</i>
           </strong>
           <span className="good">{attendanceRate}%</span>
-          <p>2 tardy · 1 unexcused absent</p>
+          <p>Present or late in selected session</p>
           <div className="teacher-attendance-bar">
             <span style={{ width: `${attendanceRate}%` }} />
           </div>
         </article>
         <article>
-          <small>CHRONIC ABSENTEEISM RISK</small>
-          <strong className="danger">
-            4 <i>students</i>
-          </strong>
-          <span className="risk">Action trigger</span>
-          <p>Students below the 85% term rate</p>
-          <div className="teacher-attendance-bar danger-bar">
-            <span style={{ width: "32%" }} />
+          <small>SESSIONS</small>
+          <strong>{sessions.length}</strong>
+          <span className="good">
+            {sessions.filter((session) => session.status === "OPEN").length} open
+          </span>
+          <p>{courseName(courses, activeCourseId)}</p>
+          <div className="teacher-attendance-bar">
+            <span style={{ width: `${sessions.length ? 100 : 0}%` }} />
           </div>
         </article>
         <article>
-          <small>WEEKLY TREND</small>
-          <strong>+2.4%</strong>
-          <span className="good">Improving</span>
-          <p>Compared with the previous five weeks</p>
-          <div className="teacher-attendance-sparkline">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
+          <small>SESSION STATUS</small>
+          <strong>{selectedSession?.status || "—"}</strong>
+          <span className={selectedSession?.status === "COMPLETED" ? "good" : "risk"}>
+            {selectedSession ? selectedSession.attendanceDate : "Select a session"}
+          </span>
+          <p>Records are saved through the attendance service</p>
         </article>
       </div>
-
       <div className="teacher-attendance-toolbar">
+        <select
+          value={courseId}
+          onChange={(event) => setCourseId(event.target.value)}
+          aria-label="Filter by course"
+        >
+          {courses.map((course) => (
+            <option key={course.id} value={course.id}>
+              {course.courseName}
+            </option>
+          ))}
+        </select>
         <label className="teacher-attendance-search">
           <span>Search</span>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search students or IDs..."
+            placeholder="Search student IDs..."
             aria-label="Search students"
           />
         </label>
-        <select
-          value={course}
-          onChange={(event) => setCourse(event.target.value)}
-          aria-label="Filter by course"
-        >
-          {courses.map((option) => (
-            <option key={option}>{option}</option>
-          ))}
-        </select>
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
           aria-label="Filter by attendance status"
         >
-          <option>All statuses</option>
-          {Object.values(statusLabels).map((label) => (
-            <option key={label}>{label}</option>
-          ))}
+          <option value="ALL">All statuses</option>
+          <option value="NOT_MARKED">Not marked</option>
+          <option value="PRESENT">Present</option>
+          <option value="LATE">Late</option>
+          <option value="ABSENT">Absent</option>
         </select>
-        <button type="button" onClick={() => notify("Attendance records exported.")}>
-          Export CSV
-        </button>
-        {selected.length > 0 && (
-          <>
-            <button type="button" onClick={() => markSelected("present")}>
-              Mark selected present
-            </button>
-            <button type="button" onClick={() => markSelected("absent")}>
-              Mark selected absent
-            </button>
-          </>
-        )}
       </div>
-
+      {error && (
+        <div className="teacher-attendance-notice" role="alert">
+          {error}
+        </div>
+      )}
       <div className="teacher-attendance-table-wrap">
         <div className="teacher-attendance-table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>
+          {loading ? (
+            <div className="teacher-attendance-empty">Loading attendance sessions…</div>
+          ) : (
+            <div className="teacher-attendance-session-layout">
+              <section>
+                <div className="teacher-attendance-section-heading">
+                  <h3>Sessions</h3>
+                  <span>{sessions.length}</span>
+                </div>
+                <form
+                  id="attendance-session-form"
+                  className="teacher-attendance-session-form"
+                  onSubmit={(event) => void createSession(event)}
+                >
                   <input
-                    type="checkbox"
-                    checked={
-                      visibleStudents.length > 0 && selected.length === visibleStudents.length
-                    }
+                    required
+                    value={sessionForm.title}
                     onChange={(event) =>
-                      setSelected(
-                        event.target.checked ? visibleStudents.map((student) => student.id) : [],
-                      )
+                      setSessionForm({ ...sessionForm, title: event.target.value })
                     }
-                    aria-label="Select all visible students"
+                    placeholder="Session title"
+                    aria-label="Session title"
                   />
-                </th>
-                <th>Student &amp; ID</th>
-                <th>Course section</th>
-                <th>Today&apos;s status</th>
-                <th>Time in</th>
-                <th>Term rate</th>
-                <th>Absences</th>
-                <th>Notes</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleStudents.map((student) => (
-                <tr className={student.flagged ? "flagged" : ""} key={student.id}>
-                  <td>
+                  <input
+                    required
+                    type="date"
+                    value={sessionForm.attendanceDate}
+                    onChange={(event) =>
+                      setSessionForm({ ...sessionForm, attendanceDate: event.target.value })
+                    }
+                  />
+                  <div>
                     <input
-                      type="checkbox"
-                      checked={selected.includes(student.id)}
+                      required
+                      type="time"
+                      value={sessionForm.startTime}
                       onChange={(event) =>
-                        setSelected((current) =>
-                          event.target.checked
-                            ? [...current, student.id]
-                            : current.filter((id) => id !== student.id),
-                        )
+                        setSessionForm({ ...sessionForm, startTime: event.target.value })
                       }
-                      aria-label={`Select ${student.name}`}
                     />
-                  </td>
-                  <td>
-                    <div className="teacher-attendance-student">
-                      <span>{student.initials}</span>
-                      <div>
-                        <strong>
-                          {student.name}
-                          {student.flagged && <em>Flagged</em>}
-                        </strong>
-                        <small>#{student.id}</small>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <b className="teacher-attendance-course-pill">{student.course}</b>
-                  </td>
-                  <td>
-                    <div className="teacher-attendance-status-buttons">
-                      {(["present", "late", "absent", "excused"] as AttendanceStatus[]).map(
-                        (status) => (
-                          <button
-                            type="button"
-                            key={status}
-                            className={`${status} ${student.status === status ? "selected" : ""}`}
-                            onClick={() => updateStatus(student.id, status)}
-                            title={statusLabels[status]}
+                    <input
+                      required
+                      type="time"
+                      value={sessionForm.endTime}
+                      onChange={(event) =>
+                        setSessionForm({ ...sessionForm, endTime: event.target.value })
+                      }
+                    />
+                  </div>
+                  <button type="submit" disabled={busy || !activeCourseId}>
+                    Create session
+                  </button>
+                </form>
+                <div className="teacher-attendance-session-list">
+                  {sessions.map((session) => (
+                    <button
+                      type="button"
+                      key={session.id}
+                      className={selectedSession?.id === session.id ? "active" : ""}
+                      onClick={() => setSelectedSession(session)}
+                    >
+                      <strong>{session.title}</strong>
+                      <span>
+                        {session.attendanceDate} · {session.status}
+                      </span>
+                      <em>{session.records.length} records</em>
+                    </button>
+                  ))}
+                  {!sessions.length && (
+                    <p className="teacher-side-muted">No attendance sessions for this course.</p>
+                  )}
+                </div>
+              </section>
+              <section>
+                <div className="teacher-attendance-section-heading">
+                  <h3>{selectedSession?.title || "Select a session"}</h3>
+                  <span>{selectedSession ? `${attended}/${total} attended` : ""}</span>
+                </div>
+                {selectedSession ? (
+                  <>
+                    <div className="teacher-attendance-record-list">
+                      {visibleRecords.map((record) => (
+                        <div className="teacher-attendance-record-row" key={record.studentId}>
+                          <strong>{displayId(record.studentId)}</strong>
+                          <select
+                            value={record.status}
+                            disabled={selectedSession.status !== "OPEN"}
+                            onChange={(event) =>
+                              updateRecord(record.studentId, event.target.value as AttendanceStatus)
+                            }
                           >
-                            {status.charAt(0).toUpperCase()}
-                          </button>
-                        ),
+                            <option value="NOT_MARKED">Not marked</option>
+                            <option value="PRESENT">Present</option>
+                            <option value="LATE">Late</option>
+                            <option value="ABSENT">Absent</option>
+                          </select>
+                          <input
+                            defaultValue={record.remarks || ""}
+                            disabled={selectedSession.status !== "OPEN"}
+                            placeholder="Remarks"
+                            aria-label={`Remarks for ${record.studentId}`}
+                          />
+                        </div>
+                      ))}
+                      {!visibleRecords.length && (
+                        <p className="teacher-attendance-empty">
+                          No attendance records match the selected filters.
+                        </p>
                       )}
                     </div>
-                  </td>
-                  <td>
-                    <span className={student.status === "late" ? "late-text" : ""}>
-                      {student.timeIn}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="teacher-attendance-rate">
-                      <b>{student.rate}%</b>
-                      <span>
-                        <i style={{ width: `${student.rate}%` }} />
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span
-                      className={`teacher-attendance-absence-count ${student.absences >= 4 ? "high" : ""}`}
-                    >
-                      {student.absences}
-                    </span>
-                  </td>
-                  <td>
-                    <input
-                      className="teacher-attendance-note"
-                      defaultValue={student.note}
-                      onBlur={(event) =>
-                        setStudents((current) =>
-                          current.map((item) =>
-                            item.id === student.id ? { ...item, note: event.target.value } : item,
-                          ),
-                        )
-                      }
-                      placeholder="Add note..."
-                      aria-label={`Note for ${student.name}`}
-                    />
-                  </td>
-                  <td>
-                    <div className="teacher-attendance-row-actions">
+                    <div className="teacher-attendance-heading-actions">
                       <button
                         type="button"
-                        onClick={() => notify(`Message opened for ${student.name}.`)}
+                        disabled={busy || selectedSession.status !== "OPEN"}
+                        onClick={() => void saveAttendance()}
                       >
-                        Message
+                        Save records
                       </button>
                       <button
                         type="button"
-                        onClick={() => notify(`Attendance history opened for ${student.name}.`)}
+                        disabled={busy || selectedSession.status !== "OPEN"}
+                        onClick={() =>
+                          void run(async () => {
+                            replaceSession(await teacherApi.completeAttendance(selectedSession.id));
+                            notify("Attendance session completed.");
+                          })
+                        }
                       >
-                        History
+                        Complete session
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || selectedSession.status !== "OPEN"}
+                        onClick={() =>
+                          void run(async () => {
+                            replaceSession(await teacherApi.cancelAttendance(selectedSession.id));
+                            notify("Attendance session cancelled.");
+                          })
+                        }
+                      >
+                        Cancel session
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!visibleStudents.length && (
-            <div className="teacher-attendance-empty">No students match the selected filters.</div>
+                  </>
+                ) : (
+                  <p className="teacher-side-muted">
+                    Create or select a session to mark attendance.
+                  </p>
+                )}
+              </section>
+            </div>
           )}
         </div>
-        <div className="teacher-attendance-table-footer">
-          <span>
-            Showing {visibleStudents.length} of {students.length} scholars · Auto-saved locally
-          </span>
-          <div>
-            <button type="button" disabled>
-              Previous
-            </button>
-            <b>1</b>
-            <button type="button">2</button>
-            <button type="button">Next</button>
-          </div>
-        </div>
-      </div>
-
-      <div className="teacher-attendance-insights">
-        <section>
-          <div className="teacher-attendance-section-heading">
-            <h3>AI Longitudinal Attendance Insights</h3>
-            <span>Active copilot</span>
-          </div>
-          <div className="teacher-attendance-insight-grid">
-            <article>
-              <strong>Friday first-period dip</strong>
-              <p>
-                Attendance decreases by 8.4% on Fridays for Physics Honors. Six scholars regularly
-                miss early lab work.
-              </p>
-              <button type="button" onClick={() => notify("Schedule Lab Shift action selected.")}>
-                Schedule Lab Shift
-              </button>
-            </article>
-            <article className="alert">
-              <strong>Test-day correlation</strong>
-              <p>
-                Maya Patel and two others show a 91% correlation of unexcused absences on scheduled
-                exam dates.
-              </p>
-              <button type="button" onClick={() => notify("Counselor referral action selected.")}>
-                Refer to Counselor
-              </button>
-            </article>
-          </div>
-          <div className="teacher-attendance-trend">
-            <div>
-              <strong>Weekly attendance rhythm</strong>
-              <span>Mon: 97.8% · Wed: 98.2% · Fri: 89.6%</span>
-            </div>
-            <div className="teacher-attendance-trend-bars">
-              {[94, 92, 96, 95, 98].map((height, index) => (
-                <span
-                  key={index}
-                  className={index === 4 ? "current" : ""}
-                  style={{ height: `${height}%` }}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-        <section className="teacher-attendance-compliance">
-          <div className="teacher-attendance-section-heading">
-            <h3>Institutional Compliance</h3>
-            <span className="compliant" />
-          </div>
-          <div>
-            <p>
-              <strong>District SIS automated sync</strong>
-              <b>98.5% compliant</b>
-            </p>
-            <p>
-              <strong>Canvas LMS LTI 1.3</strong>
-              <small>All live records reconciled at 08:00 AM and 10:00 AM daily.</small>
-            </p>
-            <p>
-              <strong>State attendance audit</strong>
-              <small>Zero unverified absences exceeding the 72h window.</small>
-            </p>
-          </div>
-          <button type="button" onClick={() => notify("Dean and admin report generation started.")}>
-            Generate Dean / Admin Report
-          </button>
-          <small>Certified electronic signature of Dr. Sarah Lin</small>
-        </section>
       </div>
     </section>
   );
