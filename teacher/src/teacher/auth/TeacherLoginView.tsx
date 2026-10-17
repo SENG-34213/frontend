@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
-import { getCurrentUser, login } from "../api/auth";
+import { loginTeacher } from "../api/auth";
+import type { AuthSession } from "./authTypes";
 
-type Props = { onLogin: () => void };
+type Props = { onLogin: (session: AuthSession) => void };
 
 export function TeacherLoginView({ onLogin }: Props) {
   const [email, setEmail] = useState("teacher1@mentify.test");
@@ -20,12 +21,8 @@ export function TeacherLoginView({ onLogin }: Props) {
     setError("");
     setIsSubmitting(true);
     try {
-      await login(email.trim(), password);
-      const currentUser = await getCurrentUser();
-      if (currentUser?.role !== "TEACHER") {
-        throw new Error("This account does not have teacher access.");
-      }
-      onLogin();
+      const session = await loginTeacher(email.trim(), password);
+      onLogin(session);
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Unable to sign in.");
     } finally {

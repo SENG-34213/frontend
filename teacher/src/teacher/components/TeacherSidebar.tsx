@@ -36,6 +36,7 @@ interface TeacherSidebarProps {
   pendingSubmissionsCount: number;
   unreadMessagesCount: number;
   unreadNotificationsCount: number;
+  onLogout: () => void | Promise<void>;
 }
 
 interface NavItem {
@@ -63,6 +64,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   pendingSubmissionsCount,
   unreadMessagesCount,
   unreadNotificationsCount,
+  onLogout,
 }) => {
   const navGroups: NavGroup[] = [
     {
@@ -268,6 +270,15 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
             </div>
           )}
         </div>
+        {!isCollapsed && (
+          <button
+            onClick={() => void onLogout()}
+            className="mt-2 w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
+        )}
       </div>
     </div>
   );
