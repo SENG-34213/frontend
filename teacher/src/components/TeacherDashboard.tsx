@@ -730,7 +730,7 @@ export default function TeacherDashboard() {
           ) : activeView === "course-details" ? (
             <TeacherCourseDetailsCurriculum courses={courses} courseId={selectedCourse?.id} />
           ) : activeView === "assignments" ? (
-            <TeacherAssignmentSubmissions />
+            <TeacherAssignmentSubmissions courses={courses} />
           ) : activeView === "students" ? (
             <TeacherMyStudentsDirectory courses={courses} />
           ) : activeView === "notifications" ? (
