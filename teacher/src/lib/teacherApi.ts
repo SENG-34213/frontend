@@ -154,6 +154,13 @@ export type AttendanceSummary = {
   attendedCount: number;
   attendancePercentage: number;
 };
+export type TeacherStudent = {
+  id: string;
+  courseId: string;
+  attendance: number;
+  absences: number;
+  status: "honors" | "on-track" | "support";
+};
 export type ExamType = "MIDTERM" | "FINAL" | "PRACTICAL" | "OTHER";
 export type ExamStatus = "DRAFT" | "SCHEDULED" | "MARKING" | "COMPLETED" | "CANCELLED";
 export type Exam = {
@@ -290,6 +297,12 @@ async function upload<T>(path: string, formData: FormData) {
 export const teacherApi = {
   profile: () => request<TeacherProfile>("/api/v1/users/me"),
   courses: () => request<TeacherCourse[]>("/api/v1/course/my-courses"),
+  enrolledStudentIds: (courseId: string) =>
+    request<string[]>(`/api/v1/enrollments/courses/${encodeURIComponent(courseId)}/students`),
+  studentAttendanceSummary: (studentId: string, courseId: string) =>
+    request<AttendanceSummary>(
+      `/api/v1/attendance/students/${encodeURIComponent(studentId)}/courses/${encodeURIComponent(courseId)}`,
+    ),
   modules: (courseId: string) =>
     request<CourseModule[]>(`/api/v1/course/${encodeURIComponent(courseId)}/modules`),
   createModule: (
