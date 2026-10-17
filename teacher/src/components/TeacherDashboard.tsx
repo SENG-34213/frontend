@@ -708,7 +708,7 @@ export default function TeacherDashboard() {
           ) : activeView === "assistant" ? (
             <TeacherAiAssistant />
           ) : activeView === "studio" ? (
-            <TeacherMentifyStudio />
+            <TeacherMentifyStudio courses={courses} />
           ) : activeView === "quizzes" ? (
             <TeacherQuizzesAssessments courses={courses} />
           ) : activeView === "attendance" ? (

@@ -304,6 +304,16 @@ export const teacherApi = {
     request<CourseLesson[]>(
       `/api/v1/course/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons`,
     ),
+  updateLesson: (
+    courseId: string,
+    moduleId: string,
+    lessonId: string,
+    draft: { title: string; description: string },
+  ) =>
+    request<CourseLesson>(
+      `/api/v1/course/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/lessons/${encodeURIComponent(lessonId)}`,
+      { method: "PUT", body: JSON.stringify({ ...draft, isVisible: true }) },
+    ),
   assignments: (courseId: string) =>
     request<TeacherAssignment[]>(`/api/v1/courses/${encodeURIComponent(courseId)}/assignments`),
   assignmentSubmissions: (assignmentId: string) =>
