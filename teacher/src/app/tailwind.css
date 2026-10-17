@@ -14,6 +14,7 @@
 @import "./teacher-assignment-submissions.css" layer(components);
 @import "./teacher-attendance-management.css" layer(components);
 @import "./teacher-course-details.css" layer(components);
+@import "./teacher-dashboard-home.css" layer(components);
 @import "./teacher-materials-library.css" layer(components);
 @import "./teacher-my-courses.css" layer(components);
 @import "./teacher-my-students.css" layer(components);

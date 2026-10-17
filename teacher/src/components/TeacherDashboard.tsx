@@ -9,6 +9,7 @@ import TeacherCalendarWorkspace from "./TeacherCalendarWorkspace";
 import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
 import TeacherAttendanceManagement from "./TeacherAttendanceManagement";
 import TeacherCourseDetailsCurriculum from "./TeacherCourseDetailsCurriculum";
+import TeacherDashboardHome from "./TeacherDashboardHome";
 import TeacherLearningMaterialsLibrary from "./TeacherLearningMaterialsLibrary";
 import TeacherMentifyStudio from "./TeacherMentifyStudio";
 import TeacherMyCourses from "./TeacherMyCourses";
@@ -152,6 +153,8 @@ function TeacherHome({
     </section>
   );
 }
+
+void TeacherHome;
 
 function TeacherSamplePage({
   title,
@@ -697,7 +700,7 @@ export default function TeacherDashboard() {
             </div>
           </header>
           {activeView === "dashboard" ? (
-            <TeacherHome
+            <TeacherDashboardHome
               profile={profile}
               courses={courses}
               onNavigate={(view) => setActiveView(view)}
