@@ -655,7 +655,7 @@ export default function TeacherDashboard() {
                             ? "Manage coursework, submissions, and grading priorities."
                             : activeView === "attendance"
                               ? "Track daily attendance and review student absence patterns."
-                            : "Review the latest activity from your teaching workspace."}
+                              : "Review the latest activity from your teaching workspace."}
               </p>
             </div>
             <div className="teacher-header-actions">
