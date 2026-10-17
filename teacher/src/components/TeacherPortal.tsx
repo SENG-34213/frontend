@@ -385,7 +385,9 @@ export default function App() {
 
           {currentTab === "materials" && <MaterialLibraryView />}
 
-          {currentTab === "calendar" && <TeacherCalendarView />}
+          {currentTab === "calendar" && (
+            <TeacherCalendarView backendCourses={teacherCourses.courses} />
+          )}
 
           {currentTab === "messages" && <TeacherMessagesView />}
 

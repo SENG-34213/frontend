@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Users,
@@ -27,6 +27,7 @@ import {
   mockMaterials,
 } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
+import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -52,6 +53,33 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   onEditCourse,
 }) => {
   const [activeTab, setActiveTab] = useState<CourseTab>("overview");
+  const [courseEvents, setCourseEvents] = useState<BackendCalendarEvent[]>([]);
+  const [courseEventsLoading, setCourseEventsLoading] = useState(true);
+  const [courseEventsError, setCourseEventsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const start = new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + 30);
+    setCourseEventsLoading(true);
+    setCourseEventsError(null);
+    getCalendarEvents(start, end, course.id, controller.signal)
+      .then(setCourseEvents)
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseEventsError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Course schedule failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseEventsLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id]);
 
   const courseModules = mockModules.filter((m) => m.courseId === course.id);
   const enrolledStudents = mockStudents.filter((s) => s.enrolledCourseIds.includes(course.id));
@@ -199,6 +227,53 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                   <p className="text-sm font-bold text-slate-900">Sarah Jenkins</p>
                   <p className="text-xs text-slate-500">Lead TA · s.jenkins@mentify.edu</p>
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900">Course Schedule</h3>
+                  <button
+                    onClick={() => onNavigate("calendar")}
+                    className="text-xs text-indigo-600 font-semibold hover:underline"
+                  >
+                    Open Calendar
+                  </button>
+                </div>
+                {courseEventsLoading ? (
+                  <div className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-500">
+                    Loading course events...
+                  </div>
+                ) : courseEventsError ? (
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                    {courseEventsError}
+                  </div>
+                ) : courseEvents.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+                    No scheduled events in the next 30 days.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {courseEvents.slice(0, 5).map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-slate-900">
+                            {event.title}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            {new Date(event.startDateTime).toLocaleString()} ·{" "}
+                            {event.location || "No location"}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">
+                          {event.eventType}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Quick Module Summary */}
