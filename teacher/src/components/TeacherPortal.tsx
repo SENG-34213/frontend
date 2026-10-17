@@ -339,10 +339,14 @@ export default function App() {
             <StudentDirectoryView
               onNavigate={handleNavigate}
               onSendMessage={(studentName) => setCurrentTab("messages")}
+              courses={courses}
+              backendCourses={teacherCourses.courses}
             />
           )}
 
-          {currentTab === "enrollments" && <EnrollmentManagementView />}
+          {currentTab === "enrollments" && (
+            <EnrollmentManagementView courses={courses} backendCourses={teacherCourses.courses} />
+          )}
 
           {currentTab === "assignments" && (
             <AssignmentDashboardView

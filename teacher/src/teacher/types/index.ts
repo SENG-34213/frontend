@@ -89,6 +89,7 @@ export interface Student {
   initials: string;
   enrolledCourseIds: string[];
   attendanceRate: number;
+  absences?: number;
   gpa: number;
   status: "Active" | "At Risk" | "Excelling";
   lastActive: string;
