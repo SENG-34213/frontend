@@ -1,5 +1,5 @@
-import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import React from "react";
+import { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
   title: string;
@@ -24,7 +24,7 @@ export const StatCard: React.FC<StatCardProps> = ({
     <div
       onClick={onClick}
       className={`p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 transition-colors ${
-        onClick ? 'cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700/60' : ''
+        onClick ? "cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700/60" : ""
       }`}
     >
       <div className="flex items-start justify-between">
@@ -38,7 +38,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
       <div className="mt-3">
         <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
-          {typeof value === 'number' ? value.toLocaleString() : value}
+          {typeof value === "number" ? value.toLocaleString() : value}
         </div>
 
         {(change || subtitle) && (
@@ -46,7 +46,9 @@ export const StatCard: React.FC<StatCardProps> = ({
             {change && (
               <span
                 className={`font-medium tabular-nums ${
-                  isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  isPositive
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
                 }`}
               >
                 {change}

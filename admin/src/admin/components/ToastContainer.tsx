@@ -1,9 +1,9 @@
-import React from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import React from "react";
+import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 
 export interface ToastMessage {
   id: string;
-  type: 'success' | 'error' | 'info';
+  type: "success" | "error" | "info";
   title: string;
   description?: string;
 }
@@ -23,20 +23,22 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismis
           key={toast.id}
           className="pointer-events-auto flex items-start gap-3 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg animate-in slide-in-from-bottom-3 duration-200"
         >
-          {toast.type === 'success' && (
+          {toast.type === "success" && (
             <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
           )}
-          {toast.type === 'error' && (
+          {toast.type === "error" && (
             <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
           )}
-          {toast.type === 'info' && (
+          {toast.type === "info" && (
             <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
           )}
 
           <div className="flex-1 min-w-0">
             <h4 className="text-xs font-semibold text-slate-900 dark:text-white">{toast.title}</h4>
             {toast.description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{toast.description}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {toast.description}
+              </p>
             )}
           </div>
 

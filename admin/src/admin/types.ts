@@ -1,8 +1,8 @@
-export type AdminRole = 'ADMIN' | 'SUPER_ADMIN';
+export type AdminRole = "ADMIN" | "SUPER_ADMIN";
 
-export type UserRole = 'STUDENT' | 'TEACHER' | 'ADMIN' | 'SUPER_ADMIN';
+export type UserRole = "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN";
 
-export type AccountStatus = 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'INACTIVE';
+export type AccountStatus = "ACTIVE" | "INVITED" | "SUSPENDED" | "INACTIVE";
 
 export interface BaseUser {
   id: string;
@@ -18,13 +18,13 @@ export interface BaseUser {
 }
 
 export interface StudentProfile extends BaseUser {
-  role: 'STUDENT';
+  role: "STUDENT";
   studentId: string; // Auto-generated e.g. STU-2026-0842
   grade: string;
   schoolName?: string;
   guardianName: string;
   guardianPhone: string;
-  attendanceMode: 'IN_PERSON' | 'ONLINE' | 'HYBRID';
+  attendanceMode: "IN_PERSON" | "ONLINE" | "HYBRID";
   addressLine1: string;
   addressLine2?: string;
   city: string;
@@ -36,7 +36,7 @@ export interface StudentProfile extends BaseUser {
 }
 
 export interface TeacherProfile extends BaseUser {
-  role: 'TEACHER';
+  role: "TEACHER";
   teacherCode: string; // Auto-generated e.g. TCH-9104
   specializations: string[];
   hireDate: string;
@@ -52,7 +52,7 @@ export interface TeacherProfile extends BaseUser {
 }
 
 export interface AdministratorProfile extends BaseUser {
-  role: 'ADMIN' | 'SUPER_ADMIN';
+  role: "ADMIN" | "SUPER_ADMIN";
   adminCode: string; // Auto-generated e.g. ADM-1049
   dob: string;
   nic: string;
@@ -73,7 +73,7 @@ export interface Course {
   grade: string;
   enrollmentCount: number;
   maxCapacity: number;
-  status: 'ACTIVE' | 'ARCHIVED' | 'UPCOMING';
+  status: "ACTIVE" | "ARCHIVED" | "UPCOMING";
   description: string;
   modulesCount: number;
   category: string;
@@ -90,7 +90,7 @@ export interface EnrollmentRecord {
   courseCode: string;
   courseTitle: string;
   enrolledDate: string;
-  status: 'ACTIVE' | 'COMPLETED' | 'PENDING_APPROVAL' | 'DROPPED';
+  status: "ACTIVE" | "COMPLETED" | "PENDING_APPROVAL" | "DROPPED";
   grade?: string;
   progressPercentage: number;
 }
@@ -106,7 +106,7 @@ export interface CurriculumModule {
     durationMinutes: number;
     hasQuiz: boolean;
     materialCount: number;
-    status: 'PUBLISHED' | 'DRAFT';
+    status: "PUBLISHED" | "DRAFT";
   }[];
 }
 
@@ -121,7 +121,7 @@ export interface Assignment {
   totalSubmissions: number;
   gradedSubmissions: number;
   maxPoints: number;
-  status: 'PUBLISHED' | 'DRAFT' | 'CLOSED';
+  status: "PUBLISHED" | "DRAFT" | "CLOSED";
 }
 
 export interface Quiz {
@@ -136,7 +136,7 @@ export interface Quiz {
   attemptsCount: number;
   averageScore: number;
   passingRate: number;
-  status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
+  status: "ACTIVE" | "DRAFT" | "ARCHIVED";
 }
 
 export interface Examination {
@@ -151,7 +151,7 @@ export interface Examination {
   endTime: string;
   hallOrPlatform: string;
   candidateCount: number;
-  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'RESULTS_PUBLISHED';
+  status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "RESULTS_PUBLISHED";
 }
 
 export interface GradeRecord {
@@ -159,7 +159,7 @@ export interface GradeRecord {
   studentId: string;
   studentName: string;
   courseCode: string;
-  assessmentType: 'ASSIGNMENT' | 'QUIZ' | 'MIDTERM' | 'FINAL_EXAM';
+  assessmentType: "ASSIGNMENT" | "QUIZ" | "MIDTERM" | "FINAL_EXAM";
   assessmentTitle: string;
   score: number;
   maxScore: number;
@@ -175,7 +175,7 @@ export interface AttendanceSession {
   courseTitle: string;
   date: string;
   timeSlot: string;
-  mode: 'IN_PERSON' | 'ONLINE' | 'HYBRID';
+  mode: "IN_PERSON" | "ONLINE" | "HYBRID";
   totalStudents: number;
   presentCount: number;
   absentCount: number;
@@ -188,30 +188,30 @@ export interface LearningMaterial {
   title: string;
   courseId: string;
   courseCode: string;
-  fileType: 'PDF' | 'VIDEO' | 'SLIDES' | 'DOCUMENT' | 'AUDIO';
+  fileType: "PDF" | "VIDEO" | "SLIDES" | "DOCUMENT" | "AUDIO";
   s3Key: string;
   fileSizeBytes: number;
   uploadedAt: string;
   uploadedBy: string;
-  status: 'READY' | 'PROCESSING' | 'RESTRICTED';
+  status: "READY" | "PROCESSING" | "RESTRICTED";
 }
 
 export interface AcademicEvent {
   id: string;
   title: string;
-  type: 'CLASS' | 'EXAM' | 'QUIZ' | 'DEADLINE' | 'SESSION';
+  type: "CLASS" | "EXAM" | "QUIZ" | "DEADLINE" | "SESSION";
   date: string;
   time: string;
   location: string;
   courseCode?: string;
-  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
 }
 
 export interface NotificationItem {
   id: string;
   title: string;
   message: string;
-  category: 'REGISTRATION' | 'ACADEMIC' | 'SECURITY' | 'SYSTEM';
+  category: "REGISTRATION" | "ACADEMIC" | "SECURITY" | "SYSTEM";
   timestamp: string;
   read: boolean;
   linkAction?: string;
@@ -222,7 +222,12 @@ export interface AuditEvent {
   timestamp: string;
   actorEmail: string;
   actorRole: string;
-  category: 'KEYCLOAK_AUTH' | 'USER_REGISTRATION' | 'MATERIAL_SERVICE' | 'AI_SERVICE' | 'COURSE_MANAGEMENT';
+  category:
+    | "KEYCLOAK_AUTH"
+    | "USER_REGISTRATION"
+    | "MATERIAL_SERVICE"
+    | "AI_SERVICE"
+    | "COURSE_MANAGEMENT";
   action: string;
   details: string;
   ipAddress: string;

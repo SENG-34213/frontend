@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
-import { Bell, CheckCheck, Filter, Clock, Shield, Award, UserPlus, CheckCircle2 } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { NotificationItem } from '../types';
-import { AdminRoute } from '../components/AdminSidebar';
+import React, { useState } from "react";
+import {
+  Bell,
+  CheckCheck,
+  Filter,
+  Clock,
+  Shield,
+  Award,
+  UserPlus,
+  CheckCircle2,
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { NotificationItem } from "../types";
+import { AdminRoute } from "../components/AdminSidebar";
 
 interface NotificationCenterProps {
   notifications: NotificationItem[];
@@ -17,23 +26,22 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   onMarkAllRead,
   onNavigate,
 }) => {
-  const [tab, setTab] = useState<'all' | 'unread' | 'read'>('all');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [tab, setTab] = useState<"all" | "unread" | "read">("all");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
 
   const filteredNotifications = notifications.filter((n) => {
-    const matchesTab =
-      tab === 'all' ? true : tab === 'unread' ? !n.read : n.read;
-    const matchesCat = categoryFilter === 'ALL' || n.category === categoryFilter;
+    const matchesTab = tab === "all" ? true : tab === "unread" ? !n.read : n.read;
+    const matchesCat = categoryFilter === "ALL" || n.category === categoryFilter;
     return matchesTab && matchesCat;
   });
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'REGISTRATION':
+      case "REGISTRATION":
         return <UserPlus className="w-4 h-4 text-indigo-500" />;
-      case 'SECURITY':
+      case "SECURITY":
         return <Shield className="w-4 h-4 text-purple-500" />;
-      case 'ACADEMIC':
+      case "ACADEMIC":
         return <Award className="w-4 h-4 text-amber-500" />;
       default:
         return <Bell className="w-4 h-4 text-slate-500" />;
@@ -45,7 +53,11 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <PageHeader
         title="Notification Center"
         description="System dispatch audit, security alerts, registration webhooks, and academic events."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Platform Operations' }, { label: 'Notifications' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Platform Operations" },
+          { label: "Notifications" },
+        ]}
         actions={
           <button
             onClick={onMarkAllRead}
@@ -60,17 +72,21 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       {/* Tabs and Categories */}
       <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-          {(['all', 'unread', 'read'] as const).map((t) => (
+          {(["all", "unread", "read"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-3 py-1 font-medium rounded-md capitalize transition-colors ${
                 tab === t
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              {t} ({t === 'all' ? notifications.length : notifications.filter((n) => t === 'unread' ? !n.read : n.read).length})
+              {t} (
+              {t === "all"
+                ? notifications.length
+                : notifications.filter((n) => (t === "unread" ? !n.read : n.read)).length}
+              )
             </button>
           ))}
         </div>
@@ -99,7 +115,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             <div
               key={notif.id}
               className={`p-4 flex items-start gap-3.5 transition-colors ${
-                !notif.read ? 'bg-indigo-50/30 dark:bg-indigo-950/20' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/20'
+                !notif.read
+                  ? "bg-indigo-50/30 dark:bg-indigo-950/20"
+                  : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"
               }`}
             >
               <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 mt-0.5">

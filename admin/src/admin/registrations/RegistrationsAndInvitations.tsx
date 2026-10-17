@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Send,
   MailCheck,
@@ -10,12 +10,12 @@ import {
   UserCheck,
   Calendar,
   RefreshCw,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { RoleBadge } from '../components/RoleBadge';
-import { StatusBadge } from '../components/StatusBadge';
-import { UserAvatar } from '../components/UserAvatar';
-import { StudentProfile, TeacherProfile, AdministratorProfile } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { RoleBadge } from "../components/RoleBadge";
+import { StatusBadge } from "../components/StatusBadge";
+import { UserAvatar } from "../components/UserAvatar";
+import { StudentProfile, TeacherProfile, AdministratorProfile } from "../types";
 
 interface RegistrationsAndInvitationsProps {
   students: StudentProfile[];
@@ -30,9 +30,9 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
   administrators,
   onResendInvitation,
 }) => {
-  const [roleFilter, setRoleFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('INVITED');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("INVITED");
+  const [searchQuery, setSearchQuery] = useState("");
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
 
   // Combine invited / recently registered accounts
@@ -42,7 +42,7 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
       code: s.studentId,
       name: `${s.firstName} ${s.lastName}`,
       email: s.email,
-      role: 'STUDENT' as const,
+      role: "STUDENT" as const,
       status: s.status,
       date: s.createdAt,
     })),
@@ -51,7 +51,7 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
       code: t.teacherCode,
       name: `${t.firstName} ${t.lastName}`,
       email: t.email,
-      role: 'TEACHER' as const,
+      role: "TEACHER" as const,
       status: t.status,
       date: t.createdAt,
     })),
@@ -71,8 +71,8 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
       acc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       acc.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       acc.code.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'ALL' || acc.role === roleFilter;
-    const matchesStatus = statusFilter === 'ALL' || acc.status === statusFilter;
+    const matchesRole = roleFilter === "ALL" || acc.role === roleFilter;
+    const matchesStatus = statusFilter === "ALL" || acc.status === statusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -84,14 +84,14 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
     }, 600);
   };
 
-  const invitedCount = allAccounts.filter((a) => a.status === 'INVITED').length;
+  const invitedCount = allAccounts.filter((a) => a.status === "INVITED").length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Registrations & Invitations Operations"
         description="Centralized Keycloak onboarding lifecycle, email dispatch audit, and activation monitoring."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'User Management' }, { label: 'Registrations' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "Registrations" }]}
       />
 
       {/* Operational Summary Cards */}
@@ -210,11 +210,11 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
 
                   <td className="py-3 px-4 text-slate-500 tabular-nums">
                     {new Date(acc.date).toLocaleDateString([], {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </td>
 
@@ -223,7 +223,7 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
                   </td>
 
                   <td className="py-3 px-4 text-right">
-                    {acc.status === 'INVITED' ? (
+                    {acc.status === "INVITED" ? (
                       <button
                         disabled={resendingEmail === acc.email}
                         onClick={() => handleResend(acc.email, acc.role)}

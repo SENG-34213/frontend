@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   BookOpen,
   Search,
@@ -12,11 +12,17 @@ import {
   X,
   Eye,
   BarChart2,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { Course, TeacherProfile, EnrollmentRecord, CurriculumModule, LearningMaterial } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { DetailDrawer } from "../components/DetailDrawer";
+import {
+  Course,
+  TeacherProfile,
+  EnrollmentRecord,
+  CurriculumModule,
+  LearningMaterial,
+} from "../types";
 
 interface CourseManagementProps {
   courses: Course[];
@@ -37,25 +43,25 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   onAddCourse,
   showCreateModalDirectly = false,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [detailTab, setDetailTab] = useState<
-    'overview' | 'curriculum' | 'students' | 'materials' | 'performance'
-  >('overview');
+    "overview" | "curriculum" | "students" | "materials" | "performance"
+  >("overview");
   const [isCreateOpen, setIsCreateOpen] = useState(showCreateModalDirectly);
 
   // New course form
   const [formData, setFormData] = useState({
-    code: '',
-    title: '',
-    teacherId: teachers[0]?.id || '',
-    grade: 'Grade 12',
-    category: 'Mathematics',
+    code: "",
+    title: "",
+    teacherId: teachers[0]?.id || "",
+    grade: "Grade 12",
+    category: "Mathematics",
     maxCapacity: 60,
-    description: '',
-    startDate: '2026-09-01',
-    endDate: '2027-01-25',
+    description: "",
+    startDate: "2026-09-01",
+    endDate: "2027-01-25",
   });
 
   const filteredCourses = courses.filter((c) => {
@@ -63,7 +69,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.teacherName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'ALL' || c.category === categoryFilter;
+    const matchesCategory = categoryFilter === "ALL" || c.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -83,7 +89,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       maxCapacity: Number(formData.maxCapacity),
       enrollmentCount: 0,
       modulesCount: 4,
-      status: 'ACTIVE',
+      status: "ACTIVE",
       description: formData.description,
       startDate: formData.startDate,
       endDate: formData.endDate,
@@ -92,20 +98,22 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     onAddCourse(newCourse);
     setIsCreateOpen(false);
     setFormData({
-      code: '',
-      title: '',
-      teacherId: teachers[0]?.id || '',
-      grade: 'Grade 12',
-      category: 'Mathematics',
+      code: "",
+      title: "",
+      teacherId: teachers[0]?.id || "",
+      grade: "Grade 12",
+      category: "Mathematics",
       maxCapacity: 60,
-      description: '',
-      startDate: '2026-09-01',
-      endDate: '2027-01-25',
+      description: "",
+      startDate: "2026-09-01",
+      endDate: "2027-01-25",
     });
   };
 
   const courseEnrollments = selectedCourse
-    ? enrollments.filter((e) => e.courseId === selectedCourse.id || e.courseCode === selectedCourse.code)
+    ? enrollments.filter(
+        (e) => e.courseId === selectedCourse.id || e.courseCode === selectedCourse.code,
+      )
     : [];
 
   const courseMaterials = selectedCourse
@@ -121,7 +129,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       <PageHeader
         title="Course Management"
         description="Comprehensive curriculum structures, teacher assignments, student capacities, and institutional syllabi."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Courses' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Academic Management" }, { label: "Courses" }]}
         actions={
           <button
             onClick={() => setIsCreateOpen(true)}
@@ -216,7 +224,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
-                              fillPercent > 90 ? 'bg-amber-500' : 'bg-indigo-600'
+                              fillPercent > 90 ? "bg-amber-500" : "bg-indigo-600"
                             }`}
                             style={{ width: `${Math.min(fillPercent, 100)}%` }}
                           />
@@ -236,7 +244,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       <button
                         onClick={() => {
                           setSelectedCourse(course);
-                          setDetailTab('overview');
+                          setDetailTab("overview");
                         }}
                         className="px-2.5 py-1 text-xs font-medium rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                       >
@@ -355,7 +363,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     min="10"
                     max="150"
                     value={formData.maxCapacity}
-                    onChange={(e) => setFormData({ ...formData, maxCapacity: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, maxCapacity: Number(e.target.value) })
+                    }
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
@@ -418,25 +428,25 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           <div className="space-y-5">
             {/* Tabs */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">
-              {(['overview', 'curriculum', 'students', 'materials', 'performance'] as const).map(
+              {(["overview", "curriculum", "students", "materials", "performance"] as const).map(
                 (tab) => (
                   <button
                     key={tab}
                     onClick={() => setDetailTab(tab)}
                     className={`flex-1 py-1.5 font-medium rounded-md capitalize transition-colors ${
                       detailTab === tab
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     {tab}
                   </button>
-                )
+                ),
               )}
             </div>
 
             {/* Overview */}
-            {detailTab === 'overview' && (
+            {detailTab === "overview" && (
               <div className="space-y-4 text-xs">
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
                   <span className="text-[11px] font-semibold uppercase text-slate-400">
@@ -477,7 +487,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             )}
 
             {/* Curriculum */}
-            {detailTab === 'curriculum' && (
+            {detailTab === "curriculum" && (
               <div className="space-y-3 text-xs">
                 {courseCurriculum.length === 0 ? (
                   <p className="text-slate-400 py-6 text-center">
@@ -498,7 +508,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                           >
                             <span className="text-slate-800 dark:text-slate-200">{les.title}</span>
                             <span className="text-slate-400 tabular-nums">
-                              {les.durationMinutes} mins · {les.hasQuiz ? 'Quiz Attached' : 'Lecture'}
+                              {les.durationMinutes} mins ·{" "}
+                              {les.hasQuiz ? "Quiz Attached" : "Lecture"}
                             </span>
                           </div>
                         ))}
@@ -510,7 +521,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             )}
 
             {/* Students */}
-            {detailTab === 'students' && (
+            {detailTab === "students" && (
               <div className="space-y-2 text-xs">
                 {courseEnrollments.map((enr) => (
                   <div
@@ -524,7 +535,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       <span className="text-slate-400 font-mono text-[11px]">{enr.studentId}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-emerald-600">Grade: {enr.grade || '—'}</span>
+                      <span className="font-medium text-emerald-600">
+                        Grade: {enr.grade || "—"}
+                      </span>
                       <StatusBadge status={enr.status} />
                     </div>
                   </div>
@@ -533,7 +546,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             )}
 
             {/* Materials */}
-            {detailTab === 'materials' && (
+            {detailTab === "materials" && (
               <div className="space-y-2 text-xs">
                 {courseMaterials.map((mat) => (
                   <div
@@ -557,7 +570,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             )}
 
             {/* Performance */}
-            {detailTab === 'performance' && (
+            {detailTab === "performance" && (
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs space-y-3">
                 <span className="font-semibold text-slate-900 dark:text-white block">
                   Cohort Evaluation Statistics
@@ -577,9 +590,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   </div>
                   <div className="p-2.5 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
                     <span className="text-slate-400 block text-[11px]">Pass Rate</span>
-                    <span className="font-bold text-emerald-600 text-sm tabular-nums">
-                      97.1%
-                    </span>
+                    <span className="font-bold text-emerald-600 text-sm tabular-nums">97.1%</span>
                   </div>
                 </div>
               </div>

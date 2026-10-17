@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Search,
   Plus,
@@ -16,12 +16,12 @@ import {
   X,
   UserCheck,
   Send,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { UserAvatar } from '../components/UserAvatar';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { StudentProfile, EnrollmentRecord, GradeRecord, AttendanceSession } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { UserAvatar } from "../components/UserAvatar";
+import { DetailDrawer } from "../components/DetailDrawer";
+import { StudentProfile, EnrollmentRecord, GradeRecord, AttendanceSession } from "../types";
 
 interface StudentManagementProps {
   students: StudentProfile[];
@@ -42,34 +42,36 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   onResendInvitation,
   showRegistrationWizardDirectly = false,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [gradeFilter, setGradeFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedStudent, setSelectedStudent] = useState<StudentProfile | null>(null);
-  const [detailTab, setDetailTab] = useState<'overview' | 'courses' | 'grades' | 'attendance'>('overview');
+  const [detailTab, setDetailTab] = useState<"overview" | "courses" | "grades" | "attendance">(
+    "overview",
+  );
 
   // Wizard state
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-  const [createdStudentId, setCreatedStudentId] = useState<string>('');
+  const [createdStudentId, setCreatedStudentId] = useState<string>("");
 
   // Form Fields
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    dob: '2008-05-15',
-    grade: 'Grade 12',
-    schoolName: 'Metropolitan STEM Collegiate',
-    guardianName: '',
-    guardianPhone: '',
-    attendanceMode: 'IN_PERSON' as 'IN_PERSON' | 'ONLINE' | 'HYBRID',
-    addressLine1: '',
-    addressLine2: '',
-    city: 'San Jose',
-    district: 'Santa Clara',
-    postalCode: '95112',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dob: "2008-05-15",
+    grade: "Grade 12",
+    schoolName: "Metropolitan STEM Collegiate",
+    guardianName: "",
+    guardianPhone: "",
+    attendanceMode: "IN_PERSON" as "IN_PERSON" | "ONLINE" | "HYBRID",
+    addressLine1: "",
+    addressLine2: "",
+    city: "San Jose",
+    district: "Santa Clara",
+    postalCode: "95112",
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -81,8 +83,8 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.studentId.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesGrade = gradeFilter === 'ALL' || s.grade === gradeFilter;
-    const matchesStatus = statusFilter === 'ALL' || s.status === statusFilter;
+    const matchesGrade = gradeFilter === "ALL" || s.grade === gradeFilter;
+    const matchesStatus = statusFilter === "ALL" || s.status === statusFilter;
 
     return matchesSearch && matchesGrade && matchesStatus;
   });
@@ -90,19 +92,19 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   const validateStep = (step: number) => {
     const errors: Record<string, string> = {};
     if (step === 1) {
-      if (!formData.firstName.trim()) errors.firstName = 'First name is required';
-      if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
-      if (!formData.email.trim() || !formData.email.includes('@'))
-        errors.email = 'Valid institutional or student email is required';
+      if (!formData.firstName.trim()) errors.firstName = "First name is required";
+      if (!formData.lastName.trim()) errors.lastName = "Last name is required";
+      if (!formData.email.trim() || !formData.email.includes("@"))
+        errors.email = "Valid institutional or student email is required";
     }
     if (step === 2) {
-      if (!formData.guardianName.trim()) errors.guardianName = 'Guardian name is required';
-      if (!formData.guardianPhone.trim()) errors.guardianPhone = 'Guardian phone is required';
+      if (!formData.guardianName.trim()) errors.guardianName = "Guardian name is required";
+      if (!formData.guardianPhone.trim()) errors.guardianPhone = "Guardian phone is required";
     }
     if (step === 3) {
-      if (!formData.addressLine1.trim()) errors.addressLine1 = 'Address line 1 is required';
-      if (!formData.city.trim()) errors.city = 'City is required';
-      if (!formData.postalCode.trim()) errors.postalCode = 'Postal code is required';
+      if (!formData.addressLine1.trim()) errors.addressLine1 = "Address line 1 is required";
+      if (!formData.city.trim()) errors.city = "City is required";
+      if (!formData.postalCode.trim()) errors.postalCode = "Postal code is required";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -128,8 +130,8 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       lastName: formData.lastName,
       email: formData.email,
       phone: formData.phone,
-      role: 'STUDENT',
-      status: 'INVITED',
+      role: "STUDENT",
+      status: "INVITED",
       createdAt: new Date().toISOString(),
       grade: formData.grade,
       schoolName: formData.schoolName,
@@ -143,7 +145,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       postalCode: formData.postalCode,
       dob: formData.dob,
       enrolledCourseCount: 0,
-      averageGrade: 'Pending',
+      averageGrade: "Pending",
     };
 
     onAddStudent(newStu);
@@ -153,21 +155,21 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
 
   const resetWizard = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      dob: '2008-05-15',
-      grade: 'Grade 12',
-      schoolName: 'Metropolitan STEM Collegiate',
-      guardianName: '',
-      guardianPhone: '',
-      attendanceMode: 'IN_PERSON',
-      addressLine1: '',
-      addressLine2: '',
-      city: 'San Jose',
-      district: 'Santa Clara',
-      postalCode: '95112',
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      dob: "2008-05-15",
+      grade: "Grade 12",
+      schoolName: "Metropolitan STEM Collegiate",
+      guardianName: "",
+      guardianPhone: "",
+      attendanceMode: "IN_PERSON",
+      addressLine1: "",
+      addressLine2: "",
+      city: "San Jose",
+      district: "Santa Clara",
+      postalCode: "95112",
     });
     setFormErrors({});
     setCurrentStep(1);
@@ -188,7 +190,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       <PageHeader
         title="Student Management"
         description="Comprehensive directory, enrollment tracking, academic records, and multi-step registration."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'User Management' }, { label: 'Students' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "Students" }]}
         actions={
           <button
             onClick={() => {
@@ -302,7 +304,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
 
                     <td className="py-3 px-4 text-slate-500">
                       <span className="text-[11px] uppercase font-semibold text-slate-500 dark:text-slate-400">
-                        {stu.attendanceMode.replace('_', ' ')}
+                        {stu.attendanceMode.replace("_", " ")}
                       </span>
                     </td>
 
@@ -315,15 +317,15 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                         <button
                           onClick={() => {
                             setSelectedStudent(stu);
-                            setDetailTab('overview');
+                            setDetailTab("overview");
                           }}
                           className="px-2 py-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-medium"
                         >
                           View Details
                         </button>
-                        {stu.status === 'INVITED' && (
+                        {stu.status === "INVITED" && (
                           <button
-                            onClick={() => onResendInvitation(stu.email, 'STUDENT')}
+                            onClick={() => onResendInvitation(stu.email, "STUDENT")}
                             className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
                           >
                             <Send className="w-3 h-3" />
@@ -366,28 +368,28 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
             {currentStep < 5 && (
               <div className="py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                 {[
-                  { step: 1, title: 'Personal Info' },
-                  { step: 2, title: 'Academic & Guardian' },
-                  { step: 3, title: 'Address Info' },
-                  { step: 4, title: 'Review & Submit' },
+                  { step: 1, title: "Personal Info" },
+                  { step: 2, title: "Academic & Guardian" },
+                  { step: 3, title: "Address Info" },
+                  { step: 4, title: "Review & Submit" },
                 ].map((s) => (
                   <div key={s.step} className="flex items-center gap-2">
                     <span
                       className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
                         currentStep === s.step
-                          ? 'bg-indigo-600 text-white'
+                          ? "bg-indigo-600 text-white"
                           : currentStep > s.step
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                            ? "bg-emerald-600 text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                       }`}
                     >
-                      {currentStep > s.step ? '✓' : s.step}
+                      {currentStep > s.step ? "✓" : s.step}
                     </span>
                     <span
                       className={`hidden sm:inline font-medium ${
                         currentStep === s.step
-                          ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-slate-400'
+                          ? "text-indigo-600 dark:text-indigo-400"
+                          : "text-slate-400"
                       }`}
                     >
                       {s.title}
@@ -735,11 +737,11 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       setCurrentStep(1);
                       setFormData({
                         ...formData,
-                        firstName: '',
-                        lastName: '',
-                        email: '',
-                        guardianName: '',
-                        guardianPhone: '',
+                        firstName: "",
+                        lastName: "",
+                        email: "",
+                        guardianName: "",
+                        guardianPhone: "",
                       });
                     }}
                     className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
@@ -797,14 +799,14 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
           <div className="space-y-5">
             {/* Tab navigation */}
             <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              {(['overview', 'courses', 'grades', 'attendance'] as const).map((tab) => (
+              {(["overview", "courses", "grades", "attendance"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setDetailTab(tab)}
                   className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${
                     detailTab === tab
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   {tab}
@@ -813,7 +815,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
             </div>
 
             {/* Overview Tab */}
-            {detailTab === 'overview' && (
+            {detailTab === "overview" && (
               <div className="space-y-4">
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
                   <UserAvatar
@@ -845,7 +847,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <span className="text-slate-400 block mb-0.5">School Name</span>
                     <span className="font-medium text-slate-900 dark:text-white">
-                      {selectedStudent.schoolName || 'St. Jude International Academy'}
+                      {selectedStudent.schoolName || "St. Jude International Academy"}
                     </span>
                   </div>
                   <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -863,7 +865,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   <div className="col-span-2 p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <span className="text-slate-400 block mb-0.5">Residential Address</span>
                     <span className="font-medium text-slate-900 dark:text-white">
-                      {selectedStudent.addressLine1}, {selectedStudent.city},{' '}
+                      {selectedStudent.addressLine1}, {selectedStudent.city},{" "}
                       {selectedStudent.postalCode}
                     </span>
                   </div>
@@ -872,7 +874,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
             )}
 
             {/* Courses Tab */}
-            {detailTab === 'courses' && (
+            {detailTab === "courses" && (
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Active Course Enrollments ({studentEnrollments.length})
@@ -908,7 +910,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
             )}
 
             {/* Grades Tab */}
-            {detailTab === 'grades' && (
+            {detailTab === "grades" && (
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Assessment Grades & Evaluations ({studentGrades.length})
@@ -939,7 +941,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
             )}
 
             {/* Attendance Tab */}
-            {detailTab === 'attendance' && (
+            {detailTab === "attendance" && (
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Recent Class Attendance Log

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Users,
   GraduationCap,
@@ -16,11 +16,11 @@ import {
   ArrowRight,
   Shield,
   CheckCircle2,
-} from 'lucide-react';
-import { StatCard } from '../components/StatCard';
-import { RoleBadge } from '../components/RoleBadge';
-import { StatusBadge } from '../components/StatusBadge';
-import { UserAvatar } from '../components/UserAvatar';
+} from "lucide-react";
+import { StatCard } from "../components/StatCard";
+import { RoleBadge } from "../components/RoleBadge";
+import { StatusBadge } from "../components/StatusBadge";
+import { UserAvatar } from "../components/UserAvatar";
 import {
   PlatformKPIs,
   StudentProfile,
@@ -28,8 +28,8 @@ import {
   AcademicEvent,
   AuditEvent,
   AdminRole,
-} from '../types';
-import { AdminRoute } from '../components/AdminSidebar';
+} from "../types";
+import { AdminRoute } from "../components/AdminSidebar";
 
 interface AdminDashboardProps {
   kpis: PlatformKPIs;
@@ -54,31 +54,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onQuickAction,
   onResendInvitation,
 }) => {
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
 
   // SVG Chart data for user growth
   const chartData = {
-    '7d': [
-      { label: 'Oct 11', students: 1390, teachers: 82 },
-      { label: 'Oct 12', students: 1398, teachers: 82 },
-      { label: 'Oct 13', students: 1404, teachers: 83 },
-      { label: 'Oct 14', students: 1410, teachers: 83 },
-      { label: 'Oct 15', students: 1414, teachers: 84 },
-      { label: 'Oct 16', students: 1418, teachers: 84 },
-      { label: 'Oct 17', students: 1420, teachers: 84 },
+    "7d": [
+      { label: "Oct 11", students: 1390, teachers: 82 },
+      { label: "Oct 12", students: 1398, teachers: 82 },
+      { label: "Oct 13", students: 1404, teachers: 83 },
+      { label: "Oct 14", students: 1410, teachers: 83 },
+      { label: "Oct 15", students: 1414, teachers: 84 },
+      { label: "Oct 16", students: 1418, teachers: 84 },
+      { label: "Oct 17", students: 1420, teachers: 84 },
     ],
-    '30d': [
-      { label: 'Sep 18', students: 1250, teachers: 76 },
-      { label: 'Sep 25', students: 1295, teachers: 78 },
-      { label: 'Oct 02', students: 1340, teachers: 80 },
-      { label: 'Oct 09', students: 1385, teachers: 82 },
-      { label: 'Oct 17', students: 1420, teachers: 84 },
+    "30d": [
+      { label: "Sep 18", students: 1250, teachers: 76 },
+      { label: "Sep 25", students: 1295, teachers: 78 },
+      { label: "Oct 02", students: 1340, teachers: 80 },
+      { label: "Oct 09", students: 1385, teachers: 82 },
+      { label: "Oct 17", students: 1420, teachers: 84 },
     ],
-    '90d': [
-      { label: 'Jul 20', students: 980, teachers: 65 },
-      { label: 'Aug 15', students: 1120, teachers: 72 },
-      { label: 'Sep 01', students: 1240, teachers: 78 },
-      { label: 'Oct 17', students: 1420, teachers: 84 },
+    "90d": [
+      { label: "Jul 20", students: 980, teachers: 65 },
+      { label: "Aug 15", students: 1120, teachers: 72 },
+      { label: "Sep 01", students: 1240, teachers: 78 },
+      { label: "Oct 17", students: 1420, teachers: 84 },
     ],
   };
 
@@ -98,31 +98,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ((p.students - minStudents) / (maxStudents - minStudents || 1)) * (svgHeight - 40);
       return `${x},${y}`;
     })
-    .join(' ');
+    .join(" ");
 
   const pendingInvites = [
     {
-      name: 'Amara Okonkwo',
-      role: 'STUDENT',
-      email: 'amara.okonkwo@mentify.edu',
-      date: 'Oct 14, 2026',
-      status: 'INVITED' as const,
+      name: "Amara Okonkwo",
+      role: "STUDENT",
+      email: "amara.okonkwo@mentify.edu",
+      date: "Oct 14, 2026",
+      status: "INVITED" as const,
     },
     {
-      name: 'Priya Nambiar',
-      role: 'TEACHER',
-      email: 'priya.nambiar@mentify.edu',
-      date: 'Oct 15, 2026',
-      status: 'INVITED' as const,
+      name: "Priya Nambiar",
+      role: "TEACHER",
+      email: "priya.nambiar@mentify.edu",
+      date: "Oct 15, 2026",
+      status: "INVITED" as const,
     },
-    ...(role === 'SUPER_ADMIN'
+    ...(role === "SUPER_ADMIN"
       ? [
           {
-            name: 'Benjamin Hayes',
-            role: 'ADMIN',
-            email: 'benjamin.hayes@mentify.edu',
-            date: 'Oct 16, 2026',
-            status: 'INVITED' as const,
+            name: "Benjamin Hayes",
+            role: "ADMIN",
+            email: "benjamin.hayes@mentify.edu",
+            date: "Oct 16, 2026",
+            status: "INVITED" as const,
           },
         ]
       : []),
@@ -130,40 +130,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const recentRegistrations = [
     {
-      id: 'r1',
-      name: 'Elena Rostova',
-      role: 'STUDENT' as const,
-      email: 'elena.rostova@mentify.edu',
-      date: 'Sep 02, 2026',
-      status: 'ACTIVE' as const,
-      idCode: 'STU-2026-0842',
+      id: "r1",
+      name: "Elena Rostova",
+      role: "STUDENT" as const,
+      email: "elena.rostova@mentify.edu",
+      date: "Sep 02, 2026",
+      status: "ACTIVE" as const,
+      idCode: "STU-2026-0842",
     },
     {
-      id: 'r2',
-      name: 'Tariq Mansoor',
-      role: 'STUDENT' as const,
-      email: 'tariq.mansoor@mentify.edu',
-      date: 'Sep 03, 2026',
-      status: 'ACTIVE' as const,
-      idCode: 'STU-2026-0843',
+      id: "r2",
+      name: "Tariq Mansoor",
+      role: "STUDENT" as const,
+      email: "tariq.mansoor@mentify.edu",
+      date: "Sep 03, 2026",
+      status: "ACTIVE" as const,
+      idCode: "STU-2026-0843",
     },
     {
-      id: 'r3',
-      name: 'Sarah Jenkins',
-      role: 'TEACHER' as const,
-      email: 'sarah.jenkins@mentify.edu',
-      date: 'Aug 15, 2025',
-      status: 'ACTIVE' as const,
-      idCode: 'TCH-9104',
+      id: "r3",
+      name: "Sarah Jenkins",
+      role: "TEACHER" as const,
+      email: "sarah.jenkins@mentify.edu",
+      date: "Aug 15, 2025",
+      status: "ACTIVE" as const,
+      idCode: "TCH-9104",
     },
     {
-      id: 'r4',
-      name: 'Chloe Lin',
-      role: 'STUDENT' as const,
-      email: 'chloe.lin@mentify.edu',
-      date: 'Sep 08, 2026',
-      status: 'ACTIVE' as const,
-      idCode: 'STU-2026-0846',
+      id: "r4",
+      name: "Chloe Lin",
+      role: "STUDENT" as const,
+      email: "chloe.lin@mentify.edu",
+      date: "Sep 08, 2026",
+      status: "ACTIVE" as const,
+      idCode: "STU-2026-0846",
     },
   ];
 
@@ -178,9 +178,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Saturday, October 17, 2026
               </span>
               <span className="text-slate-300 dark:text-slate-600">·</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Keycloak SSO Realm: mentify-prod</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Keycloak SSO Realm: mentify-prod
+              </span>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Good morning, Alex!</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Good morning, Alex!
+            </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 max-w-xl">
               Platform status is nominal across all 6 microservices. 12 account invitations await
               activation, and 9 institutional examinations are scheduled for next week.
@@ -189,27 +193,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Quick action shortcuts */}
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
               <button
-                onClick={() => onQuickAction('register-student')}
+                onClick={() => onQuickAction("register-student")}
                 className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200/80 dark:border-indigo-800 transition-colors"
               >
                 + Register Student
               </button>
               <button
-                onClick={() => onQuickAction('register-teacher')}
+                onClick={() => onQuickAction("register-teacher")}
                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
               >
                 + Register Teacher
               </button>
-              {role === 'SUPER_ADMIN' && (
+              {role === "SUPER_ADMIN" && (
                 <button
-                  onClick={() => onQuickAction('register-admin')}
+                  onClick={() => onQuickAction("register-admin")}
                   className="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-semibold border border-purple-200 dark:border-purple-800 transition-colors"
                 >
                   + Register Admin
                 </button>
               )}
               <button
-                onClick={() => onNavigate('registrations')}
+                onClick={() => onNavigate("registrations")}
                 className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-200 dark:border-slate-700 transition-colors"
               >
                 View Invitations ({kpis.pendingInvitations})
@@ -221,13 +225,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="md:w-80 p-4 rounded-xl bg-indigo-50/70 dark:bg-slate-800/60 border border-indigo-100 dark:border-slate-700/80 shrink-0">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="text-xs font-bold text-slate-900 dark:text-white">Mentify AI Quick Assist</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                Mentify AI Quick Assist
+              </span>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
               "Summarize platform activity and quiz failure trends for this week."
             </p>
             <button
-              onClick={() => onNavigate('ai-assistant')}
+              onClick={() => onNavigate("ai-assistant")}
               className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 shadow-xs"
             >
               <span>Launch Assistant</span>
@@ -245,7 +251,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           subtitle="Enrolled in school"
           change="+8.4% term-over-term"
           icon={GraduationCap}
-          onClick={() => onNavigate('students')}
+          onClick={() => onNavigate("students")}
         />
         <StatCard
           title="Total Teachers"
@@ -253,7 +259,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           subtitle="4 departments"
           change="+4 hired this month"
           icon={Briefcase}
-          onClick={() => onNavigate('teachers')}
+          onClick={() => onNavigate("teachers")}
         />
         <StatCard
           title="Active Courses"
@@ -261,7 +267,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           subtitle="Across Grades 10-12"
           change="3,290 enrollments"
           icon={BookOpen}
-          onClick={() => onNavigate('courses')}
+          onClick={() => onNavigate("courses")}
         />
         <StatCard
           title="Pending Invitations"
@@ -270,7 +276,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           change="Requires follow-up"
           isPositive={false}
           icon={MailCheck}
-          onClick={() => onNavigate('registrations')}
+          onClick={() => onNavigate("registrations")}
         />
       </div>
 
@@ -321,17 +327,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              {(['7d', '30d', '90d'] as const).map((range) => (
+              {(["7d", "30d", "90d"] as const).map((range) => (
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                     timeRange === range
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
+                  {range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : "90 Days"}
                 </button>
               ))}
             </div>
@@ -425,7 +431,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
-              onClick={() => onNavigate('registrations')}
+              onClick={() => onNavigate("registrations")}
               className="w-full text-center text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               Open Full Registration Operations →
@@ -448,7 +454,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </p>
             </div>
             <button
-              onClick={() => onNavigate('users')}
+              onClick={() => onNavigate("users")}
               className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               View directory ({students.length + teachers.length})
@@ -494,7 +500,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <td className="py-2.5 text-right">
                       <button
                         onClick={() =>
-                          onNavigate(user.role === 'STUDENT' ? 'students' : 'teachers')
+                          onNavigate(user.role === "STUDENT" ? "students" : "teachers")
                         }
                         className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
                       >
@@ -516,7 +522,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Upcoming Academic Events
               </h3>
               <button
-                onClick={() => onNavigate('calendar')}
+                onClick={() => onNavigate("calendar")}
                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
               >
                 Calendar
@@ -535,11 +541,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div className="flex items-center justify-between mb-1">
                     <span
                       className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${
-                        evt.type === 'EXAM'
-                          ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
-                          : evt.type === 'DEADLINE'
-                          ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
-                          : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
+                        evt.type === "EXAM"
+                          ? "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
+                          : evt.type === "DEADLINE"
+                            ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
+                            : "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
                       }`}
                     >
                       {evt.type}
@@ -562,7 +568,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
-              onClick={() => onNavigate('calendar')}
+              onClick={() => onNavigate("calendar")}
               className="w-full text-center text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               Open Academic Calendar →
@@ -583,7 +589,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </p>
           </div>
           <button
-            onClick={() => onNavigate('audit')}
+            onClick={() => onNavigate("audit")}
             className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             Audit Center →
@@ -605,9 +611,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {log.action}
                   </span>
                   <span className="text-[11px] text-slate-400 tabular-nums">
-                    {new Date(log.timestamp).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
+                    {new Date(log.timestamp).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </span>
                 </div>

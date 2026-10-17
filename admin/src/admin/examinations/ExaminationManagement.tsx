@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { Award, Calendar, Search, Clock, MapPin, Users, CheckCircle2 } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { Examination } from '../types';
+import React, { useState } from "react";
+import { Award, Calendar, Search, Clock, MapPin, Users, CheckCircle2 } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { Examination } from "../types";
 
 interface ExaminationManagementProps {
   examinations: Examination[];
 }
 
 export const ExaminationManagement: React.FC<ExaminationManagementProps> = ({ examinations }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredExams = examinations.filter(
     (e) =>
       e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.courseCode.toLowerCase().includes(searchQuery.toLowerCase())
+      e.courseCode.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -23,7 +23,11 @@ export const ExaminationManagement: React.FC<ExaminationManagementProps> = ({ ex
       <PageHeader
         title="Examination Management"
         description="Formal summative examinations, hall schedules, candidate room allocations, and proctor verification."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Examinations' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Academic Management" },
+          { label: "Examinations" },
+        ]}
       />
 
       {/* Filter and Search Bar */}

@@ -1,26 +1,16 @@
-import React, { useState } from 'react';
-import {
-  Activity,
-  Search,
-  Filter,
-  Shield,
-  Clock,
-  Eye,
-  Key,
-  Database,
-  Code2,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { AuditEvent } from '../types';
+import React, { useState } from "react";
+import { Activity, Search, Filter, Shield, Clock, Eye, Key, Database, Code2 } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { DetailDrawer } from "../components/DetailDrawer";
+import { AuditEvent } from "../types";
 
 interface AuditAndActivityProps {
   logs: AuditEvent[];
 }
 
 export const AuditAndActivity: React.FC<AuditAndActivityProps> = ({ logs }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [selectedLog, setSelectedLog] = useState<AuditEvent | null>(null);
 
   const filteredLogs = logs.filter((log) => {
@@ -29,22 +19,22 @@ export const AuditAndActivity: React.FC<AuditAndActivityProps> = ({ logs }) => {
       log.actorEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.details.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.ipAddress.includes(searchQuery);
-    const matchesCategory = categoryFilter === 'ALL' || log.category === categoryFilter;
+    const matchesCategory = categoryFilter === "ALL" || log.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
   const getCategoryBadge = (cat: string) => {
     switch (cat) {
-      case 'KEYCLOAK_AUTH':
-        return 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800';
-      case 'MATERIAL_SERVICE':
-        return 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800';
-      case 'AI_SERVICE':
-        return 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
-      case 'USER_REGISTRATION':
-        return 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+      case "KEYCLOAK_AUTH":
+        return "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800";
+      case "MATERIAL_SERVICE":
+        return "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800";
+      case "AI_SERVICE":
+        return "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+      case "USER_REGISTRATION":
+        return "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
       default:
-        return 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+        return "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700";
     }
   };
 
@@ -53,7 +43,11 @@ export const AuditAndActivity: React.FC<AuditAndActivityProps> = ({ logs }) => {
       <PageHeader
         title="Audit Logs & Activity"
         description="Immutable compliance event stream across Keycloak Auth, AWS S3 Material Service, and AI inference executions."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Administration' }, { label: 'Audit & Activity' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Administration" },
+          { label: "Audit & Activity" },
+        ]}
       />
 
       {/* Filter Bar */}
@@ -104,16 +98,16 @@ export const AuditAndActivity: React.FC<AuditAndActivityProps> = ({ logs }) => {
                   className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
                 >
                   <td className="py-3 px-4 font-mono text-[11px] text-slate-500 tabular-nums">
-                    {new Date(log.timestamp).toISOString().replace('T', ' ').substring(0, 19)}
+                    {new Date(log.timestamp).toISOString().replace("T", " ").substring(0, 19)}
                   </td>
 
                   <td className="py-3 px-4">
                     <span
                       className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${getCategoryBadge(
-                        log.category
+                        log.category,
                       )}`}
                     >
-                      {log.category.replace('_', ' ')}
+                      {log.category.replace("_", " ")}
                     </span>
                   </td>
 

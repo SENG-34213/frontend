@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   Bell,
@@ -18,9 +18,9 @@ import {
   LogOut,
   User,
   Settings,
-} from 'lucide-react';
-import { AdminRole, NotificationItem } from '../types';
-import { AdminRoute } from './AdminSidebar';
+} from "lucide-react";
+import { AdminRole, NotificationItem } from "../types";
+import { AdminRoute } from "./AdminSidebar";
 
 interface AdminNavbarProps {
   currentRoute: AdminRoute;
@@ -70,37 +70,37 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
         setShowUserMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const routeTitles: Record<AdminRoute, string> = {
-    dashboard: 'Platform Overview',
-    analytics: 'Analytics & Insights',
-    notifications: 'Notification Center',
-    users: 'All Users Directory',
-    students: 'Student Management',
-    teachers: 'Teacher Management',
-    administrators: 'Administrator Oversight',
-    registrations: 'Registrations & Invitations',
-    courses: 'Course Management',
-    enrollments: 'Enrollment Directory',
-    academic: 'Modules & Curriculum',
-    assignments: 'Assignment Oversight',
-    quizzes: 'Quiz Analytics',
-    examinations: 'Examination Management',
-    grades: 'Grades & Results',
-    attendance: 'Attendance Management',
-    materials: 'Learning Materials (AWS S3)',
-    calendar: 'Academic Operations Calendar',
-    communication: 'Communication & Announcements',
-    'ai-assistant': 'Mentify AI Assistant',
-    reports: 'Academic & Audit Reports',
-    audit: 'System Audit & Activity',
-    settings: 'Platform Settings',
-    profile: 'Admin Profile',
+    dashboard: "Platform Overview",
+    analytics: "Analytics & Insights",
+    notifications: "Notification Center",
+    users: "All Users Directory",
+    students: "Student Management",
+    teachers: "Teacher Management",
+    administrators: "Administrator Oversight",
+    registrations: "Registrations & Invitations",
+    courses: "Course Management",
+    enrollments: "Enrollment Directory",
+    academic: "Modules & Curriculum",
+    assignments: "Assignment Oversight",
+    quizzes: "Quiz Analytics",
+    examinations: "Examination Management",
+    grades: "Grades & Results",
+    attendance: "Attendance Management",
+    materials: "Learning Materials (AWS S3)",
+    calendar: "Academic Operations Calendar",
+    communication: "Communication & Announcements",
+    "ai-assistant": "Mentify AI Assistant",
+    reports: "Academic & Audit Reports",
+    audit: "System Audit & Activity",
+    settings: "Platform Settings",
+    profile: "Admin Profile",
   };
 
   return (
@@ -119,10 +119,10 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
           <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
             <span>Admin</span>
             <span>/</span>
-            <span className="capitalize">{currentRoute.replace('-', ' ')}</span>
+            <span className="capitalize">{currentRoute.replace("-", " ")}</span>
           </div>
           <h1 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate">
-            {routeTitles[currentRoute] || 'Mentify Admin'}
+            {routeTitles[currentRoute] || "Mentify Admin"}
           </h1>
         </div>
       </div>
@@ -147,21 +147,21 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
             Role:
           </span>
           <button
-            onClick={() => onRoleChange('ADMIN')}
+            onClick={() => onRoleChange("ADMIN")}
             className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              role === 'ADMIN'
-                ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              role === "ADMIN"
+                ? "bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             ADMIN
           </button>
           <button
-            onClick={() => onRoleChange('SUPER_ADMIN')}
+            onClick={() => onRoleChange("SUPER_ADMIN")}
             className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              role === 'SUPER_ADMIN'
-                ? 'bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-300 shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              role === "SUPER_ADMIN"
+                ? "bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-300 shadow-xs"
+                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             SUPER_ADMIN
@@ -187,7 +187,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowQuickActions(false);
-                  onQuickAction('register-student');
+                  onQuickAction("register-student");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
               >
@@ -197,7 +197,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowQuickActions(false);
-                  onQuickAction('register-teacher');
+                  onQuickAction("register-teacher");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
               >
@@ -205,11 +205,11 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                 <span>Register Teacher</span>
               </button>
 
-              {role === 'SUPER_ADMIN' && (
+              {role === "SUPER_ADMIN" && (
                 <button
                   onClick={() => {
                     setShowQuickActions(false);
-                    onQuickAction('register-admin');
+                    onQuickAction("register-admin");
                   }}
                   className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors text-left"
                 >
@@ -224,7 +224,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowQuickActions(false);
-                  onQuickAction('create-course');
+                  onQuickAction("create-course");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
               >
@@ -234,7 +234,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowQuickActions(false);
-                  onNavigate('registrations');
+                  onNavigate("registrations");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
               >
@@ -244,7 +244,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowQuickActions(false);
-                  onNavigate('calendar');
+                  onNavigate("calendar");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
               >
@@ -257,7 +257,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
 
         {/* Mentify AI Shortcut */}
         <button
-          onClick={() => onNavigate('ai-assistant')}
+          onClick={() => onNavigate("ai-assistant")}
           className="p-2 rounded-lg text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative"
           title="Mentify AI Assistant"
         >
@@ -289,7 +289,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                   </span>
                 </div>
                 <button
-                  onClick={() => onNavigate('notifications')}
+                  onClick={() => onNavigate("notifications")}
                   className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
                   View all
@@ -306,7 +306,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                       setShowNotifications(false);
                     }}
                     className={`p-3 text-left cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors ${
-                      !item.read ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''
+                      !item.read ? "bg-indigo-50/40 dark:bg-indigo-950/20" : ""
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -329,8 +329,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
         <button
           onClick={onToggleTheme}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-xs"
-          title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-          aria-label={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+          title={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
+          aria-label={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
         >
           {isDarkMode ? (
             <>
@@ -359,7 +359,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                 Alex Mercer
               </span>
               <span className="text-[10px] text-slate-400 block leading-tight">
-                {role === 'SUPER_ADMIN' ? 'Super Administrator' : 'Administrator'}
+                {role === "SUPER_ADMIN" ? "Super Administrator" : "Administrator"}
               </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -375,7 +375,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowUserMenu(false);
-                  onNavigate('profile');
+                  onNavigate("profile");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-left"
               >
@@ -386,7 +386,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowUserMenu(false);
-                  onNavigate('settings');
+                  onNavigate("settings");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-left"
               >
@@ -399,7 +399,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowUserMenu(false);
-                  onNavigate('settings');
+                  onNavigate("settings");
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left"
               >

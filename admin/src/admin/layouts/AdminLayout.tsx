@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { AdminSidebar, AdminRoute } from '../components/AdminSidebar';
-import { AdminNavbar } from '../components/AdminNavbar';
-import { ToastContainer, ToastMessage } from '../components/ToastContainer';
+import React, { useState, useEffect } from "react";
+import { AdminSidebar, AdminRoute } from "../components/AdminSidebar";
+import { AdminNavbar } from "../components/AdminNavbar";
+import { ToastContainer, ToastMessage } from "../components/ToastContainer";
 import {
   AdminRole,
   StudentProfile,
@@ -20,8 +20,17 @@ import {
   NotificationItem,
   AuditEvent,
   PlatformKPIs,
-} from '../types';
-import { Search, X, ArrowRight, UserPlus, BookOpen, GraduationCap, Briefcase, Calendar } from 'lucide-react';
+} from "../types";
+import {
+  Search,
+  X,
+  ArrowRight,
+  UserPlus,
+  BookOpen,
+  GraduationCap,
+  Briefcase,
+  Calendar,
+} from "lucide-react";
 
 interface AdminLayoutProps {
   currentRoute: AdminRoute;
@@ -54,52 +63,68 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Keyboard shortcut listener for cmd+k
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setIsSearchOpen((p) => !p);
       }
-      if (e.key === 'Escape' && isSearchOpen) {
+      if (e.key === "Escape" && isSearchOpen) {
         setIsSearchOpen(false);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isSearchOpen]);
 
   const searchIndex: { id: AdminRoute; title: string; category: string }[] = [
-    { id: 'dashboard', title: 'Platform Overview Dashboard', category: 'Overview' },
-    { id: 'analytics', title: 'Analytics & Trend Charts', category: 'Overview' },
-    { id: 'notifications', title: 'System Notifications & Webhooks', category: 'Overview' },
-    { id: 'users', title: 'All Users Management Directory', category: 'User Management' },
-    { id: 'students', title: 'Student Management & Registration Wizard', category: 'User Management' },
-    { id: 'teachers', title: 'Teacher Directory & Credentials', category: 'User Management' },
-    { id: 'administrators', title: 'Administrator Oversight (SUPER_ADMIN)', category: 'User Management' },
-    { id: 'registrations', title: 'Pending Invitations Operations', category: 'User Management' },
-    { id: 'courses', title: 'Course Management & Curriculum', category: 'Academic Management' },
-    { id: 'enrollments', title: 'Student Course Enrollments', category: 'Academic Management' },
-    { id: 'academic', title: 'Modules & Lessons Syllabus', category: 'Academic Management' },
-    { id: 'assignments', title: 'Assignment Oversight & Submissions', category: 'Academic Management' },
-    { id: 'quizzes', title: 'Quiz Performance & Analytics', category: 'Academic Management' },
-    { id: 'examinations', title: 'Examination Timetable & Halls', category: 'Academic Management' },
-    { id: 'grades', title: 'Academic Gradebook & Marks', category: 'Academic Management' },
-    { id: 'attendance', title: 'Attendance Management & Sessions', category: 'Academic Management' },
-    { id: 'materials', title: 'Learning Materials (AWS S3)', category: 'Platform Operations' },
-    { id: 'calendar', title: 'Operations Calendar', category: 'Platform Operations' },
-    { id: 'communication', title: 'Broadcast Communication', category: 'Platform Operations' },
-    { id: 'ai-assistant', title: 'Mentify AI Admin Assistant', category: 'Platform Operations' },
-    { id: 'reports', title: 'Institutional Reports & Exports', category: 'Platform Operations' },
-    { id: 'audit', title: 'System Audit Logs & Security Stream', category: 'Administration' },
-    { id: 'settings', title: 'Platform & Keycloak Settings', category: 'Administration' },
-    { id: 'profile', title: 'Alex Mercer Profile', category: 'Administration' },
+    { id: "dashboard", title: "Platform Overview Dashboard", category: "Overview" },
+    { id: "analytics", title: "Analytics & Trend Charts", category: "Overview" },
+    { id: "notifications", title: "System Notifications & Webhooks", category: "Overview" },
+    { id: "users", title: "All Users Management Directory", category: "User Management" },
+    {
+      id: "students",
+      title: "Student Management & Registration Wizard",
+      category: "User Management",
+    },
+    { id: "teachers", title: "Teacher Directory & Credentials", category: "User Management" },
+    {
+      id: "administrators",
+      title: "Administrator Oversight (SUPER_ADMIN)",
+      category: "User Management",
+    },
+    { id: "registrations", title: "Pending Invitations Operations", category: "User Management" },
+    { id: "courses", title: "Course Management & Curriculum", category: "Academic Management" },
+    { id: "enrollments", title: "Student Course Enrollments", category: "Academic Management" },
+    { id: "academic", title: "Modules & Lessons Syllabus", category: "Academic Management" },
+    {
+      id: "assignments",
+      title: "Assignment Oversight & Submissions",
+      category: "Academic Management",
+    },
+    { id: "quizzes", title: "Quiz Performance & Analytics", category: "Academic Management" },
+    { id: "examinations", title: "Examination Timetable & Halls", category: "Academic Management" },
+    { id: "grades", title: "Academic Gradebook & Marks", category: "Academic Management" },
+    {
+      id: "attendance",
+      title: "Attendance Management & Sessions",
+      category: "Academic Management",
+    },
+    { id: "materials", title: "Learning Materials (AWS S3)", category: "Platform Operations" },
+    { id: "calendar", title: "Operations Calendar", category: "Platform Operations" },
+    { id: "communication", title: "Broadcast Communication", category: "Platform Operations" },
+    { id: "ai-assistant", title: "Mentify AI Admin Assistant", category: "Platform Operations" },
+    { id: "reports", title: "Institutional Reports & Exports", category: "Platform Operations" },
+    { id: "audit", title: "System Audit Logs & Security Stream", category: "Administration" },
+    { id: "settings", title: "Platform & Keycloak Settings", category: "Administration" },
+    { id: "profile", title: "Alex Mercer Profile", category: "Administration" },
   ];
 
   const searchResults = searchIndex.filter((item) => {
-    if (item.id === 'administrators' && role !== 'SUPER_ADMIN') return false;
+    if (item.id === "administrators" && role !== "SUPER_ADMIN") return false;
     return (
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -107,7 +132,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   });
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors ${isDarkMode ? 'dark' : ''}`}>
+    <div
+      className={`min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors ${isDarkMode ? "dark" : ""}`}
+    >
       {/* Sidebar */}
       <AdminSidebar
         currentRoute={currentRoute}
@@ -137,9 +164,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         />
 
         {/* Viewport Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {children}
-        </main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">{children}</main>
       </div>
 
       {/* Toast Notifications */}
@@ -181,7 +206,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     onClick={() => {
                       onNavigate(item.id);
                       setIsSearchOpen(false);
-                      setSearchQuery('');
+                      setSearchQuery("");
                     }}
                     className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 text-left transition-colors group"
                   >

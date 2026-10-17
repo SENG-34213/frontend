@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   MessageSquare,
   Search,
@@ -8,9 +8,9 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { UserAvatar } from '../components/UserAvatar';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { UserAvatar } from "../components/UserAvatar";
 
 interface Announcement {
   id: string;
@@ -23,33 +23,33 @@ interface Announcement {
 }
 
 export const CommunicationManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'announcements' | 'channels'>('announcements');
+  const [activeTab, setActiveTab] = useState<"announcements" | "channels">("announcements");
   const [announcements, setAnnouncements] = useState<Announcement[]>([
     {
-      id: 'ann-1',
-      title: 'Midterm Examination Schedule Published (Fall 2026)',
+      id: "ann-1",
+      title: "Midterm Examination Schedule Published (Fall 2026)",
       content:
-        'All examination timetables, room assignments, and student proctoring protocols for Grades 10-12 are now synchronized in the platform.',
-      audience: 'All Students & Faculty',
-      author: 'Alex Mercer (Platform Operations)',
-      date: 'Oct 16, 2026 · 09:30 AM',
+        "All examination timetables, room assignments, and student proctoring protocols for Grades 10-12 are now synchronized in the platform.",
+      audience: "All Students & Faculty",
+      author: "Alex Mercer (Platform Operations)",
+      date: "Oct 16, 2026 · 09:30 AM",
       views: 1240,
     },
     {
-      id: 'ann-2',
-      title: 'Scheduled LMS System Maintenance Window',
+      id: "ann-2",
+      title: "Scheduled LMS System Maintenance Window",
       content:
-        'Keycloak SSO authentication realm will perform routine certificate rotation on Sunday at 02:00 AM UTC. No coursework disruption expected.',
-      audience: 'All Users',
-      author: 'Alex Mercer (Platform Operations)',
-      date: 'Oct 14, 2026 · 04:15 PM',
+        "Keycloak SSO authentication realm will perform routine certificate rotation on Sunday at 02:00 AM UTC. No coursework disruption expected.",
+      audience: "All Users",
+      author: "Alex Mercer (Platform Operations)",
+      date: "Oct 14, 2026 · 04:15 PM",
       views: 890,
     },
   ]);
 
-  const [newTitle, setNewTitle] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [newAudience, setNewAudience] = useState('All Students & Faculty');
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+  const [newAudience, setNewAudience] = useState("All Students & Faculty");
   const [isComposerOpen, setIsComposerOpen] = useState(false);
 
   const handlePostAnnouncement = (e: React.FormEvent) => {
@@ -61,14 +61,14 @@ export const CommunicationManagement: React.FC = () => {
       title: newTitle,
       content: newContent,
       audience: newAudience,
-      author: 'Alex Mercer (Administrator)',
-      date: 'Just now',
+      author: "Alex Mercer (Administrator)",
+      date: "Just now",
       views: 1,
     };
 
     setAnnouncements([created, ...announcements]);
-    setNewTitle('');
-    setNewContent('');
+    setNewTitle("");
+    setNewContent("");
     setIsComposerOpen(false);
   };
 
@@ -77,7 +77,11 @@ export const CommunicationManagement: React.FC = () => {
       <PageHeader
         title="Communication & Announcements"
         description="Broadcast institutional announcements, manage course discussion channels, and oversee school communications."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Platform Operations' }, { label: 'Communication' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Platform Operations" },
+          { label: "Communication" },
+        ]}
         actions={
           <button
             onClick={() => setIsComposerOpen(true)}

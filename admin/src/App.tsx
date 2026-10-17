@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { AdminLayout } from './admin/layouts/AdminLayout';
-import { AdminRoute } from './admin/components/AdminSidebar';
-import { ToastMessage } from './admin/components/ToastContainer';
+import React, { useState, useEffect } from "react";
+import { AdminLayout } from "./admin/layouts/AdminLayout";
+import { AdminRoute } from "./admin/components/AdminSidebar";
+import { ToastMessage } from "./admin/components/ToastContainer";
 import {
   AdminRole,
   StudentProfile,
@@ -21,7 +21,7 @@ import {
   AuditEvent,
   PlatformKPIs,
   AccountStatus,
-} from './admin/types';
+} from "./admin/types";
 import {
   INITIAL_KPIS,
   MOCK_STUDENTS,
@@ -39,45 +39,45 @@ import {
   MOCK_EVENTS,
   MOCK_NOTIFICATIONS,
   MOCK_AUDIT_LOGS,
-} from './admin/mockData';
+} from "./admin/mockData";
 
 // Screens
-import { AdminDashboard } from './admin/dashboard/AdminDashboard';
-import { UsersManagement } from './admin/users/UsersManagement';
-import { StudentManagement } from './admin/students/StudentManagement';
-import { TeacherManagement } from './admin/teachers/TeacherManagement';
-import { AdminManagement } from './admin/administrators/AdminManagement';
-import { RegistrationsAndInvitations } from './admin/registrations/RegistrationsAndInvitations';
-import { CourseManagement } from './admin/courses/CourseManagement';
-import { EnrollmentManagement } from './admin/enrollments/EnrollmentManagement';
-import { CurriculumManagement } from './admin/academic/CurriculumManagement';
-import { AssignmentOversight } from './admin/assignments/AssignmentOversight';
-import { QuizManagement } from './admin/quizzes/QuizManagement';
-import { ExaminationManagement } from './admin/examinations/ExaminationManagement';
-import { GradesAndResults } from './admin/grades/GradesAndResults';
-import { AttendanceManagement } from './admin/attendance/AttendanceManagement';
-import { LearningMaterialManagement } from './admin/materials/LearningMaterialManagement';
-import { AdminCalendar } from './admin/calendar/AdminCalendar';
-import { CommunicationManagement } from './admin/communication/CommunicationManagement';
-import { NotificationCenter } from './admin/notifications/NotificationCenter';
-import { MentifyAIAssistant } from './admin/ai-assistant/MentifyAIAssistant';
-import { AnalyticsDashboard } from './admin/analytics/AnalyticsDashboard';
-import { ReportsManagement } from './admin/reports/ReportsManagement';
-import { AuditAndActivity } from './admin/audit/AuditAndActivity';
-import { AdminProfile } from './admin/profile/AdminProfile';
-import { AdminSettings } from './admin/settings/AdminSettings';
+import { AdminDashboard } from "./admin/dashboard/AdminDashboard";
+import { UsersManagement } from "./admin/users/UsersManagement";
+import { StudentManagement } from "./admin/students/StudentManagement";
+import { TeacherManagement } from "./admin/teachers/TeacherManagement";
+import { AdminManagement } from "./admin/administrators/AdminManagement";
+import { RegistrationsAndInvitations } from "./admin/registrations/RegistrationsAndInvitations";
+import { CourseManagement } from "./admin/courses/CourseManagement";
+import { EnrollmentManagement } from "./admin/enrollments/EnrollmentManagement";
+import { CurriculumManagement } from "./admin/academic/CurriculumManagement";
+import { AssignmentOversight } from "./admin/assignments/AssignmentOversight";
+import { QuizManagement } from "./admin/quizzes/QuizManagement";
+import { ExaminationManagement } from "./admin/examinations/ExaminationManagement";
+import { GradesAndResults } from "./admin/grades/GradesAndResults";
+import { AttendanceManagement } from "./admin/attendance/AttendanceManagement";
+import { LearningMaterialManagement } from "./admin/materials/LearningMaterialManagement";
+import { AdminCalendar } from "./admin/calendar/AdminCalendar";
+import { CommunicationManagement } from "./admin/communication/CommunicationManagement";
+import { NotificationCenter } from "./admin/notifications/NotificationCenter";
+import { MentifyAIAssistant } from "./admin/ai-assistant/MentifyAIAssistant";
+import { AnalyticsDashboard } from "./admin/analytics/AnalyticsDashboard";
+import { ReportsManagement } from "./admin/reports/ReportsManagement";
+import { AuditAndActivity } from "./admin/audit/AuditAndActivity";
+import { AdminProfile } from "./admin/profile/AdminProfile";
+import { AdminSettings } from "./admin/settings/AdminSettings";
 
 export default function App() {
-  const [currentRoute, setCurrentRoute] = useState<AdminRoute>('dashboard');
-  const [role, setRole] = useState<AdminRole>('SUPER_ADMIN');
+  const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
+  const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
   // Sync theme with HTML document
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   }, [isDarkMode]);
 
@@ -93,7 +93,8 @@ export default function App() {
   const [quizzes, setQuizzes] = useState<Quiz[]>(MOCK_QUIZZES);
   const [examinations, setExaminations] = useState<Examination[]>(MOCK_EXAMINATIONS);
   const [grades, setGrades] = useState<GradeRecord[]>(MOCK_GRADES);
-  const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>(MOCK_ATTENDANCE_SESSIONS);
+  const [attendanceSessions, setAttendanceSessions] =
+    useState<AttendanceSession[]>(MOCK_ATTENDANCE_SESSIONS);
   const [materials, setMaterials] = useState<LearningMaterial[]>(MOCK_MATERIALS);
   const [events, setEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
@@ -106,7 +107,7 @@ export default function App() {
   const [openAdminWizard, setOpenAdminWizard] = useState(false);
   const [openCourseModal, setOpenCourseModal] = useState(false);
 
-  const addToast = (type: 'success' | 'error' | 'info', title: string, description?: string) => {
+  const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
     const newToast: ToastMessage = {
       id: `toast-${Date.now()}-${Math.random()}`,
       type,
@@ -125,41 +126,37 @@ export default function App() {
 
   const handleResendInvitation = (email: string, targetRole: string) => {
     addToast(
-      'success',
-      'Invitation Dispatched',
-      `Keycloak temporary password activation link dispatched to ${email} (${targetRole}).`
+      "success",
+      "Invitation Dispatched",
+      `Keycloak temporary password activation link dispatched to ${email} (${targetRole}).`,
     );
 
     // Record audit event
     const newLog: AuditEvent = {
       id: `aud-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      actorEmail: 'alex.mercer@mentify.edu',
+      actorEmail: "alex.mercer@mentify.edu",
       actorRole: role,
-      category: 'KEYCLOAK_AUTH',
-      action: 'RESEND_INVITATION',
+      category: "KEYCLOAK_AUTH",
+      action: "RESEND_INVITATION",
       details: `Dispatched Keycloak credential email to ${email}`,
-      ipAddress: '192.168.10.45',
-      payloadJson: JSON.stringify({ email, targetRole, realm: 'mentify-prod' }, null, 2),
+      ipAddress: "192.168.10.45",
+      payloadJson: JSON.stringify({ email, targetRole, realm: "mentify-prod" }, null, 2),
     };
     setAuditLogs((prev) => [newLog, ...prev]);
   };
 
   const handleUpdateUserStatus = (userId: string, newStatus: AccountStatus) => {
-    setStudents((prev) =>
-      prev.map((s) => (s.id === userId ? { ...s, status: newStatus } : s))
-    );
-    setTeachers((prev) =>
-      prev.map((t) => (t.id === userId ? { ...t, status: newStatus } : t))
-    );
+    setStudents((prev) => prev.map((s) => (s.id === userId ? { ...s, status: newStatus } : s)));
+    setTeachers((prev) => prev.map((t) => (t.id === userId ? { ...t, status: newStatus } : t)));
     setAdministrators((prev) =>
-      prev.map((a) => (a.id === userId ? { ...a, status: newStatus } : a))
+      prev.map((a) => (a.id === userId ? { ...a, status: newStatus } : a)),
     );
 
     addToast(
-      'success',
-      'Account Status Updated',
-      `User account has been set to ${newStatus}. Keycloak tokens updated.`
+      "success",
+      "Account Status Updated",
+      `User account has been set to ${newStatus}. Keycloak tokens updated.`,
     );
   };
 
@@ -171,9 +168,9 @@ export default function App() {
       pendingInvitations: prev.pendingInvitations + 1,
     }));
     addToast(
-      'success',
-      'Student Registered',
-      `${newStudent.firstName} ${newStudent.lastName} provisioned with ID ${newStudent.studentId}.`
+      "success",
+      "Student Registered",
+      `${newStudent.firstName} ${newStudent.lastName} provisioned with ID ${newStudent.studentId}.`,
     );
   };
 
@@ -185,18 +182,18 @@ export default function App() {
       pendingInvitations: prev.pendingInvitations + 1,
     }));
     addToast(
-      'success',
-      'Teacher Registered',
-      `${newTeacher.firstName} ${newTeacher.lastName} onboarded with Code ${newTeacher.teacherCode}.`
+      "success",
+      "Teacher Registered",
+      `${newTeacher.firstName} ${newTeacher.lastName} onboarded with Code ${newTeacher.teacherCode}.`,
     );
   };
 
   const handleAddAdministrator = (newAdmin: AdministratorProfile) => {
     setAdministrators((prev) => [newAdmin, ...prev]);
     addToast(
-      'success',
-      'Administrator Registered',
-      `${newAdmin.firstName} ${newAdmin.lastName} registered with Admin Code ${newAdmin.adminCode}.`
+      "success",
+      "Administrator Registered",
+      `${newAdmin.firstName} ${newAdmin.lastName} registered with Admin Code ${newAdmin.adminCode}.`,
     );
   };
 
@@ -207,64 +204,64 @@ export default function App() {
       totalCourses: prev.totalCourses + 1,
     }));
     addToast(
-      'success',
-      'Course Created',
-      `${newCourse.code} (${newCourse.title}) successfully provisioned.`
+      "success",
+      "Course Created",
+      `${newCourse.code} (${newCourse.title}) successfully provisioned.`,
     );
   };
 
   const handleUpdateEnrollmentStatus = (enrId: string, status: any) => {
-    setEnrollments((prev) =>
-      prev.map((e) => (e.id === enrId ? { ...e, status } : e))
-    );
-    addToast('success', 'Enrollment Approved', 'Student course roster validated in PostgreSQL.');
+    setEnrollments((prev) => prev.map((e) => (e.id === enrId ? { ...e, status } : e)));
+    addToast("success", "Enrollment Approved", "Student course roster validated in PostgreSQL.");
   };
 
   const handleUploadMaterial = (newMat: LearningMaterial) => {
     setMaterials((prev) => [newMat, ...prev]);
     addToast(
-      'success',
-      'Material Uploaded',
-      `Synchronized ${newMat.title} to AWS S3 bucket repository.`
+      "success",
+      "Material Uploaded",
+      `Synchronized ${newMat.title} to AWS S3 bucket repository.`,
     );
   };
 
   const handleAddEvent = (newEvent: AcademicEvent) => {
     setEvents((prev) => [newEvent, ...prev]);
-    addToast('success', 'Event Scheduled', `Added "${newEvent.title}" to institutional calendar.`);
+    addToast("success", "Event Scheduled", `Added "${newEvent.title}" to institutional calendar.`);
   };
 
   const handleMarkNotificationRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
   const handleMarkAllNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    addToast('info', 'All notifications marked as read');
+    addToast("info", "All notifications marked as read");
   };
 
   const handleQuickAction = (action: string) => {
     switch (action) {
-      case 'register-student':
-        setCurrentRoute('students');
+      case "register-student":
+        setCurrentRoute("students");
         setOpenStudentWizard(true);
         break;
-      case 'register-teacher':
-        setCurrentRoute('teachers');
+      case "register-teacher":
+        setCurrentRoute("teachers");
         setOpenTeacherWizard(true);
         break;
-      case 'register-admin':
-        if (role === 'SUPER_ADMIN') {
-          setCurrentRoute('administrators');
+      case "register-admin":
+        if (role === "SUPER_ADMIN") {
+          setCurrentRoute("administrators");
           setOpenAdminWizard(true);
         } else {
-          addToast('error', 'Unauthorized', 'Super Administrator role required to register admins.');
+          addToast(
+            "error",
+            "Unauthorized",
+            "Super Administrator role required to register admins.",
+          );
         }
         break;
-      case 'create-course':
-        setCurrentRoute('courses');
+      case "create-course":
+        setCurrentRoute("courses");
         setOpenCourseModal(true);
         break;
       default:
@@ -293,7 +290,7 @@ export default function App() {
       onQuickAction={handleQuickAction}
     >
       {/* Route Views */}
-      {currentRoute === 'dashboard' && (
+      {currentRoute === "dashboard" && (
         <AdminDashboard
           kpis={kpis}
           students={students}
@@ -307,7 +304,7 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'users' && (
+      {currentRoute === "users" && (
         <UsersManagement
           students={students}
           teachers={teachers}
@@ -315,12 +312,12 @@ export default function App() {
           currentAdminRole={role}
           onUpdateUserStatus={handleUpdateUserStatus}
           onResendInvitation={handleResendInvitation}
-          onRegisterStudent={() => handleQuickAction('register-student')}
-          onRegisterTeacher={() => handleQuickAction('register-teacher')}
+          onRegisterStudent={() => handleQuickAction("register-student")}
+          onRegisterTeacher={() => handleQuickAction("register-teacher")}
         />
       )}
 
-      {currentRoute === 'students' && (
+      {currentRoute === "students" && (
         <StudentManagement
           students={students}
           enrollments={enrollments}
@@ -332,7 +329,7 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'teachers' && (
+      {currentRoute === "teachers" && (
         <TeacherManagement
           teachers={teachers}
           courses={courses}
@@ -342,18 +339,18 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'administrators' && (
+      {currentRoute === "administrators" && (
         <AdminManagement
           administrators={administrators}
           currentRole={role}
           onAddAdministrator={handleAddAdministrator}
           onResendInvitation={handleResendInvitation}
-          onSwitchToSuperAdmin={() => setRole('SUPER_ADMIN')}
+          onSwitchToSuperAdmin={() => setRole("SUPER_ADMIN")}
           showRegistrationWizardDirectly={openAdminWizard}
         />
       )}
 
-      {currentRoute === 'registrations' && (
+      {currentRoute === "registrations" && (
         <RegistrationsAndInvitations
           students={students}
           teachers={teachers}
@@ -362,7 +359,7 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'courses' && (
+      {currentRoute === "courses" && (
         <CourseManagement
           courses={courses}
           teachers={teachers}
@@ -374,7 +371,7 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'enrollments' && (
+      {currentRoute === "enrollments" && (
         <EnrollmentManagement
           enrollments={enrollments}
           courses={courses}
@@ -382,31 +379,21 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'academic' && (
+      {currentRoute === "academic" && (
         <CurriculumManagement curriculum={curriculum} courses={courses} />
       )}
 
-      {currentRoute === 'assignments' && (
-        <AssignmentOversight assignments={assignments} />
-      )}
+      {currentRoute === "assignments" && <AssignmentOversight assignments={assignments} />}
 
-      {currentRoute === 'quizzes' && (
-        <QuizManagement quizzes={quizzes} />
-      )}
+      {currentRoute === "quizzes" && <QuizManagement quizzes={quizzes} />}
 
-      {currentRoute === 'examinations' && (
-        <ExaminationManagement examinations={examinations} />
-      )}
+      {currentRoute === "examinations" && <ExaminationManagement examinations={examinations} />}
 
-      {currentRoute === 'grades' && (
-        <GradesAndResults grades={grades} />
-      )}
+      {currentRoute === "grades" && <GradesAndResults grades={grades} />}
 
-      {currentRoute === 'attendance' && (
-        <AttendanceManagement sessions={attendanceSessions} />
-      )}
+      {currentRoute === "attendance" && <AttendanceManagement sessions={attendanceSessions} />}
 
-      {currentRoute === 'materials' && (
+      {currentRoute === "materials" && (
         <LearningMaterialManagement
           materials={materials}
           courses={courses}
@@ -414,15 +401,11 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'calendar' && (
-        <AdminCalendar events={events} onAddEvent={handleAddEvent} />
-      )}
+      {currentRoute === "calendar" && <AdminCalendar events={events} onAddEvent={handleAddEvent} />}
 
-      {currentRoute === 'communication' && (
-        <CommunicationManagement />
-      )}
+      {currentRoute === "communication" && <CommunicationManagement />}
 
-      {currentRoute === 'notifications' && (
+      {currentRoute === "notifications" && (
         <NotificationCenter
           notifications={notifications}
           onMarkRead={handleMarkNotificationRead}
@@ -431,27 +414,17 @@ export default function App() {
         />
       )}
 
-      {currentRoute === 'ai-assistant' && (
-        <MentifyAIAssistant />
-      )}
+      {currentRoute === "ai-assistant" && <MentifyAIAssistant />}
 
-      {currentRoute === 'analytics' && (
-        <AnalyticsDashboard kpis={kpis} />
-      )}
+      {currentRoute === "analytics" && <AnalyticsDashboard kpis={kpis} />}
 
-      {currentRoute === 'reports' && (
-        <ReportsManagement />
-      )}
+      {currentRoute === "reports" && <ReportsManagement />}
 
-      {currentRoute === 'audit' && (
-        <AuditAndActivity logs={auditLogs} />
-      )}
+      {currentRoute === "audit" && <AuditAndActivity logs={auditLogs} />}
 
-      {currentRoute === 'profile' && (
-        <AdminProfile role={role} />
-      )}
+      {currentRoute === "profile" && <AdminProfile role={role} />}
 
-      {currentRoute === 'settings' && (
+      {currentRoute === "settings" && (
         <AdminSettings
           role={role}
           isDarkMode={isDarkMode}

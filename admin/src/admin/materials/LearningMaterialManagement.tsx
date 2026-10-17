@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FolderLock,
   Upload,
@@ -14,11 +14,11 @@ import {
   X,
   HardDrive,
   ShieldCheck,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { LearningMaterial, Course } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { DetailDrawer } from "../components/DetailDrawer";
+import { LearningMaterial, Course } from "../types";
 
 interface LearningMaterialManagementProps {
   materials: LearningMaterial[];
@@ -31,18 +31,18 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
   courses,
   onUploadMaterial,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('ALL');
-  const [courseFilter, setCourseFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [courseFilter, setCourseFilter] = useState("ALL");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
 
   // Upload Form
   const [formData, setFormData] = useState({
-    title: '',
-    courseCode: 'MATH-401',
-    fileType: 'PDF' as 'PDF' | 'VIDEO' | 'SLIDES' | 'DOCUMENT' | 'AUDIO',
-    fileName: 'lecture_notes_fall2026.pdf',
+    title: "",
+    courseCode: "MATH-401",
+    fileType: "PDF" as "PDF" | "VIDEO" | "SLIDES" | "DOCUMENT" | "AUDIO",
+    fileName: "lecture_notes_fall2026.pdf",
     fileSizeMb: 5.4,
   });
 
@@ -51,18 +51,18 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
       m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       m.s3Key.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === 'ALL' || m.fileType === typeFilter;
-    const matchesCourse = courseFilter === 'ALL' || m.courseCode === courseFilter;
+    const matchesType = typeFilter === "ALL" || m.fileType === typeFilter;
+    const matchesCourse = courseFilter === "ALL" || m.courseCode === courseFilter;
     return matchesSearch && matchesType && matchesCourse;
   });
 
   const getFileIcon = (type: string) => {
     switch (type) {
-      case 'PDF':
+      case "PDF":
         return <FileText className="w-4 h-4 text-rose-500" />;
-      case 'VIDEO':
+      case "VIDEO":
         return <Video className="w-4 h-4 text-purple-500" />;
-      case 'SLIDES':
+      case "SLIDES":
         return <Presentation className="w-4 h-4 text-amber-500" />;
       default:
         return <File className="w-4 h-4 text-indigo-500" />;
@@ -76,23 +76,23 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
     const newMat: LearningMaterial = {
       id: `mat-${Date.now()}`,
       title: formData.title,
-      courseId: 'crs-101',
+      courseId: "crs-101",
       courseCode: formData.courseCode,
       fileType: formData.fileType,
       s3Key: `courses/${formData.courseCode.toLowerCase()}/materials/${formData.fileName}`,
       fileSizeBytes: Math.round(formData.fileSizeMb * 1024 * 1024),
       uploadedAt: new Date().toISOString(),
-      uploadedBy: 'Alex Mercer',
-      status: 'READY',
+      uploadedBy: "Alex Mercer",
+      status: "READY",
     };
 
     onUploadMaterial(newMat);
     setIsUploadOpen(false);
     setFormData({
-      title: '',
-      courseCode: 'MATH-401',
-      fileType: 'PDF',
-      fileName: 'lecture_notes_fall2026.pdf',
+      title: "",
+      courseCode: "MATH-401",
+      fileType: "PDF",
+      fileName: "lecture_notes_fall2026.pdf",
       fileSizeMb: 5.4,
     });
   };
@@ -104,7 +104,11 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
       <PageHeader
         title="Learning Material Management (AWS S3)"
         description="Inspect cloud storage asset repositories, upload pedagogical media, and verify student access integrity."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Platform Operations' }, { label: 'Learning Materials' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Platform Operations" },
+          { label: "Learning Materials" },
+        ]}
         actions={
           <button
             onClick={() => setIsUploadOpen(true)}
@@ -400,7 +404,8 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
               <div className="col-span-2 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 block mb-0.5">Uploaded By</span>
                 <span className="font-medium text-slate-900 dark:text-white">
-                  {previewMaterial.uploadedBy} on {new Date(previewMaterial.uploadedAt).toLocaleString()}
+                  {previewMaterial.uploadedBy} on{" "}
+                  {new Date(previewMaterial.uploadedAt).toLocaleString()}
                 </span>
               </div>
             </div>

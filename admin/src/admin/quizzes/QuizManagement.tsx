@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import { HelpCircle, Search, BarChart3, Clock, CheckCircle2, Award } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { Quiz } from '../types';
+import React, { useState } from "react";
+import { HelpCircle, Search, BarChart3, Clock, CheckCircle2, Award } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { DetailDrawer } from "../components/DetailDrawer";
+import { Quiz } from "../types";
 
 interface QuizManagementProps {
   quizzes: Quiz[];
 }
 
 export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
   const filteredQuizzes = quizzes.filter(
     (q) =>
       q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.teacherName.toLowerCase().includes(searchQuery.toLowerCase())
+      q.teacherName.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -25,17 +25,21 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
       <PageHeader
         title="Quiz Management & Analytics"
         description="Monitor automated formative quiz assessments, student attempt distributions, score medians, and question pass rates."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Quizzes' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Academic Management" }, { label: "Quizzes" }]}
       />
 
       {/* Analytics Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <span className="text-xs text-slate-500 block mb-1">Average Institutional Quiz Score</span>
+          <span className="text-xs text-slate-500 block mb-1">
+            Average Institutional Quiz Score
+          </span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
             83.6%
           </span>
-          <span className="text-[11px] text-emerald-600 block mt-1">+2.4% vs midterm benchmark</span>
+          <span className="text-[11px] text-emerald-600 block mt-1">
+            +2.4% vs midterm benchmark
+          </span>
         </div>
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500 block mb-1">Total Quiz Attempts Recorded</span>
@@ -166,10 +170,10 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
               </h5>
               <div className="space-y-2">
                 {[
-                  { range: '90 - 100% (High Distinction)', count: 28, pct: 42 },
-                  { range: '80 - 89% (Distinction)', count: 24, pct: 36 },
-                  { range: '70 - 79% (Credit)', count: 9, pct: 14 },
-                  { range: '< 70% (Below Threshold)', count: 5, pct: 8 },
+                  { range: "90 - 100% (High Distinction)", count: 28, pct: 42 },
+                  { range: "80 - 89% (Distinction)", count: 24, pct: 36 },
+                  { range: "70 - 79% (Credit)", count: 9, pct: 14 },
+                  { range: "< 70% (Below Threshold)", count: 5, pct: 8 },
                 ].map((item, idx) => (
                   <div key={idx} className="space-y-1">
                     <div className="flex justify-between text-[11px]">
@@ -179,7 +183,10 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${item.pct}%` }} />
+                      <div
+                        className="h-full bg-indigo-600 rounded-full"
+                        style={{ width: `${item.pct}%` }}
+                      />
                     </div>
                   </div>
                 ))}

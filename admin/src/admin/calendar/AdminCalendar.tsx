@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -9,9 +9,9 @@ import {
   Filter,
   X,
   CheckCircle2,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { AcademicEvent } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { AcademicEvent } from "../types";
 
 interface AdminCalendarProps {
   events: AcademicEvent[];
@@ -19,22 +19,22 @@ interface AdminCalendarProps {
 }
 
 export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent }) => {
-  const [view, setView] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
-  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
+  const [typeFilter, setTypeFilter] = useState("ALL");
   const [selectedEvent, setSelectedEvent] = useState<AcademicEvent | null>(null);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
 
   // New Event form
   const [newEvent, setNewEvent] = useState({
-    title: '',
-    type: 'EXAM' as 'CLASS' | 'EXAM' | 'QUIZ' | 'DEADLINE' | 'SESSION',
-    date: '2026-10-26',
-    time: '10:00 AM - 12:00 PM',
-    location: 'Science Hall Auditorium B',
-    courseCode: 'MATH-401',
+    title: "",
+    type: "EXAM" as "CLASS" | "EXAM" | "QUIZ" | "DEADLINE" | "SESSION",
+    date: "2026-10-26",
+    time: "10:00 AM - 12:00 PM",
+    location: "Science Hall Auditorium B",
+    courseCode: "MATH-401",
   });
 
-  const filteredEvents = events.filter((e) => typeFilter === 'ALL' || e.type === typeFilter);
+  const filteredEvents = events.filter((e) => typeFilter === "ALL" || e.type === typeFilter);
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,34 +48,34 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
       time: newEvent.time,
       location: newEvent.location,
       courseCode: newEvent.courseCode,
-      status: 'SCHEDULED',
+      status: "SCHEDULED",
     };
 
     onAddEvent(created);
     setIsAddEventOpen(false);
     setNewEvent({
-      title: '',
-      type: 'EXAM',
-      date: '2026-10-26',
-      time: '10:00 AM - 12:00 PM',
-      location: 'Science Hall Auditorium B',
-      courseCode: 'MATH-401',
+      title: "",
+      type: "EXAM",
+      date: "2026-10-26",
+      time: "10:00 AM - 12:00 PM",
+      location: "Science Hall Auditorium B",
+      courseCode: "MATH-401",
     });
   };
 
   const getEventBadgeClass = (type: string) => {
     switch (type) {
-      case 'EXAM':
-        return 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800';
-      case 'DEADLINE':
-        return 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
-      case 'QUIZ':
-        return 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800';
-      case 'SESSION':
-        return 'bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800';
-      case 'CLASS':
+      case "EXAM":
+        return "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800";
+      case "DEADLINE":
+        return "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+      case "QUIZ":
+        return "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800";
+      case "SESSION":
+        return "bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800";
+      case "CLASS":
       default:
-        return 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800';
+        return "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800";
     }
   };
 
@@ -100,7 +100,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
       <PageHeader
         title="Academic Operations Calendar"
         description="Master timetable for examinations, course lectures, assignment cutoff windows, and faculty sessions."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Platform Operations' }, { label: 'Calendar' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Calendar" }]}
         actions={
           <button
             onClick={() => setIsAddEventOpen(true)}
@@ -143,14 +143,14 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
           </select>
 
           <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">
-            {(['month', 'week', 'day', 'agenda'] as const).map((v) => (
+            {(["month", "week", "day", "agenda"] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
                 className={`px-2.5 py-1 font-medium rounded-md capitalize transition-colors ${
                   view === v
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 {v}
@@ -161,7 +161,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
       </div>
 
       {/* Month Grid View */}
-      {view === 'month' && (
+      {view === "month" && (
         <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
           {/* Day of week headers */}
           <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 py-2">
@@ -177,7 +177,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
           {/* Grid cells */}
           <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800">
             {calendarDays.map((cell, idx) => {
-              const dateStr = `2026-10-${String(cell.dayNumber).padStart(2, '0')}`;
+              const dateStr = `2026-10-${String(cell.dayNumber).padStart(2, "0")}`;
               const dayEvents = cell.isCurrentMonth
                 ? filteredEvents.filter((e) => e.date === dateStr)
                 : [];
@@ -188,20 +188,20 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
                   key={idx}
                   className={`min-h-[105px] p-2 flex flex-col justify-between transition-colors ${
                     !cell.isCurrentMonth
-                      ? 'bg-slate-50/40 dark:bg-slate-900/40 text-slate-300 dark:text-slate-600'
+                      ? "bg-slate-50/40 dark:bg-slate-900/40 text-slate-300 dark:text-slate-600"
                       : isToday
-                      ? 'bg-indigo-50/20 dark:bg-indigo-950/20'
-                      : 'hover:bg-slate-50/40 dark:hover:bg-slate-800/20'
+                        ? "bg-indigo-50/20 dark:bg-indigo-950/20"
+                        : "hover:bg-slate-50/40 dark:hover:bg-slate-800/20"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span
                       className={`text-xs font-semibold tabular-nums ${
                         isToday
-                          ? 'w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold'
+                          ? "w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold"
                           : cell.isCurrentMonth
-                          ? 'text-slate-800 dark:text-slate-200'
-                          : 'text-slate-400'
+                            ? "text-slate-800 dark:text-slate-200"
+                            : "text-slate-400"
                       }`}
                     >
                       {cell.dayNumber}
@@ -221,7 +221,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
                         type="button"
                         onClick={() => setSelectedEvent(evt)}
                         className={`w-full text-left p-1 rounded border text-[10px] font-medium line-clamp-1 transition-all hover:scale-[1.02] ${getEventBadgeClass(
-                          evt.type
+                          evt.type,
                         )}`}
                       >
                         {evt.title}
@@ -236,7 +236,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
       )}
 
       {/* Agenda / List View fallback */}
-      {view !== 'month' && (
+      {view !== "month" && (
         <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
             Chronological Agenda & Deadlines
@@ -250,7 +250,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
               <div className="flex items-center gap-3">
                 <span
                   className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${getEventBadgeClass(
-                    evt.type
+                    evt.type,
                   )}`}
                 >
                   {evt.type}
@@ -284,7 +284,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
               <div>
                 <span
                   className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border mb-2 ${getEventBadgeClass(
-                    selectedEvent.type
+                    selectedEvent.type,
                   )}`}
                 >
                   {selectedEvent.type}

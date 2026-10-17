@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -8,32 +8,32 @@ import {
   BookOpen,
   Award,
   Filter,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatCard } from '../components/StatCard';
-import { PlatformKPIs } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatCard } from "../components/StatCard";
+import { PlatformKPIs } from "../types";
 
 interface AnalyticsDashboardProps {
   kpis: PlatformKPIs;
 }
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ kpis }) => {
-  const [timeFilter, setTimeFilter] = useState<'30d' | '90d' | '1y'>('30d');
+  const [timeFilter, setTimeFilter] = useState<"30d" | "90d" | "1y">("30d");
 
   // Distribution chart data
   const departmentEnrollments = [
-    { name: 'Mathematics', count: 1240, percentage: 38 },
-    { name: 'Computer Science', count: 980, percentage: 30 },
-    { name: 'Natural Sciences', count: 650, percentage: 20 },
-    { name: 'Humanities & Social', count: 420, percentage: 12 },
+    { name: "Mathematics", count: 1240, percentage: 38 },
+    { name: "Computer Science", count: 980, percentage: 30 },
+    { name: "Natural Sciences", count: 650, percentage: 20 },
+    { name: "Humanities & Social", count: 420, percentage: 12 },
   ];
 
   const attendanceWeekly = [
-    { day: 'Mon', rate: 96.4 },
-    { day: 'Tue', rate: 95.8 },
-    { day: 'Wed', rate: 97.2 },
-    { day: 'Thu', rate: 94.1 },
-    { day: 'Fri', rate: 92.5 },
+    { day: "Mon", rate: 96.4 },
+    { day: "Tue", rate: 95.8 },
+    { day: "Wed", rate: 97.2 },
+    { day: "Thu", rate: 94.1 },
+    { day: "Fri", rate: 92.5 },
   ];
 
   return (
@@ -41,20 +41,20 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ kpis }) 
       <PageHeader
         title="Institutional Analytics & Reporting"
         description="Cross-service operational intelligence, longitudinal registration velocity, and cohort performance distributions."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Platform Operations' }, { label: 'Analytics' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Analytics" }]}
         actions={
           <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">
-            {(['30d', '90d', '1y'] as const).map((r) => (
+            {(["30d", "90d", "1y"] as const).map((r) => (
               <button
                 key={r}
                 onClick={() => setTimeFilter(r)}
                 className={`px-3 py-1 font-medium rounded-md capitalize transition-colors ${
                   timeFilter === r
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                {r === '30d' ? '30 Days' : r === '90d' ? '90 Days' : 'Past Year'}
+                {r === "30d" ? "30 Days" : r === "90d" ? "90 Days" : "Past Year"}
               </button>
             ))}
           </div>

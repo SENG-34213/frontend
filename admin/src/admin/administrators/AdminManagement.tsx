@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -13,13 +13,13 @@ import {
   ArrowLeft,
   X,
   Send,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { RoleBadge } from '../components/RoleBadge';
-import { StatusBadge } from '../components/StatusBadge';
-import { UserAvatar } from '../components/UserAvatar';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { AdministratorProfile, AdminRole } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { RoleBadge } from "../components/RoleBadge";
+import { StatusBadge } from "../components/StatusBadge";
+import { UserAvatar } from "../components/UserAvatar";
+import { DetailDrawer } from "../components/DetailDrawer";
+import { AdministratorProfile, AdminRole } from "../types";
 
 interface AdminManagementProps {
   administrators: AdministratorProfile[];
@@ -38,36 +38,36 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   onSwitchToSuperAdmin,
   showRegistrationWizardDirectly = false,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedAdmin, setSelectedAdmin] = useState<AdministratorProfile | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
-  const [createdAdminCode, setCreatedAdminCode] = useState('');
+  const [createdAdminCode, setCreatedAdminCode] = useState("");
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    dob: '1988-03-10',
-    nic: '',
-    department: 'Curriculum & Assessment Accreditation',
-    addressLine1: '',
-    city: 'San Jose',
-    district: 'Santa Clara',
-    postalCode: '95112',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dob: "1988-03-10",
+    nic: "",
+    department: "Curriculum & Assessment Accreditation",
+    addressLine1: "",
+    city: "San Jose",
+    district: "Santa Clara",
+    postalCode: "95112",
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Strict role check
-  if (currentRole !== 'SUPER_ADMIN') {
+  if (currentRole !== "SUPER_ADMIN") {
     return (
       <div className="space-y-6">
         <PageHeader
           title="Administrator Management"
           description="Institutional governance and administrative credentials provisioning."
-          breadcrumbs={[{ label: 'Admin' }, { label: 'Administrators' }]}
+          breadcrumbs={[{ label: "Admin" }, { label: "Administrators" }]}
         />
 
         <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center max-w-xl mx-auto space-y-4">
@@ -79,7 +79,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
               Super Administrator Authorization Required
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              According to institutional Keycloak security policies, only accounts with the{' '}
+              According to institutional Keycloak security policies, only accounts with the{" "}
               <strong className="text-slate-700 dark:text-slate-300">SUPER_ADMIN</strong> role can
               view administrator directories or provision new administrative credentials.
             </p>
@@ -110,18 +110,18 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   const validateStep = (step: number) => {
     const errors: Record<string, string> = {};
     if (step === 1) {
-      if (!formData.firstName.trim()) errors.firstName = 'First name is required';
-      if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
-      if (!formData.email.trim() || !formData.email.includes('@'))
-        errors.email = 'Valid institutional admin email is required';
+      if (!formData.firstName.trim()) errors.firstName = "First name is required";
+      if (!formData.lastName.trim()) errors.lastName = "Last name is required";
+      if (!formData.email.trim() || !formData.email.includes("@"))
+        errors.email = "Valid institutional admin email is required";
     }
     if (step === 2) {
-      if (!formData.nic.trim()) errors.nic = 'NIC identifier is required';
-      if (!formData.department.trim()) errors.department = 'Department is required';
+      if (!formData.nic.trim()) errors.nic = "NIC identifier is required";
+      if (!formData.department.trim()) errors.department = "Department is required";
     }
     if (step === 3) {
-      if (!formData.addressLine1.trim()) errors.addressLine1 = 'Address is required';
-      if (!formData.city.trim()) errors.city = 'City is required';
+      if (!formData.addressLine1.trim()) errors.addressLine1 = "Address is required";
+      if (!formData.city.trim()) errors.city = "City is required";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -142,11 +142,11 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       lastName: formData.lastName,
       email: formData.email,
       phone: formData.phone,
-      role: 'ADMIN',
-      status: 'INVITED',
+      role: "ADMIN",
+      status: "INVITED",
       createdAt: new Date().toISOString(),
       department: formData.department,
-      permissions: ['COURSE_OVERSIGHT', 'STUDENT_MANAGEMENT', 'TEACHER_MANAGEMENT'],
+      permissions: ["COURSE_OVERSIGHT", "STUDENT_MANAGEMENT", "TEACHER_MANAGEMENT"],
       dob: formData.dob,
       nic: formData.nic,
       addressLine1: formData.addressLine1,
@@ -162,17 +162,17 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
 
   const resetWizard = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      dob: '1988-03-10',
-      nic: '',
-      department: 'Curriculum & Assessment Accreditation',
-      addressLine1: '',
-      city: 'San Jose',
-      district: 'Santa Clara',
-      postalCode: '95112',
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      dob: "1988-03-10",
+      nic: "",
+      department: "Curriculum & Assessment Accreditation",
+      addressLine1: "",
+      city: "San Jose",
+      district: "Santa Clara",
+      postalCode: "95112",
     });
     setFormErrors({});
     setCurrentStep(1);
@@ -184,7 +184,11 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       <PageHeader
         title="Administrator Management"
         description="Institutional governance, administrator credential provisioning, and role delegation (SUPER_ADMIN Only)."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'User Management' }, { label: 'Administrators' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "User Management" },
+          { label: "Administrators" },
+        ]}
         actions={
           <button
             onClick={() => {
@@ -271,9 +275,9 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                       >
                         Inspect
                       </button>
-                      {admin.status === 'INVITED' && (
+                      {admin.status === "INVITED" && (
                         <button
-                          onClick={() => onResendInvitation(admin.email, 'ADMIN')}
+                          onClick={() => onResendInvitation(admin.email, "ADMIN")}
                           className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
                         >
                           <Send className="w-3 h-3" />
@@ -310,27 +314,27 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
             {currentStep < 4 && (
               <div className="py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                 {[
-                  { step: 1, title: 'Personal Info' },
-                  { step: 2, title: 'Department & NIC' },
-                  { step: 3, title: 'Address & Submit' },
+                  { step: 1, title: "Personal Info" },
+                  { step: 2, title: "Department & NIC" },
+                  { step: 3, title: "Address & Submit" },
                 ].map((s) => (
                   <div key={s.step} className="flex items-center gap-2">
                     <span
                       className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
                         currentStep === s.step
-                          ? 'bg-purple-600 text-white'
+                          ? "bg-purple-600 text-white"
                           : currentStep > s.step
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                            ? "bg-emerald-600 text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                       }`}
                     >
-                      {currentStep > s.step ? '✓' : s.step}
+                      {currentStep > s.step ? "✓" : s.step}
                     </span>
                     <span
                       className={`font-medium ${
                         currentStep === s.step
-                          ? 'text-purple-600 dark:text-purple-400'
-                          : 'text-slate-400'
+                          ? "text-purple-600 dark:text-purple-400"
+                          : "text-slate-400"
                       }`}
                     >
                       {s.title}

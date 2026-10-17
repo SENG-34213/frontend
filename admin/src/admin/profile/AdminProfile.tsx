@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { User, Mail, Phone, MapPin, Shield, CheckCircle2, Key, Calendar } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { RoleBadge } from '../components/RoleBadge';
-import { StatusBadge } from '../components/StatusBadge';
-import { UserAvatar } from '../components/UserAvatar';
-import { AdminRole } from '../types';
+import React, { useState } from "react";
+import { User, Mail, Phone, MapPin, Shield, CheckCircle2, Key, Calendar } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { RoleBadge } from "../components/RoleBadge";
+import { StatusBadge } from "../components/StatusBadge";
+import { UserAvatar } from "../components/UserAvatar";
+import { AdminRole } from "../types";
 
 interface AdminProfileProps {
   role: AdminRole;
 }
 
 export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
-  const [phone, setPhone] = useState('+1 (555) 998-1049');
-  const [address, setAddress] = useState('100 Silicon Park Plaza, Cupertino, CA 95014');
+  const [phone, setPhone] = useState("+1 (555) 998-1049");
+  const [address, setAddress] = useState("100 Silicon Park Plaza, Cupertino, CA 95014");
   const [isSaved, setIsSaved] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -26,7 +26,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
       <PageHeader
         title="Admin Profile"
         description="Personal credentials, contact preferences, institutional role tier, and security attributes."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'My Profile' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "My Profile" }]}
       />
 
       {isSaved && (

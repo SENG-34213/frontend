@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Search,
   Plus,
@@ -14,12 +14,12 @@ import {
   Send,
   Trash2,
   Award,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { UserAvatar } from '../components/UserAvatar';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { TeacherProfile, Course } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { UserAvatar } from "../components/UserAvatar";
+import { DetailDrawer } from "../components/DetailDrawer";
+import { TeacherProfile, Course } from "../types";
 
 interface TeacherManagementProps {
   teachers: TeacherProfile[];
@@ -36,29 +36,29 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   onResendInvitation,
   showRegistrationWizardDirectly = false,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherProfile | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-  const [createdTeacherCode, setCreatedTeacherCode] = useState('');
+  const [createdTeacherCode, setCreatedTeacherCode] = useState("");
 
   // Form Fields
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    dob: '1985-06-20',
-    nic: '',
-    hireDate: '2026-11-01',
-    specializations: ['Applied Mathematics'],
-    addressLine1: '',
-    city: 'San Jose',
-    district: 'Santa Clara',
-    postalCode: '95112',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dob: "1985-06-20",
+    nic: "",
+    hireDate: "2026-11-01",
+    specializations: ["Applied Mathematics"],
+    addressLine1: "",
+    city: "San Jose",
+    district: "Santa Clara",
+    postalCode: "95112",
   });
 
-  const [newSpecInput, setNewSpecInput] = useState('');
+  const [newSpecInput, setNewSpecInput] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const filteredTeachers = teachers.filter((t) => {
@@ -77,7 +77,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
         ...formData,
         specializations: [...formData.specializations, newSpecInput.trim()],
       });
-      setNewSpecInput('');
+      setNewSpecInput("");
     }
   };
 
@@ -91,19 +91,19 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   const validateStep = (step: number) => {
     const errors: Record<string, string> = {};
     if (step === 1) {
-      if (!formData.firstName.trim()) errors.firstName = 'First name is required';
-      if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
-      if (!formData.email.trim() || !formData.email.includes('@'))
-        errors.email = 'Valid institutional faculty email is required';
+      if (!formData.firstName.trim()) errors.firstName = "First name is required";
+      if (!formData.lastName.trim()) errors.lastName = "Last name is required";
+      if (!formData.email.trim() || !formData.email.includes("@"))
+        errors.email = "Valid institutional faculty email is required";
     }
     if (step === 2) {
-      if (!formData.nic.trim()) errors.nic = 'National Identity Card (NIC) is required';
+      if (!formData.nic.trim()) errors.nic = "National Identity Card (NIC) is required";
       if (formData.specializations.length === 0)
-        errors.specializations = 'At least one specialization is required';
+        errors.specializations = "At least one specialization is required";
     }
     if (step === 3) {
-      if (!formData.addressLine1.trim()) errors.addressLine1 = 'Address line 1 is required';
-      if (!formData.city.trim()) errors.city = 'City is required';
+      if (!formData.addressLine1.trim()) errors.addressLine1 = "Address line 1 is required";
+      if (!formData.city.trim()) errors.city = "City is required";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -124,8 +124,8 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
       lastName: formData.lastName,
       email: formData.email,
       phone: formData.phone,
-      role: 'TEACHER',
-      status: 'INVITED',
+      role: "TEACHER",
+      status: "INVITED",
       createdAt: new Date().toISOString(),
       specializations: formData.specializations,
       hireDate: formData.hireDate,
@@ -146,18 +146,18 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
 
   const resetWizard = () => {
     setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      dob: '1985-06-20',
-      nic: '',
-      hireDate: '2026-11-01',
-      specializations: ['Applied Mathematics'],
-      addressLine1: '',
-      city: 'San Jose',
-      district: 'Santa Clara',
-      postalCode: '95112',
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      dob: "1985-06-20",
+      nic: "",
+      hireDate: "2026-11-01",
+      specializations: ["Applied Mathematics"],
+      addressLine1: "",
+      city: "San Jose",
+      district: "Santa Clara",
+      postalCode: "95112",
     });
     setFormErrors({});
     setCurrentStep(1);
@@ -173,7 +173,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
       <PageHeader
         title="Teacher Management"
         description="Faculty directory, departmental specializations, course assignments, and credential onboarding."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'User Management' }, { label: 'Teachers' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "Teachers" }]}
         actions={
           <button
             onClick={() => {
@@ -268,9 +268,9 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                       >
                         Inspect
                       </button>
-                      {teacher.status === 'INVITED' && (
+                      {teacher.status === "INVITED" && (
                         <button
-                          onClick={() => onResendInvitation(teacher.email, 'TEACHER')}
+                          onClick={() => onResendInvitation(teacher.email, "TEACHER")}
                           className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
                         >
                           <Send className="w-3 h-3" />
@@ -308,28 +308,28 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
             {currentStep < 5 && (
               <div className="py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                 {[
-                  { step: 1, title: 'Personal Info' },
-                  { step: 2, title: 'Professional Credentials' },
-                  { step: 3, title: 'Address Info' },
-                  { step: 4, title: 'Review & Submit' },
+                  { step: 1, title: "Personal Info" },
+                  { step: 2, title: "Professional Credentials" },
+                  { step: 3, title: "Address Info" },
+                  { step: 4, title: "Review & Submit" },
                 ].map((s) => (
                   <div key={s.step} className="flex items-center gap-2">
                     <span
                       className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
                         currentStep === s.step
-                          ? 'bg-indigo-600 text-white'
+                          ? "bg-indigo-600 text-white"
                           : currentStep > s.step
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
+                            ? "bg-emerald-600 text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                       }`}
                     >
-                      {currentStep > s.step ? '✓' : s.step}
+                      {currentStep > s.step ? "✓" : s.step}
                     </span>
                     <span
                       className={`hidden sm:inline font-medium ${
                         currentStep === s.step
-                          ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-slate-400'
+                          ? "text-indigo-600 dark:text-indigo-400"
+                          : "text-slate-400"
                       }`}
                     >
                       {s.title}
@@ -463,7 +463,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                         value={newSpecInput}
                         onChange={(e) => setNewSpecInput(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             e.preventDefault();
                             handleAddSpec();
                           }
@@ -498,9 +498,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                       ))}
                     </div>
                     {formErrors.specializations && (
-                      <p className="text-rose-500 text-[11px] mt-1">
-                        {formErrors.specializations}
-                      </p>
+                      <p className="text-rose-500 text-[11px] mt-1">{formErrors.specializations}</p>
                     )}
                   </div>
                 </div>
@@ -642,10 +640,10 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                       setCurrentStep(1);
                       setFormData({
                         ...formData,
-                        firstName: '',
-                        lastName: '',
-                        email: '',
-                        nic: '',
+                        firstName: "",
+                        lastName: "",
+                        email: "",
+                        nic: "",
                       });
                     }}
                     className="px-4 py-2 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"

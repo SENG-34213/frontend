@@ -1,5 +1,5 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React from "react";
+import { X } from "lucide-react";
 
 interface DetailDrawerProps {
   isOpen: boolean;
@@ -7,7 +7,7 @@ interface DetailDrawerProps {
   subtitle?: string;
   onClose: () => void;
   children: React.ReactNode;
-  width?: 'md' | 'lg' | 'xl';
+  width?: "md" | "lg" | "xl";
 }
 
 export const DetailDrawer: React.FC<DetailDrawerProps> = ({
@@ -16,14 +16,14 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   subtitle,
   onClose,
   children,
-  width = 'lg',
+  width = "lg",
 }) => {
   if (!isOpen) return null;
 
   const widthClasses = {
-    md: 'max-w-md',
-    lg: 'max-w-xl',
-    xl: 'max-w-3xl',
+    md: "max-w-md",
+    lg: "max-w-xl",
+    xl: "max-w-3xl",
   };
 
   return (

@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
-import { CalendarCheck2, Search, Filter, Clock, Users, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { AttendanceSession } from '../types';
+import React, { useState } from "react";
+import {
+  CalendarCheck2,
+  Search,
+  Filter,
+  Clock,
+  Users,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { AttendanceSession } from "../types";
 
 interface AttendanceManagementProps {
   sessions: AttendanceSession[];
 }
 
 export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({ sessions }) => {
-  const [courseFilter, setCourseFilter] = useState('ALL');
+  const [courseFilter, setCourseFilter] = useState("ALL");
 
   const filteredSessions = sessions.filter(
-    (s) => courseFilter === 'ALL' || s.courseCode === courseFilter
+    (s) => courseFilter === "ALL" || s.courseCode === courseFilter,
   );
 
   return (
@@ -19,7 +27,11 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({ sess
       <PageHeader
         title="Attendance Management"
         description="Monitor physical classroom, hybrid, and synchronous online session roll calls, compliance rates, and absences."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Attendance' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Academic Management" },
+          { label: "Attendance" },
+        ]}
       />
 
       {/* Aggregate KPIs */}
@@ -29,7 +41,9 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({ sess
           <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
             95.1%
           </span>
-          <span className="text-[11px] text-emerald-600 block mt-1">+1.2% attendance compliance</span>
+          <span className="text-[11px] text-emerald-600 block mt-1">
+            +1.2% attendance compliance
+          </span>
         </div>
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500 block mb-1">Recorded Sessions This Week</span>
@@ -41,7 +55,9 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({ sess
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500 block mb-1">Unexcused Absence Rate</span>
           <span className="text-2xl font-bold text-amber-600 tabular-nums">3.8%</span>
-          <span className="text-[11px] text-slate-400 block mt-1">Automated guardian SMS alerted</span>
+          <span className="text-[11px] text-slate-400 block mt-1">
+            Automated guardian SMS alerted
+          </span>
         </div>
       </div>
 
@@ -89,7 +105,9 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({ sess
                       <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 block">
                         {session.courseCode}
                       </span>
-                      <span className="text-slate-600 dark:text-slate-300">{session.courseTitle}</span>
+                      <span className="text-slate-600 dark:text-slate-300">
+                        {session.courseTitle}
+                      </span>
                     </td>
 
                     <td className="py-3 px-4 font-medium text-slate-900 dark:text-white tabular-nums">
@@ -100,7 +118,7 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({ sess
 
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {session.mode.replace('_', ' ')}
+                        {session.mode.replace("_", " ")}
                       </span>
                     </td>
 

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Search, Filter, UserCheck, BookOpen, Clock, CheckCircle2 } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { EnrollmentRecord, Course } from '../types';
+import React, { useState } from "react";
+import { Search, Filter, UserCheck, BookOpen, Clock, CheckCircle2 } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { EnrollmentRecord, Course } from "../types";
 
 interface EnrollmentManagementProps {
   enrollments: EnrollmentRecord[];
@@ -15,9 +15,9 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
   courses,
   onUpdateEnrollmentStatus,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [courseFilter, setCourseFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [courseFilter, setCourseFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const filteredEnrollments = enrollments.filter((e) => {
     const matchesSearch =
@@ -25,8 +25,8 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
       e.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.courseCode.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCourse = courseFilter === 'ALL' || e.courseCode === courseFilter;
-    const matchesStatus = statusFilter === 'ALL' || e.status === statusFilter;
+    const matchesCourse = courseFilter === "ALL" || e.courseCode === courseFilter;
+    const matchesStatus = statusFilter === "ALL" || e.status === statusFilter;
     return matchesSearch && matchesCourse && matchesStatus;
   });
 
@@ -35,7 +35,11 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
       <PageHeader
         title="Enrollment Management"
         description="Monitor student course rosters, approval states, completion velocity, and institutional quotas."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Enrollments' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Academic Management" },
+          { label: "Enrollments" },
+        ]}
       />
 
       {/* Filter and Search Bar */}
@@ -134,7 +138,7 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                   </td>
 
                   <td className="py-3 px-4 font-semibold text-slate-900 dark:text-white">
-                    {enr.grade || '—'}
+                    {enr.grade || "—"}
                   </td>
 
                   <td className="py-3 px-4">
@@ -142,9 +146,9 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                   </td>
 
                   <td className="py-3 px-4 text-right">
-                    {enr.status === 'PENDING_APPROVAL' ? (
+                    {enr.status === "PENDING_APPROVAL" ? (
                       <button
-                        onClick={() => onUpdateEnrollmentStatus(enr.id, 'ACTIVE')}
+                        onClick={() => onUpdateEnrollmentStatus(enr.id, "ACTIVE")}
                         className="px-2.5 py-1 text-xs font-medium rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100"
                       >
                         Approve Enrollment

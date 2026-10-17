@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface BreadcrumbItem {
   label: string;
@@ -45,9 +45,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {title}
         </h1>
         {description && (
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-            {description}
-          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">{description}</p>
         )}
       </div>
 

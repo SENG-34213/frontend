@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertTriangle, Info, CheckCircle2, X } from 'lucide-react';
+import React from "react";
+import { AlertTriangle, Info, CheckCircle2, X } from "lucide-react";
 
 interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ interface ConfirmationDialogProps {
   consequences?: string[];
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'warning' | 'primary';
+  variant?: "danger" | "warning" | "primary";
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -18,9 +18,9 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   title,
   description,
   consequences,
-  confirmText = 'Confirm Action',
-  cancelText = 'Cancel',
-  variant = 'warning',
+  confirmText = "Confirm Action",
+  cancelText = "Cancel",
+  variant = "warning",
   onConfirm,
   onCancel,
 }) => {
@@ -33,9 +33,9 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   };
 
   const buttonVariants = {
-    danger: 'bg-rose-600 hover:bg-rose-700 text-white focus:ring-rose-500',
-    warning: 'bg-amber-600 hover:bg-amber-700 text-white focus:ring-amber-500',
-    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500',
+    danger: "bg-rose-600 hover:bg-rose-700 text-white focus:ring-rose-500",
+    warning: "bg-amber-600 hover:bg-amber-700 text-white focus:ring-amber-500",
+    primary: "bg-indigo-600 hover:bg-indigo-700 text-white focus:ring-indigo-500",
   };
 
   return (

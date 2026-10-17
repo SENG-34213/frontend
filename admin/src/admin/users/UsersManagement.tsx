@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   Search,
   Filter,
@@ -12,14 +12,22 @@ import {
   ShieldCheck,
   Ban,
   UserCheck,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { RoleBadge } from '../components/RoleBadge';
-import { StatusBadge } from '../components/StatusBadge';
-import { UserAvatar } from '../components/UserAvatar';
-import { ConfirmationDialog } from '../components/ConfirmationDialog';
-import { DetailDrawer } from '../components/DetailDrawer';
-import { BaseUser, StudentProfile, TeacherProfile, AdministratorProfile, AdminRole, UserRole, AccountStatus } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { RoleBadge } from "../components/RoleBadge";
+import { StatusBadge } from "../components/StatusBadge";
+import { UserAvatar } from "../components/UserAvatar";
+import { ConfirmationDialog } from "../components/ConfirmationDialog";
+import { DetailDrawer } from "../components/DetailDrawer";
+import {
+  BaseUser,
+  StudentProfile,
+  TeacherProfile,
+  AdministratorProfile,
+  AdminRole,
+  UserRole,
+  AccountStatus,
+} from "../types";
 
 interface UsersManagementProps {
   students: StudentProfile[];
@@ -42,15 +50,15 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
   onRegisterStudent,
   onRegisterTeacher,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('ALL');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     user: any | null;
-    action: 'ACTIVATE' | 'DEACTIVATE';
-  }>({ isOpen: false, user: null, action: 'DEACTIVATE' });
+    action: "ACTIVATE" | "DEACTIVATE";
+  }>({ isOpen: false, user: null, action: "DEACTIVATE" });
 
   // Merge users for unified directory
   const allUsers = useMemo(() => {
@@ -60,22 +68,22 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
         ...s,
         idCode: s.studentId,
         gradeOrDept: s.grade,
-      })
+      }),
     );
     teachers.forEach((t) =>
       list.push({
         ...t,
         idCode: t.teacherCode,
-        gradeOrDept: t.specializations.join(', '),
-      })
+        gradeOrDept: t.specializations.join(", "),
+      }),
     );
-    if (currentAdminRole === 'SUPER_ADMIN') {
+    if (currentAdminRole === "SUPER_ADMIN") {
       administrators.forEach((a) =>
         list.push({
           ...a,
           idCode: a.adminCode,
           gradeOrDept: a.department,
-        })
+        }),
       );
     }
     return list;
@@ -90,14 +98,14 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
         u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (u.idCode && u.idCode.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
-      const matchesStatus = statusFilter === 'ALL' || u.status === statusFilter;
+      const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
+      const matchesStatus = statusFilter === "ALL" || u.status === statusFilter;
 
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [allUsers, searchQuery, roleFilter, statusFilter]);
 
-  const handleStatusChangeClick = (user: any, action: 'ACTIVATE' | 'DEACTIVATE') => {
+  const handleStatusChangeClick = (user: any, action: "ACTIVATE" | "DEACTIVATE") => {
     setConfirmDialog({
       isOpen: true,
       user,
@@ -107,9 +115,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
 
   const handleConfirmStatusChange = () => {
     if (confirmDialog.user) {
-      const newStatus: AccountStatus = confirmDialog.action === 'ACTIVATE' ? 'ACTIVE' : 'SUSPENDED';
+      const newStatus: AccountStatus = confirmDialog.action === "ACTIVATE" ? "ACTIVE" : "SUSPENDED";
       onUpdateUserStatus(confirmDialog.user.id, newStatus);
-      setConfirmDialog({ isOpen: false, user: null, action: 'DEACTIVATE' });
+      setConfirmDialog({ isOpen: false, user: null, action: "DEACTIVATE" });
     }
   };
 
@@ -118,7 +126,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
       <PageHeader
         title="All Users Management"
         description="Unified institutional directory across Spring Boot identity providers and Keycloak realms."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'User Management' }, { label: 'All Users' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "All Users" }]}
         actions={
           <div className="flex items-center gap-2">
             <button
@@ -162,7 +170,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
             <option value="ALL">All Roles</option>
             <option value="STUDENT">Students</option>
             <option value="TEACHER">Teachers</option>
-            {currentAdminRole === 'SUPER_ADMIN' && <option value="ADMIN">Administrators</option>}
+            {currentAdminRole === "SUPER_ADMIN" && <option value="ADMIN">Administrators</option>}
           </select>
 
           {/* Status Filter */}
@@ -227,7 +235,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                     </td>
 
                     <td className="py-3 px-4 font-mono tabular-nums text-slate-600 dark:text-slate-300">
-                      {user.idCode || '—'}
+                      {user.idCode || "—"}
                     </td>
 
                     <td className="py-3 px-4">
@@ -236,9 +244,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
 
                     <td className="py-3 px-4 text-slate-500 tabular-nums">
                       {new Date(user.createdAt).toLocaleDateString([], {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
                       })}
                     </td>
 
@@ -253,7 +261,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                           View
                         </button>
 
-                        {user.status === 'INVITED' && (
+                        {user.status === "INVITED" && (
                           <button
                             onClick={() => onResendInvitation(user.email, user.role)}
                             className="px-2 py-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-medium flex items-center gap-1"
@@ -264,9 +272,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                           </button>
                         )}
 
-                        {user.status === 'ACTIVE' && (
+                        {user.status === "ACTIVE" && (
                           <button
-                            onClick={() => handleStatusChangeClick(user, 'DEACTIVATE')}
+                            onClick={() => handleStatusChangeClick(user, "DEACTIVATE")}
                             className="px-2 py-1 rounded text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-medium"
                             title="Suspend account access"
                           >
@@ -274,9 +282,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                           </button>
                         )}
 
-                        {user.status === 'SUSPENDED' && (
+                        {user.status === "SUSPENDED" && (
                           <button
-                            onClick={() => handleStatusChangeClick(user, 'ACTIVATE')}
+                            onClick={() => handleStatusChangeClick(user, "ACTIVATE")}
                             className="px-2 py-1 rounded text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-medium"
                             title="Re-activate account access"
                           >
@@ -297,31 +305,33 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
       <ConfirmationDialog
         isOpen={confirmDialog.isOpen}
         title={
-          confirmDialog.action === 'DEACTIVATE'
+          confirmDialog.action === "DEACTIVATE"
             ? `Suspend Account for ${confirmDialog.user?.firstName} ${confirmDialog.user?.lastName}?`
             : `Re-activate Account for ${confirmDialog.user?.firstName} ${confirmDialog.user?.lastName}?`
         }
         description={
-          confirmDialog.action === 'DEACTIVATE'
-            ? 'Suspending this user account will revoke active Keycloak session tokens and temporarily disable access to Mentify portals and LMS coursework.'
-            : 'Re-activating this user account will restore Keycloak authentication privileges and grant immediate access back to their assigned courses and records.'
+          confirmDialog.action === "DEACTIVATE"
+            ? "Suspending this user account will revoke active Keycloak session tokens and temporarily disable access to Mentify portals and LMS coursework."
+            : "Re-activating this user account will restore Keycloak authentication privileges and grant immediate access back to their assigned courses and records."
         }
         consequences={
-          confirmDialog.action === 'DEACTIVATE'
+          confirmDialog.action === "DEACTIVATE"
             ? [
-                'Immediate termination of active JWT tokens across all microservices',
-                'User will not be able to log in to Student or Teacher portals',
-                'Course enrollments and historical assignment data remain intact in PostgreSQL',
+                "Immediate termination of active JWT tokens across all microservices",
+                "User will not be able to log in to Student or Teacher portals",
+                "Course enrollments and historical assignment data remain intact in PostgreSQL",
               ]
             : [
-                'Keycloak user status updated to enabled',
-                'User can immediately sign in with existing credentials',
+                "Keycloak user status updated to enabled",
+                "User can immediately sign in with existing credentials",
               ]
         }
-        confirmText={confirmDialog.action === 'DEACTIVATE' ? 'Suspend Account' : 'Re-activate Account'}
-        variant={confirmDialog.action === 'DEACTIVATE' ? 'danger' : 'primary'}
+        confirmText={
+          confirmDialog.action === "DEACTIVATE" ? "Suspend Account" : "Re-activate Account"
+        }
+        variant={confirmDialog.action === "DEACTIVATE" ? "danger" : "primary"}
         onConfirm={handleConfirmStatusChange}
-        onCancel={() => setConfirmDialog({ isOpen: false, user: null, action: 'DEACTIVATE' })}
+        onCancel={() => setConfirmDialog({ isOpen: false, user: null, action: "DEACTIVATE" })}
       />
 
       {/* User Details Slide-out Drawer */}
@@ -336,10 +346,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
           <div className="space-y-6">
             {/* Header profile block */}
             <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
-              <UserAvatar
-                name={`${selectedUser.firstName} ${selectedUser.lastName}`}
-                size="lg"
-              />
+              <UserAvatar name={`${selectedUser.firstName} ${selectedUser.lastName}`} size="lg" />
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   {selectedUser.firstName} {selectedUser.lastName}
@@ -367,7 +374,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                 <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                   <span className="text-slate-400 block mb-0.5">Phone Number</span>
                   <span className="font-medium text-slate-900 dark:text-white">
-                    {selectedUser.phone || 'Not recorded'}
+                    {selectedUser.phone || "Not recorded"}
                   </span>
                 </div>
                 <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -381,14 +388,14 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                   <span className="font-medium text-slate-900 dark:text-white tabular-nums">
                     {selectedUser.lastLogin
                       ? new Date(selectedUser.lastLogin).toLocaleString()
-                      : 'Never logged in'}
+                      : "Never logged in"}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Role-specific details */}
-            {selectedUser.role === 'STUDENT' && (
+            {selectedUser.role === "STUDENT" && (
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Student Academic Profile
@@ -422,7 +429,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
               </div>
             )}
 
-            {selectedUser.role === 'TEACHER' && (
+            {selectedUser.role === "TEACHER" && (
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Faculty Attributes

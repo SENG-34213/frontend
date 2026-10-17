@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import { FileCheck2, Search, Calendar, User, Clock, CheckCircle2 } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { Assignment } from '../types';
+import React, { useState } from "react";
+import { FileCheck2, Search, Calendar, User, Clock, CheckCircle2 } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { Assignment } from "../types";
 
 interface AssignmentOversightProps {
   assignments: Assignment[];
 }
 
 export const AssignmentOversight: React.FC<AssignmentOversightProps> = ({ assignments }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [courseFilter, setCourseFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [courseFilter, setCourseFilter] = useState("ALL");
 
   const filteredAssignments = assignments.filter((a) => {
     const matchesSearch =
       a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.teacherName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCourse = courseFilter === 'ALL' || a.courseCode === courseFilter;
+    const matchesCourse = courseFilter === "ALL" || a.courseCode === courseFilter;
     return matchesSearch && matchesCourse;
   });
 
@@ -26,7 +26,11 @@ export const AssignmentOversight: React.FC<AssignmentOversightProps> = ({ assign
       <PageHeader
         title="Assignment Oversight"
         description="Monitor course problem sets, coding deliverables, submission completion rates, and faculty grading backlogs."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Assignments' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Academic Management" },
+          { label: "Assignments" },
+        ]}
       />
 
       {/* Filter and Search Bar */}
@@ -71,7 +75,7 @@ export const AssignmentOversight: React.FC<AssignmentOversightProps> = ({ assign
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredAssignments.map((asg) => {
                 const gradedPercent = Math.round(
-                  (asg.gradedSubmissions / (asg.totalSubmissions || 1)) * 100
+                  (asg.gradedSubmissions / (asg.totalSubmissions || 1)) * 100,
                 );
 
                 return (
@@ -115,10 +119,10 @@ export const AssignmentOversight: React.FC<AssignmentOversightProps> = ({ assign
 
                     <td className="py-3 px-4 text-slate-500 tabular-nums">
                       {new Date(asg.dueDate).toLocaleDateString([], {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </td>
 

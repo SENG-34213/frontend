@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-import { BarChart3, Search, Filter, Award, CheckCircle2 } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { GradeRecord } from '../types';
+import React, { useState } from "react";
+import { BarChart3, Search, Filter, Award, CheckCircle2 } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { GradeRecord } from "../types";
 
 interface GradesAndResultsProps {
   grades: GradeRecord[];
 }
 
 export const GradesAndResults: React.FC<GradesAndResultsProps> = ({ grades }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [courseFilter, setCourseFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [courseFilter, setCourseFilter] = useState("ALL");
 
   const filteredGrades = grades.filter((g) => {
     const matchesSearch =
       g.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       g.assessmentTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCourse = courseFilter === 'ALL' || g.courseCode === courseFilter;
+    const matchesCourse = courseFilter === "ALL" || g.courseCode === courseFilter;
     return matchesSearch && matchesCourse;
   });
 
@@ -25,7 +25,11 @@ export const GradesAndResults: React.FC<GradesAndResultsProps> = ({ grades }) =>
       <PageHeader
         title="Grades & Results Gradebook"
         description="Comprehensive evaluation ledger, assessment mark distributions, faculty feedback records, and grade verification."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Grades & Results' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Academic Management" },
+          { label: "Grades & Results" },
+        ]}
       />
 
       {/* Filter and Search Bar */}
@@ -88,7 +92,7 @@ export const GradesAndResults: React.FC<GradesAndResultsProps> = ({ grades }) =>
                   <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
                     <span className="font-medium block">{grade.assessmentTitle}</span>
                     <span className="text-[10px] uppercase text-slate-400">
-                      {grade.assessmentType.replace('_', ' ')}
+                      {grade.assessmentType.replace("_", " ")}
                     </span>
                   </td>
 
@@ -103,7 +107,7 @@ export const GradesAndResults: React.FC<GradesAndResultsProps> = ({ grades }) =>
                   </td>
 
                   <td className="py-3 px-4 text-slate-500 max-w-xs truncate">
-                    {grade.feedback || 'No remarks recorded'}
+                    {grade.feedback || "No remarks recorded"}
                   </td>
 
                   <td className="py-3 px-4 text-slate-500 tabular-nums">{grade.gradedDate}</td>

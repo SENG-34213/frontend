@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   Send,
@@ -14,12 +14,12 @@ import {
   Award,
   Shield,
   CornerDownLeft,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
 
 interface ChatMessage {
   id: string;
-  sender: 'user' | 'assistant';
+  sender: "user" | "assistant";
   content: string;
   timestamp: string;
 }
@@ -27,21 +27,21 @@ interface ChatMessage {
 export const MentifyAIAssistant: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: 'msg-1',
-      sender: 'assistant',
+      id: "msg-1",
+      sender: "assistant",
       content:
-        'Hello Alex! I am **Mentify AI**, your institutional administrative assistant. I have real-time visibility into your Spring Boot microservices, Keycloak authentication realms, course enrollment ratios, and attendance trends. How can I assist you with platform oversight today?',
-      timestamp: '07:00 AM',
+        "Hello Alex! I am **Mentify AI**, your institutional administrative assistant. I have real-time visibility into your Spring Boot microservices, Keycloak authentication realms, course enrollment ratios, and attendance trends. How can I assist you with platform oversight today?",
+      timestamp: "07:00 AM",
     },
   ]);
 
-  const [inputPrompt, setInputPrompt] = useState('');
+  const [inputPrompt, setInputPrompt] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -50,24 +50,25 @@ export const MentifyAIAssistant: React.FC = () => {
 
   const suggestedPrompts = [
     {
-      label: 'Summarize platform registration growth',
+      label: "Summarize platform registration growth",
       icon: TrendingUp,
-      prompt: 'Provide a structured summary of student and teacher registration velocity for October 2026.',
+      prompt:
+        "Provide a structured summary of student and teacher registration velocity for October 2026.",
     },
     {
-      label: 'Review quiz performance variance',
+      label: "Review quiz performance variance",
       icon: Award,
-      prompt: 'Analyze quiz score variances across Advanced Calculus and Data Structures.',
+      prompt: "Analyze quiz score variances across Advanced Calculus and Data Structures.",
     },
     {
-      label: 'Check upcoming exam hall conflicts',
+      label: "Check upcoming exam hall conflicts",
       icon: HelpCircle,
-      prompt: 'Are there any overlapping examination venues scheduled between Oct 25 and Nov 04?',
+      prompt: "Are there any overlapping examination venues scheduled between Oct 25 and Nov 04?",
     },
     {
-      label: 'Audit Keycloak token rotation logs',
+      label: "Audit Keycloak token rotation logs",
       icon: Shield,
-      prompt: 'Summarize the recent Keycloak SSO security events and password invitation states.',
+      prompt: "Summarize the recent Keycloak SSO security events and password invitation states.",
     },
   ];
 
@@ -77,33 +78,42 @@ export const MentifyAIAssistant: React.FC = () => {
 
     const userMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
-      sender: 'user',
+      sender: "user",
       content: prompt,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setInputPrompt('');
+    setInputPrompt("");
     setIsThinking(true);
 
     // Domain intelligence response simulation
     setTimeout(() => {
-      let responseText = '';
+      let responseText = "";
 
-      if (prompt.toLowerCase().includes('registration') || prompt.toLowerCase().includes('growth')) {
+      if (
+        prompt.toLowerCase().includes("registration") ||
+        prompt.toLowerCase().includes("growth")
+      ) {
         responseText = `### 📊 Institutional Registration Synthesis
 Based on data from the **Spring Boot User Service**:
 - **Total Registered Students**: 1,420 (up +8.4% term-over-term).
 - **Active Faculty Members**: 84 verified teachers across 4 departments.
 - **Pending Keycloak Invitations**: 12 accounts (including 2 teachers and 10 students) awaiting password activation.
 - **Recommendation**: Dispatched reminder notifications are recommended for \`amara.okonkwo@mentify.edu\` and \`priya.nambiar@mentify.edu\` before the upcoming enrollment lockout on Monday.`;
-      } else if (prompt.toLowerCase().includes('quiz') || prompt.toLowerCase().includes('performance')) {
+      } else if (
+        prompt.toLowerCase().includes("quiz") ||
+        prompt.toLowerCase().includes("performance")
+      ) {
         responseText = `### 🎯 Quiz Evaluation & Score Analytics
 - **MATH-401 (Advanced Calculus)**: Mean score of **84.5%** with a **92.4% pass rate**. Students performed exceptionally on Lagrange error bounds.
 - **CS-302 (Data Structures & Algorithms)**: Mean score of **78.2%** with **86.0% pass rate**. Dynamic programming recurrences showed a slight dip in quartile 1.
 - **PHYS-402 (Quantum Foundations)**: Highest pass rate at **94.7%** (average score 88.0%).
 - **Curriculum Note**: Consider scheduling an optional clinic session for CS-302 recursive tree balancing prior to the practical coding assessment.`;
-      } else if (prompt.toLowerCase().includes('exam') || prompt.toLowerCase().includes('conflict')) {
+      } else if (
+        prompt.toLowerCase().includes("exam") ||
+        prompt.toLowerCase().includes("conflict")
+      ) {
         responseText = `### 🏛️ Examination Timetable Verification
 I inspected all **9 scheduled examinations** for Fall 2026:
 - **MATH-401 Midterm**: Oct 25, 09:00 AM – 11:30 AM in *Science Hall Auditorium B* (68 candidates).
@@ -121,9 +131,9 @@ Here is the operational perspective for: "${prompt}"
 
       const aiMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
-        sender: 'assistant',
+        sender: "assistant",
         content: responseText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, aiMsg]);
@@ -141,9 +151,9 @@ Here is the operational perspective for: "${prompt}"
     setMessages([
       {
         id: `msg-${Date.now()}`,
-        sender: 'assistant',
-        content: 'New administrative workspace session initiated. How can I help you, Alex?',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        sender: "assistant",
+        content: "New administrative workspace session initiated. How can I help you, Alex?",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       },
     ]);
   };
@@ -153,7 +163,11 @@ Here is the operational perspective for: "${prompt}"
       <PageHeader
         title="Mentify AI Assistant"
         description="Enterprise AI intelligence agent grounded in Mentify institutional data, microservices, and educational analytics."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Platform Operations' }, { label: 'Mentify AI' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Platform Operations" },
+          { label: "Mentify AI" },
+        ]}
         actions={
           <button
             onClick={handleNewChat}
@@ -216,27 +230,27 @@ Here is the operational perspective for: "${prompt}"
           {/* Messages Scroll Area */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
             {messages.map((msg) => {
-              const isAi = msg.sender === 'assistant';
+              const isAi = msg.sender === "assistant";
 
               return (
                 <div
                   key={msg.id}
-                  className={`flex items-start gap-3 ${isAi ? '' : 'flex-row-reverse'}`}
+                  className={`flex items-start gap-3 ${isAi ? "" : "flex-row-reverse"}`}
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold ${
-                      isAi
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-700 text-white'
+                      isAi ? "bg-indigo-600 text-white" : "bg-slate-700 text-white"
                     }`}
                   >
-                    {isAi ? <Sparkles className="w-3.5 h-3.5" /> : 'AM'}
+                    {isAi ? <Sparkles className="w-3.5 h-3.5" /> : "AM"}
                   </div>
 
-                  <div className={`max-w-2xl text-xs space-y-1.5 ${isAi ? 'text-left' : 'text-right'}`}>
+                  <div
+                    className={`max-w-2xl text-xs space-y-1.5 ${isAi ? "text-left" : "text-right"}`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-900 dark:text-white">
-                        {isAi ? 'Mentify AI' : 'Alex Mercer'}
+                        {isAi ? "Mentify AI" : "Alex Mercer"}
                       </span>
                       <span className="text-[10px] text-slate-400 tabular-nums">
                         {msg.timestamp}
@@ -246,14 +260,12 @@ Here is the operational perspective for: "${prompt}"
                     <div
                       className={`p-3.5 rounded-2xl text-left leading-relaxed ${
                         isAi
-                          ? 'bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200'
-                          : 'bg-indigo-600 text-white'
+                          ? "bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200"
+                          : "bg-indigo-600 text-white"
                       }`}
                     >
                       {/* Markdown prose renderer */}
-                      <div className="whitespace-pre-wrap space-y-2">
-                        {msg.content}
-                      </div>
+                      <div className="whitespace-pre-wrap space-y-2">{msg.content}</div>
 
                       {isAi && (
                         <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">

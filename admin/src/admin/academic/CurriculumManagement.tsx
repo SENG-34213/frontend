@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Layers,
   BookOpen,
@@ -10,10 +10,10 @@ import {
   Plus,
   CheckCircle2,
   Lock,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { StatusBadge } from '../components/StatusBadge';
-import { CurriculumModule, Course } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { StatusBadge } from "../components/StatusBadge";
+import { CurriculumModule, Course } from "../types";
 
 interface CurriculumManagementProps {
   curriculum: CurriculumModule[];
@@ -24,10 +24,10 @@ export const CurriculumManagement: React.FC<CurriculumManagementProps> = ({
   curriculum,
   courses,
 }) => {
-  const [selectedCourseCode, setSelectedCourseCode] = useState('MATH-401');
+  const [selectedCourseCode, setSelectedCourseCode] = useState("MATH-401");
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
-    'mod-1': true,
-    'mod-2': true,
+    "mod-1": true,
+    "mod-2": true,
   });
 
   const activeCourse = courses.find((c) => c.code === selectedCourseCode) || courses[0];
@@ -41,7 +41,11 @@ export const CurriculumManagement: React.FC<CurriculumManagementProps> = ({
       <PageHeader
         title="Modules & Lessons Explorer"
         description="Inspect syllabi structures, lesson delivery sequences, attached formative assessments, and published statuses."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Academic Management' }, { label: 'Modules & Lessons' }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Academic Management" },
+          { label: "Modules & Lessons" },
+        ]}
       />
 
       {/* Course Selector Tabs */}
@@ -52,8 +56,8 @@ export const CurriculumManagement: React.FC<CurriculumManagementProps> = ({
             onClick={() => setSelectedCourseCode(course.code)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
               selectedCourseCode === course.code
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
             }`}
           >
             <span className="font-mono font-bold mr-1.5">{course.code}</span>

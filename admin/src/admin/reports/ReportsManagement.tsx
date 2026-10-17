@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { FileText, Download, Calendar, Filter, Eye, CheckCircle2, ArrowRight } from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { DetailDrawer } from '../components/DetailDrawer';
+import React, { useState } from "react";
+import { FileText, Download, Calendar, Filter, Eye, CheckCircle2, ArrowRight } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { DetailDrawer } from "../components/DetailDrawer";
 
 interface ReportTemplate {
   id: string;
@@ -18,40 +18,40 @@ export const ReportsManagement: React.FC = () => {
 
   const reports: ReportTemplate[] = [
     {
-      id: 'rep-1',
-      title: 'Institutional User Registration & Keycloak Onboarding Audit',
-      category: 'User Management',
+      id: "rep-1",
+      title: "Institutional User Registration & Keycloak Onboarding Audit",
+      category: "User Management",
       description:
-        'Detailed breakdown of newly registered students, appointed faculty, Keycloak activation latencies, and invitation failure logs.',
-      frequency: 'Weekly',
-      lastGenerated: 'Oct 16, 2026',
+        "Detailed breakdown of newly registered students, appointed faculty, Keycloak activation latencies, and invitation failure logs.",
+      frequency: "Weekly",
+      lastGenerated: "Oct 16, 2026",
     },
     {
-      id: 'rep-2',
-      title: 'Term 1 Course Enrollment & Section Capacity Digest',
-      category: 'Academic Operations',
+      id: "rep-2",
+      title: "Term 1 Course Enrollment & Section Capacity Digest",
+      category: "Academic Operations",
       description:
-        'Audits student enrollment saturation per subject department, pending approval queues, and faculty course loads.',
-      frequency: 'Bi-Weekly',
-      lastGenerated: 'Oct 15, 2026',
+        "Audits student enrollment saturation per subject department, pending approval queues, and faculty course loads.",
+      frequency: "Bi-Weekly",
+      lastGenerated: "Oct 15, 2026",
     },
     {
-      id: 'rep-3',
-      title: 'Comprehensive Academic Gradebook & Assessment Summary',
-      category: 'Assessment & Grading',
+      id: "rep-3",
+      title: "Comprehensive Academic Gradebook & Assessment Summary",
+      category: "Assessment & Grading",
       description:
-        'Aggregate analysis of quiz scores, assignment submission velocities, letter grade distributions, and student evaluation remarks.',
-      frequency: 'Monthly',
-      lastGenerated: 'Oct 12, 2026',
+        "Aggregate analysis of quiz scores, assignment submission velocities, letter grade distributions, and student evaluation remarks.",
+      frequency: "Monthly",
+      lastGenerated: "Oct 12, 2026",
     },
     {
-      id: 'rep-4',
-      title: 'Classroom & Online LMS Attendance Compliance Log',
-      category: 'Attendance',
+      id: "rep-4",
+      title: "Classroom & Online LMS Attendance Compliance Log",
+      category: "Attendance",
       description:
-        'Per-course physical and synchronous online roll-call logs, unexcused absence frequencies, and guardian alert logs.',
-      frequency: 'Weekly',
-      lastGenerated: 'Oct 16, 2026',
+        "Per-course physical and synchronous online roll-call logs, unexcused absence frequencies, and guardian alert logs.",
+      frequency: "Weekly",
+      lastGenerated: "Oct 16, 2026",
     },
   ];
 
@@ -65,7 +65,7 @@ export const ReportsManagement: React.FC = () => {
       <PageHeader
         title="Institutional Reports"
         description="Generate certified administrative audits, enrollment digests, and compliance reporting packages."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Platform Operations' }, { label: 'Reports' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Reports" }]}
       />
 
       {downloadSuccess && (
@@ -94,9 +94,7 @@ export const ReportsManagement: React.FC = () => {
                 </span>
               </div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">{report.title}</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {report.description}
-              </p>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">{report.description}</p>
             </div>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">

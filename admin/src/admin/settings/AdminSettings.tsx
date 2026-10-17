@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Settings,
   Shield,
@@ -11,9 +11,9 @@ import {
   LogOut,
   CheckCircle2,
   HardDrive,
-} from 'lucide-react';
-import { PageHeader } from '../components/PageHeader';
-import { AdminRole } from '../types';
+} from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { AdminRole } from "../types";
 
 interface AdminSettingsProps {
   role: AdminRole;
@@ -26,7 +26,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   isDarkMode,
   onToggleTheme,
 }) => {
-  const [activeTab, setActiveTab] = useState<'appearance' | 'notifications' | 'security' | 'sessions'>('appearance');
+  const [activeTab, setActiveTab] = useState<
+    "appearance" | "notifications" | "security" | "sessions"
+  >("appearance");
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [securityAlerts, setSecurityAlerts] = useState(true);
   const [examReminders, setExamReminders] = useState(true);
@@ -36,17 +38,17 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
       <PageHeader
         title="Platform & Account Settings"
         description="Keycloak SSO federation attributes, appearance themes, dispatch preferences, and session revocations."
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Settings' }]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Settings" }]}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Settings Navigation */}
         <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 space-y-1">
           {[
-            { id: 'appearance', label: 'Appearance & Theme', icon: Sun },
-            { id: 'notifications', label: 'Notification Preferences', icon: Bell },
-            { id: 'security', label: 'Security & Keycloak SSO', icon: Lock },
-            { id: 'sessions', label: 'Active Sessions', icon: Smartphone },
+            { id: "appearance", label: "Appearance & Theme", icon: Sun },
+            { id: "notifications", label: "Notification Preferences", icon: Bell },
+            { id: "security", label: "Security & Keycloak SSO", icon: Lock },
+            { id: "sessions", label: "Active Sessions", icon: Smartphone },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -57,8 +59,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 onClick={() => setActiveTab(item.id as any)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors ${
                   isActive
-                    ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -71,10 +73,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         {/* Settings Tab Content */}
         <div className="md:col-span-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-6 text-xs">
           {/* Appearance */}
-          {activeTab === 'appearance' && (
+          {activeTab === "appearance" && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Appearance & Theme</h3>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Appearance & Theme
+                </h3>
                 <p className="text-slate-400 mt-0.5">Customize your visual interface preference</p>
               </div>
 
@@ -86,8 +90,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                   }}
                   className={`p-4 rounded-xl border text-left flex flex-col items-start gap-2 transition-colors ${
                     !isDarkMode
-                      ? 'border-indigo-600 bg-indigo-50/40 text-indigo-950 ring-2 ring-indigo-500/20'
-                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      ? "border-indigo-600 bg-indigo-50/40 text-indigo-950 ring-2 ring-indigo-500/20"
+                      : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   <Sun className="w-5 h-5 text-amber-500" />
@@ -104,8 +108,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                   }}
                   className={`p-4 rounded-xl border text-left flex flex-col items-start gap-2 transition-colors ${
                     isDarkMode
-                      ? 'border-indigo-500 bg-indigo-950/40 text-white ring-2 ring-indigo-500/30'
-                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      ? "border-indigo-500 bg-indigo-950/40 text-white ring-2 ring-indigo-500/30"
+                      : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   <Moon className="w-5 h-5 text-indigo-400" />
@@ -119,7 +123,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
 
           {/* Notifications */}
-          {activeTab === 'notifications' && (
+          {activeTab === "notifications" && (
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -186,7 +190,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
 
           {/* Security */}
-          {activeTab === 'security' && (
+          {activeTab === "security" && (
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -227,7 +231,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
 
           {/* Sessions */}
-          {activeTab === 'sessions' && (
+          {activeTab === "sessions" && (
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
