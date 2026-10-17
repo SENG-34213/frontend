@@ -66,8 +66,10 @@ import { ReportsManagement } from "./admin/reports/ReportsManagement";
 import { AuditAndActivity } from "./admin/audit/AuditAndActivity";
 import { AdminProfile } from "./admin/profile/AdminProfile";
 import { AdminSettings } from "./admin/settings/AdminSettings";
+import { AdminLoginView } from "./admin/auth/AdminLoginView";
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
   const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -106,6 +108,10 @@ export default function App() {
   const [openTeacherWizard, setOpenTeacherWizard] = useState(false);
   const [openAdminWizard, setOpenAdminWizard] = useState(false);
   const [openCourseModal, setOpenCourseModal] = useState(false);
+
+  if (!isAuthenticated) {
+    return <AdminLoginView onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
     const newToast: ToastMessage = {
