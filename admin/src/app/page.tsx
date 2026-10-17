@@ -813,7 +813,6 @@ export default function Home() {
         courseName: course.courseName.trim(),
         courseDescription: course.courseDescription.trim(),
         courseThumbnail: course.courseThumbnail.trim() || null,
-        courseFeeMonthly: Number(course.courseFeeMonthly),
         gradeId: course.gradeId.trim(),
         assignedTeacherId: course.assignedTeacherId.trim(),
         subject: course.subject.trim(),
@@ -1269,11 +1268,11 @@ export default function Home() {
     return result.data as GroupMember[];
   }
 
-  async function createGrade(draft: { name: string; description: string }) {
+  async function createGrade(draft: { name: string; description: string; monthlyFee: string }) {
     const response = await authorizedApiRequest(`${apiUrl}/api/v1/course/grades`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(draft),
+      body: JSON.stringify({ ...draft, monthlyFee: Number(draft.monthlyFee) }),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
@@ -1288,13 +1287,13 @@ export default function Home() {
     setGradesReloadKey((current) => current + 1);
   }
 
-  async function updateGrade(id: string, draft: { name: string; description: string }) {
+  async function updateGrade(id: string, draft: { name: string; description: string; monthlyFee: string }) {
     const response = await authorizedApiRequest(
       `${apiUrl}/api/v1/course/grades/${encodeURIComponent(id)}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify({ ...draft, monthlyFee: Number(draft.monthlyFee) }),
       },
     );
     const result = await response.json().catch(() => ({}));
@@ -1811,32 +1810,12 @@ export default function Home() {
                             <Icon name="settings" size={18} />
                           </div>
                           <div>
-                            <h2>Pricing &amp; availability</h2>
-                            <p>Choose the monthly fee, delivery mode, and publishing options.</p>
+                            <h2>Availability</h2>
+                            <p>Grade pricing is managed once for every course in that grade.</p>
                           </div>
                           <span className="section-index">03</span>
                         </div>
                         <div className="field-grid two-col">
-                          <label className="field">
-                            <span className="field-label">
-                              Monthly fee (LKR)
-                              <span className="required"> *</span>
-                            </span>
-                            <div className="money-input">
-                              <span>LKR</span>
-                              <input
-                                required
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                value={course.courseFeeMonthly}
-                                placeholder="2500.00"
-                                onChange={(event) =>
-                                  changeCourse("courseFeeMonthly", event.target.value)
-                                }
-                              />
-                            </div>
-                          </label>
                           <label className="field">
                             <span className="field-label">Discount offer (%)</span>
                             <input

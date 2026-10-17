@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Icon } from "./Icon";
 import type { DirectoryUser, GradeRecord, LiveCourse } from "@/features/admin/types";
 
-type GradeDraft = { name: string; description: string };
+type GradeDraft = { name: string; description: string; monthlyFee: string };
 
 export function GradeManager({
   grades,
@@ -28,7 +28,7 @@ export function GradeManager({
   const [query, setQuery] = useState("");
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [selected, setSelected] = useState<GradeRecord | null>(null);
-  const [draft, setDraft] = useState<GradeDraft>({ name: "", description: "" });
+  const [draft, setDraft] = useState<GradeDraft>({ name: "", description: "", monthlyFee: "" });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const filteredGrades = useMemo(() => {
@@ -41,13 +41,17 @@ export function GradeManager({
   const inactiveCount = grades.length - activeCount;
   function openCreate() {
     setSelected(null);
-    setDraft({ name: "", description: "" });
+    setDraft({ name: "", description: "", monthlyFee: "" });
     setFormError("");
     setModalMode("create");
   }
   function openEdit(grade: GradeRecord) {
     setSelected(grade);
-    setDraft({ name: grade.name, description: grade.description || "" });
+    setDraft({
+      name: grade.name,
+      description: grade.description || "",
+      monthlyFee: String(grade.monthlyFee ?? ""),
+    });
     setFormError("");
     setModalMode("edit");
   }
@@ -225,6 +229,18 @@ export function GradeManager({
                         <Icon name="check" size={13} />
                         <strong>{publishedCourses}</strong> published
                       </span>
+                      <span>
+                        {grade.monthlyFee != null ? (
+                          <>
+                            <strong>
+                              {grade.currencyCode || "LKR"} {Number(grade.monthlyFee).toLocaleString()}
+                            </strong>{" "}
+                            / month per student
+                          </>
+                        ) : (
+                          <strong>Monthly fee not set</strong>
+                        )}
+                      </span>
                     </div>
                     <small>{grade.id}</small>
                   </div>
@@ -333,6 +349,26 @@ export function GradeManager({
                   }
                 />
                 <span className="field-hint">{draft.description.length}/1000 characters</span>
+              </label>
+              <label className="field">
+                <span className="field-label">
+                  Monthly grade fee (LKR)<span className="required"> *</span>
+                </span>
+                <div className="money-input">
+                  <span>LKR</span>
+                  <input
+                    required
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={draft.monthlyFee}
+                    placeholder="2500.00"
+                    onChange={(event) =>
+                      setDraft((current) => ({ ...current, monthlyFee: event.target.value }))
+                    }
+                  />
+                </div>
+                <span className="field-hint">This monthly amount applies to every course in this grade.</span>
               </label>
               <div className="modal-actions">
                 <button
