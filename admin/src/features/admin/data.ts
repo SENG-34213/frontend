@@ -4,7 +4,6 @@ export const emptyCourse: CourseDraft = {
   courseName: "",
   courseDescription: "",
   courseThumbnail: "",
-  courseFeeMonthly: "",
   gradeId: "",
   assignedTeacherId: "",
   subject: "",

@@ -62,7 +62,6 @@ export type CourseDraft = {
   courseName: string;
   courseDescription: string;
   courseThumbnail: string;
-  courseFeeMonthly: string;
   gradeId: string;
   assignedTeacherId: string;
   subject: string;
@@ -128,6 +127,8 @@ export type GradeRecord = {
   id: string;
   name: string;
   description?: string;
+  monthlyFee?: number;
+  currencyCode?: string;
   active?: boolean;
   createdAt?: string;
   updatedAt?: string;

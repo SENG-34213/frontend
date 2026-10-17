@@ -498,7 +498,7 @@ export function EnrollmentWorkspace({
                                 {course.subject || "General"} ·{" "}
                                 {course.online ? "Online" : "In person"} ·{" "}
                                 {course.courseFeeMonthly != null
-                                  ? `LKR ${Number(course.courseFeeMonthly).toLocaleString()} / month`
+                                  ? `Grade fee: LKR ${Number(course.courseFeeMonthly).toLocaleString()} / month`
                                   : "Fee not set"}
                               </small>
                             </span>

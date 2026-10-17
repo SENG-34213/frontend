@@ -345,7 +345,7 @@ export function CourseCatalog({
                             ? `LKR ${Number(course.courseFeeMonthly).toLocaleString()}`
                             : "Fee not set"}
                         </strong>
-                        <span>per month</span>
+                        <span>grade fee / month</span>
                       </div>
                       <div className="live-course-footer">
                         <span>
@@ -470,7 +470,7 @@ export function CourseCatalog({
                   <strong>{selectedCourse.gradeId || "Not assigned"}</strong>
                 </div>
                 <div>
-                  <small>Monthly fee</small>
+                  <small>Grade monthly fee</small>
                   <strong>
                     {selectedCourse.courseFeeMonthly != null
                       ? `LKR ${Number(selectedCourse.courseFeeMonthly).toLocaleString()}`
