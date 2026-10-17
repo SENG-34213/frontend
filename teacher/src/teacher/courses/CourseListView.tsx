@@ -180,7 +180,8 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
                     </span>
                   </div>
                   <div className="text-[11px] text-white/80 font-medium">
-                    {course.semester} · {course.academicYear}
+                    {course.semester}
+                    {course.academicYear ? ` · ${course.academicYear}` : ""}
                   </div>
                 </div>
 
@@ -209,7 +210,9 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
                           Students
                         </span>
                         <span className="font-bold text-slate-900 font-mono tabular-nums">
-                          {course.enrolledCount}/{course.maxCapacity}
+                          {course.maxCapacity > 0
+                            ? `${course.enrolledCount}/${course.maxCapacity}`
+                            : course.enrolledCount}
                         </span>
                       </div>
                       <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
