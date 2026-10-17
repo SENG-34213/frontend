@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { TeacherCourse } from "../lib/teacherApi";
+import { useEffect, useMemo, useState } from "react";
+import { teacherApi, type TeacherCourse } from "../lib/teacherApi";
 
 type CourseStatus = "active" | "draft" | "archived";
 type CourseView = "grid" | "list";
@@ -31,6 +31,32 @@ export default function TeacherMyCourses({
   const [status, setStatus] = useState<CourseStatus | "all">("all");
   const [view, setView] = useState<CourseView>("grid");
   const [notice, setNotice] = useState("");
+  const [moduleCounts, setModuleCounts] = useState<Record<string, number>>({});
+  const [loadingModules, setLoadingModules] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadModuleCounts() {
+      setLoadingModules(true);
+      const results = await Promise.all(
+        courses.map(async (course) => {
+          try {
+            return [course.id, (await teacherApi.modules(course.id)).length] as const;
+          } catch {
+            return [course.id, 0] as const;
+          }
+        }),
+      );
+      if (!cancelled) {
+        setModuleCounts(Object.fromEntries(results));
+        setLoadingModules(false);
+      }
+    }
+    void loadModuleCounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [courses]);
 
   const subjects = useMemo(
     () => Array.from(new Set(courses.map((course) => course.subject).filter(Boolean))),
@@ -189,8 +215,7 @@ export default function TeacherMyCourses({
           {filteredCourses.map((course, index) => {
             const courseStatus = normalizeStatus(course);
             const accent = courseAccents[index % courseAccents.length];
-            const completion = 58 + ((index * 9 + (course.numberOfStudents || 0)) % 28);
-            const attendance = 84 + (index % 9);
+            const moduleCount = moduleCounts[course.id] || 0;
             return (
               <article className={`teacher-my-course-card ${accent}`} key={course.id}>
                 <div className="teacher-my-course-cover">
@@ -228,21 +253,21 @@ export default function TeacherMyCourses({
                       <span>Learners</span>
                     </div>
                     <div>
-                      <strong>{12 + index * 4}</strong>
+                      <strong>{loadingModules ? "—" : moduleCount}</strong>
                       <span>Modules</span>
                     </div>
                     <div>
-                      <strong>{attendance}%</strong>
+                      <strong>—</strong>
                       <span>Attendance</span>
                     </div>
                   </div>
                   <div className="teacher-my-course-progress">
                     <div>
                       <span>Curriculum completion</span>
-                      <strong>{completion}%</strong>
+                      <strong>{moduleCount ? "Live" : "—"}</strong>
                     </div>
                     <span className="teacher-my-course-progress-track">
-                      <i style={{ width: `${completion}%` }} />
+                      <i style={{ width: `${moduleCount ? 100 : 0}%` }} />
                     </span>
                   </div>
                   <div className="teacher-my-course-next">

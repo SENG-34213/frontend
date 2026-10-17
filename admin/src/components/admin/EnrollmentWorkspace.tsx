@@ -285,6 +285,7 @@ export function EnrollmentWorkspace({
                           </span>
                         </div>
                         <p>{student.email}</p>
+                        {student.schoolName && <small>School · {student.schoolName}</small>}
                         <div className="directory-facts">
                           <span>{student.code || "No student ID"}</span>
                           <span>
@@ -498,7 +499,7 @@ export function EnrollmentWorkspace({
                                 {course.subject || "General"} ·{" "}
                                 {course.online ? "Online" : "In person"} ·{" "}
                                 {course.courseFeeMonthly != null
-                                  ? `LKR ${Number(course.courseFeeMonthly).toLocaleString()} / month`
+                                  ? `Grade fee: LKR ${Number(course.courseFeeMonthly).toLocaleString()} / month`
                                   : "Fee not set"}
                               </small>
                             </span>

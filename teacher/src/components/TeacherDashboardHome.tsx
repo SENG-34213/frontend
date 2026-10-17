@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import type { TeacherCourse, TeacherProfile } from "../lib/teacherApi";
+import { useEffect, useState } from "react";
+import type { CalendarEvent, TeacherCourse, TeacherProfile } from "../lib/teacherApi";
+import { teacherApi } from "../lib/teacherApi";
 
 type Props = {
   profile: TeacherProfile | null;
@@ -9,40 +10,71 @@ type Props = {
   onNavigate: (view: "courses" | "quizzes" | "communication" | "assistant") => void;
 };
 
-const sessions = [
-  {
-    time: "10:30",
-    end: "11:45 AM",
-    label: "AP Calculus BC · Unit 4: Differential Equations",
-    detail: "24 Students · Interactive Whiteboard Enabled",
-    state: "Starts in 25m",
-    action: "Join Classroom",
-    live: true,
-  },
-  {
-    time: "02:00",
-    end: "03:00 PM",
-    label: "Linear Algebra Fundamentals · Alex Turner",
-    detail: "Individual Session · Matrix Inversion Proofs",
-    state: "Scheduled",
-    action: "Lesson Notes",
-    live: false,
-  },
-  {
-    time: "04:30",
-    end: "05:45 PM",
-    label: "Intro to Python for Data Science · Lab 3",
-    detail: "18 Students · Jupyter Hub Sync Active",
-    state: "Scheduled",
-    action: "Prepare Materials",
-    live: false,
-  },
-];
-
 export default function TeacherDashboardHome({ profile, courses, onNavigate }: Props) {
   const [notice, setNotice] = useState("");
+  const [sessions, setSessions] = useState<CalendarEvent[]>([]);
+  const [pendingReviews, setPendingReviews] = useState(0);
+  const [quizCount, setQuizCount] = useState(0);
+  const [assignmentCount, setAssignmentCount] = useState(0);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [summaryError, setSummaryError] = useState("");
   const displayName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : "Teacher";
   const totalStudents = courses.reduce((sum, course) => sum + (course.numberOfStudents || 0), 0);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSummary() {
+      setLoadingSummary(true);
+      try {
+        const [events, quizzes, assignmentGroups] = await Promise.all([
+          teacherApi.upcomingCalendarEvents(6).catch(() => []),
+          teacherApi.quizzes().catch(() => []),
+          Promise.all(
+            courses.map(async (course) => {
+              const assignments = await teacherApi.assignments(course.id).catch(() => []);
+              const submissions = await Promise.all(
+                assignments.map((assignment) =>
+                  teacherApi.assignmentSubmissions(assignment.id).catch(() => []),
+                ),
+              );
+              return { assignments, submissions: submissions.flat() };
+            }),
+          ),
+        ]);
+        if (!cancelled) {
+          setSessions(events);
+          setQuizCount(quizzes.length);
+          setAssignmentCount(
+            assignmentGroups.reduce((sum, group) => sum + group.assignments.length, 0),
+          );
+          setPendingReviews(
+            assignmentGroups.reduce(
+              (sum, group) =>
+                sum +
+                group.submissions.filter((submission) =>
+                  ["SUBMITTED", "UNDER_REVIEW"].includes(submission.status),
+                ).length,
+              0,
+            ),
+          );
+          setSummaryError("");
+        }
+      } catch (loadError) {
+        if (!cancelled)
+          setSummaryError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Some dashboard metrics are unavailable.",
+          );
+      } finally {
+        if (!cancelled) setLoadingSummary(false);
+      }
+    }
+    void loadSummary();
+    return () => {
+      cancelled = true;
+    };
+  }, [courses]);
 
   function notify(message: string) {
     setNotice(message);
@@ -56,13 +88,22 @@ export default function TeacherDashboardHome({ profile, courses, onNavigate }: P
           {notice}
         </div>
       )}
+      {summaryError && (
+        <div className="teacher-dashboard-notice" role="alert">
+          {summaryError}
+        </div>
+      )}
       <div className="teacher-dashboard-welcome">
         <div>
           <span className="teacher-dashboard-kicker">Teacher workspace · Thursday, Oct 24</span>
           <h2 id="teacher-dashboard-title">
             Good morning, {displayName} <span aria-hidden="true">👋</span>
           </h2>
-          <p>You have 3 teaching sessions and 14 assignments to review today.</p>
+          <p>
+            {loadingSummary
+              ? "Loading your teaching priorities…"
+              : `You have ${sessions.length} upcoming sessions and ${pendingReviews} submissions to review.`}
+          </p>
         </div>
         <div className="teacher-dashboard-welcome-actions">
           <button type="button" onClick={() => onNavigate("assistant")}>
@@ -82,38 +123,38 @@ export default function TeacherDashboardHome({ profile, courses, onNavigate }: P
         <Kpi
           icon="▣"
           label="Active Courses"
-          value={`${courses.length || 6} Active`}
-          detail={`${Math.max(courses.length, 4)} cohort, 2 self-paced`}
-          trend="↗ +1 from last term"
+          value={`${courses.length} Active`}
+          detail="Assigned teacher courses"
+          trend="Live course service"
         />
         <Kpi
           icon="♧"
           label="Enrolled Students"
-          value={`${totalStudents || 148} Students`}
-          detail="Across 3 grade levels"
-          trend="● 94% active participation"
+          value={`${totalStudents} Students`}
+          detail="Across assigned courses"
+          trend="Live enrollment totals"
         />
         <Kpi
           icon="▣"
           label="Today's Sessions"
-          value="3 Sessions"
-          detail="3.5 instructional hours"
-          trend="● First starts in 25 min"
+          value={`${sessions.length} Sessions`}
+          detail="Upcoming calendar events"
+          trend={sessions[0] ? `● Next: ${sessions[0].title}` : "No upcoming sessions"}
         />
         <Kpi
           icon="☷"
           label="Pending Reviews"
-          value="14 Items"
-          detail="8 quizzes, 6 assignments"
-          trend="◉ 4 due today"
+          value={`${pendingReviews} Items`}
+          detail={`${quizCount} quizzes, ${assignmentCount} assignments tracked`}
+          trend="● Submission service"
           danger
         />
         <Kpi
           icon="▤"
           label="Monthly Earnings"
-          value="$4,850"
-          detail="Target: $5,200"
-          trend="↗ +12% vs last month"
+          value="—"
+          detail="Earnings data unavailable"
+          trend="Connected teacher data only"
         />
       </div>
 
@@ -124,39 +165,43 @@ export default function TeacherDashboardHome({ profile, courses, onNavigate }: P
               <div>
                 <h3>▣ Today&apos;s Teaching Schedule</h3>
               </div>
-              <span>3 Planned Classes</span>
+              <span>{sessions.length} Planned Events</span>
             </div>
             <div className="teacher-dashboard-session-list">
               {sessions.map((session) => (
-                <article
-                  className={`teacher-dashboard-session ${session.live ? "live" : ""}`}
-                  key={session.label}
-                >
+                <article className="teacher-dashboard-session" key={session.id}>
                   <div className="teacher-dashboard-time">
-                    <strong>{session.time}</strong>
-                    <small>{session.end}</small>
+                    <strong>
+                      {new Date(session.startDateTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </strong>
+                    <small>
+                      {session.endDateTime
+                        ? new Date(session.endDateTime).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
+                    </small>
                   </div>
                   <div className="teacher-dashboard-session-body">
                     <div>
-                      <span className="teacher-session-state">{session.state}</span>
-                      {session.live && (
-                        <span className="teacher-session-ready">Live Room Ready</span>
-                      )}
+                      <span className="teacher-session-state">{session.status}</span>
                     </div>
-                    <h4>{session.label}</h4>
-                    <p>{session.detail}</p>
+                    <h4>{session.title}</h4>
+                    <p>{session.description || session.location || "Scheduled calendar event"}</p>
                   </div>
                   <div className="teacher-dashboard-session-actions">
-                    <button type="button" onClick={() => notify(`${session.label} roster opened.`)}>
-                      {session.live ? "View Roster" : "Reschedule"}
-                    </button>
                     <button
                       type="button"
-                      className={session.live ? "primary" : ""}
-                      onClick={() => notify(`${session.action} opened.`)}
+                      onClick={() => notify(`${session.title} details opened.`)}
                     >
-                      {session.live ? "▣ " : ""}
-                      {session.action}
+                      View Details
+                    </button>
+                    <button type="button" onClick={() => notify(`${session.title} action opened.`)}>
+                      Open Event
                     </button>
                   </div>
                 </article>
@@ -175,29 +220,7 @@ export default function TeacherDashboardHome({ profile, courses, onNavigate }: P
               </button>
             </div>
             <div className="teacher-dashboard-course-grid">
-              {(courses.length
-                ? courses.slice(0, 3)
-                : [
-                    {
-                      id: "calc",
-                      courseName: "AP Calculus BC",
-                      courseDescription: "Advanced placement college credit track",
-                      numberOfStudents: 32,
-                    },
-                    {
-                      id: "physics",
-                      courseName: "Physics Honors: Mechanics",
-                      courseDescription: "Kinematics, Newton&apos;s Laws & Energy",
-                      numberOfStudents: 28,
-                    },
-                    {
-                      id: "linear",
-                      courseName: "Linear Algebra & Matrices",
-                      courseDescription: "Vector spaces, eigenvalues, transforms",
-                      numberOfStudents: 18,
-                    },
-                  ]
-              ).map((course, index) => (
+              {courses.slice(0, 3).map((course, index) => (
                 <article className="teacher-dashboard-course-card" key={course.id}>
                   <div className={`teacher-dashboard-course-art art-${index}`}>
                     {course.courseThumbnail ? (
@@ -207,7 +230,7 @@ export default function TeacherDashboardHome({ profile, courses, onNavigate }: P
                     ) : (
                       <span>{course.courseName.charAt(0)}</span>
                     )}
-                    <b>{index === 0 ? "Grade 12" : index === 1 ? "Grade 11" : "College Prep"}</b>
+                    <b>{course.subject || "Assigned course"}</b>
                   </div>
                   <div className="teacher-dashboard-course-content">
                     <h4>{course.courseName}</h4>
@@ -218,20 +241,17 @@ export default function TeacherDashboardHome({ profile, courses, onNavigate }: P
                     <div className="teacher-dashboard-progress">
                       <div>
                         <span>Curriculum Progress</span>
-                        <strong>{78 - index * 16}%</strong>
+                        <strong>—</strong>
                       </div>
                       <i>
-                        <em style={{ width: `${78 - index * 16}%` }} />
+                        <em style={{ width: "0%" }} />
                       </i>
                     </div>
                     <div className="teacher-dashboard-course-meta">
                       <span>♧ {course.numberOfStudents || 0} Enrolled</span>
                       <small>
-                        {index === 0
-                          ? "◷ Next lesson tomorrow at 9:00 AM"
-                          : index === 1
-                            ? "◉ Mechanics Quiz due tonight"
-                            : "☑ 3 pending homework submissions"}
+                        {course.courseStatus || "Assigned course"} ·{" "}
+                        {course.online ? "Online" : "Course service"}
                       </small>
                     </div>
                     <button type="button" onClick={() => onNavigate("courses")}>

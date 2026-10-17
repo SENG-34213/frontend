@@ -897,7 +897,7 @@ function Dashboard({
           <article className="card feature-card">
             <h2>{browseResult.courseName}</h2>
             <p>{browseResult.courseDescription || browseResult.subject}</p>
-            <p>Monthly fee: {browseResult.courseFeeMonthly ?? "Contact admin"}</p>
+            <p>Grade monthly fee: {browseResult.courseFeeMonthly ?? "Contact admin"}</p>
             <div className="feature-actions">
               <button
                 className="outline-button"

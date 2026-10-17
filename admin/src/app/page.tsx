@@ -239,6 +239,10 @@ export default function Home() {
                 phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
                 grade: activeForm === "student" ? normalizeGrade(profile?.grade) : undefined,
+                schoolName:
+                  activeForm === "student" && profile?.schoolName
+                    ? String(profile.schoolName)
+                    : undefined,
                 code:
                   activeForm === "student"
                     ? String(profile?.studentId || "")
@@ -322,6 +326,7 @@ export default function Home() {
                 email: String(user.email || ""),
                 phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 grade: normalizeGrade(profile?.grade),
+                schoolName: profile?.schoolName ? String(profile.schoolName) : undefined,
                 code: String(profile?.studentId || ""),
                 accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
               };
@@ -401,6 +406,7 @@ export default function Home() {
                 email: String(user.email || ""),
                 phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 grade: normalizeGrade(profile?.grade),
+                schoolName: profile?.schoolName ? String(profile.schoolName) : undefined,
                 code: String(profile?.studentId || ""),
                 accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
               };
@@ -474,6 +480,8 @@ export default function Home() {
               name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
               email: String(user.email || ""),
               grade: role === "student" ? normalizeGrade(profile?.grade) : undefined,
+              schoolName:
+                role === "student" && profile?.schoolName ? String(profile.schoolName) : undefined,
               code:
                 role === "student"
                   ? String(profile?.studentId || "")
@@ -547,6 +555,7 @@ export default function Home() {
                   name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
                   email: String(user.email || ""),
                   grade: normalizeGrade(profile?.grade),
+                  schoolName: profile?.schoolName ? String(profile.schoolName) : undefined,
                 };
               }),
             );
@@ -813,7 +822,6 @@ export default function Home() {
         courseName: course.courseName.trim(),
         courseDescription: course.courseDescription.trim(),
         courseThumbnail: course.courseThumbnail.trim() || null,
-        courseFeeMonthly: Number(course.courseFeeMonthly),
         gradeId: course.gradeId.trim(),
         assignedTeacherId: course.assignedTeacherId.trim(),
         subject: course.subject.trim(),
@@ -916,6 +924,7 @@ export default function Home() {
               guardianPhone: values.guardianPhone.trim(),
               attendanceMode: values.attendanceMode,
               grade: values.grade,
+              schoolName: values.schoolName.trim(),
             },
           }
         : {
@@ -1030,6 +1039,7 @@ export default function Home() {
           name: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName}`,
           email: registered.email || values.email,
           grade: normalizeGrade(registered.studentProfile?.grade ?? values.grade),
+          schoolName: registered.studentProfile?.schoolName || values.schoolName.trim(),
           phoneNumber: registered.phoneNumber || values.phoneNumber,
           attendanceMode: registered.studentProfile?.attendanceMode || values.attendanceMode,
           studentCode: registered.studentProfile?.studentId,
@@ -1269,11 +1279,11 @@ export default function Home() {
     return result.data as GroupMember[];
   }
 
-  async function createGrade(draft: { name: string; description: string }) {
+  async function createGrade(draft: { name: string; description: string; monthlyFee: string }) {
     const response = await authorizedApiRequest(`${apiUrl}/api/v1/course/grades`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(draft),
+      body: JSON.stringify({ ...draft, monthlyFee: Number(draft.monthlyFee) }),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok)
@@ -1288,13 +1298,16 @@ export default function Home() {
     setGradesReloadKey((current) => current + 1);
   }
 
-  async function updateGrade(id: string, draft: { name: string; description: string }) {
+  async function updateGrade(
+    id: string,
+    draft: { name: string; description: string; monthlyFee: string },
+  ) {
     const response = await authorizedApiRequest(
       `${apiUrl}/api/v1/course/grades/${encodeURIComponent(id)}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify({ ...draft, monthlyFee: Number(draft.monthlyFee) }),
       },
     );
     const result = await response.json().catch(() => ({}));
@@ -1811,32 +1824,12 @@ export default function Home() {
                             <Icon name="settings" size={18} />
                           </div>
                           <div>
-                            <h2>Pricing &amp; availability</h2>
-                            <p>Choose the monthly fee, delivery mode, and publishing options.</p>
+                            <h2>Availability</h2>
+                            <p>Grade pricing is managed once for every course in that grade.</p>
                           </div>
                           <span className="section-index">03</span>
                         </div>
                         <div className="field-grid two-col">
-                          <label className="field">
-                            <span className="field-label">
-                              Monthly fee (LKR)
-                              <span className="required"> *</span>
-                            </span>
-                            <div className="money-input">
-                              <span>LKR</span>
-                              <input
-                                required
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                value={course.courseFeeMonthly}
-                                placeholder="2500.00"
-                                onChange={(event) =>
-                                  changeCourse("courseFeeMonthly", event.target.value)
-                                }
-                              />
-                            </div>
-                          </label>
                           <label className="field">
                             <span className="field-label">Discount offer (%)</span>
                             <input
@@ -2444,19 +2437,30 @@ export default function Home() {
                             onChange={change}
                           />
                           {activeForm === "student" ? (
-                            <SelectField
-                              label="Grade"
-                              name="grade"
-                              options={[
-                                ["", "Select grade"],
-                                ...Array.from(
-                                  { length: 13 },
-                                  (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string],
-                                ),
-                              ]}
-                              values={values}
-                              onChange={change}
-                            />
+                            <>
+                              <SelectField
+                                label="Grade"
+                                name="grade"
+                                options={[
+                                  ["", "Select grade"],
+                                  ...Array.from(
+                                    { length: 13 },
+                                    (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string],
+                                  ),
+                                ]}
+                                values={values}
+                                onChange={change}
+                              />
+                              <Field
+                                label="School name"
+                                name="schoolName"
+                                placeholder="e.g. Colombo Central College"
+                                hint="Enter the student’s current school."
+                                maxLength={150}
+                                values={values}
+                                onChange={change}
+                              />
+                            </>
                           ) : (
                             <>
                               <Field

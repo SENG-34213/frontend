@@ -7,6 +7,7 @@ export function Field({
   placeholder,
   required = true,
   hint,
+  maxLength,
   values,
   onChange,
 }: {
@@ -16,6 +17,7 @@ export function Field({
   placeholder?: string;
   required?: boolean;
   hint?: string;
+  maxLength?: number;
   values: RegistrationValues;
   onChange: (name: keyof RegistrationValues, value: string) => void;
 }) {
@@ -30,6 +32,7 @@ export function Field({
         name={name}
         type={type}
         required={required}
+        maxLength={maxLength}
         placeholder={placeholder}
         pattern={phone ? "(?:\\+94|0)7[0-9]{8}" : undefined}
         title={

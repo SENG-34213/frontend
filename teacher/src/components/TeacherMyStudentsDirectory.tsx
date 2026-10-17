@@ -1,204 +1,142 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { TeacherCourse } from "../lib/teacherApi";
+import { useEffect, useMemo, useState } from "react";
+import type { TeacherCourse, TeacherStudent } from "../lib/teacherApi";
+import { teacherApi } from "../lib/teacherApi";
 
-type StudentStatus = "honors" | "on-track" | "support";
 type StudentView = "table" | "cards";
-
-type Student = {
-  id: string;
+type StudentRow = TeacherStudent & {
+  studentId: string;
+  courseName: string;
   name: string;
   email: string;
-  courseIndex: number;
   grade: string;
-  attendance: number;
+  mastery: number | null;
   absences: number;
-  mastery: number;
   lastSeen: string;
-  lastActivity: string;
   tag: string;
-  status: StudentStatus;
 };
 
-const roster: Student[] = [
-  {
-    id: "MNT-8902",
-    name: "Alex Turner",
-    email: "alex.t@oakdale.edu",
-    courseIndex: 0,
-    grade: "Grade 12",
-    attendance: 88,
-    absences: 3,
-    mastery: 78.4,
-    lastSeen: "2 hours ago",
-    lastActivity: "Derivatives Quiz 4",
-    tag: "2 Missed Quizzes",
-    status: "support",
-  },
-  {
-    id: "MNT-8914",
-    name: "Maya Patel",
-    email: "maya.p@oakdale.edu",
-    courseIndex: 0,
-    grade: "Grade 12",
-    attendance: 94,
-    absences: 1,
-    mastery: 84.2,
-    lastSeen: "Yesterday",
-    lastActivity: "Related Rates Lab",
-    tag: "Score trending down",
-    status: "support",
-  },
-  {
-    id: "MNT-8871",
-    name: "Jordan Lee",
-    email: "jordan.l@oakdale.edu",
-    courseIndex: 1,
-    grade: "Grade 11",
-    attendance: 98,
-    absences: 0,
-    mastery: 96.8,
-    lastSeen: "Today, 9:18 AM",
-    lastActivity: "Energy Systems Practice",
-    tag: "Top performer",
-    status: "honors",
-  },
-  {
-    id: "MNT-8845",
-    name: "Samira Khan",
-    email: "samira.k@oakdale.edu",
-    courseIndex: 1,
-    grade: "Grade 11",
-    attendance: 92,
-    absences: 1,
-    mastery: 89.5,
-    lastSeen: "Today, 8:42 AM",
-    lastActivity: "Momentum Check-in",
-    tag: "On track",
-    status: "on-track",
-  },
-  {
-    id: "MNT-8926",
-    name: "Chris Morgan",
-    email: "chris.m@oakdale.edu",
-    courseIndex: 2,
-    grade: "Grade 12",
-    attendance: 87,
-    absences: 4,
-    mastery: 82.1,
-    lastSeen: "2 days ago",
-    lastActivity: "Matrix Applications",
-    tag: "Needs check-in",
-    status: "on-track",
-  },
-  {
-    id: "MNT-8864",
-    name: "Elena Rodriguez",
-    email: "elena.r@oakdale.edu",
-    courseIndex: 2,
-    grade: "Grade 12",
-    attendance: 99,
-    absences: 0,
-    mastery: 98.1,
-    lastSeen: "Today, 10:03 AM",
-    lastActivity: "Linear Algebra Review",
-    tag: "Top performer",
-    status: "honors",
-  },
-  {
-    id: "MNT-8933",
-    name: "Noah Williams",
-    email: "noah.w@oakdale.edu",
-    courseIndex: 0,
-    grade: "Grade 12",
-    attendance: 76,
-    absences: 6,
-    mastery: 71.6,
-    lastSeen: "4 days ago",
-    lastActivity: "Unit 3 Assessment",
-    tag: "Attendance watch",
-    status: "support",
-  },
-  {
-    id: "MNT-8850",
-    name: "Priya Shah",
-    email: "priya.s@oakdale.edu",
-    courseIndex: 1,
-    grade: "Grade 11",
-    attendance: 96,
-    absences: 0,
-    mastery: 91.7,
-    lastSeen: "Today, 7:56 AM",
-    lastActivity: "Lab Reflection",
-    tag: "On track",
-    status: "on-track",
-  },
-];
+function shortId(value: string) {
+  return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
+}
+function studentStatus(attendance: number): TeacherStudent["status"] {
+  return attendance >= 90 ? "honors" : attendance >= 75 ? "on-track" : "support";
+}
 
 export default function TeacherMyStudentsDirectory({ courses }: { courses: TeacherCourse[] }) {
+  const [students, setStudents] = useState<StudentRow[]>([]);
   const [query, setQuery] = useState("");
   const [courseFilter, setCourseFilter] = useState("all");
-  const [gradeFilter, setGradeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sort, setSort] = useState<"low" | "high">("low");
   const [view, setView] = useState<StudentView>("table");
   const [selected, setSelected] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const courseOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(roster.map((student) => courses[student.courseIndex]?.id).filter(Boolean)),
-      ),
-    [courses],
-  );
+  useEffect(() => {
+    let cancelled = false;
+    async function loadStudents() {
+      setLoading(true);
+      setError("");
+      try {
+        const rows = (
+          await Promise.all(
+            courses.map(async (course) => {
+              const ids = await teacherApi.enrolledStudentIds(course.id);
+              return Promise.all(
+                ids.map(async (studentId) => {
+                  let attendance = 0;
+                  let absences = 0;
+                  try {
+                    const summary = await teacherApi.studentAttendanceSummary(studentId, course.id);
+                    attendance = Number(summary.attendancePercentage || 0);
+                    absences = summary.absentCount || 0;
+                  } catch {
+                    /* Attendance summary is optional for a roster row. */
+                  }
+                  const status = studentStatus(attendance);
+                  return {
+                    id: `${course.id}:${studentId}`,
+                    studentId,
+                    courseId: course.id,
+                    courseName: course.courseName,
+                    name: `Student ${shortId(studentId)}`,
+                    email: "Not provided",
+                    grade: "Not provided",
+                    attendance,
+                    absences,
+                    mastery: null,
+                    lastSeen: "Not available",
+                    tag:
+                      status === "support"
+                        ? "Attendance watch"
+                        : status === "honors"
+                          ? "High attendance"
+                          : "On track",
+                    status,
+                  } satisfies StudentRow;
+                }),
+              );
+            }),
+          )
+        ).flat();
+        if (!cancelled) setStudents(rows);
+      } catch (loadError) {
+        if (!cancelled) {
+          setStudents([]);
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to load the student directory.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void loadStudents();
+    return () => {
+      cancelled = true;
+    };
+  }, [courses]);
+
   const filteredStudents = useMemo(() => {
     const search = query.trim().toLowerCase();
-    return [...roster]
+    return [...students]
       .filter((student) => {
-        const courseId = courses[student.courseIndex]?.id;
         const matchesSearch =
           !search ||
-          [student.name, student.email, student.id, student.lastActivity].some((value) =>
-            value.toLowerCase().includes(search),
-          );
-        const matchesCourse = courseFilter === "all" || courseId === courseFilter;
-        const matchesGrade = gradeFilter === "all" || student.grade === gradeFilter;
-        const matchesStatus = statusFilter === "all" || student.status === statusFilter;
-        return matchesSearch && matchesCourse && matchesGrade && matchesStatus;
+          `${student.name} ${student.email} ${student.studentId} ${student.courseName}`
+            .toLowerCase()
+            .includes(search);
+        return (
+          matchesSearch &&
+          (courseFilter === "all" || student.courseId === courseFilter) &&
+          (statusFilter === "all" || student.status === statusFilter)
+        );
       })
-      .sort((a, b) => (sort === "low" ? a.mastery - b.mastery : b.mastery - a.mastery));
-  }, [courseFilter, courses, gradeFilter, query, sort, statusFilter]);
-
+      .sort((a, b) => (sort === "low" ? a.attendance - b.attendance : b.attendance - a.attendance));
+  }, [courseFilter, query, sort, statusFilter, students]);
   const selectedVisible = filteredStudents.filter((student) => selected.includes(student.id));
+  const needingSupport = students.filter((student) => student.status === "support").length;
+  const averageAttendance = students.length
+    ? students.reduce((sum, student) => sum + student.attendance, 0) / students.length
+    : 0;
 
   function notify(message: string) {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2600);
   }
-
-  function toggleSelected(id: string) {
-    setSelected((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
-  }
-
   function toggleVisible() {
-    const visibleIds = filteredStudents.map((student) => student.id);
-    const allSelected = visibleIds.every((id) => selected.includes(id));
+    const ids = filteredStudents.map((student) => student.id);
+    const allSelected = ids.every((id) => selected.includes(id));
     setSelected((current) =>
       allSelected
-        ? current.filter((id) => !visibleIds.includes(id))
-        : Array.from(new Set([...current, ...visibleIds])),
-    );
-  }
-
-  function courseName(student: Student) {
-    return (
-      courses[student.courseIndex]?.courseName ||
-      ["AP Calculus BC", "Physics Honors", "Linear Algebra"][student.courseIndex] ||
-      "Assigned course"
+        ? current.filter((id) => !ids.includes(id))
+        : Array.from(new Set([...current, ...ids])),
     );
   }
 
@@ -209,87 +147,74 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
           {notice}
         </div>
       )}
+      {error && (
+        <div className="teacher-my-students-notice" role="alert">
+          {error}
+        </div>
+      )}
       <div className="teacher-my-students-heading">
         <div>
           <div className="teacher-my-students-eyebrow">
-            <span>Spring semester · 2025</span>
+            <span>Teacher roster</span>
             <i />
             <span className="teacher-my-students-live-dot" />
-            <span>6 cohort sections active</span>
+            <span>{courses.length} assigned courses</span>
           </div>
           <h2 id="my-students-title">My Students</h2>
-          <p>Directory of active scholars across your assigned courses and learning cohorts.</p>
+          <p>Directory of enrolled students across your assigned courses.</p>
         </div>
         <div className="teacher-my-students-actions">
-          <button type="button" onClick={() => notify("Cohort announcement composer opened.")}>
+          <button
+            type="button"
+            onClick={() => notify("Cohort announcement composer is not available yet.")}
+          >
             Send Cohort Announcement
           </button>
           <button
             type="button"
             className="primary"
-            onClick={() => notify("Student enrollment is coming soon.")}
+            onClick={() => notify("Enrollment is managed by administrators.")}
           >
             + Enroll New Student
           </button>
         </div>
       </div>
-
       <div className="teacher-student-kpis">
         <article>
           <div>
             <span>Total Students</span>
-            <b>148</b>
+            <b>{students.length}</b>
           </div>
-          <small>Across 6 active cohorts</small>
-          <em>+8.4% this semester</em>
+          <small>From active enrollments</small>
+          <em>{courses.length} assigned courses</em>
         </article>
         <article>
           <div>
-            <span>Avg. Course Mastery</span>
-            <b>86.4%</b>
+            <span>Avg. Attendance</span>
+            <b>{students.length ? `${averageAttendance.toFixed(1)}%` : "—"}</b>
           </div>
-          <small>Across all assessments</small>
-          <em className="positive">+3.2% vs. last month</em>
+          <small>Attendance service summary</small>
+          <em className="positive">Live data</em>
         </article>
         <article>
           <div>
             <span>Needing Intervention</span>
-            <b className="danger">6</b>
+            <b className="danger">{needingSupport}</b>
           </div>
-          <small>Score drop &gt; 10% or &lt;75%</small>
+          <small>Attendance below 75%</small>
           <button type="button" onClick={() => setStatusFilter("support")}>
             Review List →
           </button>
         </article>
         <article>
           <div>
-            <span>Pending Submissions</span>
-            <b>14</b>
+            <span>Course Coverage</span>
+            <b>{courses.length}</b>
           </div>
-          <small>Items awaiting grade</small>
-          <em>3 extension requests</em>
+          <small>Assigned courses</small>
+          <em>Enrollment records</em>
         </article>
       </div>
-
-      <div className="teacher-student-briefing">
-        <span className="teacher-student-briefing-icon">✦</span>
-        <div>
-          <strong>AI Roster Briefing for Today</strong>
-          <p>
-            3 students showed significant improvement this week. Maya Patel and Alex Turner are
-            eligible for proactive diagnostic checks.
-          </p>
-        </div>
-        <div className="teacher-student-briefing-actions">
-          <button type="button" onClick={() => notify("Briefing dismissed for today.")}>
-            Dismiss
-          </button>
-          <button type="button" className="primary" onClick={() => setStatusFilter("support")}>
-            Apply Interventions →
-          </button>
-        </div>
-      </div>
-
       <div className="teacher-student-toolbar">
         <div className="teacher-student-filter-group">
           <label className="teacher-student-search">
@@ -297,7 +222,7 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search student by name, ID, email..."
+              placeholder="Search student ID or course..."
               aria-label="Search students"
             />
           </label>
@@ -306,31 +231,22 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
             onChange={(event) => setCourseFilter(event.target.value)}
             aria-label="Filter by course"
           >
-            <option value="all">Course: All Sections ({courseOptions.length || 6})</option>
-            {courseOptions.map((id) => (
-              <option key={id} value={id}>
-                {courses.find((course) => course.id === id)?.courseName}
+            <option value="all">Course: All Sections ({courses.length})</option>
+            {courses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.courseName}
               </option>
             ))}
-          </select>
-          <select
-            value={gradeFilter}
-            onChange={(event) => setGradeFilter(event.target.value)}
-            aria-label="Filter by grade"
-          >
-            <option value="all">Grade Level: All</option>
-            <option value="Grade 11">Grade 11</option>
-            <option value="Grade 12">Grade 12</option>
           </select>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
             aria-label="Filter by academic status"
           >
-            <option value="all">Status: All (148)</option>
-            <option value="honors">Honors (&gt;90%)</option>
-            <option value="on-track">On Track (75–89%)</option>
-            <option value="support">Needs Support (&lt;75%)</option>
+            <option value="all">Status: All ({students.length})</option>
+            <option value="honors">High attendance</option>
+            <option value="on-track">On track</option>
+            <option value="support">Needs support</option>
           </select>
         </div>
         <div className="teacher-student-view-actions">
@@ -341,8 +257,8 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
               onChange={(event) => setSort(event.target.value as "low" | "high")}
               aria-label="Sort students"
             >
-              <option value="low">Performance (Low to High)</option>
-              <option value="high">Performance (High to Low)</option>
+              <option value="low">Attendance (Low to High)</option>
+              <option value="high">Attendance (High to Low)</option>
             </select>
           </label>
           <div className="teacher-student-view-toggle">
@@ -351,7 +267,7 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
               className={view === "table" ? "active" : ""}
               onClick={() => setView("table")}
             >
-              ☷ <span>Table</span>
+              ▤ <span>Table</span>
             </button>
             <button
               type="button"
@@ -363,7 +279,6 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
           </div>
         </div>
       </div>
-
       <div className="teacher-student-roster">
         <div className="teacher-student-selection-bar">
           <label>
@@ -395,20 +310,21 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
             </button>
           </div>
         </div>
-        {view === "table" ? (
+        {loading ? (
+          <div className="teacher-student-empty">Loading enrolled students…</div>
+        ) : view === "table" ? (
           <div className="teacher-student-table-wrap">
             <table className="teacher-student-table">
               <thead>
                 <tr>
                   <th>Select</th>
-                  <th>Scholar Name &amp; ID</th>
-                  <th>Cohort &amp; Section</th>
-                  <th>Grade Level</th>
+                  <th>Scholar ID</th>
+                  <th>Course</th>
                   <th>Attendance</th>
-                  <th>Course Mastery</th>
-                  <th>Last Seen</th>
-                  <th>Academic Tag</th>
-                  <th>Quick Action</th>
+                  <th>Mastery</th>
+                  <th>Last seen</th>
+                  <th>Academic tag</th>
+                  <th>Quick action</th>
                 </tr>
               </thead>
               <tbody>
@@ -417,8 +333,13 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
                     key={student.id}
                     student={student}
                     selected={selected.includes(student.id)}
-                    courseName={courseName(student)}
-                    onToggle={() => toggleSelected(student.id)}
+                    onToggle={() =>
+                      setSelected((current) =>
+                        current.includes(student.id)
+                          ? current.filter((id) => id !== student.id)
+                          : [...current, student.id],
+                      )
+                    }
                     onNotify={notify}
                   />
                 ))}
@@ -432,14 +353,19 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
                 key={student.id}
                 student={student}
                 selected={selected.includes(student.id)}
-                courseName={courseName(student)}
-                onToggle={() => toggleSelected(student.id)}
+                onToggle={() =>
+                  setSelected((current) =>
+                    current.includes(student.id)
+                      ? current.filter((id) => id !== student.id)
+                      : [...current, student.id],
+                  )
+                }
                 onNotify={notify}
               />
             ))}
           </div>
         )}
-        {!filteredStudents.length && (
+        {!loading && !filteredStudents.length && (
           <div className="teacher-student-empty">
             <strong>No students match these filters.</strong>
             <p>Try changing the search or filter selections.</p>
@@ -450,27 +376,21 @@ export default function TeacherMyStudentsDirectory({ courses }: { courses: Teach
   );
 }
 
-function StudentAvatar({ student }: { student: Student }) {
+function StudentAvatar({ student }: { student: StudentRow }) {
   return (
-    <span className={`teacher-student-avatar avatar-${student.id.slice(-1)}`}>
-      {student.name
-        .split(" ")
-        .map((part) => part[0])
-        .join("")}
+    <span className={`teacher-student-avatar avatar-${student.studentId.slice(-1)}`}>
+      {student.studentId.slice(0, 2).toUpperCase()}
     </span>
   );
 }
-
 function StudentRow({
   student,
   selected,
-  courseName,
   onToggle,
   onNotify,
 }: {
-  student: Student;
+  student: StudentRow;
   selected: boolean;
-  courseName: string;
   onToggle: () => void;
   onNotify: (message: string) => void;
 }) {
@@ -489,34 +409,26 @@ function StudentRow({
           <StudentAvatar student={student} />
           <div>
             <strong>{student.name}</strong>
-            <small>
-              ID: #{student.id} · {student.email}
-            </small>
+            <small>ID: #{student.studentId}</small>
           </div>
         </div>
       </td>
       <td>
-        <strong>{courseName}</strong>
-        <small>Section {student.courseIndex % 2 ? "B" : "A"} · Teacher cohort</small>
-      </td>
-      <td>
-        <span className="teacher-student-grade">{student.grade}</span>
+        <strong>{student.courseName}</strong>
+        <small>Enrollment record</small>
       </td>
       <td>
         <Progress value={student.attendance} suffix={`${student.absences} abs`} />
       </td>
       <td>
-        <div className={`teacher-student-mastery ${student.status}`}>
-          <strong>{student.mastery}%</strong>
-          <small>
-            {student.mastery >= 90 ? "A" : student.mastery >= 80 ? "B" : "C+"} ·{" "}
-            {student.mastery < 80 ? "↓" : "↑"}
-          </small>
+        <div className="teacher-student-mastery">
+          <strong>—</strong>
+          <small>Not available</small>
         </div>
       </td>
       <td>
         <strong>{student.lastSeen}</strong>
-        <small>{student.lastActivity}</small>
+        <small>Attendance data</small>
       </td>
       <td>
         <span className={`teacher-student-tag ${student.status}`}>{student.tag}</span>
@@ -527,17 +439,14 @@ function StudentRow({
     </tr>
   );
 }
-
 function StudentCard({
   student,
   selected,
-  courseName,
   onToggle,
   onNotify,
 }: {
-  student: Student;
+  student: StudentRow;
   selected: boolean;
-  courseName: string;
   onToggle: () => void;
   onNotify: (message: string) => void;
 }) {
@@ -556,7 +465,7 @@ function StudentCard({
         <div>
           <strong>{student.name}</strong>
           <small>
-            {student.id} · {courseName}
+            {student.studentId} · {student.courseName}
           </small>
         </div>
       </div>
@@ -567,7 +476,7 @@ function StudentCard({
         </div>
         <div>
           <span>Mastery</span>
-          <b>{student.mastery}%</b>
+          <b>—</b>
         </div>
         <div>
           <span>Last seen</span>
@@ -579,7 +488,6 @@ function StudentCard({
     </article>
   );
 }
-
 function Progress({ value, suffix }: { value: number; suffix: string }) {
   return (
     <div className="teacher-student-progress">
@@ -593,30 +501,32 @@ function Progress({ value, suffix }: { value: number; suffix: string }) {
     </div>
   );
 }
-
 function StudentActions({
   student,
   onNotify,
 }: {
-  student: Student;
+  student: StudentRow;
   onNotify: (message: string) => void;
 }) {
   return (
     <div className="teacher-student-actions-cell">
-      <button type="button" onClick={() => onNotify(`Reminder sent to ${student.name}.`)}>
+      <button
+        type="button"
+        onClick={() => onNotify(`Reminder for ${student.name} is not available yet.`)}
+      >
         Remind
       </button>
       <button
         type="button"
         aria-label={`Message ${student.name}`}
-        onClick={() => onNotify(`Message composer opened for ${student.name}.`)}
+        onClick={() => onNotify("Messaging is not available yet.")}
       >
         ✉
       </button>
       <button
         type="button"
         aria-label={`View ${student.name} profile`}
-        onClick={() => onNotify(`${student.name}'s detailed profile opened.`)}
+        onClick={() => onNotify("Student profile details are not available yet.")}
       >
         ↗
       </button>

@@ -18,6 +18,7 @@ export type RecentStudent = {
   name: string;
   email: string;
   grade?: string;
+  schoolName?: string;
   phoneNumber?: string;
   attendanceMode?: string;
   studentCode?: string;
@@ -62,7 +63,6 @@ export type CourseDraft = {
   courseName: string;
   courseDescription: string;
   courseThumbnail: string;
-  courseFeeMonthly: string;
   gradeId: string;
   assignedTeacherId: string;
   subject: string;
@@ -82,6 +82,7 @@ export type RegistrationValues = {
   guardianName: string;
   guardianPhone: string;
   grade: string;
+  schoolName: string;
   attendanceMode: string;
   nic: string;
   hireDate: string;
@@ -100,6 +101,7 @@ export type DirectoryUser = {
   email: string;
   phoneNumber?: string;
   grade?: string;
+  schoolName?: string;
   code?: string;
   accountStatus?: string;
   specializations?: string[];
@@ -128,6 +130,8 @@ export type GradeRecord = {
   id: string;
   name: string;
   description?: string;
+  monthlyFee?: number;
+  currencyCode?: string;
   active?: boolean;
   createdAt?: string;
   updatedAt?: string;

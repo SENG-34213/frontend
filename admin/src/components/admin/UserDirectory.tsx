@@ -48,7 +48,7 @@ export function UserDirectory({
           (statusFilter === "active"
             ? String(user.accountStatus || "").toUpperCase() === "ACTIVE"
             : String(user.accountStatus || "").toUpperCase() !== "ACTIVE")) &&
-          [user.name, user.email, user.phoneNumber, user.grade, user.code]
+          [user.name, user.email, user.phoneNumber, user.grade, user.schoolName, user.code]
             .filter(Boolean)
             .some((value) => value!.toLowerCase().includes(query))),
     );
@@ -58,7 +58,14 @@ export function UserDirectory({
   const studentFilteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
     return users.filter((user, index) => {
-      const haystack = [user.name, user.email, user.phoneNumber, user.grade, user.code]
+      const haystack = [
+        user.name,
+        user.email,
+        user.phoneNumber,
+        user.grade,
+        user.schoolName,
+        user.code,
+      ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -668,7 +675,7 @@ function StudentManagementView({
                     </span>
                     <span>
                       <strong>Grade {user.grade || "12"} · AP</strong>
-                      <small>{index % 2 ? "Cohort Omega-1" : "Cohort Beta-9"}</small>
+                      <small>{user.schoolName || "School not provided"}</small>
                     </span>
                     <span>{index % 3 === 2 ? "Pending Match" : "Dr. Marcus Vance"}</span>
                     <b className={index % 5 === 2 ? "risk" : "active"}>
@@ -716,6 +723,7 @@ function StudentManagementView({
                   <div>
                     <h3>{selectedUser.name}</h3>
                     <p>Grade {selectedUser.grade || "12"} · AP Honors Track</p>
+                    <small>{selectedUser.schoolName || "School not provided"}</small>
                     <small>{selectedUser.email}</small>
                     <span>Pro Plan</span>
                   </div>

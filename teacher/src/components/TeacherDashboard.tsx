@@ -708,11 +708,11 @@ export default function TeacherDashboard() {
           ) : activeView === "assistant" ? (
             <TeacherAiAssistant />
           ) : activeView === "studio" ? (
-            <TeacherMentifyStudio />
+            <TeacherMentifyStudio courses={courses} />
           ) : activeView === "quizzes" ? (
             <TeacherQuizzesAssessments courses={courses} />
           ) : activeView === "attendance" ? (
-            <TeacherAttendanceManagement />
+            <TeacherAttendanceManagement courses={courses} />
           ) : activeView === "materials" ? (
             <TeacherLearningMaterialsLibrary courses={courses} />
           ) : activeView === "calendar" ? (
@@ -730,7 +730,7 @@ export default function TeacherDashboard() {
           ) : activeView === "course-details" ? (
             <TeacherCourseDetailsCurriculum courses={courses} courseId={selectedCourse?.id} />
           ) : activeView === "assignments" ? (
-            <TeacherAssignmentSubmissions />
+            <TeacherAssignmentSubmissions courses={courses} />
           ) : activeView === "students" ? (
             <TeacherMyStudentsDirectory courses={courses} />
           ) : activeView === "notifications" ? (
