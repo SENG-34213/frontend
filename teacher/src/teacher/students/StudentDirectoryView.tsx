@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Users,
   Search,
@@ -11,40 +11,50 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Student, Course, NavigationTab } from "../types";
-import { mockStudents, mockCourses } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
 import { StudentDetailsModal } from "./StudentDetailsModal";
+import { useTeacherStudents } from "../hooks/useTeacherStudents";
+import type { BackendCourse } from "../api/courseApi";
 
 interface StudentDirectoryViewProps {
   onNavigate: (tab: NavigationTab, param?: string) => void;
   onSendMessage: (studentName: string) => void;
+  courses: Course[];
+  backendCourses: BackendCourse[];
 }
 
 export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
   onNavigate,
   onSendMessage,
+  courses,
+  backendCourses,
 }) => {
   const [search, setSearch] = useState("");
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const studentState = useTeacherStudents(true, backendCourses);
 
   // Selected student for drawer
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredStudents = mockStudents.filter((st) => {
-    const matchesSearch =
-      st.name.toLowerCase().includes(search.toLowerCase()) ||
-      st.studentId.toLowerCase().includes(search.toLowerCase()) ||
-      st.email.toLowerCase().includes(search.toLowerCase());
+  const filteredStudents = useMemo(
+    () =>
+      studentState.students.filter((st) => {
+        const matchesSearch =
+          st.name.toLowerCase().includes(search.toLowerCase()) ||
+          st.studentId.toLowerCase().includes(search.toLowerCase()) ||
+          st.email.toLowerCase().includes(search.toLowerCase());
 
-    const matchesCourse =
-      selectedCourseFilter === "All" || st.enrolledCourseIds.includes(selectedCourseFilter);
+        const matchesCourse =
+          selectedCourseFilter === "All" || st.enrolledCourseIds.includes(selectedCourseFilter);
 
-    const matchesStatus = statusFilter === "All" || st.status === statusFilter;
+        const matchesStatus = statusFilter === "All" || st.status === statusFilter;
 
-    return matchesSearch && matchesCourse && matchesStatus;
-  });
+        return matchesSearch && matchesCourse && matchesStatus;
+      }),
+    [search, selectedCourseFilter, statusFilter, studentState.students],
+  );
 
   const handleOpenStudent = (student: Student) => {
     setSelectedStudent(student);
@@ -116,7 +126,7 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
             className="px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
           >
             <option value="All">All Courses</option>
-            {mockCourses.map((c) => (
+            {courses.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.code}
               </option>
@@ -127,92 +137,106 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
 
       {/* Students Data Grid */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
-            <tr>
-              <th className="px-5 py-3">Student</th>
-              <th className="px-4 py-3">Student ID</th>
-              <th className="px-4 py-3">Courses</th>
-              <th className="px-4 py-3">Attendance</th>
-              <th className="px-4 py-3">GPA</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-5 py-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredStudents.length === 0 ? (
+        {studentState.error && (
+          <div className="flex items-center justify-between gap-4 border-b border-rose-200 bg-rose-50 px-5 py-3 text-xs text-rose-800">
+            <span>{studentState.error.message}</span>
+            <button onClick={studentState.retry} className="font-semibold underline">
+              Try again
+            </button>
+          </div>
+        )}
+        {studentState.isLoading ? (
+          <div className="px-5 py-12 text-center text-xs text-slate-500">
+            Loading enrolled students...
+          </div>
+        ) : (
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
-                <td colSpan={7} className="px-5 py-8 text-center text-slate-400 text-xs">
-                  No students found matching your criteria.
-                </td>
+                <th className="px-5 py-3">Student</th>
+                <th className="px-4 py-3">Student ID</th>
+                <th className="px-4 py-3">Courses</th>
+                <th className="px-4 py-3">Attendance</th>
+                <th className="px-4 py-3">GPA</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-5 py-3 text-right">Action</th>
               </tr>
-            ) : (
-              filteredStudents.map((st) => (
-                <tr
-                  key={st.id}
-                  onClick={() => handleOpenStudent(st)}
-                  className="hover:bg-slate-50/70 cursor-pointer transition-colors"
-                >
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full text-white text-xs font-semibold flex items-center justify-center shrink-0 ${st.avatarBg}`}
-                      >
-                        {st.initials}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 truncate">{st.name}</p>
-                        <p className="text-[11px] text-slate-400 truncate">{st.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 font-mono text-slate-600">{st.studentId}</td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex flex-wrap gap-1">
-                      {st.enrolledCourseIds.map((cid) => {
-                        const course = mockCourses.find((c) => c.id === cid);
-                        return (
-                          <span
-                            key={cid}
-                            className="px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-slate-100 text-slate-700"
-                          >
-                            {course?.code || cid}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 font-mono tabular-nums text-slate-700">
-                    <span
-                      className={`font-semibold ${
-                        st.attendanceRate < 80 ? "text-rose-600" : "text-slate-800"
-                      }`}
-                    >
-                      {st.attendanceRate}%
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 font-mono tabular-nums font-bold text-slate-900">
-                    {st.gpa.toFixed(2)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <StatusBadge status={st.status} />
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenStudent(st);
-                      }}
-                      className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors"
-                    >
-                      View Profile
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredStudents.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400 text-xs">
+                    No students found matching your criteria.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredStudents.map((st) => (
+                  <tr
+                    key={st.id}
+                    onClick={() => handleOpenStudent(st)}
+                    className="hover:bg-slate-50/70 cursor-pointer transition-colors"
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-full text-white text-xs font-semibold flex items-center justify-center shrink-0 ${st.avatarBg}`}
+                        >
+                          {st.initials}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-900 truncate">{st.name}</p>
+                          <p className="text-[11px] text-slate-400 truncate">{st.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-slate-600">{st.studentId}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex flex-wrap gap-1">
+                        {st.enrolledCourseIds.map((cid) => {
+                          const course = courses.find((c) => c.id === cid);
+                          return (
+                            <span
+                              key={cid}
+                              className="px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-slate-100 text-slate-700"
+                            >
+                              {course?.code || cid}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 font-mono tabular-nums text-slate-700">
+                      <span
+                        className={`font-semibold ${
+                          st.attendanceRate < 80 ? "text-rose-600" : "text-slate-800"
+                        }`}
+                      >
+                        {st.attendanceRate}%
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 font-mono tabular-nums font-bold text-slate-900">
+                      {st.gpa.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <StatusBadge status={st.status} />
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenStudent(st);
+                        }}
+                        className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors"
+                      >
+                        View Profile
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Student Details Modal */}
@@ -221,6 +245,7 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
         student={selectedStudent}
         onClose={() => setIsModalOpen(false)}
         onSendMessage={onSendMessage}
+        courses={courses}
       />
     </div>
   );

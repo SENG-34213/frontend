@@ -12,15 +12,15 @@ import {
   Send,
   Check,
 } from "lucide-react";
-import { Student } from "../types";
+import { Course, Student, StudentSubmission } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
-import { mockCourses, mockSubmissions } from "../data/mockData";
 
 interface StudentDetailsModalProps {
   isOpen: boolean;
   student: Student | null;
   onClose: () => void;
   onSendMessage: (studentName: string) => void;
+  courses: Course[];
 }
 
 type StudentTab = "overview" | "assignments" | "quizzes" | "attendance" | "notes";
@@ -30,6 +30,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
   student,
   onClose,
   onSendMessage,
+  courses,
 }) => {
   if (!isOpen || !student) return null;
 
@@ -40,8 +41,8 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
     "Recommended attending Thursday office hours for graph edge relaxation concepts.",
   ]);
 
-  const studentCourses = mockCourses.filter((c) => student.enrolledCourseIds.includes(c.id));
-  const studentSubmissions = mockSubmissions.filter((sub) => sub.studentId === student.id);
+  const studentCourses = courses.filter((c) => student.enrolledCourseIds.includes(c.id));
+  const studentSubmissions: StudentSubmission[] = [];
 
   const handleAddFeedback = (e: React.FormEvent) => {
     e.preventDefault();
