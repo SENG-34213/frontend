@@ -124,14 +124,20 @@ const objectives = [
   },
 ];
 
-export default function TeacherCourseDetailsCurriculum({ courses }: { courses: TeacherCourse[] }) {
+export default function TeacherCourseDetailsCurriculum({
+  courses,
+  courseId,
+}: {
+  courses: TeacherCourse[];
+  courseId?: string;
+}) {
   const [activeLessonId, setActiveLessonId] = useState("related-rates");
   const [activeTab, setActiveTab] = useState("Curriculum & Lessons");
   const [completedObjectives, setCompletedObjectives] = useState(
     objectives.map((objective) => objective.complete),
   );
   const [notice, setNotice] = useState("");
-  const course = courses[0];
+  const course = courses.find((item) => item.id === courseId) || courses[0];
   const activeLesson =
     modules.flatMap((module) => module.lessons).find((lesson) => lesson.id === activeLessonId) ||
     modules[3].lessons[3];
