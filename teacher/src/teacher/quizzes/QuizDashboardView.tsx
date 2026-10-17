@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   HelpCircle,
   Plus,
@@ -11,11 +11,11 @@ import {
   Layers,
   Sparkles,
   BookOpen,
-} from 'lucide-react';
-import { Quiz, QuizQuestion, NavigationTab } from '../types';
-import { mockQuizzes, mockCourses } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
-import { QuestionBuilderModal } from './QuestionBuilderModal';
+} from "lucide-react";
+import { Quiz, QuizQuestion, NavigationTab } from "../types";
+import { mockQuizzes, mockCourses } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
+import { QuestionBuilderModal } from "./QuestionBuilderModal";
 
 interface QuizDashboardViewProps {
   onOpenCreateQuiz: () => void;
@@ -29,8 +29,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   onOpenAIWithPrompt,
 }) => {
   const [quizzes, setQuizzes] = useState<Quiz[]>(mockQuizzes);
-  const [search, setSearch] = useState('');
-  const [courseFilter, setCourseFilter] = useState('All');
+  const [search, setSearch] = useState("");
+  const [courseFilter, setCourseFilter] = useState("All");
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(mockQuizzes[0]);
   const [isQuestionBuilderOpen, setIsQuestionBuilderOpen] = useState(false);
 
@@ -38,7 +38,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
     const matchesSearch =
       q.title.toLowerCase().includes(search.toLowerCase()) ||
       q.courseCode.toLowerCase().includes(search.toLowerCase());
-    const matchesCourse = courseFilter === 'All' || q.courseId === courseFilter;
+    const matchesCourse = courseFilter === "All" || q.courseId === courseFilter;
     return matchesSearch && matchesCourse;
   });
 
@@ -53,8 +53,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               totalQuestions: q.totalQuestions + 1,
               totalMarks: q.totalMarks + newQuestion.marks,
             }
-          : q
-      )
+          : q,
+      ),
     );
     setSelectedQuiz((prev) =>
       prev
@@ -64,7 +64,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
             totalQuestions: prev.totalQuestions + 1,
             totalMarks: prev.totalMarks + newQuestion.marks,
           }
-        : null
+        : null,
     );
   };
 
@@ -77,14 +77,17 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
             Quiz Management
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Configure diagnostic assessments, question banks, automated grading, and concept retention checks.
+            Configure diagnostic assessments, question banks, automated grading, and concept
+            retention checks.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() =>
-              onOpenAIWithPrompt('Generate 5 conceptual multiple-choice questions for CS-201 on AVL Tree balance factors')
+              onOpenAIWithPrompt(
+                "Generate 5 conceptual multiple-choice questions for CS-201 on AVL Tree balance factors",
+              )
             }
             className="px-3.5 py-2 text-xs font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors flex items-center gap-1.5"
           >
@@ -127,9 +130,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Completion Rate</span>
-          <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
-            95.8%
-          </div>
+          <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">95.8%</div>
           <p className="text-[11px] text-slate-400 mt-0.5">110 total attempts logged</p>
         </div>
       </div>
@@ -160,8 +161,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   onClick={() => setSelectedQuiz(quiz)}
                   className={`p-4 rounded-xl border transition-all cursor-pointer text-left ${
                     isSelected
-                      ? 'bg-white border-indigo-500 shadow-sm ring-1 ring-indigo-500/20'
-                      : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                      ? "bg-white border-indigo-500 shadow-sm ring-1 ring-indigo-500/20"
+                      : "bg-white border-slate-200 hover:border-slate-300 shadow-2xs"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -176,8 +177,12 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{quiz.description}</p>
 
                   <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-mono">
-                    <span>{quiz.totalQuestions} Questions · {quiz.totalMarks} Marks</span>
-                    <span className="text-indigo-600 font-semibold">{quiz.averageScorePercent}% Avg</span>
+                    <span>
+                      {quiz.totalQuestions} Questions · {quiz.totalMarks} Marks
+                    </span>
+                    <span className="text-indigo-600 font-semibold">
+                      {quiz.averageScorePercent}% Avg
+                    </span>
                   </div>
                 </div>
               );
@@ -198,7 +203,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                     <h2 className="text-sm font-bold text-slate-900">{selectedQuiz.title}</h2>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Duration: {selectedQuiz.durationMinutes} mins · Total Marks: {selectedQuiz.totalMarks} · {selectedQuiz.attemptsCount} attempts
+                    Duration: {selectedQuiz.durationMinutes} mins · Total Marks:{" "}
+                    {selectedQuiz.totalMarks} · {selectedQuiz.attemptsCount} attempts
                   </p>
                 </div>
 
@@ -217,13 +223,17 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                     Question Bank ({selectedQuiz.questions.length})
                   </h3>
-                  <span className="text-xs text-slate-400">Randomized for each student attempt</span>
+                  <span className="text-xs text-slate-400">
+                    Randomized for each student attempt
+                  </span>
                 </div>
 
                 {selectedQuiz.questions.length === 0 ? (
                   <div className="text-center py-10 bg-slate-50 rounded-xl border border-slate-200 p-6">
                     <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-xs font-semibold text-slate-700">No questions configured yet</p>
+                    <p className="text-xs font-semibold text-slate-700">
+                      No questions configured yet
+                    </p>
                     <p className="text-xs text-slate-500 mt-1">
                       Click &quot;Add Question&quot; above or use Mentify AI to generate questions.
                     </p>
@@ -245,7 +255,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                                 {q.question}
                               </p>
                               <span className="text-[10px] text-slate-400 font-mono uppercase mt-0.5 block">
-                                {q.type.replace('-', ' ')}
+                                {q.type.replace("-", " ")}
                               </span>
                             </div>
                           </div>
@@ -267,8 +277,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                                   key={oIdx}
                                   className={`p-2 rounded-lg text-xs flex items-center gap-2 border ${
                                     isCorrect
-                                      ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900 font-medium'
-                                      : 'bg-slate-50 border-slate-200 text-slate-700'
+                                      ? "bg-emerald-50/80 border-emerald-200 text-emerald-900 font-medium"
+                                      : "bg-slate-50 border-slate-200 text-slate-700"
                                   }`}
                                 >
                                   {isCorrect ? (

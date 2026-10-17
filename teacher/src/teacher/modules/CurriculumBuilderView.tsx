@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Layers,
   Plus,
@@ -13,23 +13,23 @@ import {
   Check,
   AlertCircle,
   ExternalLink,
-} from 'lucide-react';
-import { Course, Module, Lesson, NavigationTab } from '../types';
-import { mockCourses, mockModules } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
-import { LessonEditorModal } from '../lessons/LessonEditorModal';
+} from "lucide-react";
+import { Course, Module, Lesson, NavigationTab } from "../types";
+import { mockCourses, mockModules } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
+import { LessonEditorModal } from "../lessons/LessonEditorModal";
 
 interface CurriculumBuilderViewProps {
   onNavigate: (tab: NavigationTab) => void;
 }
 
 export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ onNavigate }) => {
-  const [selectedCourseId, setSelectedCourseId] = useState(mockCourses[0]?.id || 'crs-201');
+  const [selectedCourseId, setSelectedCourseId] = useState(mockCourses[0]?.id || "crs-201");
   const [modules, setModules] = useState<Module[]>(mockModules);
   const [expandedModuleIds, setExpandedModuleIds] = useState<Record<string, boolean>>({
-    'mod-1': true,
-    'mod-2': true,
-    'mod-3': false,
+    "mod-1": true,
+    "mod-2": true,
+    "mod-3": false,
   });
 
   // Editor states
@@ -39,8 +39,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
 
   // New module modal / inline
   const [isCreatingModule, setIsCreatingModule] = useState(false);
-  const [newModuleTitle, setNewModuleTitle] = useState('');
-  const [newModuleDesc, setNewModuleDesc] = useState('');
+  const [newModuleTitle, setNewModuleTitle] = useState("");
+  const [newModuleDesc, setNewModuleDesc] = useState("");
 
   const currentCourse = mockCourses.find((c) => c.id === selectedCourseId) || mockCourses[0];
   const courseModules = modules.filter((m) => m.courseId === selectedCourseId);
@@ -63,7 +63,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
           ...mod,
           lessons: mod.lessons.map((l) => (l.id === updatedLesson.id ? updatedLesson : l)),
         };
-      })
+      }),
     );
   };
 
@@ -75,16 +75,16 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
       id: `les-${Date.now()}`,
       moduleId: modId,
       title: `New Lesson Unit ${parent.lessons.length + 1}`,
-      description: 'Define syllabus objectives, lab instructions, and references.',
+      description: "Define syllabus objectives, lab instructions, and references.",
       durationMinutes: 45,
       order: parent.lessons.length + 1,
-      status: 'Draft',
-      contentType: 'Lecture',
+      status: "Draft",
+      contentType: "Lecture",
       resourcesCount: 1,
     };
 
     setModules((prev) =>
-      prev.map((m) => (m.id === modId ? { ...m, lessons: [...m.lessons, newLesson] } : m))
+      prev.map((m) => (m.id === modId ? { ...m, lessons: [...m.lessons, newLesson] } : m)),
     );
 
     // Immediately open editor for this new lesson
@@ -101,16 +101,16 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
       id: `mod-${Date.now()}`,
       courseId: selectedCourseId,
       title: `Module ${courseModules.length + 1}: ${newModuleTitle}`,
-      description: newModuleDesc || 'Curriculum unit learning objectives.',
+      description: newModuleDesc || "Curriculum unit learning objectives.",
       order: courseModules.length + 1,
-      status: 'Published',
+      status: "Published",
       lessons: [],
     };
 
     setModules((prev) => [...prev, newMod]);
     setExpandedModuleIds((prev) => ({ ...prev, [newMod.id]: true }));
-    setNewModuleTitle('');
-    setNewModuleDesc('');
+    setNewModuleTitle("");
+    setNewModuleDesc("");
     setIsCreatingModule(false);
   };
 
@@ -123,7 +123,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
             Curriculum Builder
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Organize modules, lecture units, lab exercises, and learning assets in a hierarchical syllabus.
+            Organize modules, lecture units, lab exercises, and learning assets in a hierarchical
+            syllabus.
           </p>
         </div>
 
@@ -172,9 +173,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Module Title
-              </label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Module Title</label>
               <input
                 type="text"
                 placeholder="e.g. Dynamic Programming & Memoization"
@@ -226,14 +225,16 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
           <div>
             <h2 className="text-sm font-bold text-slate-900">{currentCourse.title}</h2>
             <p className="text-xs text-slate-500">
-              {courseModules.length} Modules · {courseModules.reduce((acc, m) => acc + m.lessons.length, 0)} Total Lessons · {currentCourse.enrolledCount} Students Enrolled
+              {courseModules.length} Modules ·{" "}
+              {courseModules.reduce((acc, m) => acc + m.lessons.length, 0)} Total Lessons ·{" "}
+              {currentCourse.enrolledCount} Students Enrolled
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onNavigate('materials')}
+            onClick={() => onNavigate("materials")}
             className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <FolderOpen className="w-3.5 h-3.5 text-slate-500" />
@@ -298,7 +299,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
                 <div className="divide-y divide-slate-100">
                   {mod.lessons.length === 0 ? (
                     <div className="p-8 text-center text-xs text-slate-400">
-                      No lessons added to this module yet. Click &quot;Add Lesson&quot; to begin building.
+                      No lessons added to this module yet. Click &quot;Add Lesson&quot; to begin
+                      building.
                     </div>
                   ) : (
                     mod.lessons.map((lesson) => (

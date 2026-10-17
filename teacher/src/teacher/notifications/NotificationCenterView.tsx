@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Bell,
   CheckCheck,
@@ -8,22 +8,20 @@ import {
   MessageSquare,
   ArrowRight,
   Filter,
-} from 'lucide-react';
-import { NotificationItem, NavigationTab } from '../types';
-import { mockNotifications } from '../data/mockData';
+} from "lucide-react";
+import { NotificationItem, NavigationTab } from "../types";
+import { mockNotifications } from "../data/mockData";
 
 interface NotificationCenterViewProps {
   onNavigate: (tab: NavigationTab) => void;
 }
 
-export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({
-  onNavigate,
-}) => {
+export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({ onNavigate }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>(mockNotifications);
-  const [filter, setFilter] = useState<'All' | 'Unread'>('All');
+  const [filter, setFilter] = useState<"All" | "Unread">("All");
 
   const filtered = notifications.filter((n) => {
-    if (filter === 'Unread') return !n.read;
+    if (filter === "Unread") return !n.read;
     return true;
   });
 
@@ -32,9 +30,7 @@ export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({
   };
 
   const handleMarkOne = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
   return (
@@ -46,20 +42,21 @@ export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({
             Notification Center
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Real-time activity logs for student assignment submissions, enrollment requests, and messages.
+            Real-time activity logs for student assignment submissions, enrollment requests, and
+            messages.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center p-1 bg-slate-100 rounded-lg">
-            {(['All', 'Unread'] as const).map((tab) => (
+            {(["All", "Unread"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                   filter === tab
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? "bg-white text-slate-900 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {tab}
@@ -88,20 +85,20 @@ export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({
         ) : (
           filtered.map((item) => {
             let Icon = Bell;
-            let iconColor = 'text-indigo-600 bg-indigo-50 border-indigo-100';
+            let iconColor = "text-indigo-600 bg-indigo-50 border-indigo-100";
 
-            if (item.category === 'submission') {
+            if (item.category === "submission") {
               Icon = ClipboardList;
-              iconColor = 'text-indigo-600 bg-indigo-50 border-indigo-100';
-            } else if (item.category === 'enrollment') {
+              iconColor = "text-indigo-600 bg-indigo-50 border-indigo-100";
+            } else if (item.category === "enrollment") {
               Icon = UserCheck;
-              iconColor = 'text-amber-600 bg-amber-50 border-amber-100';
-            } else if (item.category === 'exam') {
+              iconColor = "text-amber-600 bg-amber-50 border-amber-100";
+            } else if (item.category === "exam") {
               Icon = GraduationCap;
-              iconColor = 'text-rose-600 bg-rose-50 border-rose-100';
-            } else if (item.category === 'message') {
+              iconColor = "text-rose-600 bg-rose-50 border-rose-100";
+            } else if (item.category === "message") {
               Icon = MessageSquare;
-              iconColor = 'text-violet-600 bg-violet-50 border-violet-100';
+              iconColor = "text-violet-600 bg-violet-50 border-violet-100";
             }
 
             return (
@@ -112,25 +109,27 @@ export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({
                   if (item.actionUrl) onNavigate(item.actionUrl);
                 }}
                 className={`p-4 flex items-start justify-between gap-4 transition-colors cursor-pointer ${
-                  !item.read ? 'bg-indigo-50/20 hover:bg-indigo-50/40' : 'hover:bg-slate-50'
+                  !item.read ? "bg-indigo-50/20 hover:bg-indigo-50/40" : "hover:bg-slate-50"
                 }`}
               >
                 <div className="flex items-start gap-3.5 min-w-0">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${iconColor}`}>
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${iconColor}`}
+                  >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className={`text-xs sm:text-sm font-bold truncate ${!item.read ? 'text-slate-900' : 'text-slate-700'}`}>
+                      <h3
+                        className={`text-xs sm:text-sm font-bold truncate ${!item.read ? "text-slate-900" : "text-slate-700"}`}
+                      >
                         {item.title}
                       </h3>
                       {!item.read && (
                         <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                      {item.message}
-                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{item.message}</p>
                     <span className="text-[10px] text-slate-400 font-mono mt-1 block">
                       {item.timestamp}
                     </span>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   GraduationCap,
   Plus,
@@ -13,10 +13,10 @@ import {
   ChevronRight,
   ArrowRight,
   Sparkles,
-} from 'lucide-react';
-import { Examination, NavigationTab } from '../types';
-import { mockExaminations, mockCourses, mockStudents } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
+} from "lucide-react";
+import { Examination, NavigationTab } from "../types";
+import { mockExaminations, mockCourses, mockStudents } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
 
 interface ExamManagementViewProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -28,14 +28,14 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
   const [wizardStep, setWizardStep] = useState(1);
 
   // Wizard state
-  const [wizardCourseId, setWizardCourseId] = useState(mockCourses[0]?.id || '');
-  const [wizardTitle, setWizardTitle] = useState('');
-  const [wizardType, setWizardType] = useState<'Midterm' | 'Final' | 'Practical Exam'>('Midterm');
-  const [wizardDate, setWizardDate] = useState('2026-11-15');
-  const [wizardTime, setWizardTime] = useState('10:00 AM');
-  const [wizardDuration, setWizardDuration] = useState('120');
-  const [wizardRoom, setWizardRoom] = useState('Alan Turing Auditorium');
-  const [wizardWeight, setWizardWeight] = useState('30');
+  const [wizardCourseId, setWizardCourseId] = useState(mockCourses[0]?.id || "");
+  const [wizardTitle, setWizardTitle] = useState("");
+  const [wizardType, setWizardType] = useState<"Midterm" | "Final" | "Practical Exam">("Midterm");
+  const [wizardDate, setWizardDate] = useState("2026-11-15");
+  const [wizardTime, setWizardTime] = useState("10:00 AM");
+  const [wizardDuration, setWizardDuration] = useState("120");
+  const [wizardRoom, setWizardRoom] = useState("Alan Turing Auditorium");
+  const [wizardWeight, setWizardWeight] = useState("30");
 
   const handleFinishWizard = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +52,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
       roomOrPlatform: wizardRoom,
       totalMarks: 100,
       weightagePercent: Number(wizardWeight) || 30,
-      status: 'Scheduled',
+      status: "Scheduled",
       enrolledStudents: course.enrolledCount,
       gradedStudents: 0,
     };
@@ -60,7 +60,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
     setExams([newExam, ...exams]);
     setIsWizardOpen(false);
     setWizardStep(1);
-    setWizardTitle('');
+    setWizardTitle("");
   };
 
   return (
@@ -72,7 +72,8 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
             Examination Management
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Administer formal midterms and final comprehensive examinations, room logistics, and grading protocols.
+            Administer formal midterms and final comprehensive examinations, room logistics, and
+            grading protocols.
           </p>
         </div>
 
@@ -97,11 +98,11 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
                     Step {wizardStep} of 5
                   </span>
                   <h3 className="text-base font-bold text-slate-900 mt-0.5">
-                    {wizardStep === 1 && '1. Basic Course & Exam Type'}
-                    {wizardStep === 2 && '2. Proctoring & Exam Duration'}
-                    {wizardStep === 3 && '3. Content Format & Question Blueprint'}
-                    {wizardStep === 4 && '4. Scheduling & Venue Logistics'}
-                    {wizardStep === 5 && '5. Review & Publish Schedule'}
+                    {wizardStep === 1 && "1. Basic Course & Exam Type"}
+                    {wizardStep === 2 && "2. Proctoring & Exam Duration"}
+                    {wizardStep === 3 && "3. Content Format & Question Blueprint"}
+                    {wizardStep === 4 && "4. Scheduling & Venue Logistics"}
+                    {wizardStep === 5 && "5. Review & Publish Schedule"}
                   </h3>
                 </div>
                 <button
@@ -118,7 +119,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
                   <div
                     key={s}
                     className={`h-1.5 flex-1 rounded-full transition-all ${
-                      s <= wizardStep ? 'bg-indigo-600' : 'bg-slate-200'
+                      s <= wizardStep ? "bg-indigo-600" : "bg-slate-200"
                     }`}
                   />
                 ))}
@@ -150,15 +151,15 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
                       Exam Type
                     </label>
                     <div className="grid grid-cols-3 gap-2">
-                      {(['Midterm', 'Final', 'Practical Exam'] as const).map((t) => (
+                      {(["Midterm", "Final", "Practical Exam"] as const).map((t) => (
                         <button
                           key={t}
                           type="button"
                           onClick={() => setWizardType(t)}
                           className={`p-3 text-xs font-semibold rounded-lg border text-center transition-colors ${
                             wizardType === t
-                              ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-                              : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                              ? "bg-indigo-50 border-indigo-600 text-indigo-700"
+                              : "border-slate-200 text-slate-700 hover:bg-slate-50"
                           }`}
                         >
                           {t}
@@ -227,11 +228,14 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
                   <div className="p-4 rounded-xl border border-slate-200 space-y-2 bg-slate-50/50">
                     <h4 className="text-xs font-bold text-slate-900">Question Blueprint Format</h4>
                     <p className="text-xs text-slate-500">
-                      Standard university examination blueprint comprising Section A (Objective MCQ, 30 marks), Section B (Algorithmic Proofs, 40 marks), and Section C (Code Implementation, 30 marks).
+                      Standard university examination blueprint comprising Section A (Objective MCQ,
+                      30 marks), Section B (Algorithmic Proofs, 40 marks), and Section C (Code
+                      Implementation, 30 marks).
                     </p>
                   </div>
                   <div className="text-xs text-slate-600">
-                    Question paper blueprint will be finalized in the Mentify Examination Vault 48 hours prior to start.
+                    Question paper blueprint will be finalized in the Mentify Examination Vault 48
+                    hours prior to start.
                   </div>
                 </div>
               )}
@@ -282,12 +286,24 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
                 <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                   <h4 className="font-bold text-slate-900 text-sm">Review Examination Details</h4>
                   <div className="grid grid-cols-2 gap-2 text-slate-700">
-                    <div><strong>Title:</strong> {wizardTitle || 'Midterm Examination'}</div>
-                    <div><strong>Type:</strong> {wizardType}</div>
-                    <div><strong>Date:</strong> {wizardDate} at {wizardTime}</div>
-                    <div><strong>Duration:</strong> {wizardDuration} minutes</div>
-                    <div><strong>Weight:</strong> {wizardWeight}% of final grade</div>
-                    <div><strong>Location:</strong> {wizardRoom}</div>
+                    <div>
+                      <strong>Title:</strong> {wizardTitle || "Midterm Examination"}
+                    </div>
+                    <div>
+                      <strong>Type:</strong> {wizardType}
+                    </div>
+                    <div>
+                      <strong>Date:</strong> {wizardDate} at {wizardTime}
+                    </div>
+                    <div>
+                      <strong>Duration:</strong> {wizardDuration} minutes
+                    </div>
+                    <div>
+                      <strong>Weight:</strong> {wizardWeight}% of final grade
+                    </div>
+                    <div>
+                      <strong>Location:</strong> {wizardRoom}
+                    </div>
                   </div>
                 </div>
               )}
@@ -350,7 +366,9 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{exam.scheduledDate} at {exam.startTime}</span>
+                  <span>
+                    {exam.scheduledDate} at {exam.startTime}
+                  </span>
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
@@ -372,7 +390,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({ onNaviga
               </div>
 
               <button
-                onClick={() => onNavigate('grades')}
+                onClick={() => onNavigate("grades")}
                 className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <span>View Results Sheet</span>

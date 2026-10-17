@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   BookOpen,
   Users,
@@ -16,16 +16,16 @@ import {
   FileText,
   UserCheck,
   Send,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   mockTeacherProfile,
   mockCourses,
   mockAssignments,
   mockCalendarEvents,
   mockNotifications,
-} from '../data/mockData';
-import { NavigationTab } from '../types';
-import { StatusBadge } from '../components/StatusBadge';
+} from "../data/mockData";
+import { NavigationTab } from "../types";
+import { StatusBadge } from "../components/StatusBadge";
 
 interface DashboardViewProps {
   onNavigate: (tab: NavigationTab, param?: string) => void;
@@ -38,9 +38,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onGradeAssignment,
   onOpenAIWithPrompt,
 }) => {
-  const activeCourses = mockCourses.filter((c) => c.status === 'Active');
-  const todayClasses = mockCalendarEvents.filter((e) => e.date === '2026-10-17' && e.type === 'Class');
-  const pendingGradingAssignments = mockAssignments.filter((a) => a.totalSubmissions > a.gradedCount);
+  const activeCourses = mockCourses.filter((c) => c.status === "Active");
+  const todayClasses = mockCalendarEvents.filter(
+    (e) => e.date === "2026-10-17" && e.type === "Class",
+  );
+  const pendingGradingAssignments = mockAssignments.filter(
+    (a) => a.totalSubmissions > a.gradedCount,
+  );
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
@@ -58,22 +62,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Good morning, Alex!
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Here's what's happening across your classes today. You have{' '}
-            <span className="font-semibold text-slate-800">2 upcoming lectures</span> and{' '}
+            Here's what's happening across your classes today. You have{" "}
+            <span className="font-semibold text-slate-800">2 upcoming lectures</span> and{" "}
             <span className="font-semibold text-indigo-700">18 submissions</span> awaiting review.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
           <button
-            onClick={() => onNavigate('attendance')}
+            onClick={() => onNavigate("attendance")}
             className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <UserCheck className="w-3.5 h-3.5 text-slate-600" />
             <span>Mark Attendance</span>
           </button>
           <button
-            onClick={() => onNavigate('grading-workspace')}
+            onClick={() => onNavigate("grading-workspace")}
             className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
           >
             <ClipboardList className="w-3.5 h-3.5" />
@@ -86,7 +90,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
         {/* Card 1: My Courses */}
         <div
-          onClick={() => onNavigate('courses')}
+          onClick={() => onNavigate("courses")}
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
@@ -99,7 +103,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Card 2: Total Students */}
         <div
-          onClick={() => onNavigate('students')}
+          onClick={() => onNavigate("students")}
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
@@ -112,7 +116,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Card 3: Active Assignments */}
         <div
-          onClick={() => onNavigate('assignments')}
+          onClick={() => onNavigate("assignments")}
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
@@ -125,7 +129,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Card 4: Pending Submissions */}
         <div
-          onClick={() => onNavigate('grading-workspace')}
+          onClick={() => onNavigate("grading-workspace")}
           className="bg-white p-4 rounded-xl border border-indigo-200 shadow-xs bg-indigo-50/20 hover:border-indigo-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-indigo-600 mb-2">
@@ -138,7 +142,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Card 5: Upcoming Exams */}
         <div
-          onClick={() => onNavigate('exams')}
+          onClick={() => onNavigate("exams")}
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
@@ -151,7 +155,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* Card 6: Today's Classes */}
         <div
-          onClick={() => onNavigate('calendar')}
+          onClick={() => onNavigate("calendar")}
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
@@ -175,7 +179,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <h2 className="text-sm font-bold text-slate-900">Today's Teaching Schedule</h2>
               </div>
               <button
-                onClick={() => onNavigate('calendar')}
+                onClick={() => onNavigate("calendar")}
                 className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
               >
                 <span>Full Calendar</span>
@@ -201,7 +205,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <StatusBadge status="Confirmed" variant="clean" />
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        Room: <span className="text-slate-700 font-medium">{item.location}</span> ·{' '}
+                        Room: <span className="text-slate-700 font-medium">{item.location}</span> ·{" "}
                         <span>{item.description}</span>
                       </p>
                     </div>
@@ -209,13 +213,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                     <button
-                      onClick={() => onNavigate('attendance')}
+                      onClick={() => onNavigate("attendance")}
                       className="px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors"
                     >
                       Take Attendance
                     </button>
                     <button
-                      onClick={() => onNavigate('curriculum')}
+                      onClick={() => onNavigate("curriculum")}
                       className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
                     >
                       Lesson Notes
@@ -234,7 +238,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <h2 className="text-sm font-bold text-slate-900">Pending Grading Queue</h2>
               </div>
               <button
-                onClick={() => onNavigate('grading-workspace')}
+                onClick={() => onNavigate("grading-workspace")}
                 className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
               >
                 <span>Open Grading Workspace</span>
@@ -263,13 +267,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span>Due {asg.dueDate}</span>
                         <span>·</span>
                         <span className="text-slate-700">
-                          <strong className="text-indigo-600 tabular-nums">{asg.gradedCount}</strong> /{' '}
-                          {asg.totalSubmissions} graded
+                          <strong className="text-indigo-600 tabular-nums">
+                            {asg.gradedCount}
+                          </strong>{" "}
+                          / {asg.totalSubmissions} graded
                         </span>
                         <span>·</span>
-                        <span className="text-amber-700 font-medium">
-                          {pending} waiting review
-                        </span>
+                        <span className="text-amber-700 font-medium">{pending} waiting review</span>
                       </div>
                     </div>
 
@@ -293,7 +297,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900">My Active Courses</h2>
               <button
-                onClick={() => onNavigate('courses')}
+                onClick={() => onNavigate("courses")}
                 className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
               >
                 View All Courses
@@ -313,7 +317,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </span>
                       <StatusBadge status={course.status} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 line-clamp-1">{course.title}</h3>
+                    <h3 className="text-sm font-bold text-slate-900 line-clamp-1">
+                      {course.title}
+                    </h3>
                     <p className="text-xs text-slate-500 mt-1 line-clamp-2">{course.description}</p>
                   </div>
 
@@ -327,7 +333,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
 
                     <button
-                      onClick={() => onNavigate('courses')}
+                      onClick={() => onNavigate("courses")}
                       className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
                     >
                       Manage →
@@ -360,9 +366,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Quick AI Prompts */}
               <div className="mt-4 space-y-1.5">
                 {[
-                  'Draft 5 quiz questions for CS-201 AVL Trees',
-                  'Generate rubric for Distributed Systems Milestone',
-                  'Summarize student performance for CS-420',
+                  "Draft 5 quiz questions for CS-201 AVL Trees",
+                  "Generate rubric for Distributed Systems Milestone",
+                  "Summarize student performance for CS-420",
                 ].map((prompt, idx) => (
                   <button
                     key={idx}
@@ -377,7 +383,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               <div className="mt-4 pt-3 border-t border-indigo-800/60 flex items-center justify-between">
                 <button
-                  onClick={() => onNavigate('ai-assistant')}
+                  onClick={() => onNavigate("ai-assistant")}
                   className="text-xs font-medium text-indigo-300 hover:text-white flex items-center gap-1"
                 >
                   <span>Open Full AI Studio</span>
@@ -395,7 +401,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Course Performance Index
               </h3>
               <button
-                onClick={() => onNavigate('analytics')}
+                onClick={() => onNavigate("analytics")}
                 className="text-xs text-indigo-600 hover:underline"
               >
                 Analytics
@@ -404,9 +410,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <div className="mt-4 space-y-3">
               {[
-                { code: 'CS-201', name: 'Algorithms', avg: 84.6, color: 'bg-indigo-600' },
-                { code: 'CS-350', name: 'Web Systems', avg: 88.2, color: 'bg-violet-600' },
-                { code: 'CS-420', name: 'AI & ML', avg: 81.4, color: 'bg-emerald-600' },
+                { code: "CS-201", name: "Algorithms", avg: 84.6, color: "bg-indigo-600" },
+                { code: "CS-350", name: "Web Systems", avg: 88.2, color: "bg-violet-600" },
+                { code: "CS-420", name: "AI & ML", avg: 81.4, color: "bg-emerald-600" },
               ].map((c) => (
                 <div key={c.code} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
@@ -440,7 +446,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Recent Activity
               </h3>
               <button
-                onClick={() => onNavigate('notifications')}
+                onClick={() => onNavigate("notifications")}
                 className="text-xs text-slate-500 hover:text-slate-800"
               >
                 All

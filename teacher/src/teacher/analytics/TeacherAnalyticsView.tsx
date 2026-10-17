@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -8,17 +8,17 @@ import {
   ArrowUpRight,
   Filter,
   Calendar,
-} from 'lucide-react';
-import { mockCourses, mockStudents } from '../data/mockData';
-import { NavigationTab } from '../types';
+} from "lucide-react";
+import { mockCourses, mockStudents } from "../data/mockData";
+import { NavigationTab } from "../types";
 
 interface TeacherAnalyticsViewProps {
   onNavigate: (tab: NavigationTab) => void;
 }
 
 export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNavigate }) => {
-  const [timeRange, setTimeRange] = useState<'Term' | 'Month' | 'Week'>('Term');
-  const atRiskStudents = mockStudents.filter((s) => s.status === 'At Risk');
+  const [timeRange, setTimeRange] = useState<"Term" | "Month" | "Week">("Term");
+  const atRiskStudents = mockStudents.filter((s) => s.status === "At Risk");
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -29,20 +29,21 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
             Teaching Analytics & Insights
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Diagnostic insights into grade distributions, assessment turnaround times, and student retention.
+            Diagnostic insights into grade distributions, assessment turnaround times, and student
+            retention.
           </p>
         </div>
 
         {/* Time Filter */}
         <div className="flex items-center p-1 bg-slate-100 rounded-lg">
-          {(['Term', 'Month', 'Week'] as const).map((r) => (
+          {(["Term", "Month", "Week"] as const).map((r) => (
             <button
               key={r}
               onClick={() => setTimeRange(r)}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                 timeRange === r
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               {r}
@@ -80,7 +81,9 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
             <Calendar className="w-4 h-4 text-slate-400" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">94.8%</div>
-          <p className="text-[11px] text-emerald-600 font-medium mt-1">Compliant with accreditation</p>
+          <p className="text-[11px] text-emerald-600 font-medium mt-1">
+            Compliant with accreditation
+          </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-rose-200 shadow-2xs bg-rose-50/20">
@@ -102,17 +105,19 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
                 Grade Distribution by Letter
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">Fall 2026 Academic Cohort (142 students)</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Fall 2026 Academic Cohort (142 students)
+              </p>
             </div>
           </div>
 
           {/* Bar Distribution */}
           <div className="space-y-3 pt-2">
             {[
-              { grade: 'A / A- (90-100%)', pct: 44, count: 62, color: 'bg-indigo-600' },
-              { grade: 'B+ / B / B- (80-89%)', pct: 36, count: 51, color: 'bg-violet-600' },
-              { grade: 'C+ / C (70-79%)', pct: 14, count: 20, color: 'bg-amber-500' },
-              { grade: 'D / F (<70%)', pct: 6, count: 9, color: 'bg-rose-500' },
+              { grade: "A / A- (90-100%)", pct: 44, count: 62, color: "bg-indigo-600" },
+              { grade: "B+ / B / B- (80-89%)", pct: 36, count: 51, color: "bg-violet-600" },
+              { grade: "C+ / C (70-79%)", pct: 14, count: 20, color: "bg-amber-500" },
+              { grade: "D / F (<70%)", pct: 6, count: 9, color: "bg-rose-500" },
             ].map((item) => (
               <div key={item.grade} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
@@ -122,7 +127,10 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
                   </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.pct}%` }} />
+                  <div
+                    className={`h-full rounded-full ${item.color}`}
+                    style={{ width: `${item.pct}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -142,10 +150,10 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
 
           <div className="space-y-3 pt-2">
             {[
-              { bracket: '90% - 100% Attendance', avgScore: 92.4, color: 'bg-emerald-600' },
-              { bracket: '80% - 89% Attendance', avgScore: 84.8, color: 'bg-indigo-600' },
-              { bracket: '70% - 79% Attendance', avgScore: 75.1, color: 'bg-amber-500' },
-              { bracket: '< 70% Attendance', avgScore: 61.2, color: 'bg-rose-500' },
+              { bracket: "90% - 100% Attendance", avgScore: 92.4, color: "bg-emerald-600" },
+              { bracket: "80% - 89% Attendance", avgScore: 84.8, color: "bg-indigo-600" },
+              { bracket: "70% - 79% Attendance", avgScore: 75.1, color: "bg-amber-500" },
+              { bracket: "< 70% Attendance", avgScore: 61.2, color: "bg-rose-500" },
             ].map((b) => (
               <div key={b.bracket} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
@@ -155,7 +163,10 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
                   </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div className={`h-full rounded-full ${b.color}`} style={{ width: `${b.avgScore}%` }} />
+                  <div
+                    className={`h-full rounded-full ${b.color}`}
+                    style={{ width: `${b.avgScore}%` }}
+                  />
                 </div>
               </div>
             ))}
@@ -172,7 +183,9 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
               Students Needing Early Intervention ({atRiskStudents.length})
             </h3>
           </div>
-          <span className="text-xs text-slate-500">Flagged based on attendance and submission thresholds</span>
+          <span className="text-xs text-slate-500">
+            Flagged based on attendance and submission thresholds
+          </span>
         </div>
 
         <div className="divide-y divide-slate-100">
@@ -182,20 +195,24 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
               className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full text-white font-bold text-xs flex items-center justify-center ${st.avatarBg}`}>
+                <div
+                  className={`w-8 h-8 rounded-full text-white font-bold text-xs flex items-center justify-center ${st.avatarBg}`}
+                >
                   {st.initials}
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-900">{st.name}</h4>
                   <p className="text-[11px] text-slate-500 font-mono">
-                    {st.studentId} · Attendance: <span className="text-rose-600 font-bold">{st.attendanceRate}%</span> · Grade Avg: {st.recentGradeAvg}%
+                    {st.studentId} · Attendance:{" "}
+                    <span className="text-rose-600 font-bold">{st.attendanceRate}%</span> · Grade
+                    Avg: {st.recentGradeAvg}%
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => onNavigate('messages')}
+                  onClick={() => onNavigate("messages")}
                   className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors"
                 >
                   Schedule Office Hours

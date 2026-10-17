@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, Save, Eye, Edit3, Clock, Layers, BookOpen, Check } from 'lucide-react';
-import { Lesson, Module } from '../types';
+import React, { useState } from "react";
+import { X, Save, Eye, Edit3, Clock, Layers, BookOpen, Check } from "lucide-react";
+import { Lesson, Module } from "../types";
 
 interface LessonEditorModalProps {
   isOpen: boolean;
@@ -26,9 +26,9 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
   const [status, setStatus] = useState(lesson.status);
   const [contentMarkdown, setContentMarkdown] = useState(
     lesson.contentMarkdown ||
-      `### Learning Objectives\n- Master fundamental asymptotic invariants.\n- Implement core balancing rotations without memory leaks.\n- Benchmark algorithmic execution against baseline implementations.`
+      `### Learning Objectives\n- Master fundamental asymptotic invariants.\n- Implement core balancing rotations without memory leaks.\n- Benchmark algorithmic execution against baseline implementations.`,
   );
-  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [isSaved, setIsSaved] = useState(false);
 
   const handleSave = () => {
@@ -57,22 +57,22 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0 bg-slate-50/50">
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-500 mb-0.5">
-              <span>{module?.title || 'Module'}</span>
+              <span>{module?.title || "Module"}</span>
               <span>·</span>
               <span className="font-semibold text-indigo-600">Lesson Editor</span>
             </div>
-            <h3 className="text-base font-bold text-slate-900">{title || 'Edit Lesson'}</h3>
+            <h3 className="text-base font-bold text-slate-900">{title || "Edit Lesson"}</h3>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center p-0.5 bg-slate-200/80 rounded-lg text-xs">
               <button
                 type="button"
-                onClick={() => setMode('edit')}
+                onClick={() => setMode("edit")}
                 className={`px-3 py-1 font-medium rounded-md transition-colors flex items-center gap-1.5 ${
-                  mode === 'edit'
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                  mode === "edit"
+                    ? "bg-white text-slate-900 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -80,11 +80,11 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => setMode('preview')}
+                onClick={() => setMode("preview")}
                 className={`px-3 py-1 font-medium rounded-md transition-colors flex items-center gap-1.5 ${
-                  mode === 'preview'
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                  mode === "preview"
+                    ? "bg-white text-slate-900 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -102,7 +102,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
 
         {/* Modal Content */}
         <div className="p-6 overflow-y-auto space-y-4 flex-1">
-          {mode === 'edit' ? (
+          {mode === "edit" ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">

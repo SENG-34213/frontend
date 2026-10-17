@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Search,
   BookOpen,
@@ -10,9 +10,9 @@ import {
   X,
   ArrowRight,
   Sparkles,
-} from 'lucide-react';
-import { mockCourses, mockStudents, mockAssignments, mockMaterials } from '../data/mockData';
-import { NavigationTab } from '../types';
+} from "lucide-react";
+import { mockCourses, mockStudents, mockAssignments, mockMaterials } from "../data/mockData";
+import { NavigationTab } from "../types";
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -25,20 +25,20 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   onClose,
   onNavigate,
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         if (isOpen) onClose();
       }
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -46,25 +46,25 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   const filteredCourses = mockCourses.filter(
     (c) =>
       c.code.toLowerCase().includes(query.toLowerCase()) ||
-      c.title.toLowerCase().includes(query.toLowerCase())
+      c.title.toLowerCase().includes(query.toLowerCase()),
   );
 
   const filteredStudents = mockStudents.filter(
     (s) =>
       s.name.toLowerCase().includes(query.toLowerCase()) ||
-      s.studentId.toLowerCase().includes(query.toLowerCase())
+      s.studentId.toLowerCase().includes(query.toLowerCase()),
   );
 
   const filteredAssignments = mockAssignments.filter(
     (a) =>
       a.title.toLowerCase().includes(query.toLowerCase()) ||
-      a.courseCode.toLowerCase().includes(query.toLowerCase())
+      a.courseCode.toLowerCase().includes(query.toLowerCase()),
   );
 
   const filteredMaterials = mockMaterials.filter(
     (m) =>
       m.title.toLowerCase().includes(query.toLowerCase()) ||
-      m.courseCode.toLowerCase().includes(query.toLowerCase())
+      m.courseCode.toLowerCase().includes(query.toLowerCase()),
   );
 
   return (
@@ -82,7 +82,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           />
           {query && (
             <button
-              onClick={() => setQuery('')}
+              onClick={() => setQuery("")}
               className="p-1 text-slate-400 hover:text-slate-600 rounded"
             >
               <X className="w-4 h-4" />
@@ -97,7 +97,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           {/* Quick AI Suggestion */}
           <div
             onClick={() => {
-              onNavigate('ai-assistant');
+              onNavigate("ai-assistant");
               onClose();
             }}
             className="flex items-center justify-between p-2.5 rounded-lg bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-100 cursor-pointer transition-colors"
@@ -108,7 +108,9 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
               </div>
               <div>
                 <p className="text-xs font-semibold text-indigo-900">Ask Mentify AI</p>
-                <p className="text-xs text-indigo-700/80">Draft lesson plans, generate quiz questions, or summarize content</p>
+                <p className="text-xs text-indigo-700/80">
+                  Draft lesson plans, generate quiz questions, or summarize content
+                </p>
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-indigo-600" />
@@ -123,7 +125,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                   <button
                     key={c.id}
                     onClick={() => {
-                      onNavigate('courses');
+                      onNavigate("courses");
                       onClose();
                     }}
                     className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors text-left text-xs"
@@ -151,7 +153,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                   <button
                     key={s.id}
                     onClick={() => {
-                      onNavigate('students');
+                      onNavigate("students");
                       onClose();
                     }}
                     className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors text-left text-xs"
@@ -164,10 +166,14 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                       </div>
                       <div>
                         <span className="font-semibold text-slate-900">{s.name}</span>
-                        <span className="text-slate-400 ml-2 font-mono text-[11px]">{s.studentId}</span>
+                        <span className="text-slate-400 ml-2 font-mono text-[11px]">
+                          {s.studentId}
+                        </span>
                       </div>
                     </div>
-                    <span className="text-slate-500 tabular-nums font-mono">GPA {s.gpa.toFixed(2)}</span>
+                    <span className="text-slate-500 tabular-nums font-mono">
+                      GPA {s.gpa.toFixed(2)}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -177,13 +183,15 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
           {/* Assignments */}
           {filteredAssignments.length > 0 && (
             <div>
-              <p className="px-2 pb-1.5 text-xs font-semibold text-slate-400">Assignments & Grading</p>
+              <p className="px-2 pb-1.5 text-xs font-semibold text-slate-400">
+                Assignments & Grading
+              </p>
               <div className="space-y-1">
                 {filteredAssignments.slice(0, 3).map((a) => (
                   <button
                     key={a.id}
                     onClick={() => {
-                      onNavigate('grading-workspace');
+                      onNavigate("grading-workspace");
                       onClose();
                     }}
                     className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors text-left text-xs"
@@ -211,7 +219,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                   <button
                     key={m.id}
                     onClick={() => {
-                      onNavigate('materials');
+                      onNavigate("materials");
                       onClose();
                     }}
                     className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors text-left text-xs"

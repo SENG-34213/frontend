@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FileCheck,
   Plus,
@@ -10,10 +10,10 @@ import {
   MoreVertical,
   CheckCircle2,
   Calendar,
-} from 'lucide-react';
-import { Assignment, NavigationTab } from '../types';
-import { mockAssignments, mockCourses } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
+} from "lucide-react";
+import { Assignment, NavigationTab } from "../types";
+import { mockAssignments, mockCourses } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
 
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
@@ -27,16 +27,16 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
   onNavigate,
 }) => {
   const [assignments, setAssignments] = useState<Assignment[]>(mockAssignments);
-  const [search, setSearch] = useState('');
-  const [courseFilter, setCourseFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [search, setSearch] = useState("");
+  const [courseFilter, setCourseFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const filtered = assignments.filter((a) => {
     const matchesSearch =
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.courseCode.toLowerCase().includes(search.toLowerCase());
-    const matchesCourse = courseFilter === 'All' || a.courseId === courseFilter;
-    const matchesStatus = statusFilter === 'All' || a.status === statusFilter;
+    const matchesCourse = courseFilter === "All" || a.courseId === courseFilter;
+    const matchesStatus = statusFilter === "All" || a.status === statusFilter;
     return matchesSearch && matchesCourse && matchesStatus;
   });
 
@@ -59,7 +59,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onNavigate('grading-workspace')}
+            onClick={() => onNavigate("grading-workspace")}
             className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5"
           >
             <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
@@ -177,7 +177,9 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                 <div className="flex items-center gap-4 text-xs text-slate-500 pt-1">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Due: {asg.dueDate} at {asg.dueTime}</span>
+                    <span>
+                      Due: {asg.dueDate} at {asg.dueTime}
+                    </span>
                   </span>
                   <span>·</span>
                   <span className="font-mono text-slate-700 font-medium">

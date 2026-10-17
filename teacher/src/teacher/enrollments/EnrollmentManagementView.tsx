@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   UserCheck,
   Search,
@@ -9,24 +9,24 @@ import {
   X,
   AlertCircle,
   Filter,
-} from 'lucide-react';
-import { EnrollmentRequest } from '../types';
-import { mockEnrollmentRequests } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
+} from "lucide-react";
+import { EnrollmentRequest } from "../types";
+import { mockEnrollmentRequests } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
 
 export const EnrollmentManagementView: React.FC = () => {
   const [requests, setRequests] = useState<EnrollmentRequest[]>(mockEnrollmentRequests);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
-  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Approved" | "Rejected">(
+    "All",
+  );
+  const [feedbackMsg, setFeedbackMsg] = useState("");
 
-  const handleAction = (id: string, newStatus: 'Approved' | 'Rejected') => {
-    setRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status: newStatus } : req))
-    );
+  const handleAction = (id: string, newStatus: "Approved" | "Rejected") => {
+    setRequests((prev) => prev.map((req) => (req.id === id ? { ...req, status: newStatus } : req)));
     const target = requests.find((r) => r.id === id);
-    setFeedbackMsg(`${newStatus} enrollment for ${target?.studentName || 'student'}`);
-    setTimeout(() => setFeedbackMsg(''), 2500);
+    setFeedbackMsg(`${newStatus} enrollment for ${target?.studentName || "student"}`);
+    setTimeout(() => setFeedbackMsg(""), 2500);
   };
 
   const filtered = requests.filter((r) => {
@@ -34,12 +34,12 @@ export const EnrollmentManagementView: React.FC = () => {
       r.studentName.toLowerCase().includes(search.toLowerCase()) ||
       r.studentId.toLowerCase().includes(search.toLowerCase()) ||
       r.courseCode.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
+    const matchesStatus = statusFilter === "All" || r.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const pendingCount = requests.filter((r) => r.status === 'Pending').length;
-  const approvedCount = requests.filter((r) => r.status === 'Approved').length;
+  const pendingCount = requests.filter((r) => r.status === "Pending").length;
+  const approvedCount = requests.filter((r) => r.status === "Approved").length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -103,14 +103,14 @@ export const EnrollmentManagementView: React.FC = () => {
         </div>
 
         <div className="flex items-center p-1 bg-slate-100 rounded-lg">
-          {(['All', 'Pending', 'Approved', 'Rejected'] as const).map((st) => (
+          {(["All", "Pending", "Approved", "Rejected"] as const).map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                 statusFilter === st
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               {st}
@@ -153,7 +153,9 @@ export const EnrollmentManagementView: React.FC = () => {
                   <td className="px-4 py-3.5">
                     <div>
                       <span className="font-mono font-bold text-indigo-700">{req.courseCode}</span>
-                      <p className="text-[11px] text-slate-500 truncate max-w-xs">{req.courseTitle}</p>
+                      <p className="text-[11px] text-slate-500 truncate max-w-xs">
+                        {req.courseTitle}
+                      </p>
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-slate-600 font-mono">{req.academicTerm}</td>
@@ -162,17 +164,17 @@ export const EnrollmentManagementView: React.FC = () => {
                     <StatusBadge status={req.status} />
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    {req.status === 'Pending' ? (
+                    {req.status === "Pending" ? (
                       <div className="flex items-center justify-end gap-1.5">
                         <button
-                          onClick={() => handleAction(req.id, 'Approved')}
+                          onClick={() => handleAction(req.id, "Approved")}
                           className="px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors flex items-center gap-1"
                         >
                           <Check className="w-3 h-3" />
                           <span>Approve</span>
                         </button>
                         <button
-                          onClick={() => handleAction(req.id, 'Rejected')}
+                          onClick={() => handleAction(req.id, "Rejected")}
                           className="px-2.5 py-1 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition-colors flex items-center gap-1"
                         >
                           <X className="w-3 h-3" />

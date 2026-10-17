@@ -1,31 +1,24 @@
-import React, { useState } from 'react';
-import {
-  Award,
-  Search,
-  Download,
-  Filter,
-  ArrowUpDown,
-  Check,
-  FileSpreadsheet,
-} from 'lucide-react';
-import { GradebookRow, NavigationTab } from '../types';
-import { mockGradebookRows, mockCourses, mockAssignments, mockQuizzes } from '../data/mockData';
+import React, { useState } from "react";
+import { Award, Search, Download, Filter, ArrowUpDown, Check, FileSpreadsheet } from "lucide-react";
+import { GradebookRow, NavigationTab } from "../types";
+import { mockGradebookRows, mockCourses, mockAssignments, mockQuizzes } from "../data/mockData";
 
 interface GradebookViewProps {
   onNavigate: (tab: NavigationTab) => void;
 }
 
 export const GradebookView: React.FC<GradebookViewProps> = ({ onNavigate }) => {
-  const [courseFilter, setCourseFilter] = useState('crs-201');
-  const [search, setSearch] = useState('');
+  const [courseFilter, setCourseFilter] = useState("crs-201");
+  const [search, setSearch] = useState("");
   const [rows, setRows] = useState<GradebookRow[]>(mockGradebookRows);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   const selectedCourse = mockCourses.find((c) => c.id === courseFilter) || mockCourses[0];
 
-  const filteredRows = rows.filter((r) =>
-    r.studentName.toLowerCase().includes(search.toLowerCase()) ||
-    r.studentIdNumber.toLowerCase().includes(search.toLowerCase())
+  const filteredRows = rows.filter(
+    (r) =>
+      r.studentName.toLowerCase().includes(search.toLowerCase()) ||
+      r.studentIdNumber.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleExportCSV = () => {
@@ -42,7 +35,8 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ onNavigate }) => {
             Gradebook & Academic Results
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Spreadsheet-grade evaluation ledger calculating continuous assessment and examination percentiles.
+            Spreadsheet-grade evaluation ledger calculating continuous assessment and examination
+            percentiles.
           </p>
         </div>
 
@@ -82,9 +76,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ onNavigate }) => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Class Grade Average</span>
-          <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
-            86.1%
-          </div>
+          <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">86.1%</div>
           <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Median B+ letter grade</p>
         </div>
 
@@ -155,19 +147,19 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ onNavigate }) => {
                 </td>
                 <td className="px-4 py-3.5 text-slate-500">{row.studentIdNumber}</td>
                 <td className="px-4 py-3.5 text-right tabular-nums text-slate-800">
-                  {row.assignmentScores['asg-01'] ?? '—'}
+                  {row.assignmentScores["asg-01"] ?? "—"}
                 </td>
                 <td className="px-4 py-3.5 text-right tabular-nums text-slate-400">
-                  {row.assignmentScores['asg-04'] ?? 'Pending'}
+                  {row.assignmentScores["asg-04"] ?? "Pending"}
                 </td>
                 <td className="px-4 py-3.5 text-right tabular-nums text-slate-800">
-                  {row.quizScores['qiz-101'] ?? '—'}
+                  {row.quizScores["qiz-101"] ?? "—"}
                 </td>
                 <td className="px-4 py-3.5 text-right tabular-nums text-slate-800">
-                  {row.quizScores['qiz-102'] ?? '—'}
+                  {row.quizScores["qiz-102"] ?? "—"}
                 </td>
                 <td className="px-4 py-3.5 text-right tabular-nums text-slate-400">
-                  {row.examScores['exm-01'] ?? 'Oct 28'}
+                  {row.examScores["exm-01"] ?? "Oct 28"}
                 </td>
                 <td className="px-4 py-3.5 text-right tabular-nums font-bold text-slate-900">
                   {row.overallPercent.toFixed(1)}%
@@ -175,13 +167,13 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ onNavigate }) => {
                 <td className="px-5 py-3.5 text-center">
                   <span
                     className={`inline-block px-2 py-0.5 rounded text-xs font-bold font-sans ${
-                      row.letterGrade.startsWith('A')
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : row.letterGrade.startsWith('B')
-                        ? 'bg-indigo-50 text-indigo-700'
-                        : row.letterGrade.startsWith('C')
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-rose-50 text-rose-700'
+                      row.letterGrade.startsWith("A")
+                        ? "bg-emerald-50 text-emerald-700"
+                        : row.letterGrade.startsWith("B")
+                          ? "bg-indigo-50 text-indigo-700"
+                          : row.letterGrade.startsWith("C")
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-rose-50 text-rose-700"
                     }`}
                   >
                     {row.letterGrade}

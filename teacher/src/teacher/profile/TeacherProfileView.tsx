@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   User,
   Mail,
@@ -11,9 +11,9 @@ import {
   Check,
   Save,
   Building,
-} from 'lucide-react';
-import { TeacherProfile, NavigationTab } from '../types';
-import { mockTeacherProfile, mockCourses } from '../data/mockData';
+} from "lucide-react";
+import { TeacherProfile, NavigationTab } from "../types";
+import { mockTeacherProfile, mockCourses } from "../data/mockData";
 
 interface TeacherProfileViewProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -53,7 +53,8 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ onNaviga
             Faculty Profile
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Institutional credentials, office hour scheduling, and academic departmental affiliations.
+            Institutional credentials, office hour scheduling, and academic departmental
+            affiliations.
           </p>
         </div>
 
@@ -62,7 +63,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ onNaviga
           className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
         >
           <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-          <span>{isEditing ? 'Cancel Edit' : 'Edit Profile'}</span>
+          <span>{isEditing ? "Cancel Edit" : "Edit Profile"}</span>
         </button>
       </div>
 
@@ -249,11 +250,13 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ onNaviga
                   {mockCourses.map((c) => (
                     <div
                       key={c.id}
-                      onClick={() => onNavigate('courses')}
+                      onClick={() => onNavigate("courses")}
                       className="p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer bg-slate-50/50"
                     >
                       <span className="font-mono text-xs font-bold text-indigo-700">{c.code}</span>
-                      <p className="text-xs font-semibold text-slate-900 truncate mt-0.5">{c.title}</p>
+                      <p className="text-xs font-semibold text-slate-900 truncate mt-0.5">
+                        {c.title}
+                      </p>
                       <span className="text-[11px] text-slate-500 font-mono mt-1 block">
                         {c.enrolledCount} enrolled students
                       </span>

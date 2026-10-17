@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -10,21 +10,21 @@ import {
   CheckCircle,
   X,
   Layers,
-} from 'lucide-react';
-import { CalendarEvent, NavigationTab } from '../types';
-import { mockCalendarEvents, mockCourses } from '../data/mockData';
+} from "lucide-react";
+import { CalendarEvent, NavigationTab } from "../types";
+import { mockCalendarEvents, mockCourses } from "../data/mockData";
 
 export const TeacherCalendarView: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'Month' | 'Week' | 'Day' | 'Agenda'>('Month');
+  const [viewMode, setViewMode] = useState<"Month" | "Week" | "Day" | "Agenda">("Month");
   const [events, setEvents] = useState<CalendarEvent[]>(mockCalendarEvents);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [filterType, setFilterType] = useState<string>('All');
+  const [filterType, setFilterType] = useState<string>("All");
 
   // Month state (October 2026)
   const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
   const filteredEvents = events.filter((e) => {
-    if (filterType === 'All') return true;
+    if (filterType === "All") return true;
     return e.type === filterType;
   });
 
@@ -44,14 +44,14 @@ export const TeacherCalendarView: React.FC = () => {
         {/* View Mode Segmented Controls */}
         <div className="flex items-center gap-2">
           <div className="flex items-center p-1 bg-slate-100 rounded-lg">
-            {(['Month', 'Week', 'Day', 'Agenda'] as const).map((mode) => (
+            {(["Month", "Week", "Day", "Agenda"] as const).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                   viewMode === mode
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? "bg-white text-slate-900 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {mode}
@@ -63,14 +63,14 @@ export const TeacherCalendarView: React.FC = () => {
             onClick={() => {
               const newEv: CalendarEvent = {
                 id: `cal-${Date.now()}`,
-                title: 'Review Session: Asymptotic Recurrence',
-                type: 'Class',
-                courseCode: 'CS-201',
-                date: '2026-10-22',
-                startTime: '2:00 PM',
-                endTime: '3:30 PM',
-                location: 'Turing Hall 401',
-                color: 'indigo',
+                title: "Review Session: Asymptotic Recurrence",
+                type: "Class",
+                courseCode: "CS-201",
+                date: "2026-10-22",
+                startTime: "2:00 PM",
+                endTime: "3:30 PM",
+                location: "Turing Hall 401",
+                color: "indigo",
               };
               setEvents([...events, newEv]);
             }}
@@ -101,14 +101,14 @@ export const TeacherCalendarView: React.FC = () => {
 
         {/* Filter types */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          {(['All', 'Class', 'Assignment', 'Exam', 'Office Hours'] as const).map((t) => (
+          {(["All", "Class", "Assignment", "Exam", "Office Hours"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
               className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-colors ${
                 filterType === t
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
               }`}
             >
               {t}
@@ -121,7 +121,7 @@ export const TeacherCalendarView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Calendar View Area */}
         <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-          {viewMode === 'Month' ? (
+          {viewMode === "Month" ? (
             <div>
               {/* Day names */}
               <div className="grid grid-cols-7 text-center py-2 bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold">
@@ -137,7 +137,7 @@ export const TeacherCalendarView: React.FC = () => {
               {/* Day Grid */}
               <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-100 min-h-[480px]">
                 {daysInMonth.map((day) => {
-                  const dayString = `2026-10-${String(day).padStart(2, '0')}`;
+                  const dayString = `2026-10-${String(day).padStart(2, "0")}`;
                   const dayEvents = filteredEvents.filter((e) => e.date === dayString);
                   const isToday = day === 17;
 
@@ -145,15 +145,15 @@ export const TeacherCalendarView: React.FC = () => {
                     <div
                       key={day}
                       className={`p-1.5 min-h-[90px] flex flex-col justify-between transition-colors hover:bg-slate-50/50 ${
-                        isToday ? 'bg-indigo-50/20' : ''
+                        isToday ? "bg-indigo-50/20" : ""
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <span
                           className={`text-xs font-mono font-semibold ${
                             isToday
-                              ? 'w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold'
-                              : 'text-slate-700'
+                              ? "w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold"
+                              : "text-slate-700"
                           }`}
                         >
                           {day}
@@ -162,11 +162,15 @@ export const TeacherCalendarView: React.FC = () => {
 
                       <div className="space-y-1 mt-1">
                         {dayEvents.map((ev) => {
-                          let colorStyle = 'bg-indigo-50 text-indigo-700 border-indigo-200';
-                          if (ev.color === 'emerald') colorStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                          if (ev.color === 'amber') colorStyle = 'bg-amber-50 text-amber-700 border-amber-200';
-                          if (ev.color === 'rose') colorStyle = 'bg-rose-50 text-rose-700 border-rose-200';
-                          if (ev.color === 'violet') colorStyle = 'bg-violet-50 text-violet-700 border-violet-200';
+                          let colorStyle = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                          if (ev.color === "emerald")
+                            colorStyle = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                          if (ev.color === "amber")
+                            colorStyle = "bg-amber-50 text-amber-700 border-amber-200";
+                          if (ev.color === "rose")
+                            colorStyle = "bg-rose-50 text-rose-700 border-rose-200";
+                          if (ev.color === "violet")
+                            colorStyle = "bg-violet-50 text-violet-700 border-violet-200";
 
                           return (
                             <div
@@ -175,7 +179,7 @@ export const TeacherCalendarView: React.FC = () => {
                               className={`p-1 text-[10px] font-semibold rounded border truncate cursor-pointer hover:opacity-90 transition-opacity ${colorStyle}`}
                               title={`${ev.title} (${ev.startTime})`}
                             >
-                              {ev.courseCode ? `[${ev.courseCode}] ` : ''}
+                              {ev.courseCode ? `[${ev.courseCode}] ` : ""}
                               {ev.title}
                             </div>
                           );
@@ -239,7 +243,9 @@ export const TeacherCalendarView: React.FC = () => {
               <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{selectedEvent.date} · {selectedEvent.startTime} - {selectedEvent.endTime}</span>
+                  <span>
+                    {selectedEvent.date} · {selectedEvent.startTime} - {selectedEvent.endTime}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
@@ -261,7 +267,7 @@ export const TeacherCalendarView: React.FC = () => {
             </h3>
             <div className="space-y-2">
               {events
-                .filter((e) => e.date === '2026-10-17')
+                .filter((e) => e.date === "2026-10-17")
                 .map((ev) => (
                   <div
                     key={ev.id}

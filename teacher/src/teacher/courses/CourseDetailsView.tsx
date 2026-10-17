@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ArrowLeft,
   Users,
@@ -16,8 +16,8 @@ import {
   Clock,
   Sparkles,
   ExternalLink,
-} from 'lucide-react';
-import { Course, NavigationTab } from '../types';
+} from "lucide-react";
+import { Course, NavigationTab } from "../types";
 import {
   mockModules,
   mockStudents,
@@ -25,8 +25,8 @@ import {
   mockQuizzes,
   mockExaminations,
   mockMaterials,
-} from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
+} from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -36,14 +36,14 @@ interface CourseDetailsViewProps {
 }
 
 type CourseTab =
-  | 'overview'
-  | 'curriculum'
-  | 'students'
-  | 'materials'
-  | 'assignments'
-  | 'quizzes'
-  | 'exams'
-  | 'grades';
+  | "overview"
+  | "curriculum"
+  | "students"
+  | "materials"
+  | "assignments"
+  | "quizzes"
+  | "exams"
+  | "grades";
 
 export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   course,
@@ -51,7 +51,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   onNavigate,
   onEditCourse,
 }) => {
-  const [activeTab, setActiveTab] = useState<CourseTab>('overview');
+  const [activeTab, setActiveTab] = useState<CourseTab>("overview");
 
   const courseModules = mockModules.filter((m) => m.courseId === course.id);
   const enrolledStudents = mockStudents.filter((s) => s.enrolledCourseIds.includes(course.id));
@@ -61,14 +61,14 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   const courseMaterials = mockMaterials.filter((m) => m.courseId === course.id);
 
   const tabs: { id: CourseTab; label: string; count?: number }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'curriculum', label: 'Curriculum', count: courseModules.length },
-    { id: 'students', label: 'Students', count: enrolledStudents.length },
-    { id: 'materials', label: 'Materials', count: courseMaterials.length },
-    { id: 'assignments', label: 'Assignments', count: courseAssignments.length },
-    { id: 'quizzes', label: 'Quizzes', count: courseQuizzes.length },
-    { id: 'exams', label: 'Exams', count: courseExams.length },
-    { id: 'grades', label: 'Grades' },
+    { id: "overview", label: "Overview" },
+    { id: "curriculum", label: "Curriculum", count: courseModules.length },
+    { id: "students", label: "Students", count: enrolledStudents.length },
+    { id: "materials", label: "Materials", count: courseMaterials.length },
+    { id: "assignments", label: "Assignments", count: courseAssignments.length },
+    { id: "quizzes", label: "Quizzes", count: courseQuizzes.length },
+    { id: "exams", label: "Exams", count: courseExams.length },
+    { id: "grades", label: "Grades" },
   ];
 
   return (
@@ -92,7 +92,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
             <span>Edit Course</span>
           </button>
           <button
-            onClick={() => onNavigate('curriculum')}
+            onClick={() => onNavigate("curriculum")}
             className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
           >
             <Layers className="w-3.5 h-3.5" />
@@ -146,15 +146,15 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
                   isActive
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300"
                 }`}
               >
                 <span>{tab.label}</span>
                 {tab.count !== undefined && (
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                      isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
+                      isActive ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-600"
                     }`}
                   >
                     {tab.count}
@@ -168,7 +168,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
         {/* Tab Content Area */}
         <div className="p-6">
           {/* 1. OVERVIEW TAB */}
-          {activeTab === 'overview' && (
+          {activeTab === "overview" && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
@@ -186,7 +186,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <span className="text-xs font-semibold">Grading Weight Distribution</span>
                   </div>
                   <p className="text-sm font-bold text-slate-900">Weighted Scale</p>
-                  <p className="text-xs text-slate-500">30% Midterm · 40% Assignments · 30% Final</p>
+                  <p className="text-xs text-slate-500">
+                    30% Midterm · 40% Assignments · 30% Final
+                  </p>
                 </div>
 
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
@@ -204,7 +206,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-slate-900">Syllabus Modules</h3>
                   <button
-                    onClick={() => setActiveTab('curriculum')}
+                    onClick={() => setActiveTab("curriculum")}
                     className="text-xs text-indigo-600 font-semibold hover:underline"
                   >
                     View All Modules
@@ -237,14 +239,14 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           )}
 
           {/* 2. CURRICULUM TAB */}
-          {activeTab === 'curriculum' && (
+          {activeTab === "curriculum" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">
                   Showing structured hierarchy of modules, lecture units, and lab sessions.
                 </p>
                 <button
-                  onClick={() => onNavigate('curriculum')}
+                  onClick={() => onNavigate("curriculum")}
                   className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -282,7 +284,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                           </div>
 
                           <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <span className="font-mono tabular-nums">{lesson.durationMinutes} min</span>
+                            <span className="font-mono tabular-nums">
+                              {lesson.durationMinutes} min
+                            </span>
                             <StatusBadge status={lesson.contentType} />
                           </div>
                         </div>
@@ -295,14 +299,14 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           )}
 
           {/* 3. STUDENTS TAB */}
-          {activeTab === 'students' && (
+          {activeTab === "students" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">
                   {enrolledStudents.length} students officially enrolled for Fall 2026.
                 </span>
                 <button
-                  onClick={() => onNavigate('students')}
+                  onClick={() => onNavigate("students")}
                   className="text-xs font-medium text-indigo-600 hover:underline"
                 >
                   Open Full Directory →
@@ -349,7 +353,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
-                            onClick={() => onNavigate('students')}
+                            onClick={() => onNavigate("students")}
                             className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
                           >
                             View Record
@@ -364,14 +368,14 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           )}
 
           {/* 4. MATERIALS TAB */}
-          {activeTab === 'materials' && (
+          {activeTab === "materials" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">
                   Course syllabus files, starter code archives, and slides stored on AWS S3.
                 </p>
                 <button
-                  onClick={() => onNavigate('materials')}
+                  onClick={() => onNavigate("materials")}
                   className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -390,7 +394,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         {mat.fileType}
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-slate-900 line-clamp-1">{mat.title}</h4>
+                        <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                          {mat.title}
+                        </h4>
                         <p className="text-[11px] text-slate-500 line-clamp-1">{mat.description}</p>
                         <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
                           <span className="font-mono">{mat.fileSize}</span>
@@ -408,14 +414,14 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           )}
 
           {/* 5. ASSIGNMENTS TAB */}
-          {activeTab === 'assignments' && (
+          {activeTab === "assignments" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">
                   Manage homework milestones, rubric scoring, and submissions.
                 </p>
                 <button
-                  onClick={() => onNavigate('assignments')}
+                  onClick={() => onNavigate("assignments")}
                   className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -434,7 +440,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         <h4 className="text-xs sm:text-sm font-bold text-slate-900">{asg.title}</h4>
                         <StatusBadge status={asg.status} />
                       </div>
-                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{asg.description}</p>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                        {asg.description}
+                      </p>
                       <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
                         <span>Due {asg.dueDate}</span>
                         <span>·</span>
@@ -447,7 +455,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     </div>
 
                     <button
-                      onClick={() => onNavigate('grading-workspace')}
+                      onClick={() => onNavigate("grading-workspace")}
                       className="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors w-fit"
                     >
                       Grade Submissions
@@ -459,7 +467,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           )}
 
           {/* 6. QUIZZES & EXAMS & GRADES TABS */}
-          {(activeTab === 'quizzes' || activeTab === 'exams' || activeTab === 'grades') && (
+          {(activeTab === "quizzes" || activeTab === "exams" || activeTab === "grades") && (
             <div className="text-center py-8">
               <p className="text-xs text-slate-500 mb-3">
                 Viewing dedicated assessment module for {course.code}.

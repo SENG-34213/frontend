@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   MessageSquare,
   Search,
@@ -9,23 +9,22 @@ import {
   BellRing,
   MoreVertical,
   Plus,
-} from 'lucide-react';
-import { ConversationThread, ChatMessage } from '../types';
-import { mockConversations, mockCourses } from '../data/mockData';
+} from "lucide-react";
+import { ConversationThread, ChatMessage } from "../types";
+import { mockConversations, mockCourses } from "../data/mockData";
 
 export const TeacherMessagesView: React.FC = () => {
   const [conversations, setConversations] = useState<ConversationThread[]>(mockConversations);
   const [selectedThreadId, setSelectedThreadId] = useState(mockConversations[0]?.id);
-  const [inputText, setInputText] = useState('');
-  const [activeTab, setActiveTab] = useState<'direct' | 'announcements'>('direct');
+  const [inputText, setInputText] = useState("");
+  const [activeTab, setActiveTab] = useState<"direct" | "announcements">("direct");
 
   // Announcement state
-  const [announcementText, setAnnouncementText] = useState('');
+  const [announcementText, setAnnouncementText] = useState("");
   const [announcementTarget, setAnnouncementTarget] = useState(mockCourses[0]?.id);
   const [announcementSuccess, setAnnouncementSuccess] = useState(false);
 
-  const activeThread =
-    conversations.find((c) => c.id === selectedThreadId) || conversations[0];
+  const activeThread = conversations.find((c) => c.id === selectedThreadId) || conversations[0];
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +32,11 @@ export const TeacherMessagesView: React.FC = () => {
 
     const newMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
-      senderId: 'tch-001',
-      senderName: 'Prof. Alex Rivera',
-      senderRole: 'teacher',
+      senderId: "tch-001",
+      senderName: "Prof. Alex Rivera",
+      senderRole: "teacher",
       content: inputText,
-      timestamp: 'Just now',
+      timestamp: "Just now",
     };
 
     setConversations((prev) =>
@@ -46,14 +45,14 @@ export const TeacherMessagesView: React.FC = () => {
           ? {
               ...c,
               lastMessage: inputText,
-              lastMessageTime: 'Just now',
+              lastMessageTime: "Just now",
               messages: [...c.messages, newMsg],
             }
-          : c
-      )
+          : c,
+      ),
     );
 
-    setInputText('');
+    setInputText("");
   };
 
   const handlePublishAnnouncement = (e: React.FormEvent) => {
@@ -63,7 +62,7 @@ export const TeacherMessagesView: React.FC = () => {
     setAnnouncementSuccess(true);
     setTimeout(() => {
       setAnnouncementSuccess(false);
-      setAnnouncementText('');
+      setAnnouncementText("");
     }, 2200);
   };
 
@@ -74,21 +73,21 @@ export const TeacherMessagesView: React.FC = () => {
         <div className="flex items-center gap-2">
           <div className="flex items-center p-1 bg-slate-200/80 rounded-lg text-xs">
             <button
-              onClick={() => setActiveTab('direct')}
+              onClick={() => setActiveTab("direct")}
               className={`px-3 py-1 font-semibold rounded-md transition-colors ${
-                activeTab === 'direct'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                activeTab === "direct"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Direct & Group Messages
             </button>
             <button
-              onClick={() => setActiveTab('announcements')}
+              onClick={() => setActiveTab("announcements")}
               className={`px-3 py-1 font-semibold rounded-md transition-colors ${
-                activeTab === 'announcements'
-                  ? 'bg-white text-slate-900 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                activeTab === "announcements"
+                  ? "bg-white text-slate-900 shadow-2xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Course Broadcast Announcements
@@ -101,7 +100,7 @@ export const TeacherMessagesView: React.FC = () => {
         </span>
       </div>
 
-      {activeTab === 'direct' ? (
+      {activeTab === "direct" ? (
         <div className="flex-1 flex overflow-hidden">
           {/* Left Thread List */}
           <aside className="w-80 border-r border-slate-200 flex flex-col shrink-0 bg-slate-50/40">
@@ -124,7 +123,9 @@ export const TeacherMessagesView: React.FC = () => {
                     key={thread.id}
                     onClick={() => setSelectedThreadId(thread.id)}
                     className={`p-3.5 cursor-pointer transition-colors flex items-start gap-3 ${
-                      isSelected ? 'bg-indigo-50/70 border-l-4 border-indigo-600' : 'hover:bg-slate-50'
+                      isSelected
+                        ? "bg-indigo-50/70 border-l-4 border-indigo-600"
+                        : "hover:bg-slate-50"
                     }`}
                   >
                     <div
@@ -173,11 +174,11 @@ export const TeacherMessagesView: React.FC = () => {
             {/* Messages Scroll Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {activeThread.messages.map((msg) => {
-                const isMe = msg.senderRole === 'teacher';
+                const isMe = msg.senderRole === "teacher";
                 return (
                   <div
                     key={msg.id}
-                    className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                    className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                   >
                     <span className="text-[10px] text-slate-400 mb-1 px-1">
                       {msg.senderName} · {msg.timestamp}
@@ -185,8 +186,8 @@ export const TeacherMessagesView: React.FC = () => {
                     <div
                       className={`max-w-lg p-3 rounded-xl text-xs leading-relaxed ${
                         isMe
-                          ? 'bg-indigo-600 text-white rounded-br-none shadow-xs'
-                          : 'bg-slate-100 text-slate-900 rounded-bl-none'
+                          ? "bg-indigo-600 text-white rounded-br-none shadow-xs"
+                          : "bg-slate-100 text-slate-900 rounded-bl-none"
                       }`}
                     >
                       {msg.content}

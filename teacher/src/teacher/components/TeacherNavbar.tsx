@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Menu,
   Search,
@@ -19,9 +19,9 @@ import {
   Settings,
   LogOut,
   ExternalLink,
-} from 'lucide-react';
-import { NavigationTab, TeacherProfile } from '../types';
-import { QuickCreateType } from './QuickCreateModal';
+} from "lucide-react";
+import { NavigationTab, TeacherProfile } from "../types";
+import { QuickCreateType } from "./QuickCreateModal";
 
 interface TeacherNavbarProps {
   currentTab: NavigationTab;
@@ -34,25 +34,25 @@ interface TeacherNavbarProps {
 }
 
 const tabTitles: Record<NavigationTab, { title: string; category: string }> = {
-  dashboard: { title: 'Faculty Dashboard', category: 'Overview' },
-  calendar: { title: 'Academic Calendar & Schedule', category: 'Overview' },
-  notifications: { title: 'Notification Center', category: 'Overview' },
-  courses: { title: 'My Courses', category: 'Teaching' },
-  curriculum: { title: 'Course Content & Curriculum', category: 'Teaching' },
-  students: { title: 'Student Directory & Records', category: 'Teaching' },
-  enrollments: { title: 'Course Enrollments', category: 'Teaching' },
-  attendance: { title: 'Attendance Management', category: 'Teaching' },
-  materials: { title: 'Learning Materials & S3 Files', category: 'Teaching' },
-  assignments: { title: 'Assignments', category: 'Assessments' },
-  'grading-workspace': { title: 'Submission Review Workspace', category: 'Assessments' },
-  quizzes: { title: 'Quizzes & Questions', category: 'Assessments' },
-  exams: { title: 'Examination Management', category: 'Assessments' },
-  grades: { title: 'Gradebook & Final Results', category: 'Assessments' },
-  analytics: { title: 'Teaching Analytics & Insights', category: 'Insights' },
-  messages: { title: 'Student & Faculty Messages', category: 'Communication' },
-  'ai-assistant': { title: 'Mentify AI Teaching Assistant', category: 'AI Intelligence' },
-  profile: { title: 'Teacher Profile', category: 'Account' },
-  settings: { title: 'Account Settings & Preferences', category: 'Account' },
+  dashboard: { title: "Faculty Dashboard", category: "Overview" },
+  calendar: { title: "Academic Calendar & Schedule", category: "Overview" },
+  notifications: { title: "Notification Center", category: "Overview" },
+  courses: { title: "My Courses", category: "Teaching" },
+  curriculum: { title: "Course Content & Curriculum", category: "Teaching" },
+  students: { title: "Student Directory & Records", category: "Teaching" },
+  enrollments: { title: "Course Enrollments", category: "Teaching" },
+  attendance: { title: "Attendance Management", category: "Teaching" },
+  materials: { title: "Learning Materials & S3 Files", category: "Teaching" },
+  assignments: { title: "Assignments", category: "Assessments" },
+  "grading-workspace": { title: "Submission Review Workspace", category: "Assessments" },
+  quizzes: { title: "Quizzes & Questions", category: "Assessments" },
+  exams: { title: "Examination Management", category: "Assessments" },
+  grades: { title: "Gradebook & Final Results", category: "Assessments" },
+  analytics: { title: "Teaching Analytics & Insights", category: "Insights" },
+  messages: { title: "Student & Faculty Messages", category: "Communication" },
+  "ai-assistant": { title: "Mentify AI Teaching Assistant", category: "AI Intelligence" },
+  profile: { title: "Teacher Profile", category: "Account" },
+  settings: { title: "Account Settings & Preferences", category: "Account" },
 };
 
 export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
@@ -80,11 +80,11 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
         setProfileMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const currentMeta = tabTitles[currentTab] || { title: 'Teacher Portal', category: 'Teaching' };
+  const currentMeta = tabTitles[currentTab] || { title: "Teacher Portal", category: "Teaching" };
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-20 px-4 lg:px-6 flex items-center justify-between gap-4">
@@ -101,7 +101,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
         {/* Clean Breadcrumb */}
         <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 truncate">
           <span
-            onClick={() => onNavigate('dashboard')}
+            onClick={() => onNavigate("dashboard")}
             className="hover:text-slate-900 cursor-pointer font-medium"
           >
             Mentify
@@ -151,7 +151,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate('course');
+                  onOpenQuickCreate("course");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
@@ -161,7 +161,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate('module');
+                  onOpenQuickCreate("module");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
@@ -171,7 +171,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate('lesson');
+                  onOpenQuickCreate("lesson");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
@@ -182,7 +182,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate('assignment');
+                  onOpenQuickCreate("assignment");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
@@ -192,7 +192,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate('quiz');
+                  onOpenQuickCreate("quiz");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
@@ -202,7 +202,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate('exam');
+                  onOpenQuickCreate("exam");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
@@ -212,7 +212,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate('event');
+                  onOpenQuickCreate("event");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
@@ -225,11 +225,11 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
 
         {/* Calendar shortcut */}
         <button
-          onClick={() => onNavigate('calendar')}
+          onClick={() => onNavigate("calendar")}
           className={`p-2 rounded-lg transition-colors ${
-            currentTab === 'calendar'
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+            currentTab === "calendar"
+              ? "text-indigo-600 bg-indigo-50"
+              : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
           }`}
           title="Open Academic Calendar"
         >
@@ -238,11 +238,11 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
 
         {/* Mentify AI Shortcut */}
         <button
-          onClick={() => onNavigate('ai-assistant')}
+          onClick={() => onNavigate("ai-assistant")}
           className={`p-2 rounded-lg transition-colors ${
-            currentTab === 'ai-assistant'
-              ? 'text-violet-700 bg-violet-100'
-              : 'text-violet-600 hover:bg-violet-50'
+            currentTab === "ai-assistant"
+              ? "text-violet-700 bg-violet-100"
+              : "text-violet-600 hover:bg-violet-50"
           }`}
           title="Open Mentify AI Assistant"
         >
@@ -251,11 +251,11 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
 
         {/* Notifications Shortcut */}
         <button
-          onClick={() => onNavigate('notifications')}
+          onClick={() => onNavigate("notifications")}
           className={`relative p-2 rounded-lg transition-colors ${
-            currentTab === 'notifications'
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+            currentTab === "notifications"
+              ? "text-indigo-600 bg-indigo-50"
+              : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
           }`}
           title="Notifications"
         >
@@ -294,7 +294,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                 <button
                   onClick={() => {
                     setProfileMenuOpen(false);
-                    onNavigate('profile');
+                    onNavigate("profile");
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
                 >
@@ -304,7 +304,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                 <button
                   onClick={() => {
                     setProfileMenuOpen(false);
-                    onNavigate('settings');
+                    onNavigate("settings");
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
                 >
@@ -315,7 +315,8 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
 
               <div className="pt-1 border-t border-slate-100">
                 <div className="px-3 py-1.5 text-[11px] text-slate-400">
-                  Keycloak Session: <span className="text-emerald-600 font-medium">Active (SSO)</span>
+                  Keycloak Session:{" "}
+                  <span className="text-emerald-600 font-medium">Active (SSO)</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ClipboardCheck,
   CheckCircle,
@@ -10,10 +10,10 @@ import {
   Check,
   Users,
   Sparkles,
-} from 'lucide-react';
-import { AttendanceSession, AttendanceRecord, NavigationTab } from '../types';
-import { mockAttendanceSessions } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
+} from "lucide-react";
+import { AttendanceSession, AttendanceRecord, NavigationTab } from "../types";
+import { mockAttendanceSessions } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
 
 export const AttendanceWorkspaceView: React.FC = () => {
   const [sessions, setSessions] = useState<AttendanceSession[]>(mockAttendanceSessions);
@@ -22,20 +22,17 @@ export const AttendanceWorkspaceView: React.FC = () => {
 
   const activeSession = sessions.find((s) => s.id === selectedSessionId) || sessions[0];
 
-  const handleUpdateRecordStatus = (
-    recordId: string,
-    newStatus: AttendanceRecord['status']
-  ) => {
+  const handleUpdateRecordStatus = (recordId: string, newStatus: AttendanceRecord["status"]) => {
     setSessions((prev) =>
       prev.map((s) => {
         if (s.id !== activeSession.id) return s;
         const updatedRecords = s.records.map((r) =>
-          r.id === recordId ? { ...r, status: newStatus } : r
+          r.id === recordId ? { ...r, status: newStatus } : r,
         );
-        const presentCount = updatedRecords.filter((r) => r.status === 'Present').length;
-        const lateCount = updatedRecords.filter((r) => r.status === 'Late').length;
-        const absentCount = updatedRecords.filter((r) => r.status === 'Absent').length;
-        const excusedCount = updatedRecords.filter((r) => r.status === 'Excused').length;
+        const presentCount = updatedRecords.filter((r) => r.status === "Present").length;
+        const lateCount = updatedRecords.filter((r) => r.status === "Late").length;
+        const absentCount = updatedRecords.filter((r) => r.status === "Absent").length;
+        const excusedCount = updatedRecords.filter((r) => r.status === "Excused").length;
 
         return {
           ...s,
@@ -45,7 +42,7 @@ export const AttendanceWorkspaceView: React.FC = () => {
           absentCount,
           excusedCount,
         };
-      })
+      }),
     );
   };
 
@@ -55,7 +52,7 @@ export const AttendanceWorkspaceView: React.FC = () => {
         if (s.id !== activeSession.id) return s;
         const updatedRecords = s.records.map((r) => ({
           ...r,
-          status: 'Present' as const,
+          status: "Present" as const,
         }));
         return {
           ...s,
@@ -65,7 +62,7 @@ export const AttendanceWorkspaceView: React.FC = () => {
           absentCount: 0,
           excusedCount: 0,
         };
-      })
+      }),
     );
   };
 
@@ -83,7 +80,8 @@ export const AttendanceWorkspaceView: React.FC = () => {
             Attendance Management
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Conduct roll call, record excused absences, and monitor university compliance requirements.
+            Conduct roll call, record excused absences, and monitor university compliance
+            requirements.
           </p>
         </div>
 
@@ -169,7 +167,12 @@ export const AttendanceWorkspaceView: React.FC = () => {
             Class Roster Attendance Checklist
           </h3>
           <span className="text-xs text-slate-500 font-mono">
-            {Math.round(((activeSession.presentCount + activeSession.lateCount) / activeSession.totalEnrolled) * 100)}% attendance today
+            {Math.round(
+              ((activeSession.presentCount + activeSession.lateCount) /
+                activeSession.totalEnrolled) *
+                100,
+            )}
+            % attendance today
           </span>
         </div>
 
@@ -189,28 +192,30 @@ export const AttendanceWorkspaceView: React.FC = () => {
                   <td className="px-5 py-3.5">
                     <span className="font-semibold text-slate-900">{rec.studentName}</span>
                   </td>
-                  <td className="px-4 py-3.5 text-slate-500 font-mono">
-                    {rec.timestamp || '—'}
-                  </td>
+                  <td className="px-4 py-3.5 text-slate-500 font-mono">{rec.timestamp || "—"}</td>
                   <td className="px-4 py-3.5 text-slate-500">
                     {rec.notes || <span className="text-slate-300 italic">No notes</span>}
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <div className="inline-flex p-1 bg-slate-100 rounded-lg gap-1">
-                      {(['Present', 'Late', 'Absent', 'Excused'] as const).map((mode) => {
+                      {(["Present", "Late", "Absent", "Excused"] as const).map((mode) => {
                         const isCurrent = rec.status === mode;
-                        let activeStyle = 'bg-white text-slate-900 shadow-2xs';
-                        if (isCurrent && mode === 'Present') activeStyle = 'bg-emerald-600 text-white shadow-xs font-semibold';
-                        if (isCurrent && mode === 'Late') activeStyle = 'bg-amber-600 text-white shadow-xs font-semibold';
-                        if (isCurrent && mode === 'Absent') activeStyle = 'bg-rose-600 text-white shadow-xs font-semibold';
-                        if (isCurrent && mode === 'Excused') activeStyle = 'bg-slate-700 text-white shadow-xs font-semibold';
+                        let activeStyle = "bg-white text-slate-900 shadow-2xs";
+                        if (isCurrent && mode === "Present")
+                          activeStyle = "bg-emerald-600 text-white shadow-xs font-semibold";
+                        if (isCurrent && mode === "Late")
+                          activeStyle = "bg-amber-600 text-white shadow-xs font-semibold";
+                        if (isCurrent && mode === "Absent")
+                          activeStyle = "bg-rose-600 text-white shadow-xs font-semibold";
+                        if (isCurrent && mode === "Excused")
+                          activeStyle = "bg-slate-700 text-white shadow-xs font-semibold";
 
                         return (
                           <button
                             key={mode}
                             onClick={() => handleUpdateRecordStatus(rec.id, mode)}
                             className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                              isCurrent ? activeStyle : 'text-slate-600 hover:text-slate-900'
+                              isCurrent ? activeStyle : "text-slate-600 hover:text-slate-900"
                             }`}
                           >
                             {mode}

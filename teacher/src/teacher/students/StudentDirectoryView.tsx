@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Users,
   Search,
@@ -9,11 +9,11 @@ import {
   ArrowRight,
   UserCheck,
   AlertTriangle,
-} from 'lucide-react';
-import { Student, Course, NavigationTab } from '../types';
-import { mockStudents, mockCourses } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
-import { StudentDetailsModal } from './StudentDetailsModal';
+} from "lucide-react";
+import { Student, Course, NavigationTab } from "../types";
+import { mockStudents, mockCourses } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
+import { StudentDetailsModal } from "./StudentDetailsModal";
 
 interface StudentDirectoryViewProps {
   onNavigate: (tab: NavigationTab, param?: string) => void;
@@ -24,9 +24,9 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
   onNavigate,
   onSendMessage,
 }) => {
-  const [search, setSearch] = useState('');
-  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('All');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [search, setSearch] = useState("");
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
 
   // Selected student for drawer
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -39,9 +39,9 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
       st.email.toLowerCase().includes(search.toLowerCase());
 
     const matchesCourse =
-      selectedCourseFilter === 'All' || st.enrolledCourseIds.includes(selectedCourseFilter);
+      selectedCourseFilter === "All" || st.enrolledCourseIds.includes(selectedCourseFilter);
 
-    const matchesStatus = statusFilter === 'All' || st.status === statusFilter;
+    const matchesStatus = statusFilter === "All" || st.status === statusFilter;
 
     return matchesSearch && matchesCourse && matchesStatus;
   });
@@ -60,13 +60,14 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
             Student Directory
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Monitor academic progress, submission consistency, and attendance across all your classes.
+            Monitor academic progress, submission consistency, and attendance across all your
+            classes.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onNavigate('enrollments')}
+            onClick={() => onNavigate("enrollments")}
             className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5"
           >
             <UserCheck className="w-3.5 h-3.5 text-slate-500" />
@@ -93,14 +94,14 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
         <div className="flex items-center flex-wrap gap-2">
           {/* Status Tabs */}
           <div className="flex items-center p-1 bg-slate-100 rounded-lg">
-            {(['All', 'Excelling', 'Active', 'At Risk'] as const).map((st) => (
+            {(["All", "Excelling", "Active", "At Risk"] as const).map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                   statusFilter === st
-                    ? 'bg-white text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? "bg-white text-slate-900 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {st}
@@ -184,7 +185,7 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
                   <td className="px-4 py-3.5 font-mono tabular-nums text-slate-700">
                     <span
                       className={`font-semibold ${
-                        st.attendanceRate < 80 ? 'text-rose-600' : 'text-slate-800'
+                        st.attendanceRate < 80 ? "text-rose-600" : "text-slate-800"
                       }`}
                     >
                       {st.attendanceRate}%

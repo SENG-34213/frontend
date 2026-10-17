@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   LayoutDashboard,
   Calendar,
@@ -22,8 +22,8 @@ import {
   ChevronRight,
   LogOut,
   X,
-} from 'lucide-react';
-import { NavigationTab, TeacherProfile } from '../types';
+} from "lucide-react";
+import { NavigationTab, TeacherProfile } from "../types";
 
 interface TeacherSidebarProps {
   currentTab: NavigationTab;
@@ -66,71 +66,77 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
 }) => {
   const navGroups: NavGroup[] = [
     {
-      groupName: 'OVERVIEW',
+      groupName: "OVERVIEW",
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'calendar', label: 'My Calendar', icon: Calendar, badge: 'Today' },
+        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { id: "calendar", label: "My Calendar", icon: Calendar, badge: "Today" },
         {
-          id: 'notifications',
-          label: 'Notifications',
+          id: "notifications",
+          label: "Notifications",
           icon: Bell,
           badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined,
-          badgeColor: 'bg-rose-500 text-white',
+          badgeColor: "bg-rose-500 text-white",
         },
       ],
     },
     {
-      groupName: 'TEACHING',
+      groupName: "TEACHING",
       items: [
-        { id: 'courses', label: 'My Courses', icon: BookOpen, badge: 4 },
-        { id: 'curriculum', label: 'Course Content', icon: Layers },
-        { id: 'students', label: 'My Students', icon: Users, badge: 142 },
-        { id: 'enrollments', label: 'Enrollments', icon: UserCheck, badge: 2, badgeColor: 'bg-amber-500 text-white' },
-        { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
-        { id: 'materials', label: 'Learning Materials', icon: FolderOpen },
+        { id: "courses", label: "My Courses", icon: BookOpen, badge: 4 },
+        { id: "curriculum", label: "Course Content", icon: Layers },
+        { id: "students", label: "My Students", icon: Users, badge: 142 },
+        {
+          id: "enrollments",
+          label: "Enrollments",
+          icon: UserCheck,
+          badge: 2,
+          badgeColor: "bg-amber-500 text-white",
+        },
+        { id: "attendance", label: "Attendance", icon: ClipboardCheck },
+        { id: "materials", label: "Learning Materials", icon: FolderOpen },
       ],
     },
     {
-      groupName: 'ASSESSMENTS',
+      groupName: "ASSESSMENTS",
       items: [
         {
-          id: 'assignments',
-          label: 'Assignments',
+          id: "assignments",
+          label: "Assignments",
           icon: FileCheck,
           badge: pendingSubmissionsCount > 0 ? `${pendingSubmissionsCount}` : undefined,
-          badgeColor: 'bg-indigo-600 text-white',
+          badgeColor: "bg-indigo-600 text-white",
         },
-        { id: 'quizzes', label: 'Quizzes', icon: HelpCircle },
-        { id: 'exams', label: 'Examinations', icon: GraduationCap },
-        { id: 'grades', label: 'Grades & Results', icon: Award },
+        { id: "quizzes", label: "Quizzes", icon: HelpCircle },
+        { id: "exams", label: "Examinations", icon: GraduationCap },
+        { id: "grades", label: "Grades & Results", icon: Award },
       ],
     },
     {
-      groupName: 'INSIGHTS & COMMUNICATION',
+      groupName: "INSIGHTS & COMMUNICATION",
       items: [
-        { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+        { id: "analytics", label: "Analytics", icon: BarChart3 },
         {
-          id: 'messages',
-          label: 'Messages',
+          id: "messages",
+          label: "Messages",
           icon: MessageSquare,
           badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
-          badgeColor: 'bg-indigo-600 text-white',
+          badgeColor: "bg-indigo-600 text-white",
         },
         {
-          id: 'ai-assistant',
-          label: 'Mentify AI',
+          id: "ai-assistant",
+          label: "Mentify AI",
           icon: Sparkles,
           aiGlow: true,
-          badge: 'Pro',
-          badgeColor: 'bg-violet-100 text-violet-700 border border-violet-200',
+          badge: "Pro",
+          badgeColor: "bg-violet-100 text-violet-700 border border-violet-200",
         },
       ],
     },
     {
-      groupName: 'ACCOUNT',
+      groupName: "ACCOUNT",
       items: [
-        { id: 'profile', label: 'My Profile', icon: User },
-        { id: 'settings', label: 'Settings', icon: Settings },
+        { id: "profile", label: "My Profile", icon: User },
+        { id: "settings", label: "Settings", icon: Settings },
       ],
     },
   ];
@@ -166,9 +172,13 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           <button
             onClick={onToggleCollapse}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {isCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
           </button>
         </div>
         <div className="lg:hidden">
@@ -195,7 +205,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
                 const Icon = item.icon;
                 const isActive =
                   currentTab === item.id ||
-                  (item.id === 'assignments' && currentTab === 'grading-workspace');
+                  (item.id === "assignments" && currentTab === "grading-workspace");
 
                 return (
                   <button
@@ -204,20 +214,20 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
                     title={isCollapsed ? item.label : undefined}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
                       isActive
-                        ? 'bg-indigo-50 text-indigo-700 font-semibold shadow-xs'
+                        ? "bg-indigo-50 text-indigo-700 font-semibold shadow-xs"
                         : item.aiGlow
-                        ? 'text-violet-700 hover:bg-violet-50/70 hover:text-violet-800'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          ? "text-violet-700 hover:bg-violet-50/70 hover:text-violet-800"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <Icon
                         className={`w-4 h-4 shrink-0 transition-colors ${
                           isActive
-                            ? 'text-indigo-600'
+                            ? "text-indigo-600"
                             : item.aiGlow
-                            ? 'text-violet-600'
-                            : 'text-slate-400 group-hover:text-slate-600'
+                              ? "text-violet-600"
+                              : "text-slate-400 group-hover:text-slate-600"
                         }`}
                       />
                       {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -226,7 +236,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
                     {!isCollapsed && item.badge !== undefined && (
                       <span
                         className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
-                          item.badgeColor || 'bg-slate-100 text-slate-600'
+                          item.badgeColor || "bg-slate-100 text-slate-600"
                         }`}
                       >
                         {item.badge}
@@ -243,9 +253,9 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       {/* Teacher Profile Footer Card */}
       <div className="p-3 border-t border-slate-200 shrink-0">
         <div
-          onClick={() => handleItemClick('profile')}
+          onClick={() => handleItemClick("profile")}
           className={`flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors ${
-            isCollapsed ? 'justify-center' : ''
+            isCollapsed ? "justify-center" : ""
           }`}
         >
           <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-xs">
@@ -267,12 +277,14 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:block shrink-0 transition-all duration-200 ease-in-out ${
-          isCollapsed ? 'w-18' : 'w-64'
+          isCollapsed ? "w-18" : "w-64"
         }`}
       >
-        <div className={`fixed top-0 bottom-0 z-30 transition-all duration-200 ease-in-out ${
-          isCollapsed ? 'w-18' : 'w-64'
-        }`}>
+        <div
+          className={`fixed top-0 bottom-0 z-30 transition-all duration-200 ease-in-out ${
+            isCollapsed ? "w-18" : "w-64"
+          }`}
+        >
           {sidebarContent}
         </div>
       </aside>
@@ -288,7 +300,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       {/* Mobile Drawer */}
       <div
         className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-200 ease-in-out ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {sidebarContent}

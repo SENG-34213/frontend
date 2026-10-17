@@ -1,23 +1,23 @@
 export type NavigationTab =
-  | 'dashboard'
-  | 'calendar'
-  | 'notifications'
-  | 'courses'
-  | 'curriculum'
-  | 'students'
-  | 'enrollments'
-  | 'attendance'
-  | 'materials'
-  | 'assignments'
-  | 'grading-workspace'
-  | 'quizzes'
-  | 'exams'
-  | 'grades'
-  | 'analytics'
-  | 'messages'
-  | 'ai-assistant'
-  | 'profile'
-  | 'settings';
+  | "dashboard"
+  | "calendar"
+  | "notifications"
+  | "courses"
+  | "curriculum"
+  | "students"
+  | "enrollments"
+  | "attendance"
+  | "materials"
+  | "assignments"
+  | "grading-workspace"
+  | "quizzes"
+  | "exams"
+  | "grades"
+  | "analytics"
+  | "messages"
+  | "ai-assistant"
+  | "profile"
+  | "settings";
 
 export interface TeacherProfile {
   id: string;
@@ -42,13 +42,13 @@ export interface Course {
   title: string;
   description: string;
   category: string;
-  level: 'Undergraduate' | 'Graduate' | 'Foundational';
+  level: "Undergraduate" | "Graduate" | "Foundational";
   semester: string;
   academicYear: string;
   enrolledCount: number;
   maxCapacity: number;
-  status: 'Active' | 'Draft' | 'Archived';
-  coverTheme: 'indigo' | 'emerald' | 'violet' | 'amber';
+  status: "Active" | "Draft" | "Archived";
+  coverTheme: "indigo" | "emerald" | "violet" | "amber";
   modulesCount: number;
   assignmentsCount: number;
   nextSession?: string;
@@ -63,8 +63,8 @@ export interface Lesson {
   description: string;
   durationMinutes: number;
   order: number;
-  status: 'Published' | 'Draft';
-  contentType: 'Lecture' | 'Lab' | 'Reading' | 'Discussion';
+  status: "Published" | "Draft";
+  contentType: "Lecture" | "Lab" | "Reading" | "Discussion";
   contentMarkdown?: string;
   resourcesCount: number;
   attachedMaterials?: string[];
@@ -76,7 +76,7 @@ export interface Module {
   title: string;
   description: string;
   order: number;
-  status: 'Published' | 'Draft';
+  status: "Published" | "Draft";
   lessons: Lesson[];
 }
 
@@ -90,7 +90,7 @@ export interface Student {
   enrolledCourseIds: string[];
   attendanceRate: number;
   gpa: number;
-  status: 'Active' | 'At Risk' | 'Excelling';
+  status: "Active" | "At Risk" | "Excelling";
   lastActive: string;
   submissionsPending: number;
   recentGradeAvg: number;
@@ -105,7 +105,7 @@ export interface EnrollmentRequest {
   courseCode: string;
   courseTitle: string;
   appliedDate: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: "Pending" | "Approved" | "Rejected";
   academicTerm: string;
 }
 
@@ -119,7 +119,7 @@ export interface Assignment {
   dueTime: string;
   maxMarks: number;
   weightagePercent: number;
-  status: 'Active' | 'Grading' | 'Closed' | 'Draft';
+  status: "Active" | "Grading" | "Closed" | "Draft";
   totalSubmissions: number;
   gradedCount: number;
   totalStudents: number;
@@ -133,7 +133,7 @@ export interface StudentSubmission {
   studentName: string;
   studentEmail: string;
   submissionDate: string;
-  status: 'Submitted' | 'Late' | 'Graded' | 'Pending';
+  status: "Submitted" | "Late" | "Graded" | "Pending";
   score?: number;
   maxMarks: number;
   feedback?: string;
@@ -146,7 +146,7 @@ export interface StudentSubmission {
 export interface QuizQuestion {
   id: string;
   quizId: string;
-  type: 'multiple-choice' | 'multi-select' | 'true-false' | 'short-answer';
+  type: "multiple-choice" | "multi-select" | "true-false" | "short-answer";
   question: string;
   options?: string[];
   correctAnswer: string | string[];
@@ -163,7 +163,7 @@ export interface Quiz {
   durationMinutes: number;
   totalQuestions: number;
   totalMarks: number;
-  status: 'Active' | 'Draft' | 'Completed';
+  status: "Active" | "Draft" | "Completed";
   dueDate: string;
   attemptsCount: number;
   totalEligible: number;
@@ -180,7 +180,7 @@ export interface QuizAttempt {
   maxMarks: number;
   submittedAt: string;
   timeSpentMinutes: number;
-  status: 'Completed' | 'In Progress';
+  status: "Completed" | "In Progress";
 }
 
 export interface Examination {
@@ -188,14 +188,14 @@ export interface Examination {
   courseId: string;
   courseCode: string;
   title: string;
-  examType: 'Midterm' | 'Final' | 'Practical Exam';
+  examType: "Midterm" | "Final" | "Practical Exam";
   scheduledDate: string;
   startTime: string;
   durationMinutes: number;
   roomOrPlatform: string;
   totalMarks: number;
   weightagePercent: number;
-  status: 'Scheduled' | 'Grading' | 'Published' | 'Completed';
+  status: "Scheduled" | "Grading" | "Published" | "Completed";
   enrolledStudents: number;
   gradedStudents: number;
   averageScore?: number;
@@ -206,7 +206,7 @@ export interface AttendanceRecord {
   sessionId: string;
   studentId: string;
   studentName: string;
-  status: 'Present' | 'Late' | 'Absent' | 'Excused';
+  status: "Present" | "Late" | "Absent" | "Excused";
   timestamp?: string;
   notes?: string;
 }
@@ -226,7 +226,7 @@ export interface AttendanceSession {
   lateCount: number;
   absentCount: number;
   excusedCount: number;
-  status: 'Open' | 'Completed' | 'Upcoming';
+  status: "Open" | "Completed" | "Upcoming";
   records: AttendanceRecord[];
 }
 
@@ -236,25 +236,25 @@ export interface LearningMaterial {
   courseCode: string;
   title: string;
   description: string;
-  fileType: 'PDF' | 'ZIP' | 'DOCX' | 'VIDEO' | 'SLIDES';
+  fileType: "PDF" | "ZIP" | "DOCX" | "VIDEO" | "SLIDES";
   fileSize: string;
   uploadDate: string;
   s3Key: string;
   downloadsCount: number;
-  visibility: 'Published' | 'Draft' | 'Scheduled';
+  visibility: "Published" | "Draft" | "Scheduled";
   moduleAssociation?: string;
 }
 
 export interface CalendarEvent {
   id: string;
   title: string;
-  type: 'Class' | 'Assignment' | 'Quiz' | 'Exam' | 'Office Hours';
+  type: "Class" | "Assignment" | "Quiz" | "Exam" | "Office Hours";
   courseCode?: string;
   date: string; // YYYY-MM-DD
   startTime: string;
   endTime: string;
   location: string;
-  color: 'indigo' | 'emerald' | 'amber' | 'rose' | 'sky' | 'violet';
+  color: "indigo" | "emerald" | "amber" | "rose" | "sky" | "violet";
   description?: string;
 }
 
@@ -262,7 +262,7 @@ export interface ChatMessage {
   id: string;
   senderId: string;
   senderName: string;
-  senderRole: 'teacher' | 'student' | 'system';
+  senderRole: "teacher" | "student" | "system";
   content: string;
   timestamp: string;
   attachments?: { name: string; size: string }[];
@@ -286,7 +286,7 @@ export interface NotificationItem {
   id: string;
   title: string;
   message: string;
-  category: 'submission' | 'exam' | 'enrollment' | 'message' | 'system';
+  category: "submission" | "exam" | "enrollment" | "message" | "system";
   timestamp: string;
   read: boolean;
   actionUrl?: NavigationTab;

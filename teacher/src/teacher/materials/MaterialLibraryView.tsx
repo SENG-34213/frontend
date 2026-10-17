@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FolderOpen,
   Plus,
@@ -14,22 +14,24 @@ import {
   X,
   File,
   Sparkles,
-} from 'lucide-react';
-import { LearningMaterial, NavigationTab } from '../types';
-import { mockMaterials, mockCourses } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
+} from "lucide-react";
+import { LearningMaterial, NavigationTab } from "../types";
+import { mockMaterials, mockCourses } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
 
 export const MaterialLibraryView: React.FC = () => {
   const [materials, setMaterials] = useState<LearningMaterial[]>(mockMaterials);
-  const [search, setSearch] = useState('');
-  const [courseFilter, setCourseFilter] = useState('All');
-  const [typeFilter, setTypeFilter] = useState('All');
+  const [search, setSearch] = useState("");
+  const [courseFilter, setCourseFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
 
   // Upload modal states
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [uploadTitle, setUploadTitle] = useState('');
-  const [uploadCourseId, setUploadCourseId] = useState(mockCourses[0]?.id || '');
-  const [uploadFileType, setUploadFileType] = useState<'PDF' | 'ZIP' | 'DOCX' | 'VIDEO' | 'SLIDES'>('PDF');
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [uploadCourseId, setUploadCourseId] = useState(mockCourses[0]?.id || "");
+  const [uploadFileType, setUploadFileType] = useState<"PDF" | "ZIP" | "DOCX" | "VIDEO" | "SLIDES">(
+    "PDF",
+  );
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
@@ -38,8 +40,8 @@ export const MaterialLibraryView: React.FC = () => {
     const matchesSearch =
       m.title.toLowerCase().includes(search.toLowerCase()) ||
       m.courseCode.toLowerCase().includes(search.toLowerCase());
-    const matchesCourse = courseFilter === 'All' || m.courseId === courseFilter;
-    const matchesType = typeFilter === 'All' || m.fileType === typeFilter;
+    const matchesCourse = courseFilter === "All" || m.courseId === courseFilter;
+    const matchesType = typeFilter === "All" || m.fileType === typeFilter;
     return matchesSearch && matchesCourse && matchesType;
   });
 
@@ -64,20 +66,20 @@ export const MaterialLibraryView: React.FC = () => {
             title: uploadTitle.endsWith(`.${uploadFileType.toLowerCase()}`)
               ? uploadTitle
               : `${uploadTitle}.${uploadFileType.toLowerCase()}`,
-            description: 'Uploaded by Prof. Alex Rivera via S3 direct multipart pipeline.',
+            description: "Uploaded by Prof. Alex Rivera via S3 direct multipart pipeline.",
             fileType: uploadFileType,
-            fileSize: '3.4 MB',
-            uploadDate: 'Just now',
+            fileSize: "3.4 MB",
+            uploadDate: "Just now",
             s3Key: `mentify-materials/${course.code.toLowerCase()}/${Date.now()}.${uploadFileType.toLowerCase()}`,
             downloadsCount: 0,
-            visibility: 'Published',
+            visibility: "Published",
           };
 
           setMaterials([newMat, ...materials]);
           setTimeout(() => {
             setIsUploadOpen(false);
             setUploadProgress(0);
-            setUploadTitle('');
+            setUploadTitle("");
           }, 600);
           return 100;
         }
@@ -95,7 +97,8 @@ export const MaterialLibraryView: React.FC = () => {
             Learning Material Repository
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Cloud-backed lecture slide decks, starter code archives, and reading materials hosted on AWS S3.
+            Cloud-backed lecture slide decks, starter code archives, and reading materials hosted on
+            AWS S3.
           </p>
         </div>
 
@@ -153,13 +156,13 @@ export const MaterialLibraryView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((mat) => {
           let typeIcon = FileText;
-          let iconBg = 'bg-indigo-50 text-indigo-700 border-indigo-100';
-          if (mat.fileType === 'ZIP') {
+          let iconBg = "bg-indigo-50 text-indigo-700 border-indigo-100";
+          if (mat.fileType === "ZIP") {
             typeIcon = FileCode;
-            iconBg = 'bg-amber-50 text-amber-700 border-amber-100';
-          } else if (mat.fileType === 'VIDEO') {
+            iconBg = "bg-amber-50 text-amber-700 border-amber-100";
+          } else if (mat.fileType === "VIDEO") {
             typeIcon = Video;
-            iconBg = 'bg-rose-50 text-rose-700 border-rose-100';
+            iconBg = "bg-rose-50 text-rose-700 border-rose-100";
           }
           const Icon = typeIcon;
 
@@ -182,7 +185,9 @@ export const MaterialLibraryView: React.FC = () => {
                 </div>
 
                 <div className="flex items-start gap-3 mt-1">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border ${iconBg}`}>
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border ${iconBg}`}
+                  >
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
@@ -232,7 +237,9 @@ export const MaterialLibraryView: React.FC = () => {
             <div className="p-5 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-slate-900">Upload Learning Material</h3>
-                <p className="text-xs text-slate-500">Direct multipart streaming to Mentify S3 Storage</p>
+                <p className="text-xs text-slate-500">
+                  Direct multipart streaming to Mentify S3 Storage
+                </p>
               </div>
               <button
                 onClick={() => setIsUploadOpen(false)}
@@ -331,7 +338,7 @@ export const MaterialLibraryView: React.FC = () => {
                   disabled={isUploading}
                   className="px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  {isUploading ? 'Uploading...' : 'Confirm Upload'}
+                  {isUploading ? "Uploading..." : "Confirm Upload"}
                 </button>
               </div>
             </form>

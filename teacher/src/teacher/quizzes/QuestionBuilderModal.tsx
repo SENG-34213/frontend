@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { X, Plus, Trash2, Check, Sparkles, Save } from 'lucide-react';
-import { QuizQuestion } from '../types';
+import React, { useState } from "react";
+import { X, Plus, Trash2, Check, Sparkles, Save } from "lucide-react";
+import { QuizQuestion } from "../types";
 
 interface QuestionBuilderModalProps {
   isOpen: boolean;
@@ -17,16 +17,16 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [type, setType] = useState<QuizQuestion['type']>('multiple-choice');
-  const [questionText, setQuestionText] = useState('');
+  const [type, setType] = useState<QuizQuestion["type"]>("multiple-choice");
+  const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>([
-    'O(1) Constant Time',
-    'O(log n) Logarithmic Time',
-    'O(n) Linear Time',
-    'O(n²) Quadratic Time',
+    "O(1) Constant Time",
+    "O(log n) Logarithmic Time",
+    "O(n) Linear Time",
+    "O(n²) Quadratic Time",
   ]);
   const [correctOptionIdx, setCorrectOptionIdx] = useState(1);
-  const [explanation, setExplanation] = useState('');
+  const [explanation, setExplanation] = useState("");
   const [marks, setMarks] = useState(5);
 
   const handleOptionChange = (idx: number, val: string) => {
@@ -57,8 +57,8 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
       quizId,
       type,
       question: questionText,
-      options: type === 'true-false' ? ['True', 'False'] : options,
-      correctAnswer: type === 'true-false' ? 'True' : options[correctOptionIdx] || options[0],
+      options: type === "true-false" ? ["True", "False"] : options,
+      correctAnswer: type === "true-false" ? "True" : options[correctOptionIdx] || options[0],
       explanation,
       marks: Number(marks) || 5,
     };
@@ -74,9 +74,14 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/50">
           <div>
             <h3 className="text-base font-bold text-slate-900">Quiz Question Builder</h3>
-            <p className="text-xs text-slate-500">Configure question prompt, answer choices, and explanations</p>
+            <p className="text-xs text-slate-500">
+              Configure question prompt, answer choices, and explanations
+            </p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md">
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -130,13 +135,13 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
           </div>
 
           {/* Options Section */}
-          {type !== 'short-answer' && (
+          {type !== "short-answer" && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-semibold text-slate-700">
                   Answer Options & Correct Answer
                 </label>
-                {type === 'multiple-choice' && (
+                {type === "multiple-choice" && (
                   <button
                     type="button"
                     onClick={handleAddOption}
@@ -148,11 +153,13 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
                 )}
               </div>
 
-              {type === 'true-false' ? (
+              {type === "true-false" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 border border-slate-200 rounded-lg flex items-center gap-2 bg-indigo-50/40">
                     <input type="radio" checked readOnly name="tf" />
-                    <span className="text-xs font-medium text-slate-800">True (Correct Answer)</span>
+                    <span className="text-xs font-medium text-slate-800">
+                      True (Correct Answer)
+                    </span>
                   </div>
                   <div className="p-3 border border-slate-200 rounded-lg flex items-center gap-2">
                     <input type="radio" disabled name="tf" />
@@ -188,7 +195,9 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
                       )}
                     </div>
                   ))}
-                  <p className="text-[11px] text-slate-400">Select the radio button beside the correct choice.</p>
+                  <p className="text-[11px] text-slate-400">
+                    Select the radio button beside the correct choice.
+                  </p>
                 </div>
               )}
             </div>

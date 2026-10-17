@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Sparkles,
   Send,
@@ -12,12 +12,12 @@ import {
   ArrowRight,
   RefreshCw,
   Lightbulb,
-} from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
+} from "lucide-react";
+import { GoogleGenAI } from "@google/genai";
 
 interface Message {
   id: string;
-  sender: 'teacher' | 'ai';
+  sender: "teacher" | "ai";
   text: string;
   timestamp: string;
 }
@@ -28,23 +28,27 @@ interface MentifyAIWorkspaceViewProps {
 
 const suggestedPrompts = [
   {
-    title: 'Draft Quiz Questions',
-    prompt: 'Generate 5 conceptual multiple-choice questions for CS-201 Data Structures on AVL Tree rotations with detailed rationales.',
+    title: "Draft Quiz Questions",
+    prompt:
+      "Generate 5 conceptual multiple-choice questions for CS-201 Data Structures on AVL Tree rotations with detailed rationales.",
     icon: HelpCircle,
   },
   {
-    title: 'Explain Complex Topic',
-    prompt: 'Explain the Master Theorem for divide-and-conquer recurrence relations using intuitive analogies suitable for 2nd-year undergraduates.',
+    title: "Explain Complex Topic",
+    prompt:
+      "Explain the Master Theorem for divide-and-conquer recurrence relations using intuitive analogies suitable for 2nd-year undergraduates.",
     icon: Lightbulb,
   },
   {
-    title: 'Lesson Plan & Objectives',
-    prompt: 'Create a 50-minute interactive lesson plan for teaching Dijkstra’s Shortest Path Algorithm with a hands-on whiteboard activity.',
+    title: "Lesson Plan & Objectives",
+    prompt:
+      "Create a 50-minute interactive lesson plan for teaching Dijkstra’s Shortest Path Algorithm with a hands-on whiteboard activity.",
     icon: Layers,
   },
   {
-    title: 'Rubric Criteria Formulation',
-    prompt: 'Draft an evaluation rubric for a full-stack Spring Boot microservices project with idempotent event consumers and transaction outboxes.',
+    title: "Rubric Criteria Formulation",
+    prompt:
+      "Draft an evaluation rubric for a full-stack Spring Boot microservices project with idempotent event consumers and transaction outboxes.",
     icon: FileText,
   },
 ];
@@ -54,15 +58,15 @@ export const MentifyAIWorkspaceView: React.FC<MentifyAIWorkspaceViewProps> = ({
 }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 'init-1',
-      sender: 'ai',
+      id: "init-1",
+      sender: "ai",
       text: `Hello Professor Rivera! I'm Mentify AI, your dedicated curriculum and teaching assistant. 
 
 How can I assist you today? I can help draft assessment rubrics, author randomized quiz questions, design engaging classroom activities, or summarize student performance trends across your courses.`,
-      timestamp: 'Just now',
+      timestamp: "Just now",
     },
   ]);
-  const [input, setInput] = useState(initialPrompt || '');
+  const [input, setInput] = useState(initialPrompt || "");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -74,7 +78,7 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
   }, [initialPrompt]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async (textToSend?: string) => {
@@ -83,28 +87,28 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
 
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
-      sender: 'teacher',
+      sender: "teacher",
       text: query,
-      timestamp: 'Just now',
+      timestamp: "Just now",
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsLoading(true);
 
     try {
-      let aiResponseText = '';
+      let aiResponseText = "";
 
       // Check if GEMINI_API_KEY is available in browser process.env
       const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
 
-      if (apiKey && apiKey !== 'MY_GEMINI_API_KEY') {
+      if (apiKey && apiKey !== "MY_GEMINI_API_KEY") {
         const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: "gemini-2.5-flash",
           contents: [
             {
-              role: 'user',
+              role: "user",
               parts: [
                 {
                   text: `You are Mentify AI, an expert educational pedagogical assistant for university professor Dr. Alex Rivera (Associate Professor of Computer Science). Answer the following teacher query with high rigor, clear structure, and academic precision:\n\n${query}`,
@@ -113,12 +117,12 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
             },
           ],
         });
-        aiResponseText = response.text || 'I have analyzed your request.';
+        aiResponseText = response.text || "I have analyzed your request.";
       } else {
         // High fidelity domain-specific fallback responses matching teacher workflows
         await new Promise((resolve) => setTimeout(resolve, 800));
 
-        if (query.toLowerCase().includes('quiz') || query.toLowerCase().includes('question')) {
+        if (query.toLowerCase().includes("quiz") || query.toLowerCase().includes("question")) {
           aiResponseText = `### Generated Assessment Questions for CS-201: AVL Trees
 
 **Question 1 (Multiple Choice):**
@@ -140,7 +144,10 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
 **Question 3 (Conceptual Short Answer):**
 *Explain why maintaining a height cache on each node is superior to computing height recursively during rotations.*
 *Sample Solution:* Recursive computation requires $O(n)$ time per node visit, degrading tree operations to $O(n)$. Storing height locally allows $O(1)$ updates using $1 + \\max(\\text{left.height}, \\text{right.height})$.`;
-        } else if (query.toLowerCase().includes('lesson') || query.toLowerCase().includes('dijkstra')) {
+        } else if (
+          query.toLowerCase().includes("lesson") ||
+          query.toLowerCase().includes("dijkstra")
+        ) {
           aiResponseText = `### 50-Minute Interactive Lesson Plan: Dijkstra's Shortest Path
 
 **Target Course:** CS-201 Data Structures & Algorithms  
@@ -173,17 +180,17 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
 
       const aiMsg: Message = {
         id: `msg-${Date.now() + 1}`,
-        sender: 'ai',
+        sender: "ai",
         text: aiResponseText,
-        timestamp: 'Just now',
+        timestamp: "Just now",
       };
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
       const errorMsg: Message = {
         id: `msg-err-${Date.now()}`,
-        sender: 'ai',
-        text: 'I encountered a temporary connection issue. Please try again.',
-        timestamp: 'Just now',
+        sender: "ai",
+        text: "I encountered a temporary connection issue. Please try again.",
+        timestamp: "Just now",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -218,9 +225,9 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
                 setMessages([
                   {
                     id: `new-${Date.now()}`,
-                    sender: 'ai',
-                    text: 'Started fresh session. How can I assist your teaching today?',
-                    timestamp: 'Just now',
+                    sender: "ai",
+                    text: "Started fresh session. How can I assist your teaching today?",
+                    timestamp: "Just now",
                   },
                 ])
               }
@@ -269,24 +276,24 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
         {/* Messages Feed */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {messages.map((m) => {
-            const isUser = m.sender === 'teacher';
+            const isUser = m.sender === "teacher";
             return (
               <div
                 key={m.id}
-                className={`flex gap-3 max-w-3xl ${isUser ? 'ml-auto flex-row-reverse' : ''}`}
+                className={`flex gap-3 max-w-3xl ${isUser ? "ml-auto flex-row-reverse" : ""}`}
               >
                 <div
                   className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-semibold shrink-0 shadow-2xs ${
-                    isUser ? 'bg-indigo-600 text-white' : 'bg-violet-600 text-white'
+                    isUser ? "bg-indigo-600 text-white" : "bg-violet-600 text-white"
                   }`}
                 >
-                  {isUser ? 'AR' : <Sparkles className="w-3.5 h-3.5" />}
+                  {isUser ? "AR" : <Sparkles className="w-3.5 h-3.5" />}
                 </div>
 
-                <div className={`space-y-1.5 ${isUser ? 'items-end' : ''}`}>
+                <div className={`space-y-1.5 ${isUser ? "items-end" : ""}`}>
                   <div className="flex items-center gap-2 px-1 text-[11px] text-slate-400">
                     <span className="font-medium text-slate-700">
-                      {isUser ? 'Prof. Alex Rivera' : 'Mentify AI'}
+                      {isUser ? "Prof. Alex Rivera" : "Mentify AI"}
                     </span>
                     <span>·</span>
                     <span>{m.timestamp}</span>
@@ -295,8 +302,8 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
                   <div
                     className={`p-4 rounded-xl text-xs leading-relaxed ${
                       isUser
-                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                        : 'bg-slate-50 border border-slate-200/90 text-slate-900 rounded-tl-none whitespace-pre-line'
+                        ? "bg-indigo-600 text-white rounded-tr-none"
+                        : "bg-slate-50 border border-slate-200/90 text-slate-900 rounded-tl-none whitespace-pre-line"
                     }`}
                   >
                     {m.text}
@@ -311,7 +318,9 @@ How can I assist you today? I can help draft assessment rubrics, author randomiz
                         {copiedId === m.id ? (
                           <>
                             <Check className="w-3 h-3 text-emerald-600" />
-                            <span className="text-emerald-600 font-semibold">Copied to clipboard</span>
+                            <span className="text-emerald-600 font-semibold">
+                              Copied to clipboard
+                            </span>
                           </>
                         ) : (
                           <>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   X,
   User,
@@ -11,10 +11,10 @@ import {
   Award,
   Send,
   Check,
-} from 'lucide-react';
-import { Student } from '../types';
-import { StatusBadge } from '../components/StatusBadge';
-import { mockCourses, mockSubmissions } from '../data/mockData';
+} from "lucide-react";
+import { Student } from "../types";
+import { StatusBadge } from "../components/StatusBadge";
+import { mockCourses, mockSubmissions } from "../data/mockData";
 
 interface StudentDetailsModalProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ interface StudentDetailsModalProps {
   onSendMessage: (studentName: string) => void;
 }
 
-type StudentTab = 'overview' | 'assignments' | 'quizzes' | 'attendance' | 'notes';
+type StudentTab = "overview" | "assignments" | "quizzes" | "attendance" | "notes";
 
 export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
   isOpen,
@@ -33,11 +33,11 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 }) => {
   if (!isOpen || !student) return null;
 
-  const [activeTab, setActiveTab] = useState<StudentTab>('overview');
-  const [feedbackNote, setFeedbackNote] = useState('');
+  const [activeTab, setActiveTab] = useState<StudentTab>("overview");
+  const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackList, setFeedbackList] = useState<string[]>([
-    'Strong grasp of asymptotic recurrence relations. Keep up the thorough unit testing!',
-    'Recommended attending Thursday office hours for graph edge relaxation concepts.',
+    "Strong grasp of asymptotic recurrence relations. Keep up the thorough unit testing!",
+    "Recommended attending Thursday office hours for graph edge relaxation concepts.",
   ]);
 
   const studentCourses = mockCourses.filter((c) => student.enrolledCourseIds.includes(c.id));
@@ -47,7 +47,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
     e.preventDefault();
     if (!feedbackNote.trim()) return;
     setFeedbackList([feedbackNote, ...feedbackList]);
-    setFeedbackNote('');
+    setFeedbackNote("");
   };
 
   return (
@@ -95,18 +95,18 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
         {/* Tab Bar */}
         <div className="flex overflow-x-auto px-6 border-b border-slate-200 gap-4 bg-white shrink-0 scrollbar-none">
           {[
-            { id: 'overview', label: 'Academic Overview' },
-            { id: 'assignments', label: 'Assignments', count: studentSubmissions.length },
-            { id: 'attendance', label: 'Attendance' },
-            { id: 'notes', label: 'Faculty Feedback Log', count: feedbackList.length },
+            { id: "overview", label: "Academic Overview" },
+            { id: "assignments", label: "Assignments", count: studentSubmissions.length },
+            { id: "attendance", label: "Attendance" },
+            { id: "notes", label: "Faculty Feedback Log", count: feedbackList.length },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as StudentTab)}
               className={`py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-1.5 ${
                 activeTab === tab.id
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-900"
               }`}
             >
               <span>{tab.label}</span>
@@ -121,7 +121,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 
         {/* Content Body */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
-          {activeTab === 'overview' && (
+          {activeTab === "overview" && (
             <div className="space-y-5">
               {/* Stat Cards */}
               <div className="grid grid-cols-3 gap-3">
@@ -163,7 +163,9 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                       className="p-3 rounded-lg border border-slate-200 flex items-center justify-between"
                     >
                       <div>
-                        <span className="text-xs font-mono font-bold text-indigo-700">{c.code}</span>
+                        <span className="text-xs font-mono font-bold text-indigo-700">
+                          {c.code}
+                        </span>
                         <p className="text-xs font-semibold text-slate-900">{c.title}</p>
                       </div>
                       <span className="text-xs text-slate-500 font-mono">{c.semester}</span>
@@ -174,7 +176,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             </div>
           )}
 
-          {activeTab === 'assignments' && (
+          {activeTab === "assignments" && (
             <div className="space-y-3">
               {studentSubmissions.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-6">
@@ -182,19 +184,22 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                 </p>
               ) : (
                 studentSubmissions.map((sub) => (
-                  <div
-                    key={sub.id}
-                    className="p-4 rounded-xl border border-slate-200 space-y-2"
-                  >
+                  <div key={sub.id} className="p-4 rounded-xl border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900">{sub.submittedFileName || 'Assignment Submission'}</span>
+                      <span className="text-xs font-bold text-slate-900">
+                        {sub.submittedFileName || "Assignment Submission"}
+                      </span>
                       <StatusBadge status={sub.status} />
                     </div>
-                    <p className="text-xs text-slate-600 line-clamp-2">{sub.submittedContentText}</p>
+                    <p className="text-xs text-slate-600 line-clamp-2">
+                      {sub.submittedContentText}
+                    </p>
                     <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 text-slate-500">
                       <span>Submitted: {sub.submissionDate}</span>
                       <span className="font-mono font-bold text-indigo-700">
-                        {sub.score !== undefined ? `${sub.score} / ${sub.maxMarks} marks` : 'Pending Grading'}
+                        {sub.score !== undefined
+                          ? `${sub.score} / ${sub.maxMarks} marks`
+                          : "Pending Grading"}
                       </span>
                     </div>
                   </div>
@@ -203,7 +208,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             </div>
           )}
 
-          {activeTab === 'attendance' && (
+          {activeTab === "attendance" && (
             <div className="space-y-3">
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <div>
@@ -219,7 +224,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             </div>
           )}
 
-          {activeTab === 'notes' && (
+          {activeTab === "notes" && (
             <div className="space-y-4">
               <form onSubmit={handleAddFeedback} className="space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
@@ -245,9 +250,14 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 
               <div className="space-y-2">
                 {feedbackList.map((note, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border border-slate-200 text-xs bg-slate-50/50 text-slate-700">
+                  <div
+                    key={idx}
+                    className="p-3 rounded-lg border border-slate-200 text-xs bg-slate-50/50 text-slate-700"
+                  >
                     <p>{note}</p>
-                    <span className="text-[10px] text-slate-400 mt-1 block">Logged by Prof. Alex Rivera</span>
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Logged by Prof. Alex Rivera
+                    </span>
                   </div>
                 ))}
               </div>

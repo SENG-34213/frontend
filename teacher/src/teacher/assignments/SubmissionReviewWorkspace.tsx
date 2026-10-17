@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ArrowLeft,
   CheckCircle,
@@ -14,10 +14,10 @@ import {
   AlertCircle,
   Search,
   ExternalLink,
-} from 'lucide-react';
-import { StudentSubmission, Assignment, NavigationTab } from '../types';
-import { mockSubmissions, mockAssignments } from '../data/mockData';
-import { StatusBadge } from '../components/StatusBadge';
+} from "lucide-react";
+import { StudentSubmission, Assignment, NavigationTab } from "../types";
+import { mockSubmissions, mockAssignments } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
 
 interface SubmissionReviewWorkspaceProps {
   initialAssignmentId?: string;
@@ -26,14 +26,14 @@ interface SubmissionReviewWorkspaceProps {
 }
 
 export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps> = ({
-  initialAssignmentId = 'asg-01',
+  initialAssignmentId = "asg-01",
   onBack,
   onNavigate,
 }) => {
   const [selectedAssignmentId, setSelectedAssignmentId] = useState(initialAssignmentId);
   const [submissions, setSubmissions] = useState<StudentSubmission[]>(mockSubmissions);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string>(
-    mockSubmissions[0]?.id || ''
+    mockSubmissions[0]?.id || "",
   );
 
   // Scoring states for currently selected submission
@@ -43,16 +43,16 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     mockAssignments.find((a) => a.id === selectedAssignmentId) || mockAssignments[0];
 
   const [inputScore, setInputScore] = useState<string>(
-    currentSubmission?.score !== undefined ? String(currentSubmission.score) : ''
+    currentSubmission?.score !== undefined ? String(currentSubmission.score) : "",
   );
-  const [feedback, setFeedback] = useState<string>(currentSubmission?.feedback || '');
+  const [feedback, setFeedback] = useState<string>(currentSubmission?.feedback || "");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // When switching submission, update local inputs
   const handleSelectSubmission = (sub: StudentSubmission) => {
     setSelectedSubmissionId(sub.id);
-    setInputScore(sub.score !== undefined ? String(sub.score) : '');
-    setFeedback(sub.feedback || '');
+    setInputScore(sub.score !== undefined ? String(sub.score) : "");
+    setFeedback(sub.feedback || "");
   };
 
   const handleSaveGrade = (goToNext = false) => {
@@ -69,10 +69,10 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               ...sub,
               score: numericScore,
               feedback,
-              status: 'Graded',
+              status: "Graded",
             }
-          : sub
-      )
+          : sub,
+      ),
     );
 
     setSaveSuccess(true);
@@ -88,7 +88,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     }, 600);
   };
 
-  const gradedCount = submissions.filter((s) => s.status === 'Graded').length;
+  const gradedCount = submissions.filter((s) => s.status === "Graded").length;
 
   return (
     <div className="h-[calc(100vh-5rem)] flex flex-col bg-slate-100 overflow-hidden -m-4 lg:-m-6">
@@ -129,7 +129,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           </div>
 
           <button
-            onClick={() => onNavigate('grades')}
+            onClick={() => onNavigate("grades")}
             className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
           >
             Open Gradebook
@@ -163,12 +163,14 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   onClick={() => handleSelectSubmission(sub)}
                   className={`p-3 cursor-pointer transition-colors text-left flex items-start justify-between gap-2 ${
                     isSelected
-                      ? 'bg-indigo-50/70 border-l-4 border-indigo-600'
-                      : 'hover:bg-slate-50'
+                      ? "bg-indigo-50/70 border-l-4 border-indigo-600"
+                      : "hover:bg-slate-50"
                   }`}
                 >
                   <div className="min-w-0">
-                    <p className={`text-xs font-semibold truncate ${isSelected ? 'text-indigo-900' : 'text-slate-900'}`}>
+                    <p
+                      className={`text-xs font-semibold truncate ${isSelected ? "text-indigo-900" : "text-slate-900"}`}
+                    >
                       {sub.studentName}
                     </p>
                     <p className="text-[11px] text-slate-400 truncate">{sub.submissionDate}</p>
@@ -179,7 +181,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
 
                   <div className="text-right shrink-0">
                     <span className="font-mono text-xs font-bold text-slate-800">
-                      {sub.score !== undefined ? `${sub.score}/${sub.maxMarks}` : '—'}
+                      {sub.score !== undefined ? `${sub.score}/${sub.maxMarks}` : "—"}
                     </span>
                   </div>
                 </div>
@@ -209,7 +211,9 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   {currentSubmission.submittedFileName}
                 </span>
                 <button
-                  onClick={() => alert(`Downloading ${currentSubmission.submittedFileName} from S3 bucket...`)}
+                  onClick={() =>
+                    alert(`Downloading ${currentSubmission.submittedFileName} from S3 bucket...`)
+                  }
                   className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors flex items-center gap-1"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -226,7 +230,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                 Student Submission Notes & Architecture
               </span>
               <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-line font-sans">
-                {currentSubmission.submittedContentText || 'No explanatory comments provided.'}
+                {currentSubmission.submittedContentText || "No explanatory comments provided."}
               </p>
             </div>
 
@@ -255,7 +259,10 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               Evaluation & Rubric Scoring
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Assignment Maximum: <strong className="font-mono text-slate-900">{currentAssignment.maxMarks} marks</strong>
+              Assignment Maximum:{" "}
+              <strong className="font-mono text-slate-900">
+                {currentAssignment.maxMarks} marks
+              </strong>
             </p>
           </div>
 
@@ -286,7 +293,10 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               </span>
               <div className="space-y-2">
                 {currentAssignment.rubricItems.map((r, i) => (
-                  <div key={i} className="text-xs p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-start justify-between gap-2">
+                  <div
+                    key={i}
+                    className="text-xs p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-start justify-between gap-2"
+                  >
                     <span className="text-slate-700 leading-snug">{r.criterion}</span>
                     <span className="font-mono font-bold text-slate-900 tabular-nums shrink-0">
                       {r.marks}m
@@ -306,7 +316,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   type="button"
                   onClick={() =>
                     setFeedback(
-                      'Well executed implementation. Edge cases in rotation balance factors handled gracefully.'
+                      "Well executed implementation. Edge cases in rotation balance factors handled gracefully.",
                     )
                   }
                   className="text-[10px] text-indigo-600 hover:underline flex items-center gap-1"
@@ -326,17 +336,19 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
 
               {/* Quick comment chips */}
               <div className="flex flex-wrap gap-1 pt-1">
-                {['Great test coverage', 'Review rotation tie-breakers', 'Clean code style'].map(
+                {["Great test coverage", "Review rotation tie-breakers", "Clean code style"].map(
                   (chip, idx) => (
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setFeedback((prev) => (prev ? `${prev} ${chip}.` : `${chip}.`))}
+                      onClick={() =>
+                        setFeedback((prev) => (prev ? `${prev} ${chip}.` : `${chip}.`))
+                      }
                       className="px-2 py-0.5 rounded text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                     >
                       + {chip}
                     </button>
-                  )
+                  ),
                 )}
               </div>
             </div>
