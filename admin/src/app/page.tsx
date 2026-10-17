@@ -239,6 +239,10 @@ export default function Home() {
                 phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
                 grade: activeForm === "student" ? normalizeGrade(profile?.grade) : undefined,
+                schoolName:
+                  activeForm === "student" && profile?.schoolName
+                    ? String(profile.schoolName)
+                    : undefined,
                 code:
                   activeForm === "student"
                     ? String(profile?.studentId || "")
@@ -322,6 +326,7 @@ export default function Home() {
                 email: String(user.email || ""),
                 phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 grade: normalizeGrade(profile?.grade),
+                schoolName: profile?.schoolName ? String(profile.schoolName) : undefined,
                 code: String(profile?.studentId || ""),
                 accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
               };
@@ -401,6 +406,7 @@ export default function Home() {
                 email: String(user.email || ""),
                 phoneNumber: user.phoneNumber ? String(user.phoneNumber) : undefined,
                 grade: normalizeGrade(profile?.grade),
+                schoolName: profile?.schoolName ? String(profile.schoolName) : undefined,
                 code: String(profile?.studentId || ""),
                 accountStatus: user.accountStatus ? String(user.accountStatus) : undefined,
               };
@@ -474,6 +480,8 @@ export default function Home() {
               name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
               email: String(user.email || ""),
               grade: role === "student" ? normalizeGrade(profile?.grade) : undefined,
+              schoolName:
+                role === "student" && profile?.schoolName ? String(profile.schoolName) : undefined,
               code:
                 role === "student"
                   ? String(profile?.studentId || "")
@@ -547,6 +555,7 @@ export default function Home() {
                   name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
                   email: String(user.email || ""),
                   grade: normalizeGrade(profile?.grade),
+                  schoolName: profile?.schoolName ? String(profile.schoolName) : undefined,
                 };
               }),
             );
@@ -915,6 +924,7 @@ export default function Home() {
               guardianPhone: values.guardianPhone.trim(),
               attendanceMode: values.attendanceMode,
               grade: values.grade,
+              schoolName: values.schoolName.trim(),
             },
           }
         : {
@@ -1029,6 +1039,7 @@ export default function Home() {
           name: `${registered.firstName || values.firstName} ${registered.lastName || values.lastName}`,
           email: registered.email || values.email,
           grade: normalizeGrade(registered.studentProfile?.grade ?? values.grade),
+          schoolName: registered.studentProfile?.schoolName || values.schoolName.trim(),
           phoneNumber: registered.phoneNumber || values.phoneNumber,
           attendanceMode: registered.studentProfile?.attendanceMode || values.attendanceMode,
           studentCode: registered.studentProfile?.studentId,
@@ -2426,19 +2437,30 @@ export default function Home() {
                             onChange={change}
                           />
                           {activeForm === "student" ? (
-                            <SelectField
-                              label="Grade"
-                              name="grade"
-                              options={[
-                                ["", "Select grade"],
-                                ...Array.from(
-                                  { length: 13 },
-                                  (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string],
-                                ),
-                              ]}
-                              values={values}
-                              onChange={change}
-                            />
+                            <>
+                              <SelectField
+                                label="Grade"
+                                name="grade"
+                                options={[
+                                  ["", "Select grade"],
+                                  ...Array.from(
+                                    { length: 13 },
+                                    (_, i) => [String(i + 1), `Grade ${i + 1}`] as [string, string],
+                                  ),
+                                ]}
+                                values={values}
+                                onChange={change}
+                              />
+                              <Field
+                                label="School name"
+                                name="schoolName"
+                                placeholder="e.g. Colombo Central College"
+                                hint="Enter the student’s current school."
+                                maxLength={150}
+                                values={values}
+                                onChange={change}
+                              />
+                            </>
                           ) : (
                             <>
                               <Field
