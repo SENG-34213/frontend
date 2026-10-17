@@ -39,8 +39,10 @@ import { TeacherAnalyticsView } from "../teacher/analytics/TeacherAnalyticsView"
 import { NotificationCenterView } from "../teacher/notifications/NotificationCenterView";
 import { TeacherProfileView } from "../teacher/profile/TeacherProfileView";
 import { TeacherSettingsView } from "../teacher/settings/TeacherSettingsView";
+import { TeacherLoginView } from "../teacher/auth/TeacherLoginView";
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentTab, setCurrentTab] = useState<NavigationTab>("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -122,6 +124,8 @@ export default function App() {
       setCurrentTab("calendar");
     }
   };
+
+  if (!isAuthenticated) return <TeacherLoginView onLogin={() => setIsAuthenticated(true)} />;
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
