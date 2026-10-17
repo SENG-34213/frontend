@@ -349,7 +349,9 @@ export default function App() {
             />
           )}
 
-          {currentTab === "exams" && <ExamManagementView onNavigate={handleNavigate} />}
+          {currentTab === "exams" && (
+            <ExamManagementView teacherCourses={courses} onNavigate={handleNavigate} />
+          )}
 
           {currentTab === "grades" && <GradebookView onNavigate={handleNavigate} />}
 
