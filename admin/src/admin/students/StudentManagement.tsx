@@ -22,6 +22,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { DetailDrawer } from "../components/DetailDrawer";
 import { StudentProfile, EnrollmentRecord, GradeRecord, AttendanceSession } from "../types";
+import type { RegisterStudentRequest } from "../api/usersApi";
 
 interface StudentManagementProps {
   students: StudentProfile[];
@@ -29,6 +30,7 @@ interface StudentManagementProps {
   grades: GradeRecord[];
   attendanceSessions: AttendanceSession[];
   onAddStudent: (newStudent: StudentProfile) => void;
+  onRegisterStudent: (request: RegisterStudentRequest) => Promise<StudentProfile>;
   onResendInvitation: (email: string, role: string) => void;
   showRegistrationWizardDirectly?: boolean;
 }
@@ -39,6 +41,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   grades,
   attendanceSessions,
   onAddStudent,
+  onRegisterStudent,
   onResendInvitation,
   showRegistrationWizardDirectly = false,
 }) => {
@@ -120,37 +123,15 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
     setCurrentStep((prev) => (prev - 1) as any);
   };
 
-  const handleFinalSubmit = () => {
-    // Generate institutional student ID from backend simulation
-    const genId = `STU-2026-08${Math.floor(47 + Math.random() * 50)}`;
-    const newStu: StudentProfile = {
-      id: `usr-stu-${Date.now()}`,
-      studentId: genId,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      role: "STUDENT",
-      status: "INVITED",
-      createdAt: new Date().toISOString(),
-      grade: formData.grade,
-      schoolName: formData.schoolName,
-      guardianName: formData.guardianName,
-      guardianPhone: formData.guardianPhone,
-      attendanceMode: formData.attendanceMode,
-      addressLine1: formData.addressLine1,
-      addressLine2: formData.addressLine2,
-      city: formData.city,
-      district: formData.district,
-      postalCode: formData.postalCode,
-      dob: formData.dob,
-      enrolledCourseCount: 0,
-      averageGrade: "Pending",
-    };
-
-    onAddStudent(newStu);
-    setCreatedStudentId(genId);
-    setCurrentStep(5);
+  const handleFinalSubmit = async () => {
+    try {
+      const createdStudent = await onRegisterStudent(formData);
+      onAddStudent(createdStudent);
+      setCreatedStudentId(createdStudent.studentId);
+      setCurrentStep(5);
+    } catch (error) {
+      setFormErrors({ api: error instanceof Error ? error.message : "Unable to register student." });
+    }
   };
 
   const resetWizard = () => {
@@ -753,6 +734,11 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
             )}
 
             {/* Stepper Navigation Buttons */}
+            {formErrors.api && (
+              <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                {formErrors.api}
+              </p>
+            )}
             {currentStep < 5 && (
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <button

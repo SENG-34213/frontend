@@ -20,11 +20,13 @@ import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { DetailDrawer } from "../components/DetailDrawer";
 import { TeacherProfile, Course } from "../types";
+import type { RegisterTeacherRequest } from "../api/usersApi";
 
 interface TeacherManagementProps {
   teachers: TeacherProfile[];
   courses: Course[];
   onAddTeacher: (teacher: TeacherProfile) => void;
+  onRegisterTeacher: (request: RegisterTeacherRequest) => Promise<TeacherProfile>;
   onResendInvitation: (email: string, role: string) => void;
   showRegistrationWizardDirectly?: boolean;
 }
@@ -33,6 +35,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   teachers,
   courses,
   onAddTeacher,
+  onRegisterTeacher,
   onResendInvitation,
   showRegistrationWizardDirectly = false,
 }) => {
@@ -115,33 +118,15 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
     }
   };
 
-  const handleFinalSubmit = () => {
-    const genCode = `TCH-910${Math.floor(8 + Math.random() * 20)}`;
-    const newTeacher: TeacherProfile = {
-      id: `usr-tch-${Date.now()}`,
-      teacherCode: genCode,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      role: "TEACHER",
-      status: "INVITED",
-      createdAt: new Date().toISOString(),
-      specializations: formData.specializations,
-      hireDate: formData.hireDate,
-      dob: formData.dob,
-      nic: formData.nic,
-      addressLine1: formData.addressLine1,
-      city: formData.city,
-      district: formData.district,
-      postalCode: formData.postalCode,
-      assignedCourseCount: 0,
-      activeStudentsCount: 0,
-    };
-
-    onAddTeacher(newTeacher);
-    setCreatedTeacherCode(genCode);
-    setCurrentStep(5);
+  const handleFinalSubmit = async () => {
+    try {
+      const createdTeacher = await onRegisterTeacher(formData);
+      onAddTeacher(createdTeacher);
+      setCreatedTeacherCode(createdTeacher.teacherCode);
+      setCurrentStep(5);
+    } catch (error) {
+      setFormErrors({ api: error instanceof Error ? error.message : "Unable to register teacher." });
+    }
   };
 
   const resetWizard = () => {
@@ -655,6 +640,11 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
             )}
 
             {/* Stepper Buttons */}
+            {formErrors.api && (
+              <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                {formErrors.api}
+              </p>
+            )}
             {currentStep < 5 && (
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <button

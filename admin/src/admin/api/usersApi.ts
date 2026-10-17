@@ -18,6 +18,7 @@ interface BackendAddress {
 
 interface BackendUser {
   id: string;
+  keycloakUserId?: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -30,7 +31,7 @@ interface BackendUser {
     dateOfBirth?: string;
     guardianName?: string;
     guardianPhone?: string;
-    attendanceMode?: StudentProfile["attendanceMode"];
+    attendanceMode?: StudentProfile["attendanceMode"] | "PHYSICAL";
   } | null;
   teacherProfile?: {
     teacherCode?: string;
@@ -53,6 +54,52 @@ export interface AdminUsersData {
   administrators: AdministratorProfile[];
 }
 
+export interface RegisterStudentRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  dob: string;
+  grade: string;
+  schoolName: string;
+  guardianName: string;
+  guardianPhone: string;
+  attendanceMode: "IN_PERSON" | "ONLINE" | "HYBRID";
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  district: string;
+  postalCode: string;
+}
+
+export interface RegisterTeacherRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  dob: string;
+  nic: string;
+  hireDate: string;
+  specializations: string[];
+  addressLine1: string;
+  city: string;
+  district: string;
+  postalCode: string;
+}
+
+export interface RegisterAdministratorRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  dob: string;
+  nic: string;
+  addressLine1: string;
+  city: string;
+  district: string;
+  postalCode: string;
+}
+
 function accountStatus(value: string): AccountStatus {
   if (value === "ACTIVE" || value === "INVITED" || value === "SUSPENDED") return value;
   return "INACTIVE";
@@ -61,6 +108,7 @@ function accountStatus(value: string): AccountStatus {
 function commonUser(user: BackendUser) {
   return {
     id: user.id,
+    keycloakUserId: user.keycloakUserId,
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
@@ -87,7 +135,8 @@ function mapStudent(user: BackendUser): StudentProfile {
     grade: profile?.grade || "Not assigned",
     guardianName: profile?.guardianName || "Not recorded",
     guardianPhone: profile?.guardianPhone || "Not recorded",
-    attendanceMode: profile?.attendanceMode || "IN_PERSON",
+    attendanceMode:
+      profile?.attendanceMode === "PHYSICAL" ? "IN_PERSON" : profile?.attendanceMode || "IN_PERSON",
     dob: profile?.dateOfBirth || "",
     enrolledCourseCount: 0,
     averageGrade: "—",
@@ -142,6 +191,94 @@ export async function fetchAdminUsers(): Promise<AdminUsersData> {
     teachers: teachers.map(mapTeacher),
     administrators: [...admins, ...superAdmins].map(mapAdministrator),
   };
+}
+
+function addressFromRequest(request: {
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  district: string;
+  postalCode: string;
+}) {
+  return {
+    addressLine1: request.addressLine1.trim(),
+    addressLine2: request.addressLine2?.trim() || undefined,
+    city: request.city.trim(),
+    district: request.district.trim(),
+    postalCode: request.postalCode.trim() || undefined,
+  };
+}
+
+function registrationResponse(response: ApiResponse<BackendUser>) {
+  if (!response.data) throw new Error(response.message || "Registration returned no user.");
+  return response.data;
+}
+
+export async function registerStudent(request: RegisterStudentRequest): Promise<StudentProfile> {
+  const response = await apiRequest<ApiResponse<BackendUser>>("/api/v1/admin/users/register", {
+    method: "POST",
+    body: {
+      email: request.email.trim(),
+      firstName: request.firstName.trim(),
+      lastName: request.lastName.trim(),
+      phoneNumber: request.phone?.trim() || undefined,
+      role: "STUDENT",
+      studentProfile: {
+        dateOfBirth: request.dob,
+        guardianName: request.guardianName.trim(),
+        guardianPhone: request.guardianPhone.trim(),
+        attendanceMode: request.attendanceMode === "IN_PERSON" ? "PHYSICAL" : request.attendanceMode,
+        grade: request.grade.replace(/^Grade\s+/i, ""),
+        schoolName: request.schoolName.trim(),
+      },
+      address: addressFromRequest(request),
+    },
+  });
+  return mapStudent(registrationResponse(response));
+}
+
+export async function registerTeacher(request: RegisterTeacherRequest): Promise<TeacherProfile> {
+  const response = await apiRequest<ApiResponse<BackendUser>>("/api/v1/admin/users/register", {
+    method: "POST",
+    body: {
+      email: request.email.trim(),
+      firstName: request.firstName.trim(),
+      lastName: request.lastName.trim(),
+      phoneNumber: request.phone?.trim() || undefined,
+      role: "TEACHER",
+      teacherProfile: {
+        dateOfBirth: request.dob,
+        nic: request.nic.trim() || undefined,
+        specializations: request.specializations.map((item) => item.trim()).filter(Boolean),
+        hireDate: request.hireDate || undefined,
+      },
+      address: addressFromRequest(request),
+    },
+  });
+  return mapTeacher(registrationResponse(response));
+}
+
+export async function registerAdministrator(
+  request: RegisterAdministratorRequest,
+): Promise<AdministratorProfile> {
+  const response = await apiRequest<ApiResponse<BackendUser>>(
+    "/api/v1/admin/users/admins/register",
+    {
+      method: "POST",
+      body: {
+        email: request.email.trim(),
+        firstName: request.firstName.trim(),
+        lastName: request.lastName.trim(),
+        phoneNumber: request.phone?.trim() || undefined,
+        adminProfile: {
+          dateOfBirth: request.dob,
+          nic: request.nic.trim() || undefined,
+        },
+        address: addressFromRequest(request),
+      },
+    },
+  );
+  return mapAdministrator(registrationResponse(response));
 }
 
 export async function resendUserInvitation(userId: string) {

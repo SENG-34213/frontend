@@ -109,7 +109,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     },
     { id: "quizzes", title: "Quiz Performance & Analytics", category: "Academic Management" },
     { id: "examinations", title: "Examination Timetable & Halls", category: "Academic Management" },
-    { id: "grades", title: "Academic Gradebook & Marks", category: "Academic Management" },
+    { id: "grades", title: "Grade Level Management", category: "Academic Management" },
+    { id: "results", title: "Academic Gradebook & Marks", category: "Academic Management" },
     {
       id: "attendance",
       title: "Attendance Management & Sessions",
