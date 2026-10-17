@@ -68,6 +68,7 @@ import { AdminProfile } from "./admin/profile/AdminProfile";
 import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
 import { logoutAdmin } from "./admin/api/authApi";
+import { fetchAdminUsers, resendUserInvitation, updateUserStatus } from "./admin/api/usersApi";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -109,6 +110,27 @@ export default function App() {
   const [openTeacherWizard, setOpenTeacherWizard] = useState(false);
   const [openAdminWizard, setOpenAdminWizard] = useState(false);
   const [openCourseModal, setOpenCourseModal] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState("");
+
+  const loadAdminUsers = async () => {
+    setUsersLoading(true);
+    setUsersError("");
+    try {
+      const data = await fetchAdminUsers();
+      setStudents(data.students);
+      setTeachers(data.teachers);
+      setAdministrators(data.administrators);
+    } catch (error) {
+      setUsersError(error instanceof Error ? error.message : "Unable to load users.");
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) void loadAdminUsers();
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
@@ -143,11 +165,23 @@ export default function App() {
   };
 
   const handleResendInvitation = (email: string, targetRole: string) => {
-    addToast(
-      "success",
-      "Invitation Dispatched",
-      `Keycloak temporary password activation link dispatched to ${email} (${targetRole}).`,
-    );
+    const user = [...students, ...teachers, ...administrators].find((item) => item.email === email);
+    if (!user) {
+      addToast("error", "Invitation Failed", "The selected user could not be found.");
+      return;
+    }
+
+    void resendUserInvitation(user.id)
+      .then(() => {
+        addToast(
+          "success",
+          "Invitation Dispatched",
+          `Keycloak temporary password activation link dispatched to ${email} (${targetRole}).`,
+        );
+      })
+      .catch((error) => {
+        addToast("error", "Invitation Failed", error instanceof Error ? error.message : undefined);
+      });
 
     // Record audit event
     const newLog: AuditEvent = {
@@ -165,17 +199,22 @@ export default function App() {
   };
 
   const handleUpdateUserStatus = (userId: string, newStatus: AccountStatus) => {
-    setStudents((prev) => prev.map((s) => (s.id === userId ? { ...s, status: newStatus } : s)));
-    setTeachers((prev) => prev.map((t) => (t.id === userId ? { ...t, status: newStatus } : t)));
-    setAdministrators((prev) =>
-      prev.map((a) => (a.id === userId ? { ...a, status: newStatus } : a)),
-    );
-
-    addToast(
-      "success",
-      "Account Status Updated",
-      `User account has been set to ${newStatus}. Keycloak tokens updated.`,
-    );
+    void updateUserStatus(userId, newStatus === "ACTIVE")
+      .then(() => {
+        setStudents((prev) => prev.map((s) => (s.id === userId ? { ...s, status: newStatus } : s)));
+        setTeachers((prev) => prev.map((t) => (t.id === userId ? { ...t, status: newStatus } : t)));
+        setAdministrators((prev) =>
+          prev.map((a) => (a.id === userId ? { ...a, status: newStatus } : a)),
+        );
+        addToast("success", "Account Status Updated", `User account has been set to ${newStatus}.`);
+      })
+      .catch((error) => {
+        addToast(
+          "error",
+          "Status Update Failed",
+          error instanceof Error ? error.message : undefined,
+        );
+      });
   };
 
   const handleAddStudent = (newStudent: StudentProfile) => {
@@ -333,6 +372,9 @@ export default function App() {
           onResendInvitation={handleResendInvitation}
           onRegisterStudent={() => handleQuickAction("register-student")}
           onRegisterTeacher={() => handleQuickAction("register-teacher")}
+          isLoading={usersLoading}
+          error={usersError}
+          onRetry={() => void loadAdminUsers()}
         />
       )}
 

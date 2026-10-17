@@ -38,6 +38,9 @@ interface UsersManagementProps {
   onResendInvitation: (email: string, role: string) => void;
   onRegisterStudent: () => void;
   onRegisterTeacher: () => void;
+  isLoading?: boolean;
+  error?: string;
+  onRetry?: () => void;
 }
 
 export const UsersManagement: React.FC<UsersManagementProps> = ({
@@ -49,6 +52,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
   onResendInvitation,
   onRegisterStudent,
   onRegisterTeacher,
+  isLoading = false,
+  error,
+  onRetry,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
@@ -144,6 +150,23 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
           </div>
         }
       />
+
+      {isLoading && (
+        <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-indigo-700">
+          Loading users from the Mentify backend…
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+          <span>{error}</span>
+          {onRetry && (
+            <button onClick={onRetry} className="font-semibold underline">
+              Retry
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -243,11 +266,13 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                     </td>
 
                     <td className="py-3 px-4 text-slate-500 tabular-nums">
-                      {new Date(user.createdAt).toLocaleDateString([], {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString([], {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "Not available"}
                     </td>
 
                     <td className="py-3 px-4 text-right">
@@ -380,7 +405,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                 <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                   <span className="text-slate-400 block mb-0.5">Created Date</span>
                   <span className="font-medium text-slate-900 dark:text-white tabular-nums">
-                    {new Date(selectedUser.createdAt).toLocaleDateString()}
+                    {selectedUser.createdAt
+                      ? new Date(selectedUser.createdAt).toLocaleDateString()
+                      : "Not available"}
                   </span>
                 </div>
                 <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
