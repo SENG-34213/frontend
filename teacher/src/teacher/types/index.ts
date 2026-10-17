@@ -196,7 +196,7 @@ export interface Examination {
   roomOrPlatform: string;
   totalMarks: number;
   weightagePercent: number;
-  status: "Scheduled" | "Grading" | "Published" | "Completed";
+  status: "Draft" | "Scheduled" | "Grading" | "Published" | "Completed" | "Cancelled";
   enrolledStudents: number;
   gradedStudents: number;
   averageScore?: number;

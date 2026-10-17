@@ -1,725 +1,510 @@
-"use client";
-
-import React, { useEffect, useMemo, useState } from "react";
-import { CheckCircle, Edit3, Loader2, Plus, Save, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Plus, Calendar, Clock, MapPin, CheckCircle, ChevronRight } from "lucide-react";
+import { Examination, NavigationTab } from "../types";
+import { mockExaminations, mockCourses } from "../data/mockData";
+import { StatusBadge } from "../components/StatusBadge";
+import { createExam, getCourseExams, type BackendExam } from "../api/examApi";
 import type { BackendCourse } from "../api/courseApi";
-import {
-  cancelExam,
-  completeExam,
-  createExam,
-  enterExamMarks,
-  getCourseExams,
-  getExamResults,
-  getExamSummary,
-  scheduleExam,
-  startExamMarking,
-  updateExam,
-  type BackendExam,
-  type ExamAttendanceStatus,
-  type ExamDraft,
-  type ExamResult,
-  type ExamMarkEntry,
-  type ExamSummary,
-  type ExamType,
-} from "../api/examApi";
-import type { Course } from "../types";
 
-type ExamManagementViewProps = {
-  backendCourses: BackendCourse[];
-  courses: Course[];
+interface ExamManagementViewProps {
+  onNavigate?: (tab: NavigationTab) => void;
+  backendCourses?: BackendCourse[];
+}
+
+const examTypeLabel = (type: BackendExam["type"]): Examination["examType"] => {
+  if (type === "FINAL") return "Final";
+  if (type === "PRACTICAL") return "Practical Exam";
+  return "Midterm";
 };
-type ExamForm = ExamDraft;
 
-const initialForm = (courseId = ""): ExamForm => ({
-  courseId,
-  title: "",
-  description: "",
-  examDate: new Date().toISOString().slice(0, 10),
-  startTime: "10:00",
-  endTime: "12:00",
-  totalMarks: 100,
-  passMarks: 40,
-  type: "MIDTERM",
-});
+const examStatusLabel = (status: BackendExam["status"]): Examination["status"] => {
+  if (status === "DRAFT") return "Draft";
+  if (status === "MARKING") return "Grading";
+  if (status === "COMPLETED") return "Completed";
+  if (status === "CANCELLED") return "Cancelled";
+  return "Scheduled";
+};
 
-function numberValue(value: number | string | undefined) {
-  return value === undefined ? "—" : Number(value).toFixed(2).replace(/\.00$/, "");
-}
+const minutesBetween = (startTime: string, endTime: string) => {
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const [endHour, endMinute] = endTime.split(":").map(Number);
+  const duration = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  return duration > 0 ? duration : 120;
+};
 
-function displayTime(value: string) {
-  return value.length > 5 ? value.slice(0, 5) : value;
-}
+const toDisplayTime = (time: string) => {
+  const [hourText, minuteText] = time.split(":");
+  const hour = Number(hourText);
+  if (!Number.isFinite(hour)) return time;
+  return `${hour % 12 || 12}:${minuteText ?? "00"} ${hour >= 12 ? "PM" : "AM"}`;
+};
+
+const fromDisplayTime = (time: string) => {
+  const match = time.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return time;
+  let hour = Number(match[1]);
+  if (match[3].toUpperCase() === "PM" && hour !== 12) hour += 12;
+  if (match[3].toUpperCase() === "AM" && hour === 12) hour = 0;
+  return `${String(hour).padStart(2, "0")}:${match[2]}:00`;
+};
+
+const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examination => {
+  const course = courses.find((item) => item.id === exam.courseId);
+  const start = exam.startTime.slice(0, 5);
+  return {
+    id: exam.id,
+    courseId: exam.courseId,
+    courseCode: course?.subject || course?.courseName || exam.courseId,
+    title: exam.title,
+    examType: examTypeLabel(exam.type),
+    scheduledDate: exam.examDate,
+    startTime: toDisplayTime(start),
+    durationMinutes: minutesBetween(start, exam.endTime.slice(0, 5)),
+    roomOrPlatform: "Venue not provided",
+    totalMarks: Number(exam.totalMarks),
+    weightagePercent: 0,
+    status: examStatusLabel(exam.status),
+    enrolledStudents: course?.numberOfStudents ?? 0,
+    gradedStudents: 0,
+  };
+};
 
 export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
-  backendCourses,
-  courses,
+  onNavigate,
+  backendCourses = [],
 }) => {
-  const [exams, setExams] = useState<BackendExam[]>([]);
-  const [selectedExam, setSelectedExam] = useState<BackendExam | null>(null);
-  const [results, setResults] = useState<ExamResult[]>([]);
-  const [summary, setSummary] = useState<ExamSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isResultsLoading, setIsResultsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [editingExam, setEditingExam] = useState<BackendExam | null>(null);
-  const [form, setForm] = useState<ExamForm>(initialForm(backendCourses[0]?.id));
+  const [exams, setExams] = useState<Examination[]>(mockExaminations);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
 
-  const courseById = useMemo(
-    () => new Map(courses.map((course) => [course.id, course])),
-    [courses],
-  );
-  const canEdit = selectedExam?.status === "DRAFT";
-  const canSchedule = selectedExam?.status === "DRAFT";
-  const canStartMarking = selectedExam?.status === "SCHEDULED";
-  const canComplete = selectedExam?.status === "MARKING";
-  const canCancel = Boolean(
-    selectedExam && !["COMPLETED", "CANCELLED"].includes(selectedExam.status),
-  );
-
-  async function loadExams() {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await Promise.all(backendCourses.map((course) => getCourseExams(course.id)));
-      const next = response.flat();
-      setExams(next);
-      if (selectedExam) {
-        const refreshed = next.find((exam) => exam.id === selectedExam.id);
-        if (refreshed) await selectExam(refreshed);
-      } else if (next[0]) {
-        await selectExam(next[0]);
-      }
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Exams failed to load.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function selectExam(exam: BackendExam) {
-    setSelectedExam(exam);
-    setIsResultsLoading(true);
-    setError(null);
-    try {
-      const [resultSheet, examSummary] = await Promise.all([
-        getExamResults(exam.id),
-        getExamSummary(exam.id),
-      ]);
-      setResults(resultSheet?.results ?? []);
-      setSummary(examSummary ?? null);
-    } catch (requestError) {
-      setResults([]);
-      setSummary(null);
-      setError(
-        requestError instanceof Error ? requestError.message : "Exam results failed to load.",
-      );
-    } finally {
-      setIsResultsLoading(false);
-    }
-  }
+  // Wizard state
+  const [wizardCourseId, setWizardCourseId] = useState(mockCourses[0]?.id || "");
+  const [wizardTitle, setWizardTitle] = useState("");
+  const [wizardType, setWizardType] = useState<"Midterm" | "Final" | "Practical Exam">("Midterm");
+  const [wizardDate, setWizardDate] = useState("2026-11-15");
+  const [wizardTime, setWizardTime] = useState("10:00 AM");
+  const [wizardDuration, setWizardDuration] = useState("120");
+  const [wizardRoom, setWizardRoom] = useState("Alan Turing Auditorium");
+  const [wizardWeight, setWizardWeight] = useState("30");
 
   useEffect(() => {
-    if (backendCourses.length) void loadExams();
-    else setIsLoading(false);
-    // loadExams intentionally runs when the authenticated course list changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (backendCourses.length === 0) return;
+    const controller = new AbortController();
+
+    Promise.all(backendCourses.map((course) => getCourseExams(course.id, controller.signal)))
+      .then((courseExams) => {
+        const liveExams = courseExams.flat().map((exam) => mapBackendExam(exam, backendCourses));
+        if (liveExams.length > 0) setExams(liveExams);
+      })
+      .catch(() => {
+        // The existing mock examinations remain visible when the API is unavailable.
+      });
+
+    return () => controller.abort();
   }, [backendCourses]);
 
-  function openCreate() {
-    setEditingExam(null);
-    setForm(initialForm(backendCourses[0]?.id));
-    setShowForm(true);
-  }
+  const handleFinishWizard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const course = mockCourses.find((c) => c.id === wizardCourseId) || mockCourses[0];
+    const backendCourse =
+      backendCourses.find(
+        (item) => item.subject === course.code || item.courseName === course.title,
+      ) || backendCourses[0];
+    const startTime = fromDisplayTime(wizardTime);
+    const startDate = new Date(`1970-01-01T${startTime}`);
+    const endDate = new Date(startDate.getTime() + (Number(wizardDuration) || 120) * 60_000);
+    const endTime = `${String(endDate.getHours()).padStart(2, "0")}:${String(
+      endDate.getMinutes(),
+    ).padStart(2, "0")}:00`;
 
-  function openEdit() {
-    if (!selectedExam || !canEdit) return;
-    setEditingExam(selectedExam);
-    setForm({
-      courseId: selectedExam.courseId,
-      title: selectedExam.title,
-      description: selectedExam.description ?? "",
-      examDate: selectedExam.examDate,
-      startTime: selectedExam.startTime.slice(0, 5),
-      endTime: selectedExam.endTime.slice(0, 5),
-      totalMarks: Number(selectedExam.totalMarks),
-      passMarks: Number(selectedExam.passMarks),
-      type: selectedExam.type,
-    });
-    setShowForm(true);
-  }
-
-  async function saveExam(event: React.FormEvent) {
-    event.preventDefault();
-    if (!form.title.trim() || form.endTime <= form.startTime || form.passMarks > form.totalMarks) {
-      setError(
-        "Enter a title, an end time after the start time, and pass marks within total marks.",
-      );
-      return;
-    }
-    setIsSaving(true);
-    setError(null);
-    try {
-      const saved = editingExam
-        ? await updateExam(editingExam.id, {
-            title: form.title,
-            description: form.description,
-            examDate: form.examDate,
-            startTime: form.startTime,
-            endTime: form.endTime,
-            totalMarks: form.totalMarks,
-            passMarks: form.passMarks,
-            type: form.type,
-          })
-        : await createExam(form);
-      if (saved) {
-        setExams((current) =>
-          editingExam
-            ? current.map((exam) => (exam.id === saved.id ? saved : exam))
-            : [saved, ...current],
-        );
-        setShowForm(false);
-        setNotice(editingExam ? "Exam updated." : "Exam created as a draft.");
-        await selectExam(saved);
+    if (backendCourse) {
+      try {
+        const created = await createExam({
+          courseId: backendCourse.id,
+          title: wizardTitle || `${course.code} ${wizardType} Examination`,
+          examDate: wizardDate,
+          startTime,
+          endTime,
+          totalMarks: 100,
+          passMarks: 40,
+          type:
+            wizardType === "Final"
+              ? "FINAL"
+              : wizardType === "Practical Exam"
+                ? "PRACTICAL"
+                : "MIDTERM",
+        });
+        if (created) {
+          setExams((current) => [mapBackendExam(created, backendCourses), ...current]);
+          setIsWizardOpen(false);
+          setWizardStep(1);
+          setWizardTitle("");
+          return;
+        }
+      } catch {
+        // Keep the original local-only behavior when the API is unavailable.
       }
-    } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Exam could not be saved.");
-    } finally {
-      setIsSaving(false);
     }
-  }
 
-  async function transition(action: "schedule" | "marking" | "complete" | "cancel") {
-    if (!selectedExam) return;
-    setIsSaving(true);
-    setError(null);
-    try {
-      const updated =
-        action === "schedule"
-          ? await scheduleExam(selectedExam.id)
-          : action === "marking"
-            ? await startExamMarking(selectedExam.id)
-            : action === "complete"
-              ? await completeExam(selectedExam.id)
-              : await cancelExam(selectedExam.id);
-      if (updated) {
-        setExams((current) => current.map((exam) => (exam.id === updated.id ? updated : exam)));
-        await selectExam(updated);
-      }
-      const transitionLabel =
-        action === "marking"
-          ? "moved to marking"
-          : action === "schedule"
-            ? "scheduled"
-            : action === "complete"
-              ? "completed"
-              : "cancelled";
-      setNotice(`Exam ${transitionLabel}.`);
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error ? requestError.message : "Exam state transition failed.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
+    const newExam: Examination = {
+      id: `exm-${Date.now()}`,
+      courseId: course.id,
+      courseCode: course.code,
+      title: wizardTitle || `${course.code} ${wizardType} Examination`,
+      examType: wizardType,
+      scheduledDate: wizardDate,
+      startTime: wizardTime,
+      durationMinutes: Number(wizardDuration) || 120,
+      roomOrPlatform: wizardRoom,
+      totalMarks: 100,
+      weightagePercent: Number(wizardWeight) || 30,
+      status: "Scheduled",
+      enrolledStudents: course.enrolledCount,
+      gradedStudents: 0,
+    };
 
-  async function saveMarks() {
-    if (!selectedExam || selectedExam.status !== "MARKING") return;
-    const invalid = results.some(
-      (result) =>
-        result.marksObtained !== undefined &&
-        Number(result.marksObtained) > Number(selectedExam.totalMarks),
-    );
-    if (
-      invalid ||
-      results.some(
-        (result) => result.marksObtained !== undefined && Number(result.marksObtained) < 0,
-      )
-    ) {
-      setError("Marks must be between 0 and the exam total.");
-      return;
-    }
-    setIsSaving(true);
-    setError(null);
-    try {
-      const response = await enterExamMarks(
-        selectedExam.id,
-        results.map(
-          ({ studentId, attendanceStatus, marksObtained, remarks }): ExamMarkEntry => ({
-            studentId,
-            attendanceStatus,
-            marksObtained,
-            remarks,
-          }),
-        ),
-      );
-      if (response?.results) setResults(response.results);
-      setNotice(`${response?.updatedCount ?? results.length} mark records saved.`);
-      const refreshed = { ...selectedExam, status: "MARKING" as const };
-      setSelectedExam(refreshed);
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error ? requestError.message : "Exam marks could not be saved.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function updateResult(index: number, patch: Partial<ExamResult>) {
-    setResults((current) =>
-      current.map((result, resultIndex) =>
-        resultIndex === index ? { ...result, ...patch } : result,
-      ),
-    );
-  }
+    setExams((current) => [newExam, ...current]);
+    setIsWizardOpen(false);
+    setWizardStep(1);
+    setWizardTitle("");
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Examination Management
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Create, schedule, mark, and complete your course examinations.
+            Administer formal midterms and final comprehensive examinations, room logistics, and
+            grading protocols.
           </p>
         </div>
+
         <button
-          onClick={openCreate}
-          className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5"
+          onClick={() => setIsWizardOpen(true)}
+          className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
         >
-          <Plus className="w-3.5 h-3.5" /> New exam
+          <Plus className="w-3.5 h-3.5" />
+          <span>Schedule New Exam</span>
         </button>
       </div>
-      {notice && (
-        <div className="px-3.5 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle className="w-3.5 h-3.5" />
-          {notice}
-        </div>
-      )}
-      {error && (
-        <div className="px-3.5 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
-          {error}
-          <button onClick={() => void loadExams()} className="ml-3 underline">
-            Retry
-          </button>
-        </div>
-      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] gap-5">
-        <section className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-900">Course exams</h2>
-            <span className="text-xs text-slate-500">{exams.length} total</span>
-          </div>
-          {isLoading ? (
-            <div className="p-10 text-center text-xs text-slate-500">
-              <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-              Loading exams...
-            </div>
-          ) : exams.length === 0 ? (
-            <div className="p-10 text-center text-xs text-slate-500">
-              No exams found. Create your first draft.
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {exams.map((exam) => (
-                <button
-                  key={exam.id}
-                  onClick={() => void selectExam(exam)}
-                  className={`w-full text-left p-4 hover:bg-slate-50 ${selectedExam?.id === exam.id ? "bg-indigo-50/60 border-l-2 border-indigo-600" : ""}`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-mono font-bold text-indigo-700">
-                        {courseById.get(exam.courseId)?.code ?? exam.courseId}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900 truncate">
-                        {exam.title}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {exam.examDate} · {displayTime(exam.startTime)}–{displayTime(exam.endTime)}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
-                      {exam.status}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-5">
-          {!selectedExam ? (
-            <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-xs text-slate-500">
-              Select an exam to manage it.
-            </div>
-          ) : (
-            <>
-              <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-mono font-bold text-indigo-700">
-                      {courseById.get(selectedExam.courseId)?.code ?? selectedExam.courseId} ·{" "}
-                      {selectedExam.type}
-                    </p>
-                    <h2 className="mt-1 text-lg font-bold text-slate-900">{selectedExam.title}</h2>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {selectedExam.description || "No description provided."}
-                    </p>
-                  </div>
-                  <span className="rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700">
-                    {selectedExam.status}
+      {/* 5-Step Exam Creation Wizard Modal */}
+      {isWizardOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="p-6 bg-slate-50 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-semibold tracking-wider uppercase text-indigo-700">
+                    Step {wizardStep} of 5
                   </span>
+                  <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                    {wizardStep === 1 && "1. Basic Course & Exam Type"}
+                    {wizardStep === 2 && "2. Proctoring & Exam Duration"}
+                    {wizardStep === 3 && "3. Content Format & Question Blueprint"}
+                    {wizardStep === 4 && "4. Scheduling & Venue Logistics"}
+                    {wizardStep === 5 && "5. Review & Publish Schedule"}
+                  </h3>
                 </div>
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-400 block">Date</span>
-                    <b className="text-slate-800">{selectedExam.examDate}</b>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block">Time</span>
-                    <b className="text-slate-800">
-                      {displayTime(selectedExam.startTime)}–{displayTime(selectedExam.endTime)}
-                    </b>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block">Total marks</span>
-                    <b className="text-slate-800">{numberValue(selectedExam.totalMarks)}</b>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block">Pass marks</span>
-                    <b className="text-slate-800">{numberValue(selectedExam.passMarks)}</b>
-                  </div>
-                </div>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <button
-                    onClick={openEdit}
-                    disabled={!canEdit || isSaving}
-                    className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg disabled:opacity-40"
-                  >
-                    <Edit3 className="w-3.5 h-3.5 inline mr-1" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => void transition("schedule")}
-                    disabled={!canSchedule || isSaving}
-                    className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg disabled:opacity-40"
-                  >
-                    Schedule
-                  </button>
-                  <button
-                    onClick={() => void transition("marking")}
-                    disabled={!canStartMarking || isSaving}
-                    className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg disabled:opacity-40"
-                  >
-                    Start marking
-                  </button>
-                  <button
-                    onClick={() => void transition("complete")}
-                    disabled={!canComplete || isSaving}
-                    className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg disabled:opacity-40"
-                  >
-                    Complete
-                  </button>
-                  <button
-                    onClick={() => void transition("cancel")}
-                    disabled={!canCancel || isSaving}
-                    className="px-3 py-1.5 text-xs font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg disabled:opacity-40"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <button
+                  onClick={() => setIsWizardOpen(false)}
+                  className="text-xs text-slate-400 hover:text-slate-600"
+                >
+                  Cancel
+                </button>
               </div>
-              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">Results and summary</h3>
-                  {selectedExam.status === "MARKING" && (
-                    <button
-                      onClick={() => void saveMarks()}
-                      disabled={isSaving || isResultsLoading}
-                      className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg disabled:opacity-50"
+
+              {/* Step indicator bar */}
+              <div className="flex gap-1.5 mt-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <div
+                    key={s}
+                    className={`h-1.5 flex-1 rounded-full transition-all ${
+                      s <= wizardStep ? "bg-indigo-600" : "bg-slate-200"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Wizard Body */}
+            <div className="p-6 space-y-4">
+              {wizardStep === 1 && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Target Course
+                    </label>
+                    <select
+                      value={wizardCourseId}
+                      onChange={(e) => setWizardCourseId(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
                     >
-                      <Save className="w-3.5 h-3.5 inline mr-1" />
-                      Save marks
-                    </button>
-                  )}
-                </div>
-                {isResultsLoading ? (
-                  <div className="p-8 text-center text-xs text-slate-500">
-                    <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                    Loading result sheet...
+                      {mockCourses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.code} — {c.title}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-4 border-b border-slate-100">
-                      {[
-                        ["Students", summary?.totalStudents ?? 0],
-                        ["Present", summary?.presentStudents ?? 0],
-                        ["Absent", summary?.absentStudents ?? 0],
-                        ["Passed", summary?.passedStudents ?? 0],
-                        ["Average", numberValue(summary?.averageMarks)],
-                      ].map(([label, value]) => (
-                        <div key={label} className="rounded-lg bg-slate-50 p-2.5 text-center">
-                          <span className="block text-[10px] text-slate-500">{label}</span>
-                          <b className="text-sm text-slate-900">{value}</b>
-                        </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Exam Type
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["Midterm", "Final", "Practical Exam"] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setWizardType(t)}
+                          className={`p-3 text-xs font-semibold rounded-lg border text-center transition-colors ${
+                            wizardType === t
+                              ? "bg-indigo-50 border-indigo-600 text-indigo-700"
+                              : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {t}
+                        </button>
                       ))}
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500">
-                          <tr>
-                            <th className="px-5 py-3">Student</th>
-                            <th className="px-3 py-3">Attendance</th>
-                            <th className="px-3 py-3">Marks</th>
-                            <th className="px-3 py-3">Grade</th>
-                            <th className="px-5 py-3">Remarks</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {results.length === 0 ? (
-                            <tr>
-                              <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
-                                No result records available.
-                              </td>
-                            </tr>
-                          ) : (
-                            results.map((result, index) => (
-                              <tr key={result.studentId} className="hover:bg-slate-50/60">
-                                <td className="px-5 py-3 font-semibold text-slate-900">
-                                  Student {result.studentId.slice(0, 8)}
-                                </td>
-                                <td className="px-3 py-3">
-                                  <select
-                                    value={result.attendanceStatus}
-                                    disabled={selectedExam.status !== "MARKING" || isSaving}
-                                    onChange={(event) =>
-                                      updateResult(index, {
-                                        attendanceStatus: event.target
-                                          .value as ExamAttendanceStatus,
-                                      })
-                                    }
-                                    className="border border-slate-200 rounded px-2 py-1 text-[11px]"
-                                  >
-                                    <option value="PRESENT">Present</option>
-                                    <option value="ABSENT">Absent</option>
-                                    <option value="LATE">Late</option>
-                                    <option value="NOT_MARKED">Not marked</option>
-                                  </select>
-                                </td>
-                                <td className="px-3 py-3">
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max={Number(selectedExam.totalMarks)}
-                                    step="0.01"
-                                    value={result.marksObtained ?? ""}
-                                    disabled={
-                                      selectedExam.status !== "MARKING" ||
-                                      result.attendanceStatus === "ABSENT" ||
-                                      isSaving
-                                    }
-                                    onChange={(event) =>
-                                      updateResult(index, {
-                                        marksObtained:
-                                          event.target.value === ""
-                                            ? undefined
-                                            : Number(event.target.value),
-                                      })
-                                    }
-                                    className="w-20 border border-slate-200 rounded px-2 py-1 text-[11px]"
-                                  />
-                                </td>
-                                <td className="px-3 py-3 font-semibold text-indigo-700">
-                                  {result.grade ?? "—"}
-                                </td>
-                                <td className="px-5 py-3">
-                                  <input
-                                    value={result.remarks ?? ""}
-                                    disabled={selectedExam.status !== "MARKING" || isSaving}
-                                    onChange={(event) =>
-                                      updateResult(index, { remarks: event.target.value })
-                                    }
-                                    className="w-full min-w-28 border border-slate-200 rounded px-2 py-1 text-[11px]"
-                                    placeholder="Optional"
-                                  />
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
-          )}
-        </section>
-      </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Exam Formal Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Midterm Examination: Core Data Structures"
+                      value={wizardTitle}
+                      onChange={(e) => setWizardTitle(e.target.value)}
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+              )}
 
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-          <form
-            onSubmit={saveExam}
-            className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl space-y-4"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  {editingExam ? "Edit exam draft" : "Create exam draft"}
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  The backend controls exam status and ownership.
-                </p>
-              </div>
-              <button type="button" onClick={() => setShowForm(false)}>
-                <X className="w-4 h-4 text-slate-500" />
-              </button>
+              {wizardStep === 2 && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Duration (Minutes)
+                      </label>
+                      <input
+                        type="number"
+                        value={wizardDuration}
+                        onChange={(e) => setWizardDuration(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Course Grade Weight (%)
+                      </label>
+                      <input
+                        type="number"
+                        value={wizardWeight}
+                        onChange={(e) => setWizardWeight(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-2">
+                    <span className="text-xs font-bold text-slate-900 block">Proctoring Mode</span>
+                    <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                      <input type="checkbox" defaultChecked className="text-indigo-600" />
+                      <span>Require physical faculty proctor verification</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                      <input type="checkbox" defaultChecked className="text-indigo-600" />
+                      <span>Lockdown browser mode enabled</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {wizardStep === 3 && (
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl border border-slate-200 space-y-2 bg-slate-50/50">
+                    <h4 className="text-xs font-bold text-slate-900">Question Blueprint Format</h4>
+                    <p className="text-xs text-slate-500">
+                      Standard university examination blueprint comprising Section A (Objective MCQ,
+                      30 marks), Section B (Algorithmic Proofs, 40 marks), and Section C (Code
+                      Implementation, 30 marks).
+                    </p>
+                  </div>
+                  <div className="text-xs text-slate-600">
+                    Question paper blueprint will be finalized in the Mentify Examination Vault 48
+                    hours prior to start.
+                  </div>
+                </div>
+              )}
+
+              {wizardStep === 4 && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Scheduled Date
+                      </label>
+                      <input
+                        type="date"
+                        value={wizardDate}
+                        onChange={(e) => setWizardDate(e.target.value)}
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Start Time
+                      </label>
+                      <input
+                        type="text"
+                        value={wizardTime}
+                        onChange={(e) => setWizardTime(e.target.value)}
+                        placeholder="10:00 AM"
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Lecture Hall / Venue
+                    </label>
+                    <input
+                      type="text"
+                      value={wizardRoom}
+                      onChange={(e) => setWizardRoom(e.target.value)}
+                      placeholder="e.g. Turing Hall Theatre A"
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {wizardStep === 5 && (
+                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                  <h4 className="font-bold text-slate-900 text-sm">Review Examination Details</h4>
+                  <div className="grid grid-cols-2 gap-2 text-slate-700">
+                    <div>
+                      <strong>Title:</strong> {wizardTitle || "Midterm Examination"}
+                    </div>
+                    <div>
+                      <strong>Type:</strong> {wizardType}
+                    </div>
+                    <div>
+                      <strong>Date:</strong> {wizardDate} at {wizardTime}
+                    </div>
+                    <div>
+                      <strong>Duration:</strong> {wizardDuration} minutes
+                    </div>
+                    <div>
+                      <strong>Weight:</strong> {wizardWeight}% of final grade
+                    </div>
+                    <div>
+                      <strong>Location:</strong> {wizardRoom}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="text-xs font-semibold text-slate-700">
-                Course
-                <select
-                  required
-                  disabled={Boolean(editingExam)}
-                  value={form.courseId}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, courseId: event.target.value }))
-                  }
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+
+            {/* Wizard Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-between">
+              {wizardStep > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setWizardStep(wizardStep - 1)}
+                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-200 rounded-lg"
                 >
-                  <option value="">Select course</option>
-                  {backendCourses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.courseName}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs font-semibold text-slate-700">
-                Type
-                <select
-                  value={form.type}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, type: event.target.value as ExamType }))
-                  }
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
+                  Previous
+                </button>
+              ) : (
+                <div />
+              )}
+
+              {wizardStep < 5 ? (
+                <button
+                  type="button"
+                  onClick={() => setWizardStep(wizardStep + 1)}
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1"
                 >
-                  <option value="MIDTERM">Midterm</option>
-                  <option value="FINAL">Final</option>
-                  <option value="PRACTICAL">Practical</option>
-                  <option value="OTHER">Other</option>
-                </select>
-              </label>
+                  <span>Continue</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleFinishWizard}
+                  className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs flex items-center gap-1"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Confirm & Publish Exam</span>
+                </button>
+              )}
             </div>
-            <label className="text-xs font-semibold text-slate-700">
-              Title
-              <input
-                required
-                maxLength={200}
-                value={form.title}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, title: event.target.value }))
-                }
-                className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="text-xs font-semibold text-slate-700">
-              Description
-              <textarea
-                maxLength={2000}
-                value={form.description}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, description: event.target.value }))
-                }
-                className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                rows={2}
-              />
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <label className="text-xs font-semibold text-slate-700">
-                Date
-                <input
-                  required
-                  type="date"
-                  value={form.examDate}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, examDate: event.target.value }))
-                  }
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
-                />
-              </label>
-              <label className="text-xs font-semibold text-slate-700">
-                Start
-                <input
-                  required
-                  type="time"
-                  value={form.startTime}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, startTime: event.target.value }))
-                  }
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
-                />
-              </label>
-              <label className="text-xs font-semibold text-slate-700">
-                End
-                <input
-                  required
-                  type="time"
-                  value={form.endTime}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, endTime: event.target.value }))
-                  }
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
-                />
-              </label>
-              <label className="text-xs font-semibold text-slate-700">
-                Total marks
-                <input
-                  required
-                  min="0.01"
-                  type="number"
-                  step="0.01"
-                  value={form.totalMarks}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, totalMarks: Number(event.target.value) }))
-                  }
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
-                />
-              </label>
-            </div>
-            <label className="block text-xs font-semibold text-slate-700">
-              Pass marks
-              <input
-                required
-                min="0"
-                max={form.totalMarks}
-                type="number"
-                step="0.01"
-                value={form.passMarks}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, passMarks: Number(event.target.value) }))
-                }
-                className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm"
-              />
-            </label>
-            <button
-              disabled={isSaving}
-              className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              {isSaving ? "Saving..." : editingExam ? "Save draft" : "Create draft"}
-            </button>
-          </form>
+          </div>
         </div>
       )}
+
+      {/* Scheduled Exams List */}
+      <div className="space-y-4">
+        {exams.map((exam) => (
+          <div
+            key={exam.id}
+            className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs hover:border-slate-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+          >
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                  {exam.courseCode}
+                </span>
+                <span className="text-xs font-semibold text-slate-500">{exam.examType}</span>
+                <StatusBadge status={exam.status} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">{exam.title}</h3>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <span>
+                    {exam.scheduledDate} at {exam.startTime}
+                  </span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{exam.durationMinutes} Minutes</span>
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{exam.roomOrPlatform}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+              <div className="text-right text-xs">
+                <span className="text-slate-400 block text-[10px]">Registered Candidates</span>
+                <span className="font-bold text-slate-900 font-mono tabular-nums">
+                  {exam.enrolledStudents} students
+                </span>
+              </div>
+
+              <button
+                onClick={() => onNavigate?.("grades")}
+                className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <span>View Results Sheet</span>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

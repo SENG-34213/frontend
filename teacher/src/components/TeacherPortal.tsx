@@ -374,7 +374,10 @@ export default function App() {
           )}
 
           {currentTab === "exams" && (
-            <ExamManagementView courses={courses} backendCourses={teacherCourses.courses} />
+            <ExamManagementView
+              onNavigate={handleNavigate}
+              backendCourses={teacherCourses.courses}
+            />
           )}
 
           {currentTab === "grades" && <GradebookView onNavigate={handleNavigate} />}
