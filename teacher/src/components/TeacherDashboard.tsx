@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import TeacherAiAssistant from "../ai-assistant/TeacherAiAssistant";
 import TeacherCommunication from "./TeacherCommunication";
-import TeacherQuizWorkspace from "./TeacherQuizWorkspace";
+import TeacherQuizzesAssessments from "./TeacherQuizzesAssessments";
 import TeacherCalendarWorkspace from "./TeacherCalendarWorkspace";
 import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
 import TeacherAttendanceManagement from "./TeacherAttendanceManagement";
@@ -618,7 +618,7 @@ export default function TeacherDashboard() {
               onClick={() => setActiveView("quizzes")}
             >
               <span className="teacher-nav-icon">â–£</span>
-              <span>Quizzes</span>
+              <span>Quizzes &amp; Assessments</span>
             </button>
           </nav>
           <div className="teacher-sidebar-spacer" />
@@ -645,7 +645,7 @@ export default function TeacherDashboard() {
                       : activeView === "materials"
                         ? "Learning Materials & Media Library"
                         : activeView === "quizzes"
-                          ? "Quiz Management Hub"
+                          ? "Quizzes & Assessments"
                           : activeView === "calendar"
                             ? "Calendar"
                             : activeView === "communication" || activeView === "messages"
@@ -672,7 +672,7 @@ export default function TeacherDashboard() {
                       : activeView === "materials"
                         ? "Organize, share, and manage your teaching resources."
                         : activeView === "quizzes"
-                          ? "Create, review, and manage assessments for your students."
+                          ? "Create, distribute, and analyze assessments for your students."
                           : activeView === "calendar"
                             ? "Plan and review upcoming course events."
                             : activeView === "communication" || activeView === "messages"
@@ -707,7 +707,7 @@ export default function TeacherDashboard() {
           ) : activeView === "studio" ? (
             <TeacherMentifyStudio />
           ) : activeView === "quizzes" ? (
-            <TeacherQuizWorkspace courses={courses} />
+            <TeacherQuizzesAssessments courses={courses} />
           ) : activeView === "attendance" ? (
             <TeacherAttendanceManagement />
           ) : activeView === "materials" ? (
