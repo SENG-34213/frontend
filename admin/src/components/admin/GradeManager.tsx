@@ -233,7 +233,8 @@ export function GradeManager({
                         {grade.monthlyFee != null ? (
                           <>
                             <strong>
-                              {grade.currencyCode || "LKR"} {Number(grade.monthlyFee).toLocaleString()}
+                              {grade.currencyCode || "LKR"}{" "}
+                              {Number(grade.monthlyFee).toLocaleString()}
                             </strong>{" "}
                             / month per student
                           </>
@@ -368,7 +369,9 @@ export function GradeManager({
                     }
                   />
                 </div>
-                <span className="field-hint">This monthly amount applies to every course in this grade.</span>
+                <span className="field-hint">
+                  This monthly amount applies to every course in this grade.
+                </span>
               </label>
               <div className="modal-actions">
                 <button

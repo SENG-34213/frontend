@@ -1287,7 +1287,10 @@ export default function Home() {
     setGradesReloadKey((current) => current + 1);
   }
 
-  async function updateGrade(id: string, draft: { name: string; description: string; monthlyFee: string }) {
+  async function updateGrade(
+    id: string,
+    draft: { name: string; description: string; monthlyFee: string },
+  ) {
     const response = await authorizedApiRequest(
       `${apiUrl}/api/v1/course/grades/${encodeURIComponent(id)}`,
       {
