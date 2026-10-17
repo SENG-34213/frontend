@@ -39,7 +39,7 @@ import { NotificationCenterView } from "../teacher/notifications/NotificationCen
 import { TeacherProfileView } from "../teacher/profile/TeacherProfileView";
 import { TeacherSettingsView } from "../teacher/settings/TeacherSettingsView";
 import { TeacherLoginView } from "../teacher/auth/TeacherLoginView";
-import { logoutTeacher } from "../teacher/api/auth";
+import { getCurrentTeacher, logoutTeacher } from "../teacher/api/auth";
 import { restoreTeacherSession } from "../teacher/api/client";
 import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
@@ -79,8 +79,19 @@ export default function App() {
     restoreStartedRef.current = true;
 
     restoreTeacherSession()
-      .then((restoredSession) => {
+      .then(async (restoredSession) => {
+        if (!restoredSession) {
+          setSession(null);
+          return;
+        }
+
+        // Verify the stored/renewed session before exposing the teacher workspace.
+        // This prevents a stale session for another role from reaching the shell.
+        await getCurrentTeacher();
         setSession(restoredSession);
+      })
+      .catch(() => {
+        setSession(null);
       })
       .finally(() => {
         setIsInitializing(false);
