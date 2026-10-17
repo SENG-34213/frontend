@@ -1,13 +1,9 @@
-
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { resources } from "../../../../../data/resources";
 
-const PRIVATE_FILES_DIRECTORY = path.resolve(
-  process.cwd(),
-  "private-resources"
-);
+const PRIVATE_FILES_DIRECTORY = path.resolve(process.cwd(), "private-resources");
 
 const ALLOWED_FILE_TYPES = {
   ".pdf": "application/pdf",
@@ -22,49 +18,34 @@ export async function GET(_request, { params }) {
   const resource = resources.find((item) => item.id === id);
 
   if (!resource) {
-    return NextResponse.json(
-      { error: "Resource not found." },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Resource not found." }, { status: 404 });
   }
 
   // Never serve paid resources through the free-download endpoint.
   if (resource.access !== "free") {
     return NextResponse.json(
       { error: "This resource is not available for free download." },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
   // A missing filename means the real file has not been added yet.
   if (!resource.filePath || path.basename(resource.filePath) !== resource.filePath) {
-    return NextResponse.json(
-      { error: "The resource file is not available yet." },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "The resource file is not available yet." }, { status: 404 });
   }
 
   const extension = path.extname(resource.filePath).toLowerCase();
   const contentType = ALLOWED_FILE_TYPES[extension];
 
   if (!contentType) {
-    return NextResponse.json(
-      { error: "This file type is not supported." },
-      { status: 415 }
-    );
+    return NextResponse.json({ error: "This file type is not supported." }, { status: 415 });
   }
 
-  const filePath = path.resolve(
-    PRIVATE_FILES_DIRECTORY,
-    resource.filePath
-  );
+  const filePath = path.resolve(PRIVATE_FILES_DIRECTORY, resource.filePath);
 
   // Extra protection against paths escaping the private directory.
   if (!filePath.startsWith(`${PRIVATE_FILES_DIRECTORY}${path.sep}`)) {
-    return NextResponse.json(
-      { error: "Invalid resource path." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid resource path." }, { status: 400 });
   }
 
   let file;
@@ -75,7 +56,7 @@ export async function GET(_request, { params }) {
     if (error.code === "ENOENT" || error.code === "ENOTDIR") {
       return NextResponse.json(
         { error: "The resource file is not available yet." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -83,7 +64,7 @@ export async function GET(_request, { params }) {
 
     return NextResponse.json(
       { error: "Unable to download this resource right now." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

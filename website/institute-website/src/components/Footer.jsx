@@ -9,9 +9,7 @@ export default function Footer() {
   const pathname = usePathname();
   const firstSegment = pathname.split("/").filter(Boolean)[0];
 
-  const language = supportedLanguages.includes(firstSegment)
-    ? firstSegment
-    : "en";
+  const language = supportedLanguages.includes(firstSegment) ? firstSegment : "en";
 
   // Every internal link uses the visitor's current language.
   const pagePath = (page) => `/${language}${page ? `/${page}` : ""}`;
@@ -43,9 +41,7 @@ export default function Footer() {
           <ul className={styles.linkList}>
             {quickLinks.map((item) => (
               <li key={item.key}>
-                <Link href={pagePath(item.href)}>
-                  {translate(language, `nav.${item.key}`)}
-                </Link>
+                <Link href={pagePath(item.href)}>{translate(language, `nav.${item.key}`)}</Link>
               </li>
             ))}
           </ul>
@@ -56,14 +52,10 @@ export default function Footer() {
           <p>Jaffna, Sri Lanka</p>
 
           <h3>{translate(language, "footer.phoneLabel")}</h3>
-          <a href={`tel:+94770158446`}>
-            +94770158446
-          </a>
+          <a href={`tel:+94770158446`}>+94770158446</a>
 
           <h3>{translate(language, "footer.emailLabel")}</h3>
-          <a href={`mailto:admin@titjaffna.lk`}>
-            admin@titjaffna.lk
-          </a>
+          <a href={`mailto:admin@titjaffna.lk`}>admin@titjaffna.lk</a>
         </section>
 
         <section>
@@ -71,14 +63,10 @@ export default function Footer() {
 
           <ul className={styles.linkList}>
             <li>
-              <Link href={pagePath("privacy-policy")}>
-                {translate(language, "footer.privacy")}
-              </Link>
+              <Link href={pagePath("privacy-policy")}>{translate(language, "footer.privacy")}</Link>
             </li>
             <li>
-              <Link href={pagePath("terms-of-use")}>
-                {translate(language, "footer.terms")}
-              </Link>
+              <Link href={pagePath("terms-of-use")}>{translate(language, "footer.terms")}</Link>
             </li>
           </ul>
         </section>
@@ -86,8 +74,7 @@ export default function Footer() {
 
       <div className={styles.copyright}>
         <p>
-          © 2026 {translate(language, "site.name")}.{" "}
-          {translate(language, "footer.copyright")}
+          © 2026 {translate(language, "site.name")}. {translate(language, "footer.copyright")}
         </p>
       </div>
     </footer>

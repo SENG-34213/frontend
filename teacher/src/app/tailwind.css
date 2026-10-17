@@ -11,6 +11,7 @@
 @import "./teacher-dashboard-theme.css" layer(components);
 @import "./teacher-assets.css" layer(components);
 @import "./teacher-pages.css" layer(components);
+@import "./teacher-assignment-submissions.css" layer(components);
 @import "../../../shared/materials/materials.css" layer(components);
 @import "./teacher-materials.css" layer(components);
 

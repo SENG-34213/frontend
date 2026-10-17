@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -10,9 +9,7 @@ export default function LanguageNotFound() {
   const pathname = usePathname();
   const firstSegment = pathname.split("/").filter(Boolean)[0];
 
-  const lang = supportedLanguages.includes(firstSegment)
-    ? firstSegment
-    : "en";
+  const lang = supportedLanguages.includes(firstSegment) ? firstSegment : "en";
 
   return (
     <section className={styles.page}>

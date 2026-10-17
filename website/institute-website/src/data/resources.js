@@ -1,4 +1,3 @@
-
 /*
  * Sample resource catalogue.
  *
@@ -38,8 +37,7 @@ export const resources = [
   {
     id: "sample-reference-notes",
     title: "Sample Reference Notes",
-    description:
-      "Example reference notes for learners who want to review key concepts.",
+    description: "Example reference notes for learners who want to review key concepts.",
     category: "reference",
     type: "PDF",
     size: "1.8 MB",
@@ -49,9 +47,4 @@ export const resources = [
   },
 ];
 
-export const resourceCategories = [
-  "all",
-  "study-skills",
-  "learning",
-  "reference",
-];
+export const resourceCategories = ["all", "study-skills", "learning", "reference"];

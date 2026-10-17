@@ -12,14 +12,7 @@ export const classGrades = [
   },
 ];
 
-export const classSubjects = [
-  "English",
-  "Mathematics",
-  "Science",
-  "History",
-  "Tamil",
-  "Sinhala",
-];
+export const classSubjects = ["English", "Mathematics", "Science", "History", "Tamil", "Sinhala"];
 
 // On-site classes are listed first because they are the
 // institute's primary teaching format.
@@ -43,8 +36,7 @@ export const classes = [
     fee: "Contact for fees",
     availability: "To be confirmed",
     language: "English",
-    description:
-      "On-site Mathematics tuition for Grade 6 students.",
+    description: "On-site Mathematics tuition for Grade 6 students.",
     enquiryLabel: "Enquire about this class",
   },
   {
@@ -59,8 +51,7 @@ export const classes = [
     fee: "Contact for fees",
     availability: "To be confirmed",
     language: "English",
-    description:
-      "On-site Science tuition for Grade 8 students.",
+    description: "On-site Science tuition for Grade 8 students.",
     enquiryLabel: "Enquire about this class",
   },
   {
@@ -75,8 +66,7 @@ export const classes = [
     fee: "Contact for fees",
     availability: "Occasional classes — schedule to be confirmed",
     language: "English",
-    description:
-      "Example online English class for Advanced Level students.",
+    description: "Example online English class for Advanced Level students.",
     enquiryLabel: "Enquire about this class",
   },
 ];

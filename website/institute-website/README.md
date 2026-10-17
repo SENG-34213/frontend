@@ -14,16 +14,16 @@ Mentify includes a translation utility that allows interface content to be adapt
 
 ## Technology Stack
 
-| Technology | Purpose |
-|---|---|
-| Next.js | Application framework and routing |
-| React | Component-based user interface |
-| JavaScript / JSX | Application logic and UI composition |
-| CSS Modules | Component-scoped styling |
-| React Hooks | State management and component logic |
-| Git | Version control |
-| GitHub | Source code hosting and collaboration |
-| npm | Dependency management and package scripts |
+| Technology       | Purpose                                   |
+| ---------------- | ----------------------------------------- |
+| Next.js          | Application framework and routing         |
+| React            | Component-based user interface            |
+| JavaScript / JSX | Application logic and UI composition      |
+| CSS Modules      | Component-scoped styling                  |
+| React Hooks      | State management and component logic      |
+| Git              | Version control                           |
+| GitHub           | Source code hosting and collaboration     |
+| npm              | Dependency management and package scripts |
 
 ## Getting Started
 
