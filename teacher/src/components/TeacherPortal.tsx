@@ -342,6 +342,7 @@ export default function App() {
 
           {currentTab === "quizzes" && (
             <QuizDashboardView
+              teacherCourses={courses}
               onOpenCreateQuiz={() => handleOpenQuickCreate("quiz")}
               onNavigate={handleNavigate}
               onOpenAIWithPrompt={handleOpenAIWithPrompt}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   HelpCircle,
   Plus,
@@ -12,27 +12,43 @@ import {
   Sparkles,
   BookOpen,
 } from "lucide-react";
-import { Quiz, QuizQuestion, NavigationTab } from "../types";
-import { mockQuizzes, mockCourses } from "../data/mockData";
+import { Course, Quiz, QuizQuestion, NavigationTab } from "../types";
+import type { BackendQuiz } from "../api/quizApi";
+import { useTeacherQuizzes } from "../hooks/useTeacherQuizzes";
 import { StatusBadge } from "../components/StatusBadge";
 import { QuestionBuilderModal } from "./QuestionBuilderModal";
 
 interface QuizDashboardViewProps {
+  teacherCourses: Course[];
   onOpenCreateQuiz: () => void;
   onNavigate: (tab: NavigationTab) => void;
   onOpenAIWithPrompt: (prompt: string) => void;
 }
 
 export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
+  teacherCourses,
   onOpenCreateQuiz,
   onNavigate,
   onOpenAIWithPrompt,
 }) => {
-  const [quizzes, setQuizzes] = useState<Quiz[]>(mockQuizzes);
+  const teacherQuizState = useTeacherQuizzes(true);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
-  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(mockQuizzes[0]);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isQuestionBuilderOpen, setIsQuestionBuilderOpen] = useState(false);
+
+  useEffect(() => {
+    const mappedQuizzes = teacherQuizState.quizzes.map((quiz) =>
+      mapBackendQuiz(quiz, teacherCourses),
+    );
+    setQuizzes(mappedQuizzes);
+    setSelectedQuiz((current) =>
+      current
+        ? (mappedQuizzes.find((quiz) => quiz.id === current.id) ?? null)
+        : (mappedQuizzes[0] ?? null),
+    );
+  }, [teacherCourses, teacherQuizState.quizzes]);
 
   const filtered = quizzes.filter((q) => {
     const matchesSearch =
@@ -109,29 +125,33 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Total Quizzes</span>
           <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
-            {quizzes.length}
+            {teacherQuizState.isLoading ? "—" : quizzes.length}
           </div>
           <p className="text-[11px] text-slate-400 mt-0.5">Across active courses</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Active This Week</span>
-          <div className="text-2xl font-bold text-indigo-600 font-mono mt-1 tabular-nums">1</div>
-          <p className="text-[11px] text-slate-400 mt-0.5">CS-350 Token Validation</p>
+          <div className="text-2xl font-bold text-indigo-600 font-mono mt-1 tabular-nums">
+            {teacherQuizState.isLoading
+              ? "—"
+              : quizzes.filter((quiz) => quiz.status === "Active").length}
+          </div>
+          <p className="text-[11px] text-slate-400 mt-0.5">Published quizzes</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Avg Class Score</span>
-          <div className="text-2xl font-bold text-emerald-600 font-mono mt-1 tabular-nums">
-            82.3%
-          </div>
-          <p className="text-[11px] text-emerald-700 font-medium mt-0.5">+4.2% from Quiz 1</p>
+          <div className="text-2xl font-bold text-emerald-600 font-mono mt-1 tabular-nums">—</div>
+          <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+            Live analytics coming later
+          </p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Completion Rate</span>
-          <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">95.8%</div>
-          <p className="text-[11px] text-slate-400 mt-0.5">110 total attempts logged</p>
+          <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">—</div>
+          <p className="text-[11px] text-slate-400 mt-0.5">Attempt analytics coming later</p>
         </div>
       </div>
 
@@ -151,6 +171,32 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               />
             </div>
           </div>
+
+          {teacherQuizState.error && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800">
+              <p className="font-semibold">Quizzes could not be loaded.</p>
+              <p className="mt-1">{teacherQuizState.error.message}</p>
+              <button
+                type="button"
+                onClick={teacherQuizState.retry}
+                className="mt-3 font-semibold underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {teacherQuizState.isLoading && !teacherQuizState.error && (
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+              Loading quizzes…
+            </div>
+          )}
+
+          {!teacherQuizState.isLoading && !teacherQuizState.error && quizzes.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-xs text-slate-500">
+              No quizzes have been created for your courses yet.
+            </div>
+          )}
 
           <div className="space-y-2.5">
             {filtered.map((quiz) => {
@@ -192,7 +238,11 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
 
         {/* Right Column: Quiz Question Breakdown & Questions Builder */}
         <div className="lg:col-span-7">
-          {selectedQuiz ? (
+          {teacherQuizState.error ? (
+            <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-xs text-slate-400">
+              Quiz details are unavailable until the quiz list loads.
+            </div>
+          ) : selectedQuiz ? (
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
               <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -325,3 +375,40 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
     </div>
   );
 };
+
+function mapBackendQuiz(quiz: BackendQuiz, courses: Course[]): Quiz {
+  const course = courses.find((item) => item.id === quiz.courseId);
+  const questions = quiz.questions.map((question) => {
+    const options = [...question.options].sort((a, b) => a.optionOrder - b.optionOrder);
+    const correctAnswer = options.find((option) => option.correct)?.optionText ?? "";
+
+    return {
+      id: question.id,
+      quizId: quiz.id,
+      type: "multiple-choice" as const,
+      question: question.questionText,
+      options: options.map((option) => option.optionText),
+      correctAnswer,
+      explanation: "",
+      marks: Number(question.marks),
+    };
+  });
+
+  return {
+    id: quiz.id,
+    courseId: quiz.courseId,
+    courseCode: course?.code || "COURSE",
+    title: quiz.title,
+    description: quiz.description || "No quiz description available.",
+    durationMinutes: quiz.durationMinutes,
+    totalQuestions: questions.length,
+    totalMarks: Number(quiz.totalMarks),
+    status:
+      quiz.status === "PUBLISHED" ? "Active" : quiz.status === "CLOSED" ? "Completed" : "Draft",
+    dueDate: quiz.endTime || quiz.startTime || "",
+    attemptsCount: 0,
+    totalEligible: course?.enrolledCount || 0,
+    averageScorePercent: 0,
+    questions,
+  };
+}
