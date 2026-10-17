@@ -11,14 +11,16 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
-import { AcademicEvent } from "../types";
+import { AcademicEvent, Course } from "../types";
+import type { CalendarEventRequest, CalendarEventType } from "../api/calendarApi";
 
 interface AdminCalendarProps {
   events: AcademicEvent[];
-  onAddEvent: (evt: AcademicEvent) => void;
+  courses: Course[];
+  onAddEvent: (event: CalendarEventRequest) => Promise<void>;
 }
 
-export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent }) => {
+export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, onAddEvent }) => {
   const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [selectedEvent, setSelectedEvent] = useState<AcademicEvent | null>(null);
@@ -27,40 +29,69 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
   // New Event form
   const [newEvent, setNewEvent] = useState({
     title: "",
-    type: "EXAM" as "CLASS" | "EXAM" | "QUIZ" | "DEADLINE" | "SESSION",
-    date: "2026-10-26",
-    time: "10:00 AM - 12:00 PM",
-    location: "Science Hall Auditorium B",
-    courseCode: "MATH-401",
+    description: "",
+    eventType: "EXAM" as CalendarEventType,
+    startDate: "2026-10-26",
+    startTime: "10:00",
+    endDate: "2026-10-26",
+    endTime: "12:00",
+    allDay: false,
+    location: "",
+    courseId: "",
+    visibility: "GLOBAL" as "PRIVATE" | "COURSE" | "ROLE" | "GLOBAL",
+    targetRole: "" as "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN" | "",
   });
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredEvents = events.filter((e) => typeFilter === "ALL" || e.type === typeFilter);
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEvent.title) return;
+    if (!newEvent.title.trim()) return setFormError("Event title is required.");
+    if (!newEvent.allDay && !newEvent.endTime) return setFormError("End time is required.");
+    if (newEvent.visibility === "COURSE" && !newEvent.courseId) {
+      return setFormError("Course ID is required for course visibility.");
+    }
+    if (newEvent.visibility === "ROLE" && !newEvent.targetRole) {
+      return setFormError("Target role is required for role visibility.");
+    }
 
-    const created: AcademicEvent = {
-      id: `evt-${Date.now()}`,
-      title: newEvent.title,
-      type: newEvent.type,
-      date: newEvent.date,
-      time: newEvent.time,
-      location: newEvent.location,
-      courseCode: newEvent.courseCode,
-      status: "SCHEDULED",
-    };
-
-    onAddEvent(created);
-    setIsAddEventOpen(false);
-    setNewEvent({
-      title: "",
-      type: "EXAM",
-      date: "2026-10-26",
-      time: "10:00 AM - 12:00 PM",
-      location: "Science Hall Auditorium B",
-      courseCode: "MATH-401",
-    });
+    setIsSubmitting(true);
+    setFormError("");
+    try {
+      await onAddEvent({
+        title: newEvent.title.trim(),
+        description: newEvent.description.trim() || undefined,
+        eventType: newEvent.eventType,
+        startDateTime: `${newEvent.startDate}T${newEvent.startTime}`,
+        endDateTime: newEvent.allDay ? null : `${newEvent.endDate}T${newEvent.endTime}`,
+        allDay: newEvent.allDay,
+        courseId: newEvent.courseId || null,
+        visibility: newEvent.visibility,
+        targetRole: newEvent.targetRole || null,
+        location: newEvent.location.trim() || undefined,
+      });
+      setIsAddEventOpen(false);
+      setNewEvent({
+        title: "",
+        description: "",
+        eventType: "EXAM",
+        startDate: "2026-10-26",
+        startTime: "10:00",
+        endDate: "2026-10-26",
+        endTime: "12:00",
+        allDay: false,
+        location: "",
+        courseId: "",
+        visibility: "GLOBAL",
+        targetRole: "",
+      });
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Unable to create calendar event.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getEventBadgeClass = (type: string) => {
@@ -367,15 +398,20 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
                     Category
                   </label>
                   <select
-                    value={newEvent.type}
-                    onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as any })}
+                    value={newEvent.eventType}
+                    onChange={(e) =>
+                      setNewEvent({ ...newEvent, eventType: e.target.value as CalendarEventType })
+                    }
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   >
                     <option value="EXAM">Examination</option>
-                    <option value="DEADLINE">Assignment Deadline</option>
+                    <option value="ASSIGNMENT">Assignment Deadline</option>
                     <option value="QUIZ">Quiz Window</option>
                     <option value="CLASS">Class Lecture</option>
-                    <option value="SESSION">Admin Session</option>
+                    <option value="MEETING">Meeting</option>
+                    <option value="ADMIN">Admin Session</option>
+                    <option value="HOLIDAY">Holiday</option>
+                    <option value="CUSTOM">Custom</option>
                   </select>
                 </div>
 
@@ -385,8 +421,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
                   </label>
                   <input
                     type="date"
-                    value={newEvent.date}
-                    onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                    value={newEvent.startDate}
+                    onChange={(e) => setNewEvent({ ...newEvent, startDate: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
@@ -396,11 +432,35 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
                     Time Window
                   </label>
                   <input
-                    type="text"
-                    value={newEvent.time}
-                    onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
-                    placeholder="09:00 AM - 11:30 AM"
+                    type="time"
+                    value={newEvent.startTime}
+                    onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={newEvent.endDate}
+                    onChange={(e) => setNewEvent({ ...newEvent, endDate: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={newEvent.endTime}
+                    onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+                    disabled={newEvent.allDay}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:opacity-50"
                   />
                 </div>
 
@@ -418,6 +478,73 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
                 </div>
               </div>
 
+              <textarea
+                value={newEvent.description}
+                onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                placeholder="Description (optional)"
+                rows={2}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <select
+                  value={newEvent.visibility}
+                  onChange={(e) =>
+                    setNewEvent({
+                      ...newEvent,
+                      visibility: e.target.value as typeof newEvent.visibility,
+                    })
+                  }
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                >
+                  <option value="GLOBAL">Global visibility</option>
+                  <option value="PRIVATE">Private</option>
+                  <option value="COURSE">Course visibility</option>
+                  <option value="ROLE">Role visibility</option>
+                </select>
+                <select
+                  value={newEvent.targetRole}
+                  onChange={(e) =>
+                    setNewEvent({
+                      ...newEvent,
+                      targetRole: e.target.value as typeof newEvent.targetRole,
+                    })
+                  }
+                  disabled={newEvent.visibility !== "ROLE"}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">Target role</option>
+                  <option value="STUDENT">Students</option>
+                  <option value="TEACHER">Teachers</option>
+                  <option value="ADMIN">Admins</option>
+                  <option value="SUPER_ADMIN">Super admins</option>
+                </select>
+              </div>
+
+              <select
+                value={newEvent.courseId}
+                onChange={(e) => setNewEvent({ ...newEvent, courseId: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+              >
+                <option value="">Course (required for course visibility)</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title} ({course.code})
+                  </option>
+                ))}
+              </select>
+
+              <label className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={newEvent.allDay}
+                  onChange={(e) => setNewEvent({ ...newEvent, allDay: e.target.checked })}
+                />
+                All-day event
+              </label>
+
+              {formError && <p className="text-rose-500">{formError}</p>}
+
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
                 <button
                   type="button"
@@ -430,7 +557,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, onAddEvent
                   type="submit"
                   className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
-                  Save Event
+                  {isSubmitting ? "Saving..." : "Save Event"}
                 </button>
               </div>
             </form>
