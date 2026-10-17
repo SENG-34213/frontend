@@ -377,7 +377,9 @@ export default function App() {
 
           {currentTab === "grades" && <GradebookView onNavigate={handleNavigate} />}
 
-          {currentTab === "attendance" && <AttendanceWorkspaceView />}
+          {currentTab === "attendance" && (
+            <AttendanceWorkspaceView courses={courses} backendCourses={teacherCourses.courses} />
+          )}
 
           {currentTab === "materials" && <MaterialLibraryView />}
 
