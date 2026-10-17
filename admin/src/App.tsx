@@ -110,7 +110,14 @@ export default function App() {
   const [openCourseModal, setOpenCourseModal] = useState(false);
 
   if (!isAuthenticated) {
-    return <AdminLoginView onLogin={() => setIsAuthenticated(true)} />;
+    return (
+      <AdminLoginView
+        onLogin={(session) => {
+          setRole(session.user.role);
+          setIsAuthenticated(true);
+        }}
+      />
+    );
   }
 
   const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
