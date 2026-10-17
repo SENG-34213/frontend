@@ -9,6 +9,7 @@ import TeacherMaterialsWorkspace from "./TeacherMaterialsWorkspace";
 import TeacherCalendarWorkspace from "./TeacherCalendarWorkspace";
 import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
 import TeacherAttendanceManagement from "./TeacherAttendanceManagement";
+import TeacherCourseDetailsCurriculum from "./TeacherCourseDetailsCurriculum";
 import {
   teacherApi,
   type CourseLesson,
@@ -623,7 +624,7 @@ export default function TeacherDashboard() {
                 {activeView === "dashboard"
                   ? "Dashboard"
                   : activeView === "courses"
-                    ? `Welcome back, ${displayName}`
+                    ? "Course Details & Curriculum"
                     : activeView === "quizzes"
                       ? "Quiz Management Hub"
                       : activeView === "calendar"
@@ -644,7 +645,7 @@ export default function TeacherDashboard() {
                 {activeView === "dashboard"
                   ? "A quick view of your courses, students, and teaching priorities."
                   : activeView === "courses"
-                    ? "Manage your assigned courses and build learning content."
+                    ? "Explore course progress, curriculum modules, and lesson details."
                     : activeView === "quizzes"
                       ? "Create, review, and manage assessments for your students."
                       : activeView === "calendar"
@@ -686,6 +687,8 @@ export default function TeacherDashboard() {
             <TeacherCalendarWorkspace courses={courses} />
           ) : activeView === "communication" || activeView === "messages" ? (
             <TeacherCommunication courses={courses} currentUserId={profile?.keycloakUserId} />
+          ) : activeView === "courses" ? (
+            <TeacherCourseDetailsCurriculum courses={courses} />
           ) : activeView === "assignments" ? (
             <TeacherAssignmentSubmissions />
           ) : ["students", "notifications"].includes(activeView) ? (
