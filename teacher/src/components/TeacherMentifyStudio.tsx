@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { CourseLesson, CourseModule, TeacherCourse } from "../lib/teacherApi";
+import { teacherApi } from "../lib/teacherApi";
 
 const sessions = [
   {
@@ -35,14 +37,101 @@ const resources = [
   { type: "QUIZ", title: "Related Rates Checkpoint", detail: "3 questions · Draft" },
 ];
 
-export default function TeacherMentifyStudio() {
+export default function TeacherMentifyStudio({ courses }: { courses: TeacherCourse[] }) {
+  const [courseId, setCourseId] = useState(courses[0]?.id || "");
+  const [modules, setModules] = useState<CourseModule[]>([]);
+  const [lessons, setLessons] = useState<Record<string, CourseLesson[]>>({});
+  const [activeLessonId, setActiveLessonId] = useState("");
   const [activeTab, setActiveTab] = useState("Lesson Studio");
-  const [draft, setDraft] = useState(
-    "Students will connect geometric relationships to time-dependent rates and explain their reasoning using correct units.",
-  );
+  const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
   const [copilotOpen, setCopilotOpen] = useState(true);
   const [published, setPublished] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const activeCourseId = courseId || courses[0]?.id || "";
+  const activeCourse = courses.find((course) => course.id === activeCourseId);
+  const allLessons = modules.flatMap((module) => lessons[module.id] || []);
+  const activeLesson = allLessons.find((lesson) => lesson.id === activeLessonId) || allLessons[0];
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadStudio() {
+      if (!activeCourseId) {
+        setModules([]);
+        setLessons({});
+        setActiveLessonId("");
+        return;
+      }
+      setLoading(true);
+      setError("");
+      try {
+        const loadedModules = await teacherApi.modules(activeCourseId);
+        const entries = await Promise.all(
+          loadedModules.map(
+            async (module) =>
+              [module.id, await teacherApi.lessons(activeCourseId, module.id)] as const,
+          ),
+        );
+        if (!cancelled) {
+          const loadedLessons = Object.fromEntries(entries);
+          const firstLesson = loadedModules.flatMap((module) => loadedLessons[module.id] || [])[0];
+          setModules(loadedModules);
+          setLessons(loadedLessons);
+          setActiveLessonId(firstLesson?.id || "");
+          setDraft(firstLesson?.description || "");
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(
+            loadError instanceof Error ? loadError.message : "Unable to load Studio lessons.",
+          );
+          setModules([]);
+          setLessons({});
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void loadStudio();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCourseId]);
+
+  async function saveLesson() {
+    if (!activeLesson || !activeCourseId) return;
+    const targetModule = modules.find((item) =>
+      (lessons[item.id] || []).some((lesson) => lesson.id === activeLesson.id),
+    );
+    if (!targetModule) return;
+    setSaving(true);
+    setError("");
+    try {
+      const updated = await teacherApi.updateLesson(
+        activeCourseId,
+        targetModule.id,
+        activeLesson.id,
+        {
+          title: activeLesson.title,
+          description: draft,
+        },
+      );
+      setLessons((current) => ({
+        ...current,
+        [targetModule.id]: (current[targetModule.id] || []).map((lesson) =>
+          lesson.id === updated.id ? updated : lesson,
+        ),
+      }));
+      notify("Lesson draft saved to the course service.");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save the lesson.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function notify(message: string) {
     setNotice(message);
@@ -54,6 +143,11 @@ export default function TeacherMentifyStudio() {
       {notice && (
         <div className="teacher-studio-notice" role="status">
           {notice}
+        </div>
+      )}
+      {error && (
+        <div className="teacher-studio-notice" role="alert">
+          {error}
         </div>
       )}
       <header className="teacher-studio-header">
@@ -106,9 +200,44 @@ export default function TeacherMentifyStudio() {
         <main className="teacher-studio-canvas">
           <div className="teacher-studio-canvas-heading">
             <div>
-              <span className="teacher-studio-label">ACTIVE LESSON · AP CALCULUS BC</span>
-              <h3>Related Rates in Physical Systems</h3>
-              <p>Lesson 4.4 · 55 minutes · Grade 12</p>
+              <span className="teacher-studio-label">
+                ACTIVE LESSON · {activeCourse?.courseName || "NO COURSE"}
+              </span>
+              <select
+                value={activeCourseId}
+                onChange={(event) => setCourseId(event.target.value)}
+                aria-label="Select Studio course"
+              >
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.courseName}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={activeLessonId}
+                onChange={(event) => {
+                  const next = allLessons.find((lesson) => lesson.id === event.target.value);
+                  setActiveLessonId(event.target.value);
+                  setDraft(next?.description || "");
+                }}
+                aria-label="Select Studio lesson"
+                disabled={loading || !allLessons.length}
+              >
+                {!allLessons.length && (
+                  <option value="">{loading ? "Loading lessons…" : "No lessons available"}</option>
+                )}
+                {allLessons.map((lesson) => (
+                  <option key={lesson.id} value={lesson.id}>
+                    {lesson.title}
+                  </option>
+                ))}
+              </select>
+              <h3>{activeLesson?.title || "Select a lesson"}</h3>
+              <p>
+                {activeLesson?.description ||
+                  "Select a real course lesson to begin editing in Studio."}
+              </p>
             </div>
             <button type="button" onClick={() => notify("Lesson settings opened.")}>
               Settings
@@ -333,8 +462,12 @@ export default function TeacherMentifyStudio() {
           <button type="button" onClick={() => notify("Lesson duplicated.")}>
             Duplicate lesson
           </button>
-          <button type="button" onClick={() => notify("Lesson draft saved.")}>
-            Save draft
+          <button
+            type="button"
+            onClick={() => void saveLesson()}
+            disabled={saving || !activeLesson}
+          >
+            {saving ? "Saving…" : "Save draft"}
           </button>
           <button
             type="button"
