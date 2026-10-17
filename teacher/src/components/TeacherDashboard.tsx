@@ -5,10 +5,10 @@ import type { FormEvent } from "react";
 import TeacherAiAssistant from "../ai-assistant/TeacherAiAssistant";
 import TeacherCommunication from "./TeacherCommunication";
 import TeacherQuizWorkspace from "./TeacherQuizWorkspace";
-import TeacherAttendanceWorkspace from "./TeacherAttendanceWorkspace";
 import TeacherMaterialsWorkspace from "./TeacherMaterialsWorkspace";
 import TeacherCalendarWorkspace from "./TeacherCalendarWorkspace";
 import TeacherAssignmentSubmissions from "./TeacherAssignmentSubmissions";
+import TeacherAttendanceManagement from "./TeacherAttendanceManagement";
 import {
   teacherApi,
   type CourseLesson,
@@ -653,6 +653,8 @@ export default function TeacherDashboard() {
                           ? "Keep your course community moving forward."
                           : activeView === "assignments"
                             ? "Manage coursework, submissions, and grading priorities."
+                            : activeView === "attendance"
+                              ? "Track daily attendance and review student absence patterns."
                             : "Review the latest activity from your teaching workspace."}
               </p>
             </div>
@@ -677,7 +679,7 @@ export default function TeacherDashboard() {
           ) : activeView === "quizzes" ? (
             <TeacherQuizWorkspace courses={courses} />
           ) : activeView === "attendance" ? (
-            <TeacherAttendanceWorkspace courses={courses} />
+            <TeacherAttendanceManagement />
           ) : activeView === "materials" ? (
             <TeacherMaterialsWorkspace courses={courses} />
           ) : activeView === "calendar" ? (
