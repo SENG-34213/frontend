@@ -30,6 +30,7 @@ import {
   AdminRole,
 } from "../types";
 import { AdminRoute } from "../components/AdminSidebar";
+import type { RegistrationOverview } from "../api/dashboardApi";
 
 interface AdminDashboardProps {
   kpis: PlatformKPIs;
@@ -41,6 +42,9 @@ interface AdminDashboardProps {
   onNavigate: (route: AdminRoute) => void;
   onQuickAction: (action: string) => void;
   onResendInvitation: (email: string, role: string) => void;
+  registrationOverview?: RegistrationOverview | null;
+  registrationOverviewLoading?: boolean;
+  registrationOverviewError?: string;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -53,6 +57,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onNavigate,
   onQuickAction,
   onResendInvitation,
+  registrationOverview,
+  registrationOverviewLoading = false,
+  registrationOverviewError,
 }) => {
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
 
@@ -128,7 +135,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       : []),
   ];
 
-  const recentRegistrations = [
+  const mockRecentRegistrations = [
     {
       id: "r1",
       name: "Elena Rostova",
@@ -166,6 +173,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       idCode: "STU-2026-0846",
     },
   ];
+
+  const recentRegistrations = registrationOverview
+    ? [...registrationOverview.recentStudents, ...registrationOverview.recentTeachers]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, 4)
+        .map((user) => ({
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          role: user.role,
+          email: user.email,
+          date: new Date(user.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "2-digit",
+          }),
+          status: user.accountStatus,
+          idCode: user.studentId || user.teacherCode || user.id,
+        }))
+    : mockRecentRegistrations;
 
   return (
     <div className="space-y-6">
@@ -374,6 +400,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               />
             </svg>
           </div>
+
+          {registrationOverviewLoading && (
+            <p className="text-[11px] text-indigo-600 dark:text-indigo-400">
+              Loading registration overview…
+            </p>
+          )}
+          {registrationOverviewError && (
+            <p className="text-[11px] text-rose-600 dark:text-rose-400">
+              Registration overview unavailable: {registrationOverviewError}
+            </p>
+          )}
 
           <div className="flex items-center justify-between text-xs text-slate-400 mt-2 px-4 border-t border-slate-100 dark:border-slate-800 pt-2">
             {currentPoints.map((p, idx) => (

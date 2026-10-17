@@ -69,6 +69,7 @@ import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
 import { logoutAdmin } from "./admin/api/authApi";
 import { fetchAdminUsers, resendUserInvitation, updateUserStatus } from "./admin/api/usersApi";
+import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -112,6 +113,11 @@ export default function App() {
   const [openCourseModal, setOpenCourseModal] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState("");
+  const [registrationOverview, setRegistrationOverview] = useState<Awaited<
+    ReturnType<typeof fetchRegistrationOverview>
+  > | null>(null);
+  const [registrationOverviewLoading, setRegistrationOverviewLoading] = useState(false);
+  const [registrationOverviewError, setRegistrationOverviewError] = useState("");
 
   const loadAdminUsers = async () => {
     setUsersLoading(true);
@@ -129,7 +135,37 @@ export default function App() {
   };
 
   useEffect(() => {
+    // This effect starts the async synchronization with the admin users API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isAuthenticated) void loadAdminUsers();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const loadRegistrationOverview = async () => {
+      setRegistrationOverviewLoading(true);
+      setRegistrationOverviewError("");
+      try {
+        const overview = await fetchRegistrationOverview();
+        setRegistrationOverview(overview);
+        setKpis((previous) => ({
+          ...previous,
+          totalStudents: overview.usersByRole.STUDENT ?? previous.totalStudents,
+          totalTeachers: overview.usersByRole.TEACHER ?? previous.totalTeachers,
+          activeUsers: overview.usersByAccountStatus.ACTIVE ?? previous.activeUsers,
+          pendingInvitations: overview.usersByAccountStatus.INVITED ?? previous.pendingInvitations,
+        }));
+      } catch (error) {
+        setRegistrationOverviewError(
+          error instanceof Error ? error.message : "Unable to load registration overview.",
+        );
+      } finally {
+        setRegistrationOverviewLoading(false);
+      }
+    };
+
+    void loadRegistrationOverview();
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
@@ -359,6 +395,9 @@ export default function App() {
           onNavigate={setCurrentRoute}
           onQuickAction={handleQuickAction}
           onResendInvitation={handleResendInvitation}
+          registrationOverview={registrationOverview}
+          registrationOverviewLoading={registrationOverviewLoading}
+          registrationOverviewError={registrationOverviewError}
         />
       )}
 
