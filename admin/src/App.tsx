@@ -388,7 +388,10 @@ export default function App() {
     );
   };
 
-  const handleUpdateCourse = async (courseId: string, payload: Parameters<typeof updateCourse>[1]) => {
+  const handleUpdateCourse = async (
+    courseId: string,
+    payload: Parameters<typeof updateCourse>[1],
+  ) => {
     const updated = await updateCourse(courseId, payload);
     setCourses((previous) =>
       previous.map((course) => (course.id === courseId ? { ...course, ...updated } : course)),
@@ -433,7 +436,10 @@ export default function App() {
   const handleCreateEnrollment = async (studentId: string, courseIds: string[]) => {
     const existing = enrollmentApiRecords?.find((item) => item.studentId === studentId);
     const created = existing
-      ? await updateEnrollment(existing.id, Array.from(new Set([...existing.courseIds, ...courseIds])))
+      ? await updateEnrollment(
+          existing.id,
+          Array.from(new Set([...existing.courseIds, ...courseIds])),
+        )
       : await createEnrollment(studentId, courseIds);
     setEnrollmentApiRecords((previous) => {
       if (!previous) return [created];

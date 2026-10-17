@@ -125,7 +125,9 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
       setCreatedTeacherCode(createdTeacher.teacherCode);
       setCurrentStep(5);
     } catch (error) {
-      setFormErrors({ api: error instanceof Error ? error.message : "Unable to register teacher." });
+      setFormErrors({
+        api: error instanceof Error ? error.message : "Unable to register teacher.",
+      });
     }
   };
 

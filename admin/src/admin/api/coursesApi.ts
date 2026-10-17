@@ -111,7 +111,10 @@ export async function createCourse(payload: CreateCoursePayload): Promise<Course
   return mapCourseResponse(response.data);
 }
 
-export async function updateCourse(courseId: string, payload: CreateCoursePayload): Promise<Course> {
+export async function updateCourse(
+  courseId: string,
+  payload: CreateCoursePayload,
+): Promise<Course> {
   const response = await apiRequest<ApiResponse<CourseApiResponse>>(`/api/v1/course/${courseId}`, {
     method: "PUT",
     body: payload,

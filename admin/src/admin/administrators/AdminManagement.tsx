@@ -143,7 +143,9 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       setCreatedAdminCode(createdAdmin.adminCode);
       setCurrentStep(4);
     } catch (error) {
-      setFormErrors({ api: error instanceof Error ? error.message : "Unable to register administrator." });
+      setFormErrors({
+        api: error instanceof Error ? error.message : "Unable to register administrator.",
+      });
     }
   };
 

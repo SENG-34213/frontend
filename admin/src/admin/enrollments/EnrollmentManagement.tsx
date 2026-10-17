@@ -54,8 +54,7 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
       student.studentId.toLowerCase().includes(query);
     const matchesGrade =
       studentGradeFilter === "ALL" || studentGradeLabel(student) === studentGradeFilter;
-    const matchesEnrollment =
-      studentEnrollmentFilter === "ALL" || !hasEnrollment(student.id);
+    const matchesEnrollment = studentEnrollmentFilter === "ALL" || !hasEnrollment(student.id);
     return matchesSearch && matchesGrade && matchesEnrollment;
   });
 
@@ -314,7 +313,8 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                 <div className="max-h-44 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredModalStudents.length === 0 ? (
                     <div className="px-3 py-5 text-center text-xs text-slate-500">
-                      No students match these filters. Try “All students” or adjust the grade/search.
+                      No students match these filters. Try “All students” or adjust the
+                      grade/search.
                     </div>
                   ) : (
                     filteredModalStudents.map((student) => {
@@ -359,7 +359,9 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Courses
                   </label>
-                  <span className="text-[11px] text-slate-400">{selectedCourseIds.length} selected</span>
+                  <span className="text-[11px] text-slate-400">
+                    {selectedCourseIds.length} selected
+                  </span>
                 </div>
                 <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
                   {courses.map((course) => {
@@ -386,7 +388,8 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                             {course.title}
                           </span>
                           <span className="block text-[11px] text-slate-500">
-                            {course.code} · {course.gradeName || course.grade || "Grade not specified"}
+                            {course.code} ·{" "}
+                            {course.gradeName || course.grade || "Grade not specified"}
                           </span>
                         </span>
                       </label>
@@ -395,7 +398,9 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                 </div>
               </div>
 
-              {formError && <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{formError}</p>}
+              {formError && (
+                <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{formError}</p>
+              )}
 
               <div className="flex justify-end gap-3 pt-2">
                 <button

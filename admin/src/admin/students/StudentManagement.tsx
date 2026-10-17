@@ -130,7 +130,9 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       setCreatedStudentId(createdStudent.studentId);
       setCurrentStep(5);
     } catch (error) {
-      setFormErrors({ api: error instanceof Error ? error.message : "Unable to register student." });
+      setFormErrors({
+        api: error instanceof Error ? error.message : "Unable to register student.",
+      });
     }
   };
 

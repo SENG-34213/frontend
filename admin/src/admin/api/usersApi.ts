@@ -227,7 +227,8 @@ export async function registerStudent(request: RegisterStudentRequest): Promise<
         dateOfBirth: request.dob,
         guardianName: request.guardianName.trim(),
         guardianPhone: request.guardianPhone.trim(),
-        attendanceMode: request.attendanceMode === "IN_PERSON" ? "PHYSICAL" : request.attendanceMode,
+        attendanceMode:
+          request.attendanceMode === "IN_PERSON" ? "PHYSICAL" : request.attendanceMode,
         grade: request.grade.replace(/^Grade\s+/i, ""),
         schoolName: request.schoolName.trim(),
       },

@@ -100,7 +100,10 @@ interface CourseManagementProps {
   curriculum: CurriculumModule[];
   materials: LearningMaterial[];
   onAddCourse: (newCourse: Course) => void;
-  onUpdateCourse?: (courseId: string, updatedCourse: Parameters<typeof updateCourse>[1]) => Promise<Course>;
+  onUpdateCourse?: (
+    courseId: string,
+    updatedCourse: Parameters<typeof updateCourse>[1],
+  ) => Promise<Course>;
   onDeleteCourse?: (courseId: string) => Promise<{ success: boolean; error?: string }>;
   showCreateModalDirectly?: boolean;
   preselectedGradeId?: string | null;
@@ -252,7 +255,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     if (!formData.gradeId) {
       errors.gradeId = "Target Grade selection is required";
     } else if (!selectedGrade) {
-      errors.gradeId = "The selected grade is no longer available. Refresh and select an existing grade.";
+      errors.gradeId =
+        "The selected grade is no longer available. Refresh and select an existing grade.";
     }
 
     const selectedTeacher = teachers.find(
@@ -285,7 +289,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       const selectedGrade = grades.find((grade) => grade.id === formData.gradeId);
       if (!selectedGrade) {
         setFormErrors({
-          gradeId: "The selected grade is no longer available. Refresh and select an existing grade.",
+          gradeId:
+            "The selected grade is no longer available. Refresh and select an existing grade.",
         });
         return;
       }
