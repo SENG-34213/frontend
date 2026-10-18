@@ -12,15 +12,19 @@ import {
   Save,
   Building,
 } from "lucide-react";
-import { TeacherProfile, NavigationTab } from "../types";
-import { mockCourses } from "../data/mockData";
+import { Course, TeacherProfile, NavigationTab } from "../types";
 
 interface TeacherProfileViewProps {
   teacher: TeacherProfile;
+  courses: Course[];
   onNavigate: (tab: NavigationTab) => void;
 }
 
-export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ teacher, onNavigate }) => {
+export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
+  teacher,
+  courses,
+  onNavigate,
+}) => {
   const [profile, setProfile] = useState<TeacherProfile>(teacher);
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(profile.name);
@@ -251,10 +255,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({ teacher,
               {/* Teaching Portfolio Summary */}
               <div className="pt-6 border-t border-slate-100">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-3">
-                  Current Term Teaching Assignments ({mockCourses.length})
+                  Current Term Teaching Assignments ({courses.length})
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {mockCourses.map((c) => (
+                  {courses.map((c) => (
                     <div
                       key={c.id}
                       onClick={() => onNavigate("courses")}

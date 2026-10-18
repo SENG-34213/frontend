@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { ApiError, apiRequest } from "./client";
 import { clearSession, getSession, saveSession } from "../auth/authStorage";
 import type {
   ApiResponse,
@@ -29,12 +29,19 @@ export async function loginTeacher(identifier: string, password: string): Promis
 }
 
 export async function getCurrentTeacher() {
-  const response = await apiRequest<ApiResponse<TeacherUserSummary>>("/api/v1/users/me");
-  if (response.data?.role !== "TEACHER") {
-    clearSession();
-    throw new Error("This account does not have access to the teacher workspace.");
+  try {
+    const response = await apiRequest<ApiResponse<TeacherUserSummary>>("/api/v1/users/me");
+    if (response.data?.role !== "TEACHER") {
+      clearSession();
+      throw new Error("This account does not have access to the teacher workspace.");
+    }
+    return response.data;
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      clearSession();
+    }
+    throw error;
   }
-  return response.data;
 }
 
 export async function logoutTeacher() {
