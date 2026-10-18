@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "./admin/layouts/AdminLayout";
 import { AdminRoute } from "./admin/components/AdminSidebar";
 import { ToastMessage } from "./admin/components/ToastContainer";
@@ -90,7 +90,14 @@ import {
   type EnrollmentApiResponse,
 } from "./admin/api/enrollmentsApi";
 import { createGrade, deleteGrade, fetchGrades, updateGrade } from "./admin/api/gradesApi";
-import { createCalendarEvent, fetchCalendarEvents } from "./admin/api/calendarApi";
+import {
+  cancelCalendarEvent,
+  createCalendarEvent,
+  fetchCalendarEvents,
+  fetchUpcomingCalendarEvents,
+  updateCalendarEvent,
+  type CalendarEventFilters,
+} from "./admin/api/calendarApi";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -127,6 +134,7 @@ export default function App() {
     useState<AttendanceSession[]>(MOCK_ATTENDANCE_SESSIONS);
   const [materials, setMaterials] = useState<LearningMaterial[]>(MOCK_MATERIALS);
   const [events, setEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
+  const [upcomingEvents, setUpcomingEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
   const [auditLogs, setAuditLogs] = useState<AuditEvent[]>(MOCK_AUDIT_LOGS);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -164,6 +172,16 @@ export default function App() {
     // This effect starts the async synchronization with the admin users API.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isAuthenticated) void loadAdminUsers();
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    void fetchUpcomingCalendarEvents(10)
+      .then(setUpcomingEvents)
+      .catch(() => {
+        // Keep the dashboard available when the calendar service is unavailable.
+      });
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -273,6 +291,14 @@ export default function App() {
 
     void loadCalendarEvents();
   }, [isAuthenticated]);
+
+  const handleFilterCalendarEvents = useCallback(
+    async (filters: CalendarEventFilters, start: Date, end: Date) => {
+      const filtered = await fetchCalendarEvents(start, end, filters);
+      setEvents(filtered);
+    },
+    [],
+  );
 
   if (!isAuthenticated) {
     return (
@@ -487,6 +513,21 @@ export default function App() {
     addToast("success", "Event Scheduled", `Added "${created.title}" to institutional calendar.`);
   };
 
+  const handleUpdateEvent = async (
+    eventId: string,
+    request: Parameters<typeof updateCalendarEvent>[1],
+  ) => {
+    const updated = await updateCalendarEvent(eventId, request);
+    setEvents((prev) => prev.map((event) => (event.id === eventId ? updated : event)));
+    addToast("success", "Event Updated", `"${updated.title}" was updated successfully.`);
+  };
+
+  const handleCancelEvent = async (eventId: string) => {
+    const cancelled = await cancelCalendarEvent(eventId);
+    setEvents((prev) => prev.map((event) => (event.id === eventId ? cancelled : event)));
+    addToast("success", "Event Cancelled", `"${cancelled.title}" was cancelled.`);
+  };
+
   const handleMarkNotificationRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
@@ -554,7 +595,7 @@ export default function App() {
           kpis={kpis}
           students={students}
           teachers={teachers}
-          events={events}
+          events={upcomingEvents}
           recentLogs={auditLogs}
           role={role}
           onNavigate={setCurrentRoute}
@@ -690,7 +731,14 @@ export default function App() {
       )}
 
       {currentRoute === "calendar" && (
-        <AdminCalendar events={events} courses={courses} onAddEvent={handleAddEvent} />
+        <AdminCalendar
+          events={events}
+          courses={courses}
+          onAddEvent={handleAddEvent}
+          onUpdateEvent={handleUpdateEvent}
+          onCancelEvent={handleCancelEvent}
+          onFilterEvents={handleFilterCalendarEvents}
+        />
       )}
 
       {currentRoute === "communication" && <CommunicationManagement />}
