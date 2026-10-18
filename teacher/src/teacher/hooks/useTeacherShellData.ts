@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getTeacherShellData } from "../api/teacherApi";
 import type { TeacherUserSummary } from "../auth/authTypes";
 import type { TeacherProfile } from "../types";
-import { mockTeacherProfile } from "../data/mockData";
 
 type ShellState = {
   teacherProfile: TeacherProfile | null;
@@ -20,13 +19,24 @@ function toTeacherProfile(user: TeacherUserSummary): TeacherProfile {
   const name = [firstName, lastName].filter(Boolean).join(" ");
 
   return {
-    ...mockTeacherProfile,
-    id: user.id ?? user.keycloakUserId ?? mockTeacherProfile.id,
-    name: name || user.email || mockTeacherProfile.name,
+    id: user.id ?? user.keycloakUserId ?? "",
+    name: name || user.email || "Teacher",
+    title: typeof user.title === "string" ? user.title : "",
+    teacherCode: typeof user.teacherCode === "string" ? user.teacherCode : "",
+    department: typeof user.department === "string" ? user.department : "",
     email: user.email,
-    title: typeof user.title === "string" ? user.title : mockTeacherProfile.title,
-    teacherCode:
-      typeof user.teacherCode === "string" ? user.teacherCode : mockTeacherProfile.teacherCode,
+    phone: typeof user.phone === "string" ? user.phone : "",
+    officeLocation: typeof user.officeLocation === "string" ? user.officeLocation : "",
+    officeHours: typeof user.officeHours === "string" ? user.officeHours : "",
+    avatarUrl: typeof user.avatarUrl === "string" ? user.avatarUrl : "",
+    bio: typeof user.bio === "string" ? user.bio : "",
+    specializations: Array.isArray(user.specializations)
+      ? user.specializations.filter((item): item is string => typeof item === "string")
+      : [],
+    totalCoursesTaught:
+      typeof user.totalCoursesTaught === "number" ? user.totalCoursesTaught : 0,
+    totalStudentsMentored:
+      typeof user.totalStudentsMentored === "number" ? user.totalStudentsMentored : 0,
   };
 }
 

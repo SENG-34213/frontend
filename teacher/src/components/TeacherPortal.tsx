@@ -7,7 +7,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavigationTab, Course } from "../teacher/types";
 import {
-  mockTeacherProfile,
   mockCourses,
   mockAssignments,
   mockConversations,
@@ -200,7 +199,7 @@ export default function App() {
 
   if (!session) return <TeacherLoginView onLogin={setSession} />;
 
-  if (shellData.isLoading) {
+  if (shellData.isLoading || !shellData.teacherProfile) {
     return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher workspace" />;
   }
 
@@ -237,7 +236,7 @@ export default function App() {
     );
   }
 
-  const teacherProfile = shellData.teacherProfile ?? mockTeacherProfile;
+  const teacherProfile = shellData.teacherProfile;
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -422,7 +421,11 @@ export default function App() {
           )}
 
           {currentTab === "profile" && (
-            <TeacherProfileView teacher={teacherProfile} onNavigate={handleNavigate} />
+            <TeacherProfileView
+              teacher={teacherProfile}
+              courses={courses}
+              onNavigate={handleNavigate}
+            />
           )}
 
           {currentTab === "settings" && <TeacherSettingsView teacher={teacherProfile} />}
