@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Calendar, Clock, MapPin, CheckCircle, ChevronRight } from "lucide-react";
 import { Examination, NavigationTab } from "../types";
-import { mockExaminations, mockCourses } from "../data/mockData";
+import { mockExaminations } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
 import { createExam, getCourseExams, type BackendExam } from "../api/examApi";
 import type { BackendCourse } from "../api/courseApi";
@@ -82,7 +82,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [wizardStep, setWizardStep] = useState(1);
 
   // Wizard state
-  const [wizardCourseId, setWizardCourseId] = useState(mockCourses[0]?.id || "");
+  const [wizardCourseId, setWizardCourseId] = useState("");
   const [wizardTitle, setWizardTitle] = useState("");
   const [wizardType, setWizardType] = useState<"Midterm" | "Final" | "Practical Exam">("Midterm");
   const [wizardDate, setWizardDate] = useState("2026-11-15");
@@ -90,6 +90,15 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [wizardDuration, setWizardDuration] = useState("120");
   const [wizardRoom, setWizardRoom] = useState("Alan Turing Auditorium");
   const [wizardWeight, setWizardWeight] = useState("30");
+
+  useEffect(() => {
+    if (
+      backendCourses.length > 0 &&
+      !backendCourses.some((course) => course.id === wizardCourseId)
+    ) {
+      setWizardCourseId(backendCourses[0].id);
+    }
+  }, [backendCourses, wizardCourseId]);
 
   useEffect(() => {
     if (backendCoursesLoading || backendCoursesError || backendCourses.length === 0) return;
@@ -115,11 +124,9 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
 
   const handleFinishWizard = async (e: React.FormEvent) => {
     e.preventDefault();
-    const course = mockCourses.find((c) => c.id === wizardCourseId) || mockCourses[0];
-    const backendCourse =
-      backendCourses.find(
-        (item) => item.subject === course.code || item.courseName === course.title,
-      ) || backendCourses[0];
+    const backendCourse = backendCourses.find((item) => item.id === wizardCourseId);
+    if (!backendCourse) return;
+    const courseCode = backendCourse.subject || backendCourse.courseName;
     const startTime = fromDisplayTime(wizardTime);
     const startDate = new Date(`1970-01-01T${startTime}`);
     const endDate = new Date(startDate.getTime() + (Number(wizardDuration) || 120) * 60_000);
@@ -131,7 +138,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       try {
         const created = await createExam({
           courseId: backendCourse.id,
-          title: wizardTitle || `${course.code} ${wizardType} Examination`,
+          title: wizardTitle || `${courseCode} ${wizardType} Examination`,
           examDate: wizardDate,
           startTime,
           endTime,
@@ -174,9 +181,9 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
 
     const newExam: Examination = {
       id: `exm-${Date.now()}`,
-      courseId: course.id,
-      courseCode: course.code,
-      title: wizardTitle || `${course.code} ${wizardType} Examination`,
+      courseId: backendCourse.id,
+      courseCode,
+      title: wizardTitle || `${courseCode} ${wizardType} Examination`,
       examType: wizardType,
       scheduledDate: wizardDate,
       startTime: wizardTime,
@@ -185,7 +192,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       totalMarks: 100,
       weightagePercent: Number(wizardWeight) || 30,
       status: "Scheduled",
-      enrolledStudents: course.enrolledCount,
+      enrolledStudents: backendCourse.numberOfStudents ?? 0,
       gradedStudents: 0,
     };
 
@@ -271,11 +278,17 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                       onChange={(e) => setWizardCourseId(e.target.value)}
                       className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
                     >
-                      {mockCourses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.code} — {c.title}
+                      {backendCourses.length === 0 ? (
+                        <option value="" disabled>
+                          No courses available
                         </option>
-                      ))}
+                      ) : (
+                        backendCourses.map((course) => (
+                          <option key={course.id} value={course.id}>
+                            {course.subject || course.courseName}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div>

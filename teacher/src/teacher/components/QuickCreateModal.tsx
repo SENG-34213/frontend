@@ -60,16 +60,25 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   }, [type]);
 
   React.useEffect(() => {
-    if (backendCourses[0] && !backendCourses.some((course) => course.id === selectedCourseId)) {
+    if (
+      activeType === "quiz" &&
+      backendCourses[0] &&
+      !backendCourses.some((course) => course.id === selectedCourseId)
+    ) {
       setSelectedCourseId(backendCourses[0].id);
     }
-  }, [backendCourses, selectedCourseId]);
+  }, [activeType, backendCourses, selectedCourseId]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    if (activeType === "quiz" && backendCourses.length === 0) {
+      setIsSubmitting(false);
+      return;
+    }
 
     if (activeType === "quiz" && onCreateQuiz && backendCourses.length > 0) {
       try {
@@ -194,11 +203,17 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     onChange={(e) => setSelectedCourseId(e.target.value)}
                     className="w-full px-3 py-2 text-xs text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
-                    {(backendCourses.length > 0 ? backendCourses : mockCourses).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {"courseName" in c ? c.subject || c.courseName : `${c.code} — ${c.title}`}
+                    {activeType === "quiz" && backendCourses.length === 0 ? (
+                      <option value="" disabled>
+                        No courses available
                       </option>
-                    ))}
+                    ) : (
+                      (activeType === "quiz" ? backendCourses : mockCourses).map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {"courseName" in c ? c.subject || c.courseName : `${c.code} — ${c.title}`}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
               )}
