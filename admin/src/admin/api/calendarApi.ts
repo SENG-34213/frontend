@@ -14,6 +14,13 @@ export type CalendarEventType =
   | "ATTENDANCE";
 export type CalendarVisibility = "PRIVATE" | "COURSE" | "ROLE" | "GLOBAL";
 export type CalendarTargetRole = "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN";
+export type CalendarEventStatus = "SCHEDULED" | "CANCELLED";
+
+export interface CalendarEventFilters {
+  type?: CalendarEventType;
+  courseId?: string;
+  status?: CalendarEventStatus;
+}
 
 export interface CalendarEventRequest {
   title: string;
@@ -94,13 +101,27 @@ function localDateTime(value: Date) {
   return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
 }
 
-export async function fetchCalendarEvents(start: Date, end: Date): Promise<AcademicEvent[]> {
+export async function fetchCalendarEvents(
+  start: Date,
+  end: Date,
+  filters: CalendarEventFilters = {},
+): Promise<AcademicEvent[]> {
   const params = new URLSearchParams({
     start: localDateTime(start),
     end: localDateTime(end),
   });
+  if (filters.type) params.set("type", filters.type);
+  if (filters.courseId) params.set("courseId", filters.courseId);
+  if (filters.status) params.set("status", filters.status);
   const response = await apiRequest<ApiResponse<CalendarEventResponse[]>>(
     `/api/v1/calendar/events?${params.toString()}`,
+  );
+  return (response.data || []).map(mapCalendarEvent);
+}
+
+export async function fetchUpcomingCalendarEvents(limit = 10): Promise<AcademicEvent[]> {
+  const response = await apiRequest<ApiResponse<CalendarEventResponse[]>>(
+    `/api/v1/calendar/upcoming?limit=${limit}`,
   );
   return (response.data || []).map(mapCalendarEvent);
 }
@@ -114,6 +135,34 @@ export async function createCalendarEvent(request: CalendarEventRequest): Promis
       endDateTime: request.endDateTime ? apiDateTime(request.endDateTime) : null,
     },
   });
+  if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
+  return mapCalendarEvent(response.data);
+}
+
+export async function updateCalendarEvent(
+  eventId: string,
+  request: CalendarEventRequest,
+): Promise<AcademicEvent> {
+  const response = await apiRequest<ApiResponse<CalendarEventResponse>>(
+    `/api/v1/calendar/events/${eventId}`,
+    {
+      method: "PUT",
+      body: {
+        ...request,
+        startDateTime: apiDateTime(request.startDateTime),
+        endDateTime: request.endDateTime ? apiDateTime(request.endDateTime) : null,
+      },
+    },
+  );
+  if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
+  return mapCalendarEvent(response.data);
+}
+
+export async function cancelCalendarEvent(eventId: string): Promise<AcademicEvent> {
+  const response = await apiRequest<ApiResponse<CalendarEventResponse>>(
+    `/api/v1/calendar/events/${eventId}/cancel`,
+    { method: "POST" },
+  );
   if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
   return mapCalendarEvent(response.data);
 }

@@ -16,6 +16,7 @@ import {
   CornerDownLeft,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
+import { createAiConversation, sendAiMessage } from "../api/aiApi";
 
 interface ChatMessage {
   id: string;
@@ -37,6 +38,8 @@ export const MentifyAIAssistant: React.FC = () => {
 
   const [inputPrompt, setInputPrompt] = useState("");
   const [isThinking, setIsThinking] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +50,16 @@ export const MentifyAIAssistant: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isThinking]);
+
+  useEffect(() => {
+    void createAiConversation("Admin Assistant")
+      .then((conversation) => {
+        setConversationId(conversation.id);
+      })
+      .catch((error) => {
+        setApiError(error instanceof Error ? error.message : "Unable to connect to AI service.");
+      });
+  }, []);
 
   const suggestedPrompts = [
     {
@@ -72,7 +85,7 @@ export const MentifyAIAssistant: React.FC = () => {
     },
   ];
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const prompt = textToSend || inputPrompt;
     if (!prompt.trim() || isThinking) return;
 
@@ -86,59 +99,41 @@ export const MentifyAIAssistant: React.FC = () => {
     setMessages((prev) => [...prev, userMsg]);
     setInputPrompt("");
     setIsThinking(true);
-
-    // Domain intelligence response simulation
-    setTimeout(() => {
-      let responseText = "";
-
-      if (
-        prompt.toLowerCase().includes("registration") ||
-        prompt.toLowerCase().includes("growth")
-      ) {
-        responseText = `### 📊 Institutional Registration Synthesis
-Based on data from the **Spring Boot User Service**:
-- **Total Registered Students**: 1,420 (up +8.4% term-over-term).
-- **Active Faculty Members**: 84 verified teachers across 4 departments.
-- **Pending Keycloak Invitations**: 12 accounts (including 2 teachers and 10 students) awaiting password activation.
-- **Recommendation**: Dispatched reminder notifications are recommended for \`amara.okonkwo@mentify.edu\` and \`priya.nambiar@mentify.edu\` before the upcoming enrollment lockout on Monday.`;
-      } else if (
-        prompt.toLowerCase().includes("quiz") ||
-        prompt.toLowerCase().includes("performance")
-      ) {
-        responseText = `### 🎯 Quiz Evaluation & Score Analytics
-- **MATH-401 (Advanced Calculus)**: Mean score of **84.5%** with a **92.4% pass rate**. Students performed exceptionally on Lagrange error bounds.
-- **CS-302 (Data Structures & Algorithms)**: Mean score of **78.2%** with **86.0% pass rate**. Dynamic programming recurrences showed a slight dip in quartile 1.
-- **PHYS-402 (Quantum Foundations)**: Highest pass rate at **94.7%** (average score 88.0%).
-- **Curriculum Note**: Consider scheduling an optional clinic session for CS-302 recursive tree balancing prior to the practical coding assessment.`;
-      } else if (
-        prompt.toLowerCase().includes("exam") ||
-        prompt.toLowerCase().includes("conflict")
-      ) {
-        responseText = `### 🏛️ Examination Timetable Verification
-I inspected all **9 scheduled examinations** for Fall 2026:
-- **MATH-401 Midterm**: Oct 25, 09:00 AM – 11:30 AM in *Science Hall Auditorium B* (68 candidates).
-- **CS-302 Practical Coding Exam**: Oct 29, 01:30 PM – 04:00 PM in *Turing Lab 304* (82 candidates).
-- **BIO-204 Theory Examination**: Nov 04, 10:00 AM – 12:00 PM in *BioTech Seminar Hall 101* (54 candidates).
-- **Status**: ✅ **Zero room conflicts or proctor overlaps detected**. Capacities are within certified safety limits.`;
-      } else {
-        responseText = `### 💡 Administrative Assessment
-Here is the operational perspective for: "${prompt}"
-
-1. **Microservices Status**: All 6 services (User, Course, Enrollment, Assessment, Material, AI) are operating nominally with sub-25ms PostgreSQL query latencies.
-2. **Access Control**: Role-based access control (RBAC) enforced via Keycloak realm \`mentify-prod\`.
-3. **Action Items**: No critical security anomalies detected in the last 24 hours. 4 administrative capacity approvals await your review in Course Management.`;
-      }
-
-      const aiMsg: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        sender: "assistant",
-        content: responseText,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
+    setApiError("");
+    try {
+      const activeConversation = conversationId
+        ? { id: conversationId }
+        : await createAiConversation(prompt.slice(0, 150));
+      setConversationId(activeConversation.id);
+      const response = await sendAiMessage(activeConversation.id, prompt, userMsg.id);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: response.messageId,
+          sender: "assistant",
+          content: response.message,
+          timestamp: response.timestamp
+            ? new Date(response.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Unable to reach the AI service.");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          sender: "assistant",
+          content: "I could not reach the AI service. Please try again.",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    } finally {
       setIsThinking(false);
-    }, 900);
+    }
   };
 
   const handleCopy = (id: string, text: string) => {
@@ -147,7 +142,15 @@ Here is the operational perspective for: "${prompt}"
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleNewChat = () => {
+  const handleNewChat = async () => {
+    try {
+      const conversation = await createAiConversation("Admin Assistant");
+      setConversationId(conversation.id);
+      setApiError("");
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Unable to create a new conversation.");
+      return;
+    }
     setMessages([
       {
         id: `msg-${Date.now()}`,
@@ -316,6 +319,7 @@ Here is the operational perspective for: "${prompt}"
 
           {/* Composer Input Bar */}
           <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            {apiError && <p className="mb-2 text-[11px] text-rose-500">{apiError}</p>}
             <form
               onSubmit={(e) => {
                 e.preventDefault();

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -12,19 +12,37 @@ import {
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { AcademicEvent, Course } from "../types";
-import type { CalendarEventRequest, CalendarEventType } from "../api/calendarApi";
+import type {
+  CalendarEventFilters,
+  CalendarEventRequest,
+  CalendarEventType,
+} from "../api/calendarApi";
 
 interface AdminCalendarProps {
   events: AcademicEvent[];
   courses: Course[];
   onAddEvent: (event: CalendarEventRequest) => Promise<void>;
+  onUpdateEvent: (eventId: string, event: CalendarEventRequest) => Promise<void>;
+  onCancelEvent: (eventId: string) => Promise<void>;
+  onFilterEvents: (filters: CalendarEventFilters, start: Date, end: Date) => Promise<void>;
 }
 
-export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, onAddEvent }) => {
+export const AdminCalendar: React.FC<AdminCalendarProps> = ({
+  events,
+  courses,
+  onAddEvent,
+  onUpdateEvent,
+  onCancelEvent,
+  onFilterEvents,
+}) => {
   const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [courseFilter, setCourseFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [displayMonth, setDisplayMonth] = useState(() => new Date(2026, 9, 1));
   const [selectedEvent, setSelectedEvent] = useState<AcademicEvent | null>(null);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<AcademicEvent | null>(null);
 
   // New Event form
   const [newEvent, setNewEvent] = useState({
@@ -44,7 +62,47 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredEvents = events.filter((e) => typeFilter === "ALL" || e.type === typeFilter);
+  const openEventForm = (event?: AcademicEvent) => {
+    setFormError("");
+    setEditingEvent(event || null);
+    if (event) {
+      const start = event.startDateTime || `${event.date}T10:00`;
+      const end = event.endDateTime || `${event.date}T12:00`;
+      setNewEvent({
+        title: event.title,
+        description: event.description || "",
+        eventType: (event.eventType || "CUSTOM") as CalendarEventType,
+        startDate: start.slice(0, 10),
+        startTime: start.slice(11, 16),
+        endDate: end.slice(0, 10),
+        endTime: end.slice(11, 16),
+        allDay: Boolean(event.allDay),
+        location: event.location === "Not specified" ? "" : event.location,
+        courseId: event.courseId || "",
+        visibility: event.visibility || "GLOBAL",
+        targetRole: event.targetRole || "",
+      });
+    }
+    setIsAddEventOpen(true);
+    setSelectedEvent(null);
+  };
+
+  // Filtering is performed by the calendar service; keep this view as a direct rendering of its response.
+  const filteredEvents = events;
+
+  useEffect(() => {
+    const start = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), 1);
+    const end = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1);
+    void onFilterEvents(
+      {
+        type: typeFilter === "ALL" ? undefined : (typeFilter as CalendarEventType),
+        courseId: courseFilter === "ALL" ? undefined : courseFilter,
+        status: statusFilter === "ALL" ? undefined : (statusFilter as "SCHEDULED" | "CANCELLED"),
+      },
+      start,
+      end,
+    );
+  }, [courseFilter, displayMonth, onFilterEvents, statusFilter, typeFilter]);
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +118,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
     setIsSubmitting(true);
     setFormError("");
     try {
-      await onAddEvent({
+      const request: CalendarEventRequest = {
         title: newEvent.title.trim(),
         description: newEvent.description.trim() || undefined,
         eventType: newEvent.eventType,
@@ -71,8 +129,11 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
         visibility: newEvent.visibility,
         targetRole: newEvent.targetRole || null,
         location: newEvent.location.trim() || undefined,
-      });
+      };
+      if (editingEvent) await onUpdateEvent(editingEvent.id, request);
+      else await onAddEvent(request);
       setIsAddEventOpen(false);
+      setEditingEvent(null);
       setNewEvent({
         title: "",
         description: "",
@@ -110,21 +171,32 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
     }
   };
 
-  // Month grid generator for October 2026 (Starts on Thursday Oct 1)
-  const daysInOctober = 31;
-  const startDayOffset = 4; // Thursday = 4 (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)
-
-  const calendarDays = [];
-  for (let i = 0; i < startDayOffset; i++) {
-    calendarDays.push({ dayNumber: 27 + i, isCurrentMonth: false });
-  }
-  for (let i = 1; i <= daysInOctober; i++) {
-    calendarDays.push({ dayNumber: i, isCurrentMonth: true });
-  }
-  const remaining = 35 - calendarDays.length;
-  for (let i = 1; i <= remaining; i++) {
-    calendarDays.push({ dayNumber: i, isCurrentMonth: false });
-  }
+  const year = displayMonth.getFullYear();
+  const month = displayMonth.getMonth();
+  const startDayOffset = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const previousMonthDays = new Date(year, month, 0).getDate();
+  const calendarDays = Array.from({ length: 42 }, (_, index) => {
+    const dayIndex = index - startDayOffset + 1;
+    const date = new Date(year, month, dayIndex);
+    return {
+      dayNumber:
+        dayIndex < 1
+          ? previousMonthDays + dayIndex
+          : dayIndex > daysInMonth
+            ? dayIndex - daysInMonth
+            : dayIndex,
+      isCurrentMonth: dayIndex >= 1 && dayIndex <= daysInMonth,
+      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+    };
+  });
+  const monthLabel = displayMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const monthOptions = Array.from({ length: 12 }, (_, index) =>
+    new Date(2024, index, 1).toLocaleDateString(undefined, { month: "long" }),
+  );
+  const yearOptions = Array.from({ length: 9 }, (_, index) => 2022 + index);
+  const today = new Date();
+  const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   return (
     <div className="space-y-6">
@@ -144,41 +216,101 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
       />
 
       {/* Calendar Controls Bar */}
-      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-3 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Month Navigation */}
-        <div className="flex items-center gap-3">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white">October 2026</h2>
-          <div className="flex items-center gap-1">
-            <button className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+          <h2 className="sr-only">{monthLabel}</h2>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => setDisplayMonth(new Date(year, month - 1, 1))}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
+            <button
+              onClick={() => setDisplayMonth(new Date(year, month + 1, 1))}
+              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <span className="text-xs font-medium text-slate-400">Term 1 · Week 7</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <select
+              aria-label="Select calendar month"
+              value={month}
+              onChange={(event) => setDisplayMonth(new Date(year, Number(event.target.value), 1))}
+              className="max-w-[132px] sm:max-w-none px-2.5 py-2 sm:py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            >
+              {monthOptions.map((monthName, index) => (
+                <option key={monthName} value={index}>
+                  {monthName}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Select calendar year"
+              value={year}
+              onChange={(event) => setDisplayMonth(new Date(Number(event.target.value), month, 1))}
+              className="w-[92px] px-2.5 py-2 sm:py-1.5 text-sm font-bold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            >
+              {yearOptions.map((yearOption) => (
+                <option key={yearOption} value={yearOption}>
+                  {yearOption}
+                </option>
+              ))}
+            </select>
+          </div>
+          <span className="hidden sm:inline text-xs font-medium text-slate-400 whitespace-nowrap">
+            Term 1 · Week 7
+          </span>
         </div>
 
         {/* View Switcher and Type Filter */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap lg:justify-end items-center gap-2 w-full lg:w-auto">
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            className="w-full sm:w-auto min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <option value="ALL">All Event Types</option>
             <option value="EXAM">Examinations</option>
-            <option value="DEADLINE">Deadlines</option>
+            <option value="ASSIGNMENT">Deadlines</option>
             <option value="CLASS">Classes</option>
-            <option value="SESSION">Administrative</option>
+            <option value="MEETING">Meetings</option>
+            <option value="ADMIN">Administrative</option>
+            <option value="HOLIDAY">Holidays</option>
+            <option value="CUSTOM">Custom</option>
           </select>
 
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">
+          <select
+            value={courseFilter}
+            onChange={(e) => setCourseFilter(e.target.value)}
+            className="w-full sm:w-auto min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <option value="ALL">All Courses</option>
+            {courses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.title}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full sm:w-auto min-w-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="SCHEDULED">Scheduled</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+
+          <div className="col-span-2 sm:col-span-1 flex items-center justify-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs w-full sm:w-auto overflow-x-auto">
             {(["month", "week", "day", "agenda"] as const).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`px-2.5 py-1 font-medium rounded-md capitalize transition-colors ${
+                className={`flex-1 sm:flex-none px-2 sm:px-2.5 py-1.5 sm:py-1 font-medium rounded-md capitalize transition-colors ${
                   view === v
                     ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
@@ -208,11 +340,10 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
           {/* Grid cells */}
           <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800">
             {calendarDays.map((cell, idx) => {
-              const dateStr = `2026-10-${String(cell.dayNumber).padStart(2, "0")}`;
               const dayEvents = cell.isCurrentMonth
-                ? filteredEvents.filter((e) => e.date === dateStr)
+                ? filteredEvents.filter((e) => e.date === cell.date)
                 : [];
-              const isToday = cell.isCurrentMonth && cell.dayNumber === 17;
+              const isToday = cell.isCurrentMonth && cell.date === todayString;
 
               return (
                 <div
@@ -349,7 +480,32 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex justify-end gap-2">
+              {selectedEvent.canEdit && (
+                <button
+                  onClick={() => openEventForm(selectedEvent)}
+                  className="px-4 py-2 text-xs font-medium rounded-lg border border-indigo-200 text-indigo-700 dark:border-indigo-800 dark:text-indigo-300"
+                >
+                  Edit Event
+                </button>
+              )}
+              {selectedEvent.canCancel && selectedEvent.status === "SCHEDULED" && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await onCancelEvent(selectedEvent.id);
+                      setSelectedEvent(null);
+                    } catch (error) {
+                      setFormError(
+                        error instanceof Error ? error.message : "Unable to cancel event.",
+                      );
+                    }
+                  }}
+                  className="px-4 py-2 text-xs font-medium rounded-lg border border-rose-200 text-rose-700 dark:border-rose-800 dark:text-rose-300"
+                >
+                  Cancel Event
+                </button>
+              )}
               <button
                 onClick={() => setSelectedEvent(null)}
                 className="px-4 py-2 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -367,7 +523,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({ events, courses, o
           <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Schedule Academic Event
+                {editingEvent ? "Edit Calendar Event" : "Schedule Academic Event"}
               </h3>
               <button
                 onClick={() => setIsAddEventOpen(false)}
