@@ -3,6 +3,29 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
+  Award,
+  BookOpen,
+  CalendarDays,
+  ChevronRight,
+  CircleHelp,
+  Compass,
+  CreditCard,
+  FileCheck2,
+  FolderArchive,
+  GraduationCap,
+  LayoutDashboard,
+  LifeBuoy,
+  LogOut,
+  Menu,
+  MessagesSquare,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+  Sparkles,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
+import {
   configuredCourseIds,
   getToken,
   login,
@@ -22,6 +45,7 @@ import {
   type Submission,
 } from "../lib/studentApi";
 import StudentMaterialsWorkspace from "../components/StudentMaterialsWorkspace";
+import ThemeToggle from "../components/ThemeToggle";
 
 type Section =
   | "Dashboard"
@@ -37,19 +61,40 @@ type Section =
   | "Payments"
   | "AI Insights"
   | "Profile";
-const navItems: { label: Section; icon: string }[] = [
-  { label: "Dashboard", icon: "â–¦" },
-  { label: "My Courses", icon: "âŒ‚" },
-  { label: "Browse Courses", icon: "âŒ•" },
-  { label: "Assignments", icon: "â–¤" },
-  { label: "Quizzes", icon: "â–£" },
-  { label: "Attendance", icon: "â—‰" },
-  { label: "Exams", icon: "â–¥" },
-  { label: "Calendar", icon: "â–¡" },
-  { label: "Materials", icon: "â—ˆ" },
-  { label: "Messages", icon: "â–±" },
-  { label: "Payments", icon: "$" },
-  { label: "AI Insights", icon: "âœ¦" },
+const navGroups: { name: string; items: { label: Section; icon: LucideIcon }[] }[] = [
+  {
+    name: "Learning",
+    items: [
+      { label: "Dashboard", icon: LayoutDashboard },
+      { label: "My Courses", icon: BookOpen },
+      { label: "Browse Courses", icon: Compass },
+      { label: "Materials", icon: FolderArchive },
+    ],
+  },
+  {
+    name: "Assessments",
+    items: [
+      { label: "Assignments", icon: FileCheck2 },
+      { label: "Quizzes", icon: CircleHelp },
+      { label: "Exams", icon: Award },
+      { label: "Attendance", icon: GraduationCap },
+    ],
+  },
+  {
+    name: "Collaboration",
+    items: [
+      { label: "Calendar", icon: CalendarDays },
+      { label: "Messages", icon: MessagesSquare },
+      { label: "AI Insights", icon: Sparkles },
+    ],
+  },
+  {
+    name: "Account",
+    items: [
+      { label: "Payments", icon: CreditCard },
+      { label: "Profile", icon: UserRound },
+    ],
+  },
 ];
 type Activity = {
   assignments: Assignment[];
@@ -540,6 +585,8 @@ function Dashboard({
   onRefresh: () => void;
 }) {
   const [section, setSection] = useState<Section>("Dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [browseId, setBrowseId] = useState("");
   const [browseResult, setBrowseResult] = useState<Course | null>(null);
   const firstName = student?.firstName || "Student";
@@ -550,6 +597,13 @@ function Dashboard({
   const completion = activity.assignments.length
     ? Math.round((completed / activity.assignments.length) * 100)
     : 0;
+  const pendingAssignments = activity.assignments.length - completed;
+  const currentGroup =
+    navGroups.find((group) => group.items.some((item) => item.label === section))?.name ?? "Account";
+  function navigateTo(sectionName: Section) {
+    setSection(sectionName);
+    setMobileMenuOpen(false);
+  }
   const averageAttendance = activity.attendance.length
     ? Math.round(
         activity.attendance.reduce(
@@ -575,50 +629,65 @@ function Dashboard({
     section === "Dashboard" ? (
       <>
         <div className="welcome">
-          <div>
-            <h1>Welcome back, {firstName}.</h1>
+          <div className="welcome-copy">
+            <div className="welcome-kicker">
+              <span />
+              STUDENT PORTAL
+              <span className="welcome-divider">·</span>
+              {activity.loading ? "SYNCING YOUR WORKSPACE" : `${activity.courses.length} ACTIVE COURSES`}
+            </div>
+            <h1>Good to see you, {firstName}.</h1>
             <p>
               {activity.loading
-                ? "Syncing your complete learning workspaceâ€¦"
-                : `${activity.assignments.length} assignments, ${activity.quizzes.length} quizzes, and ${activity.events.length} upcoming events are connected.`}
+                ? "Your courses, assessments, and schedule are being updated."
+                : `You have ${pendingAssignments} assignments to complete and ${activity.events.length} upcoming events in your schedule.`}
             </p>
-          </div>
-          <div className="readiness">
-            <span>âœ¦</span>
-            <div>
-              <small>LEARNING ACTIVITY</small>
-              <b>
-                {activity.loading
-                  ? "Syncing workspaceâ€¦"
-                  : `${activity.courses.length} active course${activity.courses.length === 1 ? "" : "s"}`}
-              </b>
+            <div className="welcome-actions">
+              <button onClick={() => navigateTo("My Courses")}>
+                <BookOpen aria-hidden="true" />
+                Continue learning
+              </button>
+              <button onClick={() => navigateTo("Calendar")}>
+                <CalendarDays aria-hidden="true" />
+                View schedule
+              </button>
             </div>
           </div>
+          <div className="welcome-art" aria-hidden="true">
+            <GraduationCap />
+            <span><Sparkles /></span>
+          </div>
+        </div>
+        <div className="summary-grid">
+          {[
+            { label: "Enrolled", value: activity.courses.length, hint: "Active courses", Icon: BookOpen, tone: "indigo" },
+            { label: "Assignments", value: pendingAssignments, hint: "Awaiting submission", Icon: FileCheck2, tone: "amber" },
+            { label: "Quizzes", value: activity.quizzes.length, hint: "Available to take", Icon: CircleHelp, tone: "blue" },
+            { label: "Examinations", value: activity.exams.length, hint: "Exam records", Icon: Award, tone: "violet" },
+            { label: "Attendance", value: averageAttendance === null ? "—" : `${averageAttendance}%`, hint: "Across your courses", Icon: GraduationCap, tone: "emerald" },
+            { label: "Submitted", value: completed, hint: "Assignment submissions", Icon: LayoutDashboard, tone: "rose" },
+          ].map(({ label, value, hint, Icon, tone }) => (
+            <article className="summary-card" key={label}>
+              <div className="summary-card-heading">
+                <span>{label}</span>
+                <span className={`summary-icon ${tone}`}><Icon aria-hidden="true" /></span>
+              </div>
+              <strong>{activity.loading ? "—" : value}</strong>
+              <small>{hint}</small>
+            </article>
+          ))}
         </div>
         <div className="dashboard-grid">
           <section className="primary-column">
-            <div className="revision-banner">
-              <div className="revision-copy">
-                <span>
-                  LEARNING
-                  <br />
-                  SUMMARY
-                </span>
-                <p>
-                  {activity.error ||
-                    (activity.loading
-                      ? "Syncing all student servicesâ€¦"
-                      : `${completed} of ${activity.assignments.length} assignments submitted. Keep your momentum going.`)}
-                </p>
+            <div className="dashboard-section-heading">
+              <div>
+                <h2>Continue learning</h2>
+                <p>Your enrolled courses and progress</p>
               </div>
-              <button onClick={() => setSection("Assignments")}>
-                View
-                <br />
-                Activity
-              </button>
+              <button onClick={() => navigateTo("My Courses")}>View all courses <ChevronRight /></button>
             </div>
             <div className="course-grid">
-              {activity.courses.slice(0, 2).map((course, index) => {
+              {activity.courses.slice(0, 3).map((course, index) => {
                 const courseAssignments = activity.assignments.filter(
                   (item) => item.courseId === course.id,
                 );
@@ -710,7 +779,7 @@ function Dashboard({
                   <p>No upcoming events found.</p>
                 </div>
               )}
-              <button className="outline-button" onClick={() => setSection("Calendar")}>
+              <button className="outline-button" onClick={() => navigateTo("Calendar")}>
                 Open Calendar
               </button>
             </section>
@@ -947,53 +1016,90 @@ function Dashboard({
     );
   return (
     <div className="workspace">
-      <aside className="sidebar">
+      <button
+        className={`sidebar-backdrop ${mobileMenuOpen ? "open" : ""}`}
+        type="button"
+        aria-label="Close navigation menu"
+        onClick={() => setMobileMenuOpen(false)}
+      />
+      <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${mobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-brand">
-          <span className="brand-mark">âŒ</span>
-          <div>
-            <strong>Mentify</strong>
-            <small>ACADEMIC EDITORIAL</small>
-          </div>
+          <button className="brand-home" type="button" onClick={() => navigateTo("Dashboard")}>
+            <span className="brand-mark">M</span>
+            <span className="brand-copy">
+              <strong>Mentify</strong>
+              <small>STUDENT PORTAL</small>
+            </span>
+          </button>
+          <button
+            className="sidebar-collapse"
+            type="button"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}
+          </button>
         </div>
-        <nav className="side-nav">
-          {navItems.map((item) => (
-            <button
-              key={item.label}
-              className={section === item.label ? "active" : ""}
-              onClick={() => setSection(item.label)}
-            >
-              <span>{item.icon}</span>
-              {item.label}
-            </button>
+        <nav className="side-nav" aria-label="Student portal">
+          {navGroups.map((group) => (
+            <div className="nav-group" key={group.name}>
+              <h2>{group.name}</h2>
+              {group.items.map(({ label, icon: Icon }) => (
+                <button
+                  type="button"
+                  key={label}
+                  className={section === label ? "active" : ""}
+                  title={sidebarCollapsed ? label : undefined}
+                  aria-current={section === label ? "page" : undefined}
+                  onClick={() => navigateTo(label)}
+                >
+                  <Icon aria-hidden="true" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="sidebar-footer">
-          <button className="new-session" onClick={() => setSection("AI Insights")}>
-            <span>âœ¦</span> New AI Session
+          <button className="new-session" type="button" title={sidebarCollapsed ? "Mentify AI" : undefined} onClick={() => navigateTo("AI Insights")}>
+            <Sparkles aria-hidden="true" />
+            <span>Mentify AI</span>
           </button>
-          <button onClick={() => setSection("Messages")}>
-            <span>?</span> Support
+          <button type="button" title={sidebarCollapsed ? "Support" : undefined} onClick={() => navigateTo("Messages")}>
+            <LifeBuoy aria-hidden="true" />
+            <span>Support</span>
           </button>
-          <button onClick={signOut}>
-            <span>â†ª</span> Logout
+          <button type="button" title={sidebarCollapsed ? "Log out" : undefined} onClick={signOut}>
+            <LogOut aria-hidden="true" />
+            <span>Log out</span>
           </button>
         </div>
       </aside>
       <main className="main-area">
         <header className="topbar">
+          <div className="topbar-leading">
+            <button className="mobile-menu" type="button" aria-label="Open navigation menu" onClick={() => setMobileMenuOpen(true)}>
+              <Menu aria-hidden="true" />
+            </button>
+            <nav className="breadcrumbs" aria-label="Breadcrumb">
+              <button type="button" onClick={() => navigateTo("Dashboard")}>Mentify</button>
+              <ChevronRight aria-hidden="true" />
+              <span>{currentGroup}</span>
+              <ChevronRight aria-hidden="true" />
+              <strong>{section}</strong>
+            </nav>
+          </div>
           <label className="search">
-            <span>âŒ•</span>
+            <Search aria-hidden="true" />
             <input aria-label="Search" placeholder="Search courses, notes, or AI insights..." />
           </label>
-          <div className="profile">
-            <button
-              className="notification"
-              aria-label="Notifications"
-              onClick={() => setSection("Calendar")}
-            >
-              â™§
-              <i />
+          <div className="topbar-actions">
+            <button className="header-action calendar-shortcut" type="button" aria-label="Open calendar" title="Student calendar" onClick={() => navigateTo("Calendar")}>
+              <CalendarDays aria-hidden="true" />
             </button>
+            <ThemeToggle />
+          <div className="profile">
             <div className="profile-copy">
               <strong>{fullName}</strong>
               <span>
@@ -1002,9 +1108,10 @@ function Dashboard({
                   : "Student workspace"}
               </span>
             </div>
-            <button className="avatar" onClick={() => setSection("Profile")}>
+            <button className="avatar" type="button" aria-label="Open student profile" onClick={() => navigateTo("Profile")}>
               {initials}
             </button>
+          </div>
           </div>
         </header>
         <div className="content-area">{content}</div>

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mentify · Student workspace",
-  description: "Your learning workspace",
+  title: "Mentify · Student Portal",
+  description: "Your connected student learning portal",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
