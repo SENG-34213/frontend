@@ -9,6 +9,8 @@ import type { BackendCourse } from "../api/courseApi";
 interface ExamManagementViewProps {
   onNavigate?: (tab: NavigationTab) => void;
   backendCourses?: BackendCourse[];
+  backendCoursesLoading?: boolean;
+  backendCoursesError?: Error | null;
 }
 
 const examTypeLabel = (type: BackendExam["type"]): Examination["examType"] => {
@@ -72,6 +74,8 @@ const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examinatio
 export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   onNavigate,
   backendCourses = [],
+  backendCoursesLoading = false,
+  backendCoursesError = null,
 }) => {
   const [exams, setExams] = useState<Examination[]>(mockExaminations);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -88,20 +92,26 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [wizardWeight, setWizardWeight] = useState("30");
 
   useEffect(() => {
-    if (backendCourses.length === 0) return;
+    if (backendCoursesLoading || backendCoursesError || backendCourses.length === 0) return;
     const controller = new AbortController();
 
-    Promise.all(backendCourses.map((course) => getCourseExams(course.id, controller.signal)))
-      .then((courseExams) => {
-        const liveExams = courseExams.flat().map((exam) => mapBackendExam(exam, backendCourses));
-        if (liveExams.length > 0) setExams(liveExams);
-      })
-      .catch(() => {
-        // The existing mock examinations remain visible when the API is unavailable.
-      });
+    Promise.allSettled(
+      backendCourses.map((course) => getCourseExams(course.id, controller.signal)),
+    ).then((results) => {
+      const liveExams = results
+        .filter(
+          (result): result is PromiseFulfilledResult<BackendExam[]> =>
+            result.status === "fulfilled",
+        )
+        .flatMap((result) => result.value)
+        .map((exam) => mapBackendExam(exam, backendCourses));
+      if (liveExams.length > 0) {
+        setExams(liveExams);
+      }
+    });
 
     return () => controller.abort();
-  }, [backendCourses]);
+  }, [backendCourses, backendCoursesError, backendCoursesLoading]);
 
   const handleFinishWizard = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +146,22 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         });
         if (created) {
           setExams((current) => [mapBackendExam(created, backendCourses), ...current]);
+          setIsWizardOpen(false);
+          setWizardStep(1);
+          setWizardTitle("");
+          return;
+        }
+
+        // Some deployments return 201 without a response body. Re-query the
+        // backend before falling back to local mock state so a successful
+        // create is still visible after a reload.
+        const refreshedExams = (
+          await Promise.all(backendCourses.map((item) => getCourseExams(item.id)))
+        )
+          .flat()
+          .map((item) => mapBackendExam(item, backendCourses));
+        if (refreshedExams.length > 0) {
+          setExams(refreshedExams);
           setIsWizardOpen(false);
           setWizardStep(1);
           setWizardTitle("");

@@ -377,6 +377,8 @@ export default function App() {
             <ExamManagementView
               onNavigate={handleNavigate}
               backendCourses={teacherCourses.courses}
+              backendCoursesLoading={teacherCourses.isLoading}
+              backendCoursesError={teacherCourses.error}
             />
           )}
 
