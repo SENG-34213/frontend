@@ -6,7 +6,7 @@ interface QuestionBuilderModalProps {
   isOpen: boolean;
   quizId: string;
   onClose: () => void;
-  onSaveQuestion: (question: QuizQuestion) => void;
+  onSaveQuestion: (question: QuizQuestion) => void | Promise<void>;
 }
 
 export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
@@ -48,7 +48,7 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!questionText.trim()) return;
 
@@ -63,7 +63,7 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
       marks: Number(marks) || 5,
     };
 
-    onSaveQuestion(newQuestion);
+    await onSaveQuestion(newQuestion);
     onClose();
   };
 

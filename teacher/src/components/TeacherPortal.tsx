@@ -45,6 +45,7 @@ import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
+import { createQuiz } from "../teacher/api/quizApi";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -430,6 +431,8 @@ export default function App() {
         type={quickCreateType}
         onClose={() => setIsQuickCreateOpen(false)}
         onCreated={handleItemCreated}
+        backendCourses={teacherCourses.courses}
+        onCreateQuiz={createQuiz}
       />
     </div>
   );

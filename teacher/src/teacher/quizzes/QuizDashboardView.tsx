@@ -13,7 +13,13 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Course, Quiz, QuizQuestion, NavigationTab } from "../types";
-import type { BackendQuiz } from "../api/quizApi";
+import {
+  createQuizQuestion,
+  getTodayQuizAnalytics,
+  type BackendQuiz,
+  type BackendQuizQuestion,
+  type QuizAnalytics,
+} from "../api/quizApi";
 import { useTeacherQuizzes } from "../hooks/useTeacherQuizzes";
 import { StatusBadge } from "../components/StatusBadge";
 import { QuestionBuilderModal } from "./QuestionBuilderModal";
@@ -37,6 +43,27 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   const [courseFilter, setCourseFilter] = useState("All");
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isQuestionBuilderOpen, setIsQuestionBuilderOpen] = useState(false);
+  const [todayAnalytics, setTodayAnalytics] = useState<QuizAnalytics | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getTodayQuizAnalytics(controller.signal)
+      .then((analytics) => {
+        if (!controller.signal.aborted) setTodayAnalytics(analytics ?? null);
+      })
+      .catch(() => {
+        // Analytics are optional; the existing placeholder remains visible.
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const averageTodayScore = todayAnalytics?.quizzes.length
+    ? Math.round(
+        todayAnalytics.quizzes.reduce((total, quiz) => total + (quiz.averagePercentage ?? 0), 0) /
+          todayAnalytics.quizzes.length,
+      )
+    : null;
 
   useEffect(() => {
     const mappedQuizzes = teacherQuizState.quizzes.map((quiz) =>
@@ -58,7 +85,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
     return matchesSearch && matchesCourse;
   });
 
-  const handleSaveQuestion = (newQuestion: QuizQuestion) => {
+  const appendQuestion = (newQuestion: QuizQuestion) => {
     if (!selectedQuiz) return;
     setQuizzes((prev) =>
       prev.map((q) =>
@@ -82,6 +109,31 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           }
         : null,
     );
+  };
+
+  const handleSaveQuestion = async (newQuestion: QuizQuestion) => {
+    if (selectedQuiz && newQuestion.type === "multiple-choice" && newQuestion.options?.length) {
+      try {
+        const created = await createQuizQuestion(selectedQuiz.id, {
+          questionText: newQuestion.question,
+          questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
+          marks: newQuestion.marks,
+          questionOrder: selectedQuiz.questions.length + 1,
+          options: newQuestion.options.map((option, index) => ({
+            optionText: option,
+            correct: option === newQuestion.correctAnswer,
+            optionOrder: index + 1,
+          })),
+        });
+        if (created) {
+          appendQuestion(mapBackendQuestion(created, selectedQuiz.id));
+          return;
+        }
+      } catch {
+        // Keep the current local question behavior when the API is unavailable.
+      }
+    }
+    appendQuestion(newQuestion);
   };
 
   return (
@@ -142,7 +194,9 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Avg Class Score</span>
-          <div className="text-2xl font-bold text-emerald-600 font-mono mt-1 tabular-nums">—</div>
+          <div className="text-2xl font-bold text-emerald-600 font-mono mt-1 tabular-nums">
+            {averageTodayScore === null ? "—" : `${averageTodayScore}%`}
+          </div>
           <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
             Live analytics coming later
           </p>
@@ -410,5 +464,19 @@ function mapBackendQuiz(quiz: BackendQuiz, courses: Course[]): Quiz {
     totalEligible: course?.enrolledCount || 0,
     averageScorePercent: 0,
     questions,
+  };
+}
+
+function mapBackendQuestion(question: BackendQuizQuestion, quizId: string): QuizQuestion {
+  const options = [...question.options].sort((a, b) => a.optionOrder - b.optionOrder);
+  return {
+    id: question.id,
+    quizId,
+    type: "multiple-choice",
+    question: question.questionText,
+    options: options.map((option) => option.optionText),
+    correctAnswer: options.find((option) => option.correct)?.optionText ?? "",
+    explanation: "",
+    marks: Number(question.marks),
   };
 }

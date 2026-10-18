@@ -11,6 +11,8 @@ import {
   Check,
 } from "lucide-react";
 import { mockCourses } from "../data/mockData";
+import type { BackendCourse } from "../api/courseApi";
+import type { QuizDraft } from "../api/quizApi";
 
 export type QuickCreateType =
   | "course"
@@ -26,6 +28,8 @@ interface QuickCreateModalProps {
   type: QuickCreateType | null;
   onClose: () => void;
   onCreated: (type: QuickCreateType, item: any) => void;
+  backendCourses?: BackendCourse[];
+  onCreateQuiz?: (draft: QuizDraft) => Promise<unknown>;
 }
 
 export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
@@ -33,6 +37,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   type,
   onClose,
   onCreated,
+  backendCourses = [],
+  onCreateQuiz,
 }) => {
   const [activeType, setActiveType] = useState<QuickCreateType>(type || "assignment");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,11 +59,42 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     if (type) setActiveType(type);
   }, [type]);
 
+  React.useEffect(() => {
+    if (backendCourses[0] && !backendCourses.some((course) => course.id === selectedCourseId)) {
+      setSelectedCourseId(backendCourses[0].id);
+    }
+  }, [backendCourses, selectedCourseId]);
+
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    if (activeType === "quiz" && onCreateQuiz && backendCourses.length > 0) {
+      try {
+        const created = await onCreateQuiz({
+          courseId: selectedCourseId,
+          title,
+          description,
+          durationMinutes: Number(duration) || 45,
+          passMark: 0,
+          maxAttempts: 1,
+          showResultImmediately: true,
+          creationMethod: "MANUAL",
+        });
+        setIsSubmitting(false);
+        setSuccessMsg("Created QUIZ successfully!");
+        onCreated(activeType, created);
+        setTimeout(() => {
+          setSuccessMsg("");
+          onClose();
+        }, 900);
+        return;
+      } catch {
+        // Preserve the existing local mock flow when the quiz API is unavailable.
+      }
+    }
 
     setTimeout(() => {
       setIsSubmitting(false);
@@ -157,9 +194,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     onChange={(e) => setSelectedCourseId(e.target.value)}
                     className="w-full px-3 py-2 text-xs text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
-                    {mockCourses.map((c) => (
+                    {(backendCourses.length > 0 ? backendCourses : mockCourses).map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.code} — {c.title}
+                        {"courseName" in c ? c.subject || c.courseName : `${c.code} — ${c.title}`}
                       </option>
                     ))}
                   </select>
