@@ -21,6 +21,7 @@ import { Assignment, Course, Module, NavigationTab } from "../types";
 import { mockStudents, mockQuizzes, mockExaminations, mockMaterials } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
 import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
+import { getCourseById, mapBackendCourse } from "../api/courseApi";
 import { getCourseModules, getModuleLessons } from "../api/courseContentApi";
 import { getCourseAssignments, type BackendAssignment } from "../api/assignmentApi";
 
@@ -78,6 +79,19 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   const [courseEventsError, setCourseEventsError] = useState<string | null>(null);
   const [courseModules, setCourseModules] = useState<Module[]>([]);
   const [courseAssignments, setCourseAssignments] = useState<Assignment[]>([]);
+  const [displayCourse, setDisplayCourse] = useState(course);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getCourseById(course.id, controller.signal)
+      .then((backendCourse) => {
+        if (!controller.signal.aborted) setDisplayCourse(mapBackendCourse(backendCourse));
+      })
+      .catch(() => {
+        // Keep the backend list result visible if the detail request is unavailable.
+      });
+    return () => controller.abort();
+  }, [course]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -181,7 +195,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onEditCourse(course)}
+            onClick={() => onEditCourse(displayCourse)}
             className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <Edit3 className="w-3.5 h-3.5 text-slate-500" />
@@ -204,19 +218,19 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
             <div>
               <div className="flex items-center gap-2.5 mb-2">
                 <span className="text-xs font-mono font-bold bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded border border-indigo-400/30">
-                  {course.code}
+                  {displayCourse.code}
                 </span>
                 <span className="text-xs text-slate-300 font-medium">
                   {course.semester} · {course.academicYear}
                 </span>
                 <span className="text-xs text-slate-400">·</span>
-                <span className="text-xs text-slate-300">{course.level} Level</span>
+                <span className="text-xs text-slate-300">{displayCourse.level} Level</span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                {course.title}
+                {displayCourse.title}
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 max-w-3xl mt-1.5 leading-relaxed">
-                {course.description}
+                {displayCourse.description}
               </p>
             </div>
 
@@ -224,10 +238,10 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
               <div className="text-right">
                 <span className="text-xs text-slate-400 block">Class Enrollment</span>
                 <span className="text-lg font-bold text-white font-mono tabular-nums">
-                  {course.enrolledCount} / {course.maxCapacity}
+                  {displayCourse.enrolledCount} / {displayCourse.maxCapacity}
                 </span>
               </div>
-              <StatusBadge status={course.status} />
+              <StatusBadge status={displayCourse.status} />
             </div>
           </div>
         </div>
@@ -613,7 +627,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           {(activeTab === "quizzes" || activeTab === "exams" || activeTab === "grades") && (
             <div className="text-center py-8">
               <p className="text-xs text-slate-500 mb-3">
-                Viewing dedicated assessment module for {course.code}.
+                Viewing dedicated assessment module for {displayCourse.code}.
               </p>
               <button
                 onClick={() => onNavigate(activeTab as NavigationTab)}

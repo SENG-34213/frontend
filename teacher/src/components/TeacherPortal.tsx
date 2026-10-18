@@ -6,7 +6,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { NavigationTab, Course } from "../teacher/types";
-import { mockCourses, mockAssignments, mockConversations } from "../teacher/data/mockData";
+import { mockAssignments, mockConversations } from "../teacher/data/mockData";
 import { TeacherSidebar } from "../teacher/components/TeacherSidebar";
 import { TeacherNavbar } from "../teacher/components/TeacherNavbar";
 import { GlobalSearchModal } from "../teacher/components/GlobalSearchModal";
@@ -41,6 +41,7 @@ import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
 import { createQuiz } from "../teacher/api/quizApi";
+import { mapBackendCourse } from "../teacher/api/courseApi";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -66,7 +67,7 @@ export default function App() {
   const recentNotifications = useTeacherNotifications(Boolean(session), 4);
 
   // Course state
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
 
   // Counts
   const pendingSubmissionsCount = mockAssignments.reduce(
@@ -99,31 +100,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!teacherCourses.isLoading && !teacherCourses.error) {
-      setCourses(
-        teacherCourses.courses.map((course) => ({
-          id: course.id,
-          code: course.subject || "COURSE",
-          title: course.courseName,
-          description: course.courseDescription || "No course description available.",
-          category: course.subject || "Academic Course",
-          level: "Undergraduate",
-          semester: "Current Semester",
-          academicYear: "",
-          enrolledCount: course.numberOfStudents ?? 0,
-          maxCapacity: course.numberOfStudents ?? 0,
-          status:
-            course.courseStatus === "PUBLISHED"
-              ? "Active"
-              : course.courseStatus === "ARCHIVED"
-                ? "Archived"
-                : "Draft",
-          coverTheme: "indigo",
-          modulesCount: 0,
-          assignmentsCount: 0,
-          averageGrade: 0,
-        })),
-      );
+    if (teacherCourses.error) {
+      setCourses([]);
+      return;
+    }
+    if (!teacherCourses.isLoading) {
+      setCourses(teacherCourses.courses.map(mapBackendCourse));
     }
   }, [teacherCourses.courses, teacherCourses.error, teacherCourses.isLoading]);
 

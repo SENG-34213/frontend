@@ -10,7 +10,6 @@ import {
   Calendar,
   Check,
 } from "lucide-react";
-import { mockCourses } from "../data/mockData";
 import type { BackendCourse } from "../api/courseApi";
 import type { QuizDraft } from "../api/quizApi";
 import { createAssignment } from "../api/assignmentApi";
@@ -50,7 +49,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [courseCode, setCourseCode] = useState("");
   const [courseTitle, setCourseTitle] = useState("");
   const [courseCategory, setCourseCategory] = useState("Computer Science");
-  const [selectedCourseId, setSelectedCourseId] = useState(mockCourses[0]?.id || "");
+  const [selectedCourseId, setSelectedCourseId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("2026-10-30");
@@ -64,11 +63,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   }, [type]);
 
   React.useEffect(() => {
-    if (
-      (activeType === "quiz" || activeType === "assignment") &&
-      backendCourses[0] &&
-      !backendCourses.some((course) => course.id === selectedCourseId)
-    ) {
+    if (backendCourses[0] && !backendCourses.some((course) => course.id === selectedCourseId)) {
       setSelectedCourseId(backendCourses[0].id);
     }
   }, [activeType, backendCourses, selectedCourseId]);
@@ -91,8 +86,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (activeType === "quiz" && backendCourses.length === 0) {
+    if (activeType !== "course" && backendCourses.length === 0) {
       setIsSubmitting(false);
+      setSuccessMsg("No courses available.");
       return;
     }
 
@@ -165,7 +161,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         id: `gen-${Date.now()}`,
         title: title || courseTitle || `${activeType} #${Math.floor(Math.random() * 900 + 100)}`,
         courseId: selectedCourseId,
-        courseCode: mockCourses.find((c) => c.id === selectedCourseId)?.code || "CS-201",
+        courseCode:
+          backendCourses.find((course) => course.id === selectedCourseId)?.subject || "COURSE",
         description,
         dueDate,
         maxMarks: Number(maxMarks) || 100,
@@ -255,12 +252,12 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     onChange={(e) => setSelectedCourseId(e.target.value)}
                     className="w-full px-3 py-2 text-xs text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   >
-                    {activeType === "quiz" && backendCourses.length === 0 ? (
+                    {backendCourses.length === 0 ? (
                       <option value="" disabled>
                         No courses available
                       </option>
                     ) : (
-                      (activeType === "quiz" ? backendCourses : mockCourses).map((c) => (
+                      backendCourses.map((c: any) => (
                         <option key={c.id} value={c.id}>
                           {"courseName" in c ? c.subject || c.courseName : `${c.code} — ${c.title}`}
                         </option>
