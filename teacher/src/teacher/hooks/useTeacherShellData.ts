@@ -33,8 +33,7 @@ function toTeacherProfile(user: TeacherUserSummary): TeacherProfile {
     specializations: Array.isArray(user.specializations)
       ? user.specializations.filter((item): item is string => typeof item === "string")
       : [],
-    totalCoursesTaught:
-      typeof user.totalCoursesTaught === "number" ? user.totalCoursesTaught : 0,
+    totalCoursesTaught: typeof user.totalCoursesTaught === "number" ? user.totalCoursesTaught : 0,
     totalStudentsMentored:
       typeof user.totalStudentsMentored === "number" ? user.totalStudentsMentored : 0,
   };
