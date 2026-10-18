@@ -56,6 +56,7 @@ export default function App() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+  const [assignmentRefreshToken, setAssignmentRefreshToken] = useState(0);
 
   // Quick Create Modal state
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
@@ -182,6 +183,7 @@ export default function App() {
       setSelectedCourseForDetail(newCourse);
       setCurrentTab("courses");
     } else if (type === "assignment") {
+      setAssignmentRefreshToken((current) => current + 1);
       setCurrentTab("assignments");
     } else if (type === "quiz") {
       setCurrentTab("quizzes");
@@ -359,6 +361,8 @@ export default function App() {
               onGradeAssignment={handleOpenGradeAssignment}
               onOpenCreateAssignment={() => handleOpenQuickCreate("assignment")}
               onNavigate={handleNavigate}
+              backendCourses={teacherCourses.courses}
+              refreshToken={assignmentRefreshToken}
             />
           )}
 

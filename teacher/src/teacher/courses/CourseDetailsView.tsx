@@ -17,17 +17,12 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
-import { Course, Module, NavigationTab } from "../types";
-import {
-  mockStudents,
-  mockAssignments,
-  mockQuizzes,
-  mockExaminations,
-  mockMaterials,
-} from "../data/mockData";
+import { Assignment, Course, Module, NavigationTab } from "../types";
+import { mockStudents, mockQuizzes, mockExaminations, mockMaterials } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
 import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
 import { getCourseModules, getModuleLessons } from "../api/courseContentApi";
+import { getCourseAssignments, type BackendAssignment } from "../api/assignmentApi";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -46,6 +41,31 @@ type CourseTab =
   | "exams"
   | "grades";
 
+const mapCourseAssignment = (item: BackendAssignment): Assignment => {
+  const due = new Date(item.dueDate);
+  return {
+    id: item.id,
+    courseId: item.courseId,
+    courseCode: item.courseId,
+    title: item.title,
+    description: item.description || item.instructions || "",
+    dueDate: Number.isNaN(due.getTime()) ? item.dueDate : due.toLocaleDateString(),
+    dueTime: Number.isNaN(due.getTime())
+      ? ""
+      : due.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+    maxMarks: item.maxMarks,
+    weightagePercent: 0,
+    status: item.status === "PUBLISHED" ? "Active" : item.status === "CLOSED" ? "Closed" : "Draft",
+    totalSubmissions: item.totalSubmissions ?? 0,
+    gradedCount: item.gradedCount ?? 0,
+    totalStudents: 0,
+    rubricItems: (item.rubricItems || []).map((rubric) => ({
+      criterion: rubric.criterion,
+      marks: rubric.marks,
+    })),
+  };
+};
+
 export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   course,
   onBack,
@@ -57,6 +77,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   const [courseEventsLoading, setCourseEventsLoading] = useState(true);
   const [courseEventsError, setCourseEventsError] = useState<string | null>(null);
   const [courseModules, setCourseModules] = useState<Module[]>([]);
+  const [courseAssignments, setCourseAssignments] = useState<Assignment[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -118,8 +139,19 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
     return () => controller.abort();
   }, [course.id]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    getCourseAssignments(course.id, controller.signal)
+      .then((assignments) => {
+        if (!controller.signal.aborted) setCourseAssignments(assignments.map(mapCourseAssignment));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setCourseAssignments([]);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
   const enrolledStudents = mockStudents.filter((s) => s.enrolledCourseIds.includes(course.id));
-  const courseAssignments = mockAssignments.filter((a) => a.courseId === course.id);
   const courseQuizzes = mockQuizzes.filter((q) => q.courseId === course.id);
   const courseExams = mockExaminations.filter((e) => e.courseId === course.id);
   const courseMaterials = mockMaterials.filter((m) => m.courseId === course.id);
