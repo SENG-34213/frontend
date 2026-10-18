@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Layers,
   Plus,
@@ -15,17 +15,58 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Course, Module, Lesson, NavigationTab } from "../types";
-import { mockCourses, mockModules } from "../data/mockData";
+import type { BackendCourse } from "../api/courseApi";
+import {
+  createCourseModule,
+  createModuleLesson,
+  deleteCourseModule,
+  deleteModuleLesson,
+  getCourseModules,
+  getModuleLessons,
+  updateCourseModule,
+  updateModuleLesson,
+  type CourseContentLesson,
+  type CourseContentModule,
+} from "../api/courseContentApi";
 import { StatusBadge } from "../components/StatusBadge";
 import { LessonEditorModal } from "../lessons/LessonEditorModal";
 
 interface CurriculumBuilderViewProps {
   onNavigate: (tab: NavigationTab) => void;
+  backendCourses?: BackendCourse[];
 }
 
-export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ onNavigate }) => {
-  const [selectedCourseId, setSelectedCourseId] = useState(mockCourses[0]?.id || "crs-201");
-  const [modules, setModules] = useState<Module[]>(mockModules);
+const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
+  id: lesson.id,
+  moduleId: lesson.moduleId,
+  title: lesson.title,
+  description: lesson.description || "",
+  durationMinutes: 0,
+  order,
+  status: lesson.visible === false ? "Draft" : "Published",
+  contentType: "Lecture",
+  resourcesCount: 0,
+});
+
+const toModule = (module: CourseContentModule, lessons: CourseContentLesson[]): Module => ({
+  id: module.id,
+  courseId: module.courseId,
+  title: module.title,
+  description: module.description || "",
+  order: module.sequenceOrder,
+  status: module.visible === false ? "Draft" : "Published",
+  lessons: lessons.map((lesson, index) => toLesson(lesson, index + 1)),
+});
+
+export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
+  onNavigate,
+  backendCourses = [],
+}) => {
+  const [selectedCourseId, setSelectedCourseId] = useState(backendCourses[0]?.id || "");
+  const [modules, setModules] = useState<Module[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedModuleIds, setExpandedModuleIds] = useState<Record<string, boolean>>({
     "mod-1": true,
     "mod-2": true,
@@ -41,9 +82,59 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [newModuleDesc, setNewModuleDesc] = useState("");
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
 
-  const currentCourse = mockCourses.find((c) => c.id === selectedCourseId) || mockCourses[0];
+  const currentBackendCourse = backendCourses.find((course) => course.id === selectedCourseId);
+  const currentCourse: Course = {
+    id: selectedCourseId,
+    code: currentBackendCourse?.subject || "COURSE",
+    title: currentBackendCourse?.courseName || "Select a course",
+    description: currentBackendCourse?.courseDescription || "",
+    category: currentBackendCourse?.subject || "Academic Course",
+    level: "Undergraduate",
+    semester: "Current Semester",
+    academicYear: "",
+    enrolledCount: currentBackendCourse?.numberOfStudents || 0,
+    maxCapacity: currentBackendCourse?.numberOfStudents || 0,
+    status: "Active",
+    coverTheme: "indigo",
+    modulesCount: modules.length,
+    assignmentsCount: 0,
+    averageGrade: 0,
+  };
   const courseModules = modules.filter((m) => m.courseId === selectedCourseId);
+
+  useEffect(() => {
+    if (!selectedCourseId) {
+      setModules([]);
+      return;
+    }
+    const controller = new AbortController();
+    setIsLoading(true);
+    setError(null);
+    getCourseModules(selectedCourseId, controller.signal)
+      .then(async (items) => {
+        const loaded = await Promise.all(
+          items.map(async (item) => {
+            const lessons = await getModuleLessons(selectedCourseId, item.id, controller.signal);
+            return toModule(item, lessons);
+          }),
+        );
+        setModules(loaded.sort((a, b) => a.order - b.order));
+        setExpandedModuleIds(Object.fromEntries(loaded.map((item) => [item.id, true])));
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            requestError instanceof Error ? requestError.message : "Course content failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, [selectedCourseId]);
 
   const toggleModule = (id: string) => {
     setExpandedModuleIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -55,16 +146,46 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
     setIsEditorOpen(true);
   };
 
-  const handleSaveLesson = (updatedLesson: Lesson) => {
-    setModules((prev) =>
-      prev.map((mod) => {
-        if (mod.id !== updatedLesson.moduleId) return mod;
-        return {
-          ...mod,
-          lessons: mod.lessons.map((l) => (l.id === updatedLesson.id ? updatedLesson : l)),
-        };
-      }),
-    );
+  const handleSaveLesson = async (updatedLesson: Lesson) => {
+    if (!selectedCourseId || !editingParentModule) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        title: updatedLesson.title.trim(),
+        description: updatedLesson.description.trim(),
+        isVisible: updatedLesson.status === "Published",
+      };
+      const saved = updatedLesson.id.startsWith("new-")
+        ? await createModuleLesson(selectedCourseId, editingParentModule.id, payload)
+        : await updateModuleLesson(
+            selectedCourseId,
+            editingParentModule.id,
+            updatedLesson.id,
+            payload,
+          );
+      const nextLesson = toLesson(saved, updatedLesson.order);
+      setModules((prev) =>
+        prev.map((mod) =>
+          mod.id === editingParentModule.id
+            ? {
+                ...mod,
+                lessons: updatedLesson.id.startsWith("new-")
+                  ? [...mod.lessons, nextLesson]
+                  : mod.lessons.map((lesson) =>
+                      lesson.id === updatedLesson.id ? nextLesson : lesson,
+                    ),
+              }
+            : mod,
+        ),
+      );
+      setEditingLesson(null);
+      setIsEditorOpen(false);
+    } catch (requestError: unknown) {
+      setError(requestError instanceof Error ? requestError.message : "Lesson could not be saved.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddLesson = (modId: string) => {
@@ -72,7 +193,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
     if (!parent) return;
 
     const newLesson: Lesson = {
-      id: `les-${Date.now()}`,
+      id: `new-${Date.now()}`,
       moduleId: modId,
       title: `New Lesson Unit ${parent.lessons.length + 1}`,
       description: "Define syllabus objectives, lab instructions, and references.",
@@ -83,35 +204,77 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
       resourcesCount: 1,
     };
 
-    setModules((prev) =>
-      prev.map((m) => (m.id === modId ? { ...m, lessons: [...m.lessons, newLesson] } : m)),
-    );
-
     // Immediately open editor for this new lesson
     setEditingLesson(newLesson);
     setEditingParentModule(parent);
     setIsEditorOpen(true);
   };
 
-  const handleCreateModuleSubmit = (e: React.FormEvent) => {
+  const handleCreateModuleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newModuleTitle.trim()) return;
 
-    const newMod: Module = {
-      id: `mod-${Date.now()}`,
-      courseId: selectedCourseId,
-      title: `Module ${courseModules.length + 1}: ${newModuleTitle}`,
-      description: newModuleDesc || "Curriculum unit learning objectives.",
-      order: courseModules.length + 1,
-      status: "Published",
-      lessons: [],
-    };
+    if (!selectedCourseId) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        title: newModuleTitle.trim(),
+        description: newModuleDesc.trim(),
+        sequenceOrder: editingModule?.order || courseModules.length + 1,
+        isVisible: editingModule?.status !== "Draft",
+      };
+      const saved = editingModule
+        ? await updateCourseModule(selectedCourseId, editingModule.id, payload)
+        : await createCourseModule(selectedCourseId, payload);
+      const nextModule = toModule(saved, editingModule?.lessons || []);
+      setModules((prev) =>
+        editingModule
+          ? prev.map((item) => (item.id === editingModule.id ? nextModule : item))
+          : [...prev, nextModule],
+      );
+      setExpandedModuleIds((prev) => ({ ...prev, [nextModule.id]: true }));
+      setNewModuleTitle("");
+      setNewModuleDesc("");
+      setEditingModule(null);
+      setIsCreatingModule(false);
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Module could not be created.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-    setModules((prev) => [...prev, newMod]);
-    setExpandedModuleIds((prev) => ({ ...prev, [newMod.id]: true }));
-    setNewModuleTitle("");
-    setNewModuleDesc("");
-    setIsCreatingModule(false);
+  const handleDeleteModule = async (module: Module) => {
+    if (!selectedCourseId || !window.confirm(`Delete ${module.title}?`)) return;
+    try {
+      await deleteCourseModule(selectedCourseId, module.id);
+      setModules((prev) => prev.filter((item) => item.id !== module.id));
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Module could not be deleted.",
+      );
+    }
+  };
+
+  const handleDeleteLesson = async (module: Module, lesson: Lesson) => {
+    if (!selectedCourseId || !window.confirm(`Delete ${lesson.title}?`)) return;
+    try {
+      await deleteModuleLesson(selectedCourseId, module.id, lesson.id);
+      setModules((prev) =>
+        prev.map((item) =>
+          item.id === module.id
+            ? { ...item, lessons: item.lessons.filter((entry) => entry.id !== lesson.id) }
+            : item,
+        ),
+      );
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Lesson could not be deleted.",
+      );
+    }
   };
 
   return (
@@ -135,15 +298,20 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
             onChange={(e) => setSelectedCourseId(e.target.value)}
             className="px-3 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden shadow-2xs"
           >
-            {mockCourses.map((c) => (
+            {backendCourses.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.code} — {c.title}
+                {c.subject || "COURSE"} - {c.courseName}
               </option>
             ))}
           </select>
 
           <button
-            onClick={() => setIsCreatingModule(true)}
+            onClick={() => {
+              setEditingModule(null);
+              setNewModuleTitle("");
+              setNewModuleDesc("");
+              setIsCreatingModule(true);
+            }}
             className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -160,7 +328,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
         >
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-700">
-              Create New Syllabus Module
+              {editingModule ? "Edit Syllabus Module" : "Create New Syllabus Module"}
             </h3>
             <button
               type="button"
@@ -210,10 +378,30 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
               type="submit"
               className="px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs"
             >
-              Save Module
+              {isSaving ? "Saving..." : "Save Module"}
             </button>
           </div>
         </form>
+      )}
+
+      {error && (
+        <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError(null)} className="font-semibold">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {!selectedCourseId && (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          No courses are assigned to you yet.
+        </div>
+      )}
+      {selectedCourseId && isLoading && (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          Loading course content...
+        </div>
       )}
 
       {/* Course Header Banner */}
@@ -282,6 +470,20 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
                     {mod.lessons.length} lessons
                   </span>
                   <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingModule(mod);
+                      setNewModuleTitle(mod.title);
+                      setNewModuleDesc(mod.description);
+                      setIsCreatingModule(true);
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
+                    aria-label={`Edit ${mod.title}`}
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddLesson(mod.id);
@@ -290,6 +492,17 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
                   >
                     <Plus className="w-3 h-3" />
                     <span>Add Lesson</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleDeleteModule(mod);
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
+                    aria-label={`Delete ${mod.title}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -337,6 +550,14 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({ on
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>Edit Unit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteLesson(mod, lesson)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
+                            aria-label={`Delete ${lesson.title}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>

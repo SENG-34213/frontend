@@ -17,9 +17,8 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
-import { Course, NavigationTab } from "../types";
+import { Course, Module, NavigationTab } from "../types";
 import {
-  mockModules,
   mockStudents,
   mockAssignments,
   mockQuizzes,
@@ -28,6 +27,7 @@ import {
 } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
 import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
+import { getCourseModules, getModuleLessons } from "../api/courseContentApi";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -56,6 +56,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   const [courseEvents, setCourseEvents] = useState<BackendCalendarEvent[]>([]);
   const [courseEventsLoading, setCourseEventsLoading] = useState(true);
   const [courseEventsError, setCourseEventsError] = useState<string | null>(null);
+  const [courseModules, setCourseModules] = useState<Module[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -81,7 +82,42 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
     return () => controller.abort();
   }, [course.id]);
 
-  const courseModules = mockModules.filter((m) => m.courseId === course.id);
+  useEffect(() => {
+    const controller = new AbortController();
+    getCourseModules(course.id, controller.signal)
+      .then(async (modules) => {
+        const withLessons = await Promise.all(
+          modules.map(async (module) => {
+            const lessons = await getModuleLessons(course.id, module.id, controller.signal);
+            return {
+              id: module.id,
+              courseId: module.courseId,
+              title: module.title,
+              description: module.description || "",
+              order: module.sequenceOrder,
+              status: module.visible === false ? "Draft" : "Published",
+              lessons: lessons.map((lesson, index) => ({
+                id: lesson.id,
+                moduleId: lesson.moduleId,
+                title: lesson.title,
+                description: lesson.description || "",
+                durationMinutes: 0,
+                order: index + 1,
+                status: lesson.visible === false ? "Draft" : "Published",
+                contentType: "Lecture",
+                resourcesCount: 0,
+              })),
+            } as Module;
+          }),
+        );
+        if (!controller.signal.aborted) setCourseModules(withLessons);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setCourseModules([]);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
   const enrolledStudents = mockStudents.filter((s) => s.enrolledCourseIds.includes(course.id));
   const courseAssignments = mockAssignments.filter((a) => a.courseId === course.id);
   const courseQuizzes = mockQuizzes.filter((q) => q.courseId === course.id);

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Save, Eye, Edit3, Clock, Layers, BookOpen, Check } from "lucide-react";
 import { Lesson, Module } from "../types";
 
@@ -30,6 +30,18 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
   );
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (!lesson) return;
+    setTitle(lesson.title);
+    setDescription(lesson.description);
+    setDurationMinutes(lesson.durationMinutes);
+    setContentType(lesson.contentType);
+    setStatus(lesson.status);
+    setContentMarkdown(lesson.contentMarkdown || "");
+    setMode("edit");
+    setIsSaved(false);
+  }, [lesson]);
 
   const handleSave = () => {
     setIsSaved(true);
