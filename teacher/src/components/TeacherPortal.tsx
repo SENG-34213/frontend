@@ -6,11 +6,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { NavigationTab, Course } from "../teacher/types";
-import {
-  mockCourses,
-  mockAssignments,
-  mockConversations,
-} from "../teacher/data/mockData";
+import { mockCourses, mockAssignments, mockConversations } from "../teacher/data/mockData";
 import { TeacherSidebar } from "../teacher/components/TeacherSidebar";
 import { TeacherNavbar } from "../teacher/components/TeacherNavbar";
 import { GlobalSearchModal } from "../teacher/components/GlobalSearchModal";
