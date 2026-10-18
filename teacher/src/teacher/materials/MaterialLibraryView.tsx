@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FolderOpen,
   Plus,
@@ -15,12 +15,49 @@ import {
   File,
   Sparkles,
 } from "lucide-react";
-import { LearningMaterial, NavigationTab } from "../types";
-import { mockMaterials, mockCourses } from "../data/mockData";
+import { LearningMaterial } from "../types";
+import type { BackendCourse } from "../api/courseApi";
+import {
+  createModuleMaterial,
+  deleteModuleMaterial,
+  getCourseModules,
+  getModuleMaterials,
+  updateModuleMaterial,
+  type CourseContentMaterial,
+  type CourseContentModule,
+} from "../api/courseContentApi";
 import { StatusBadge } from "../components/StatusBadge";
 
-export const MaterialLibraryView: React.FC = () => {
-  const [materials, setMaterials] = useState<LearningMaterial[]>(mockMaterials);
+type MaterialLibraryViewProps = { backendCourses?: BackendCourse[] };
+
+const toMaterial = (material: CourseContentMaterial, course: BackendCourse): LearningMaterial => ({
+  id: material.id,
+  courseId: course.id,
+  courseCode: course.subject || "COURSE",
+  title: material.title,
+  description: material.fileUrl || "Course learning material",
+  fileType:
+    material.type === "DOC"
+      ? "DOCX"
+      : material.type === "PPT"
+        ? "SLIDES"
+        : material.type === "IMAGE" || material.type === "AUDIO"
+          ? "VIDEO"
+          : material.type || "PDF",
+  fileSize: "—",
+  uploadDate: "Available",
+  s3Key: material.fileUrl || material.materialId || "",
+  downloadsCount: 0,
+  visibility: "Published",
+  moduleAssociation: material.moduleId,
+});
+
+export const MaterialLibraryView: React.FC<MaterialLibraryViewProps> = ({
+  backendCourses = [],
+}) => {
+  const [materials, setMaterials] = useState<LearningMaterial[]>([]);
+  const [modules, setModules] = useState<CourseContentModule[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -28,13 +65,47 @@ export const MaterialLibraryView: React.FC = () => {
   // Upload modal states
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadTitle, setUploadTitle] = useState("");
-  const [uploadCourseId, setUploadCourseId] = useState(mockCourses[0]?.id || "");
+  const [uploadCourseId, setUploadCourseId] = useState(backendCourses[0]?.id || "");
+  const [uploadModuleId, setUploadModuleId] = useState("");
+  const [materialUrl, setMaterialUrl] = useState("");
   const [uploadFileType, setUploadFileType] = useState<"PDF" | "ZIP" | "DOCX" | "VIDEO" | "SLIDES">(
     "PDF",
   );
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<LearningMaterial | null>(null);
+
+  useEffect(() => {
+    if (!uploadCourseId) {
+      setModules([]);
+      setMaterials([]);
+      return;
+    }
+    const controller = new AbortController();
+    setError(null);
+    getCourseModules(uploadCourseId, controller.signal)
+      .then(async (courseModules) => {
+        setModules(courseModules);
+        setUploadModuleId((current) => current || courseModules[0]?.id || "");
+        const loaded = await Promise.all(
+          courseModules.map(async (module) => {
+            const entries = await getModuleMaterials(uploadCourseId, module.id, controller.signal);
+            return entries;
+          }),
+        );
+        const course = backendCourses.find((entry) => entry.id === uploadCourseId);
+        if (course) setMaterials(loaded.flat().map((entry) => toMaterial(entry, course)));
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            requestError instanceof Error ? requestError.message : "Materials failed to load.",
+          );
+        }
+      });
+    return () => controller.abort();
+  }, [backendCourses, uploadCourseId]);
 
   const filtered = materials.filter((m) => {
     const matchesSearch =
@@ -45,47 +116,54 @@ export const MaterialLibraryView: React.FC = () => {
     return matchesSearch && matchesCourse && matchesType;
   });
 
-  const handleStartUpload = (e: React.FormEvent) => {
+  const handleStartUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadTitle.trim()) return;
 
+    if (!uploadCourseId || !uploadModuleId || !materialUrl.trim()) {
+      setError("Select a course and module, then provide a material URL.");
+      return;
+    }
     setIsUploading(true);
-    setUploadProgress(20);
-
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-
-          const course = mockCourses.find((c) => c.id === uploadCourseId) || mockCourses[0];
-          const newMat: LearningMaterial = {
-            id: `mat-${Date.now()}`,
-            courseId: course.id,
-            courseCode: course.code,
-            title: uploadTitle.endsWith(`.${uploadFileType.toLowerCase()}`)
-              ? uploadTitle
-              : `${uploadTitle}.${uploadFileType.toLowerCase()}`,
-            description: "Uploaded by Prof. Alex Rivera via S3 direct multipart pipeline.",
-            fileType: uploadFileType,
-            fileSize: "3.4 MB",
-            uploadDate: "Just now",
-            s3Key: `mentify-materials/${course.code.toLowerCase()}/${Date.now()}.${uploadFileType.toLowerCase()}`,
-            downloadsCount: 0,
-            visibility: "Published",
-          };
-
-          setMaterials([newMat, ...materials]);
-          setTimeout(() => {
-            setIsUploadOpen(false);
-            setUploadProgress(0);
-            setUploadTitle("");
-          }, 600);
-          return 100;
-        }
-        return prev + 30;
-      });
-    }, 250);
+    setUploadProgress(30);
+    try {
+      const payload = {
+        title: uploadTitle.trim(),
+        type:
+          uploadFileType === "DOCX"
+            ? "DOC"
+            : uploadFileType === "SLIDES"
+              ? "PPT"
+              : uploadFileType === "ZIP"
+                ? "DOC"
+                : uploadFileType,
+        fileUrl: materialUrl.trim(),
+      } as const;
+      const saved = editingMaterial
+        ? await updateModuleMaterial(uploadCourseId, uploadModuleId, editingMaterial.id, payload)
+        : await createModuleMaterial(uploadCourseId, uploadModuleId, payload);
+      const course = backendCourses.find((entry) => entry.id === uploadCourseId);
+      if (course) {
+        const next = toMaterial(saved, course);
+        setMaterials((current) =>
+          editingMaterial
+            ? current.map((entry) => (entry.id === editingMaterial.id ? next : entry))
+            : [next, ...current],
+        );
+      }
+      setUploadProgress(100);
+      setIsUploadOpen(false);
+      setUploadTitle("");
+      setMaterialUrl("");
+      setEditingMaterial(null);
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Material could not be created.",
+      );
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -131,9 +209,9 @@ export const MaterialLibraryView: React.FC = () => {
             className="px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
           >
             <option value="All">All Courses</option>
-            {mockCourses.map((c) => (
+            {backendCourses.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.code}
+                {c.subject || "COURSE"}
               </option>
             ))}
           </select>
@@ -153,6 +231,11 @@ export const MaterialLibraryView: React.FC = () => {
       </div>
 
       {/* Materials Grid */}
+      {error && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filtered.map((mat) => {
           let typeIcon = FileText;
@@ -223,6 +306,38 @@ export const MaterialLibraryView: React.FC = () => {
                     <Download className="w-3.5 h-3.5" />
                     <span>Download</span>
                   </button>
+                  <button
+                    onClick={() => {
+                      setEditingMaterial(mat);
+                      setUploadCourseId(mat.courseId);
+                      setUploadModuleId(mat.moduleAssociation || "");
+                      setUploadTitle(mat.title);
+                      setMaterialUrl(mat.s3Key);
+                      setIsUploadOpen(true);
+                    }}
+                    className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-md transition-colors border border-slate-200"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const moduleId = mat.moduleAssociation;
+                      if (!moduleId) return;
+                      try {
+                        await deleteModuleMaterial(mat.courseId, moduleId, mat.id);
+                        setMaterials((current) => current.filter((entry) => entry.id !== mat.id));
+                      } catch (requestError: unknown) {
+                        setError(
+                          requestError instanceof Error
+                            ? requestError.message
+                            : "Material could not be deleted.",
+                        );
+                      }
+                    }}
+                    className="px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-md transition-colors border border-rose-200"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -236,7 +351,9 @@ export const MaterialLibraryView: React.FC = () => {
           <div className="w-full max-w-lg bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
             <div className="p-5 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-900">Upload Learning Material</h3>
+                <h3 className="text-base font-bold text-slate-900">
+                  {editingMaterial ? "Edit Learning Material" : "Upload Learning Material"}
+                </h3>
                 <p className="text-xs text-slate-500">
                   Direct multipart streaming to Mentify S3 Storage
                 </p>
@@ -285,9 +402,24 @@ export const MaterialLibraryView: React.FC = () => {
                     onChange={(e) => setUploadCourseId(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
                   >
-                    {mockCourses.map((c) => (
+                    {backendCourses.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.code}
+                        {c.subject || "COURSE"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Module</label>
+                  <select
+                    value={uploadModuleId}
+                    onChange={(e) => setUploadModuleId(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                  >
+                    {modules.map((module) => (
+                      <option key={module.id} value={module.id}>
+                        {module.title}
                       </option>
                     ))}
                   </select>
@@ -307,6 +439,20 @@ export const MaterialLibraryView: React.FC = () => {
                     <option value="VIDEO">Video</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Material URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={materialUrl}
+                  onChange={(e) => setMaterialUrl(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                />
               </div>
 
               {/* Progress bar if uploading */}

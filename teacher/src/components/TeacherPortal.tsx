@@ -334,7 +334,12 @@ export default function App() {
               />
             ))}
 
-          {currentTab === "curriculum" && <CurriculumBuilderView onNavigate={handleNavigate} />}
+          {currentTab === "curriculum" && (
+            <CurriculumBuilderView
+              onNavigate={handleNavigate}
+              backendCourses={teacherCourses.courses}
+            />
+          )}
 
           {currentTab === "students" && (
             <StudentDirectoryView
@@ -389,7 +394,9 @@ export default function App() {
             <AttendanceWorkspaceView courses={courses} backendCourses={teacherCourses.courses} />
           )}
 
-          {currentTab === "materials" && <MaterialLibraryView />}
+          {currentTab === "materials" && (
+            <MaterialLibraryView backendCourses={teacherCourses.courses} />
+          )}
 
           {currentTab === "calendar" && (
             <TeacherCalendarView backendCourses={teacherCourses.courses} />
