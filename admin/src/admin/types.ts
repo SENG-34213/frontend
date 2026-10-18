@@ -270,6 +270,9 @@ export interface AcademicEvent {
   time: string;
   location: string;
   courseCode?: string;
+  courseTitle?: string;
+  instructorName?: string;
+  instructorEmail?: string;
   status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
   description?: string;
   eventType?: string;
@@ -277,11 +280,20 @@ export interface AcademicEvent {
   endDateTime?: string | null;
   allDay?: boolean;
   courseId?: string | null;
-  visibility?: "PRIVATE" | "COURSE" | "ROLE" | "GLOBAL";
+  visibility?: EventVisibility;
   targetRole?: "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN" | null;
   canEdit?: boolean;
   canCancel?: boolean;
 }
+
+export type EventVisibility =
+  | "PRIVATE"
+  | "COURSE"
+  | "ROLE"
+  | "GLOBAL"
+  | "PUBLIC_STUDENTS"
+  | "FACULTY_ONLY"
+  | "ADMIN_RESTRICTED";
 
 export interface NotificationItem {
   id: string;

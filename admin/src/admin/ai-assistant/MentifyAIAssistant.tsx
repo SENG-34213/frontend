@@ -1,171 +1,279 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Sparkles,
-  Send,
-  Copy,
-  RotateCcw,
-  Check,
   Bot,
-  User,
-  Plus,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Ellipsis,
+  FileText,
+  Menu,
   MessageSquare,
-  HelpCircle,
-  TrendingUp,
-  Award,
-  Shield,
-  CornerDownLeft,
+  Pencil,
+  Plus,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  X,
+  Zap,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
-import { createAiConversation, sendAiMessage } from "../api/aiApi";
+import {
+  AiConversation,
+  AiMessage,
+  createAiConversation,
+  deleteAiConversation,
+  fetchAiConversations,
+  fetchAiMessages,
+  messageRole,
+  messageText,
+  messageTime,
+  sendAiMessage,
+  updateAiConversation,
+} from "../api/aiApi";
 
-interface ChatMessage {
-  id: string;
-  sender: "user" | "assistant";
-  content: string;
-  timestamp: string;
+const suggestions = [
+  ["Platform overview", "Summarize the current student, teacher, and course activity."],
+  ["Registration trends", "What registration trends should the admin team review this month?"],
+  ["Academic risks", "Identify academic or attendance risks that need attention."],
+  ["Upcoming exams", "Check upcoming examinations for scheduling conflicts."],
+];
+
+function formatConversationDate(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function renderInline(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={index} className="font-semibold text-slate-900 dark:text-white">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      <React.Fragment key={index}>{part}</React.Fragment>
+    ),
+  );
+}
+
+function AiResponseContent({ text }: { text: string }) {
+  return (
+    <div className="space-y-2">
+      {text.split("\n").map((line, index) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={index} className="h-1" />;
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4 key={index} className="pt-2 text-sm font-bold text-slate-900 dark:text-white">
+              {renderInline(trimmed.slice(4))}
+            </h4>
+          );
+        }
+        if (/^[-*] /.test(trimmed)) {
+          return (
+            <div key={index} className="flex gap-2 pl-1">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+              <span>{renderInline(trimmed.slice(2))}</span>
+            </div>
+          );
+        }
+        return <p key={index}>{renderInline(trimmed)}</p>;
+      })}
+    </div>
+  );
+}
+
+function AssistantMessage({ message, onCopy }: { message: AiMessage; onCopy: () => void }) {
+  const text = messageText(message);
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+        <Sparkles className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 max-w-3xl">
+        <div className="mb-1 flex items-center gap-2 text-[11px]">
+          <span className="font-semibold text-slate-900 dark:text-white">Mentify AI</span>
+          <span className="text-slate-400">{messageTime(message)}</span>
+        </div>
+        <div className="rounded-2xl rounded-tl-sm border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-200">
+          <AiResponseContent text={text} />
+          <div className="mt-3 flex items-center justify-between border-t border-slate-200/70 pt-2 text-[10px] text-slate-400 dark:border-slate-700">
+            <button onClick={onCopy} className="flex items-center gap-1 hover:text-indigo-500">
+              <Copy className="h-3 w-3" /> Copy response
+            </button>
+            {message.toolsUsed?.length ? <span>{message.toolsUsed.length} tools used</span> : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UserMessage({ message }: { message: AiMessage }) {
+  return (
+    <div className="flex items-start justify-end gap-3">
+      <div className="min-w-0 max-w-3xl">
+        <div className="mb-1 flex items-center justify-end gap-2 text-[11px]">
+          <span className="text-slate-400">{messageTime(message)}</span>
+          <span className="font-semibold text-slate-900 dark:text-white">You</span>
+        </div>
+        <div className="rounded-2xl rounded-tr-sm bg-indigo-600 px-4 py-3 text-sm leading-6 text-white shadow-sm">
+          <div>{messageText(message)}</div>
+        </div>
+      </div>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-700 text-xs font-bold text-white">
+        A
+      </div>
+    </div>
+  );
 }
 
 export const MentifyAIAssistant: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "msg-1",
-      sender: "assistant",
-      content:
-        "Hello Alex! I am **Mentify AI**, your institutional administrative assistant. I have real-time visibility into your Spring Boot microservices, Keycloak authentication realms, course enrollment ratios, and attendance trends. How can I assist you with platform oversight today?",
-      timestamp: "07:00 AM",
-    },
-  ]);
-
-  const [inputPrompt, setInputPrompt] = useState("");
-  const [isThinking, setIsThinking] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [apiError, setApiError] = useState("");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<AiConversation[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<AiMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [copied, setCopied] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const activeConversation = conversations.find((item) => item.id === activeId);
+  const filteredConversations = useMemo(
+    () =>
+      conversations.filter((item) =>
+        (item.title || "New conversation").toLowerCase().includes(search.toLowerCase()),
+      ),
+    [conversations, search],
+  );
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isThinking]);
-
-  useEffect(() => {
-    void createAiConversation("Admin Assistant")
-      .then((conversation) => {
-        setConversationId(conversation.id);
-      })
-      .catch((error) => {
-        setApiError(error instanceof Error ? error.message : "Unable to connect to AI service.");
-      });
+    void (async () => {
+      try {
+        const loaded = await fetchAiConversations();
+        setConversations(loaded);
+        if (loaded[0]) setActiveId(loaded[0].id);
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error ? loadError.message : "Unable to load AI conversations.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, []);
 
-  const suggestedPrompts = [
-    {
-      label: "Summarize platform registration growth",
-      icon: TrendingUp,
-      prompt:
-        "Provide a structured summary of student and teacher registration velocity for October 2026.",
-    },
-    {
-      label: "Review quiz performance variance",
-      icon: Award,
-      prompt: "Analyze quiz score variances across Advanced Calculus and Data Structures.",
-    },
-    {
-      label: "Check upcoming exam hall conflicts",
-      icon: HelpCircle,
-      prompt: "Are there any overlapping examination venues scheduled between Oct 25 and Nov 04?",
-    },
-    {
-      label: "Audit Keycloak token rotation logs",
-      icon: Shield,
-      prompt: "Summarize the recent Keycloak SSO security events and password invitation states.",
-    },
-  ];
+  useEffect(() => {
+    if (!activeId) return;
+    void (async () => {
+      try {
+        setError("");
+        setMessages(await fetchAiMessages(activeId));
+      } catch (loadError) {
+        setError(
+          loadError instanceof Error ? loadError.message : "Unable to load this conversation.",
+        );
+      }
+    })();
+  }, [activeId]);
 
-  const handleSendMessage = async (textToSend?: string) => {
-    const prompt = textToSend || inputPrompt;
-    if (!prompt.trim() || isThinking) return;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isSending]);
 
-    const userMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      sender: "user",
-      content: prompt,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+  const startNewChat = () => {
+    setActiveId(null);
+    setMessages([]);
+    setInput("");
+    setError("");
+    setMobileSidebarOpen(false);
+  };
+
+  const handleSend = async (value = input) => {
+    const prompt = value.trim();
+    if (!prompt || isSending) return;
+    setInput("");
+    setError("");
+    const clientMessageId = `client-${crypto.randomUUID?.() || Date.now()}`;
+    const optimistic: AiMessage = {
+      id: clientMessageId,
+      role: "USER",
+      message: prompt,
+      timestamp: new Date().toISOString(),
     };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInputPrompt("");
-    setIsThinking(true);
-    setApiError("");
+    setMessages((current) => [...current, optimistic]);
+    setIsSending(true);
     try {
-      const activeConversation = conversationId
-        ? { id: conversationId }
-        : await createAiConversation(prompt.slice(0, 150));
-      setConversationId(activeConversation.id);
-      const response = await sendAiMessage(activeConversation.id, prompt, userMsg.id);
-      setMessages((prev) => [
-        ...prev,
+      let conversation = activeConversation;
+      if (!conversation) {
+        conversation = await createAiConversation(prompt.slice(0, 80));
+        setConversations((current) => [conversation!, ...current]);
+        setActiveId(conversation.id);
+      }
+      const response = await sendAiMessage(conversation.id, prompt, clientMessageId);
+      setMessages((current) => [
+        ...current,
         {
           id: response.messageId,
-          sender: "assistant",
-          content: response.message,
-          timestamp: response.timestamp
-            ? new Date(response.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          role: "ASSISTANT",
+          message: response.message,
+          timestamp: response.timestamp || new Date().toISOString(),
+          toolsUsed: response.toolsUsed,
         },
       ]);
-    } catch (error) {
-      setApiError(error instanceof Error ? error.message : "Unable to reach the AI service.");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `error-${Date.now()}`,
-          sender: "assistant",
-          content: "I could not reach the AI service. Please try again.",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+    } catch (sendError) {
+      setMessages((current) => current.filter((item) => item.id !== clientMessageId));
+      setError(sendError instanceof Error ? sendError.message : "Unable to reach the AI service.");
     } finally {
-      setIsThinking(false);
+      setIsSending(false);
     }
   };
 
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleNewChat = async () => {
+  const handleRename = async () => {
+    if (!activeId || !renameValue.trim()) return;
     try {
-      const conversation = await createAiConversation("Admin Assistant");
-      setConversationId(conversation.id);
-      setApiError("");
-    } catch (error) {
-      setApiError(error instanceof Error ? error.message : "Unable to create a new conversation.");
-      return;
+      const updated = await updateAiConversation(activeId, renameValue.trim());
+      setConversations((current) =>
+        current.map((item) => (item.id === activeId ? { ...item, ...updated } : item)),
+      );
+      setDialog(null);
+    } catch (renameError) {
+      setError(
+        renameError instanceof Error ? renameError.message : "Unable to rename conversation.",
+      );
     }
-    setMessages([
-      {
-        id: `msg-${Date.now()}`,
-        sender: "assistant",
-        content: "New administrative workspace session initiated. How can I help you, Alex?",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
-    ]);
+  };
+
+  const handleDelete = async () => {
+    if (!activeId) return;
+    try {
+      await deleteAiConversation(activeId);
+      const remaining = conversations.filter((item) => item.id !== activeId);
+      setConversations(remaining);
+      setActiveId(remaining[0]?.id || null);
+      setDialog(null);
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : "Unable to delete conversation.",
+      );
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Mentify AI Assistant"
-        description="Enterprise AI intelligence agent grounded in Mentify institutional data, microservices, and educational analytics."
+        description="Premium conversational intelligence grounded in Mentify institutional data and live platform analytics."
         breadcrumbs={[
           { label: "Admin" },
           { label: "Platform Operations" },
@@ -173,178 +281,406 @@ export const MentifyAIAssistant: React.FC = () => {
         ]}
         actions={
           <button
-            onClick={handleNewChat}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-xs"
+            onClick={startNewChat}
+            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Chat Session</span>
+            <Plus className="h-4 w-4" /> New chat
           </button>
         }
       />
 
-      {/* Main Chat Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Suggested Queries Sidebar (1 col) */}
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
-          <div>
-            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-              Suggested Administrative Inquiries
-            </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Instant prompts utilizing authorized institutional analytics tools
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {suggestedPrompts.map((p, idx) => {
-              const Icon = p.icon;
-              return (
+      <div className="relative flex h-[calc(100vh-8.5rem)] min-h-[640px] max-h-[920px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        {mobileSidebarOpen && (
+          <div className="fixed inset-0 z-40 flex lg:hidden">
+            <button
+              aria-label="Close conversations"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="flex-1 bg-slate-950/40"
+            />
+            <aside className="w-72 border-l border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+              <div className="mb-3 flex items-center justify-between px-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Conversations
+                </span>
                 <button
-                  key={idx}
-                  onClick={() => handleSendMessage(p.prompt)}
-                  className="w-full text-left p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700/60 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-all text-xs group"
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800"
                 >
-                  <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-1">
-                    <Icon className="w-3.5 h-3.5" />
-                    <span className="font-semibold text-slate-900 dark:text-white line-clamp-1">
-                      {p.label}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 line-clamp-2">{p.prompt}</p>
+                  <X className="h-4 w-4" />
                 </button>
-              );
-            })}
+              </div>
+              <button
+                onClick={startNewChat}
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"
+              >
+                <Plus className="h-4 w-4" /> New conversation
+              </button>
+              <div className="space-y-2 overflow-y-auto">
+                {filteredConversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    onClick={() => {
+                      setActiveId(conversation.id);
+                      setMobileSidebarOpen(false);
+                    }}
+                    className={`flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left ${activeId === conversation.id ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                  >
+                    <MessageSquare className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span className="min-w-0 truncate text-xs font-medium">
+                      {conversation.title || "New conversation"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </aside>
           </div>
+        )}
+        <aside
+          className={`${sidebarOpen ? "w-64" : "w-14"} hidden shrink-0 border-r border-slate-200 bg-slate-50 transition-all dark:border-slate-800 dark:bg-slate-950 lg:block`}
+        >
+          <div className="flex h-14 items-center justify-between border-b border-slate-200 px-3 dark:border-slate-800">
+            {sidebarOpen && (
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Conversations
+              </span>
+            )}
+            <button
+              onClick={() => setSidebarOpen((open) => !open)}
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800"
+            >
+              {sidebarOpen ? (
+                <ChevronLeft className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+          {sidebarOpen && (
+            <div className="p-3">
+              <button
+                onClick={startNewChat}
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"
+              >
+                <Plus className="h-4 w-4" /> New conversation
+              </button>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search conversations"
+                className="mb-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900"
+              />
+              <div className="space-y-4 overflow-y-auto">
+                {filteredConversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    onClick={() => {
+                      setActiveId(conversation.id);
+                      setSidebarOpen(false);
+                    }}
+                    className={`group flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left ${activeId === conversation.id ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                  >
+                    <MessageSquare className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">
+                      {conversation.title || "New conversation"}
+                      <span className="mt-1 block text-[10px] font-normal text-slate-400">
+                        {formatConversationDate(conversation.updatedAt || conversation.createdAt)}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+                {!isLoading && filteredConversations.length === 0 && (
+                  <p className="px-2 text-xs text-slate-400">No conversations yet.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </aside>
 
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 space-y-1">
-            <span className="font-semibold text-slate-600 dark:text-slate-300 block">
-              Authorized Capabilities:
+        <section className="relative flex min-w-0 flex-1 flex-col">
+          <header className="flex h-14 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden dark:hover:bg-slate-800"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white">
+                <Bot className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-slate-900 dark:text-white">
+                  {activeConversation?.title || "New AI workspace"}
+                </p>
+                <p className="flex items-center gap-1 text-[10px] text-emerald-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> HTTP API connected
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {activeConversation && (
+                <>
+                  <button
+                    onClick={() => {
+                      setRenameValue(activeConversation.title || "");
+                      setDialog("rename");
+                    }}
+                    className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setDialog("delete")}
+                    className="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => setContextOpen((open) => !open)}
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <Ellipsis className="h-4 w-4" />
+              </button>
+            </div>
+          </header>
+
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/80 px-4 py-2 dark:border-slate-800/80 dark:bg-slate-950/40">
+            <div className="flex min-w-0 items-center gap-2 text-[11px] text-slate-500">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                <ShieldCheck className="h-3 w-3" />
+              </span>
+              <span className="truncate">
+                Connected to Mentify AI · authorized admin tools enabled
+              </span>
+            </div>
+            <span className="hidden shrink-0 text-[10px] text-slate-400 sm:block">
+              HTTP API · secure session
             </span>
-            <span>• Cross-table student & course queries</span>
-            <br />
-            <span>• Grade distribution analysis</span>
-            <br />
-            <span>• Examination conflict detection</span>
           </div>
-        </div>
 
-        {/* Conversation Viewport (3 cols) */}
-        <div className="lg:col-span-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col h-[600px] shadow-xs overflow-hidden">
-          {/* Messages Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
-            {messages.map((msg) => {
-              const isAi = msg.sender === "assistant";
-
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex items-start gap-3 ${isAi ? "" : "flex-row-reverse"}`}
-                >
-                  <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold ${
-                      isAi ? "bg-indigo-600 text-white" : "bg-slate-700 text-white"
-                    }`}
-                  >
-                    {isAi ? <Sparkles className="w-3.5 h-3.5" /> : "AM"}
-                  </div>
-
-                  <div
-                    className={`max-w-2xl text-xs space-y-1.5 ${isAi ? "text-left" : "text-right"}`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {isAi ? "Mentify AI" : "Alex Mercer"}
-                      </span>
-                      <span className="text-[10px] text-slate-400 tabular-nums">
-                        {msg.timestamp}
-                      </span>
-                    </div>
-
-                    <div
-                      className={`p-3.5 rounded-2xl text-left leading-relaxed ${
-                        isAi
-                          ? "bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200"
-                          : "bg-indigo-600 text-white"
-                      }`}
+          {error && (
+            <div className="mx-4 mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+              {error}
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            {messages.length === 0 && !isLoading ? (
+              <div className="mx-auto flex max-w-2xl flex-col items-center justify-center py-16 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">
+                  <Sparkles className="h-7 w-7" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  How can I help with Mentify?
+                </h2>
+                <p className="mt-2 max-w-lg text-sm text-slate-500">
+                  Ask about courses, users, registrations, attendance, examinations, or platform
+                  operations.
+                </p>
+                <div className="mt-7 grid w-full gap-2 sm:grid-cols-2">
+                  {suggestions.map(([title, prompt]) => (
+                    <button
+                      key={title}
+                      onClick={() => void handleSend(prompt)}
+                      className="rounded-xl border border-slate-200 p-3 text-left transition hover:border-indigo-300 hover:bg-indigo-50/50 dark:border-slate-800 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/20"
                     >
-                      {/* Markdown prose renderer */}
-                      <div className="whitespace-pre-wrap space-y-2">{msg.content}</div>
-
-                      {isAi && (
-                        <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
-                          <button
-                            onClick={() => handleCopy(msg.id, msg.content)}
-                            className="hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1"
-                          >
-                            {copiedId === msg.id ? (
-                              <>
-                                <Check className="w-3 h-3 text-emerald-600" />
-                                <span className="text-emerald-600">Copied</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Copy response</span>
-                              </>
-                            )}
-                          </button>
-                          <span className="text-[10px] text-slate-400">
-                            Model: gemini-3.8-flash · Real-time grounded
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {isThinking && (
-              <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                  <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                </div>
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.4s]" />
-                  </div>
-                  <span>Synthesizing microservices data...</span>
+                      <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                        {title}
+                      </span>
+                      <span className="mt-1 block text-[11px] text-slate-500">{prompt}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
+            ) : (
+              <div className="mx-auto max-w-4xl space-y-5">
+                {messages.map((message) =>
+                  messageRole(message) === "user" ? (
+                    <UserMessage key={message.id} message={message} />
+                  ) : (
+                    <AssistantMessage
+                      key={message.id}
+                      message={message}
+                      onCopy={() => {
+                        void navigator.clipboard?.writeText(messageText(message));
+                        setCopied(message.id);
+                        window.setTimeout(() => setCopied(null), 1600);
+                      }}
+                    />
+                  ),
+                )}
+                {isSending && (
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
+                      <Sparkles className="h-4 w-4 animate-pulse" />
+                    </div>
+                    <div className="rounded-2xl rounded-tl-sm border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-800/70">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-500" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:120ms]" />
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:240ms]" />
+                        <span className="ml-2 text-xs text-slate-500">Mentify AI is thinking…</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
-          {/* Composer Input Bar */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-            {apiError && <p className="mb-2 text-[11px] text-rose-500">{apiError}</p>}
+          <div className="border-t border-slate-200 p-3 dark:border-slate-800 sm:p-4">
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSend();
               }}
-              className="flex items-center gap-2"
+              className="mx-auto flex max-w-4xl items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 focus-within:border-indigo-400 dark:border-slate-700 dark:bg-slate-800/60"
             >
-              <input
-                type="text"
-                value={inputPrompt}
-                onChange={(e) => setInputPrompt(e.target.value)}
-                placeholder="Ask Mentify AI about students, courses, attendance, or audit metrics..."
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              <textarea
+                value={input}
+                onChange={(event) => setInput(event.target.value.slice(0, 4000))}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void handleSend();
+                  }
+                }}
+                rows={1}
+                placeholder="Ask Mentify AI about your platform..."
+                className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
               />
+              <span className="hidden self-end pb-2 text-[10px] text-slate-400 sm:block">
+                {input.length}/4000
+              </span>
               <button
-                type="submit"
-                disabled={!inputPrompt.trim() || isThinking}
-                className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white transition-colors shrink-0 shadow-xs"
+                disabled={!input.trim() || isSending}
+                className="rounded-lg bg-indigo-600 p-2.5 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Send className="w-4 h-4" />
+                <Send className="h-4 w-4" />
               </button>
             </form>
+            <p className="mx-auto mt-2 max-w-4xl text-[10px] text-slate-400">
+              Enter to send · Shift + Enter for a new line · Responses use your authorized admin
+              data
+            </p>
+          </div>
+        </section>
+
+        {contextOpen && (
+          <aside className="hidden w-64 shrink-0 border-l border-slate-200 bg-slate-50 p-4 xl:block dark:border-slate-800 dark:bg-slate-950">
+            <div className="mb-5 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-indigo-600" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Workspace context
+              </span>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                <p className="text-[10px] font-bold uppercase text-slate-400">Connection</p>
+                <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-emerald-600">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> AI API available
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">POST /api/ai/chat</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+                <p className="text-[10px] font-bold uppercase text-slate-400">
+                  Authorized capabilities
+                </p>
+                <div className="mt-2 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                  <p className="flex gap-2">
+                    <ShieldCheck className="h-4 w-4 text-indigo-500" />
+                    Student and course queries
+                  </p>
+                  <p className="flex gap-2">
+                    <FileText className="h-4 w-4 text-indigo-500" />
+                    Academic analytics
+                  </p>
+                  <p className="flex gap-2">
+                    <MessageSquare className="h-4 w-4 text-indigo-500" />
+                    Conversation history
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3 dark:border-indigo-900 dark:bg-indigo-950/30">
+                <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300">
+                  Data privacy
+                </p>
+                <p className="mt-1 text-[11px] leading-5 text-indigo-700/80 dark:text-indigo-300/80">
+                  Only tools authorized for your admin role are available to the assistant.
+                </p>
+              </div>
+            </div>
+          </aside>
+        )}
+      </div>
+
+      {dialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900">
+            {dialog === "rename" ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Rename conversation</h3>
+                  <button onClick={() => setDialog(null)}>
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void handleRename();
+                  }}
+                  className="mt-4 w-full rounded-lg border border-slate-200 bg-transparent px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-slate-700"
+                />
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    onClick={() => setDialog(null)}
+                    className="rounded-lg px-3 py-2 text-xs text-slate-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => void handleRename()}
+                    className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    Save
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="font-semibold">Delete conversation?</h3>
+                <p className="mt-2 text-sm text-slate-500">
+                  This permanently removes the conversation and its messages.
+                </p>
+                <div className="mt-5 flex justify-end gap-2">
+                  <button
+                    onClick={() => setDialog(null)}
+                    className="rounded-lg px-3 py-2 text-xs text-slate-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => void handleDelete()}
+                    className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      </div>
+      )}
+      {copied && (
+        <div className="fixed bottom-5 right-5 flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white">
+          <Check className="h-4 w-4 text-emerald-400" /> Copied
+        </div>
+      )}
     </div>
   );
 };
