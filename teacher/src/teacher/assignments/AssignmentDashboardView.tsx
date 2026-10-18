@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FileCheck,
   Plus,
@@ -12,24 +12,162 @@ import {
   Calendar,
 } from "lucide-react";
 import { Assignment, NavigationTab } from "../types";
-import { mockAssignments, mockCourses } from "../data/mockData";
+import type { BackendCourse } from "../api/courseApi";
+import {
+  closeAssignment,
+  deleteAssignment,
+  getCourseAssignments,
+  publishAssignment,
+  updateAssignment,
+  type BackendAssignment,
+} from "../api/assignmentApi";
 import { StatusBadge } from "../components/StatusBadge";
 
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
   onOpenCreateAssignment: () => void;
   onNavigate: (tab: NavigationTab) => void;
+  backendCourses?: BackendCourse[];
+  refreshToken?: number;
 }
+
+const toAssignment = (item: BackendAssignment, courses: BackendCourse[]): Assignment => {
+  const course = courses.find((entry) => entry.id === item.courseId);
+  const due = new Date(item.dueDate);
+  return {
+    id: item.id,
+    courseId: item.courseId,
+    courseCode: course?.subject || course?.courseName || item.courseId,
+    title: item.title,
+    description: item.description || item.instructions || "",
+    dueDate: Number.isNaN(due.getTime()) ? item.dueDate : due.toLocaleDateString(),
+    dueTime: Number.isNaN(due.getTime())
+      ? ""
+      : due.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+    maxMarks: item.maxMarks,
+    weightagePercent: 0,
+    status: item.status === "PUBLISHED" ? "Active" : item.status === "CLOSED" ? "Closed" : "Draft",
+    totalSubmissions: item.totalSubmissions ?? 0,
+    gradedCount: item.gradedCount ?? 0,
+    totalStudents: course?.numberOfStudents ?? 0,
+    rubricItems: (item.rubricItems || []).map((rubric) => ({
+      criterion: rubric.criterion,
+      marks: rubric.marks,
+    })),
+  };
+};
 
 export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = ({
   onGradeAssignment,
   onOpenCreateAssignment,
   onNavigate,
+  backendCourses = [],
+  refreshToken = 0,
 }) => {
-  const [assignments, setAssignments] = useState<Assignment[]>(mockAssignments);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [backendAssignments, setBackendAssignments] = useState<BackendAssignment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    if (backendCourses.length === 0) {
+      setBackendAssignments([]);
+      setAssignments([]);
+      setIsLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    setIsLoading(true);
+    setError(null);
+    Promise.all(backendCourses.map((course) => getCourseAssignments(course.id, controller.signal)))
+      .then((responses) => {
+        const loaded = responses.flat();
+        setBackendAssignments(loaded);
+        setAssignments(loaded.map((item) => toAssignment(item, backendCourses)));
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            requestError instanceof Error ? requestError.message : "Assignments failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, [backendCourses, refreshToken]);
+
+  const handleStatusChange = async (assignment: Assignment, action: "publish" | "close") => {
+    try {
+      const updated =
+        action === "publish"
+          ? await publishAssignment(assignment.id)
+          : await closeAssignment(assignment.id);
+      setAssignments((current) =>
+        current.map((entry) =>
+          entry.id === assignment.id ? toAssignment(updated, backendCourses) : entry,
+        ),
+      );
+      setBackendAssignments((current) =>
+        current.map((entry) => (entry.id === updated.id ? updated : entry)),
+      );
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Assignment status could not be updated.",
+      );
+    }
+  };
+
+  const handleEdit = async (assignment: Assignment) => {
+    const record = backendAssignments.find((entry) => entry.id === assignment.id);
+    if (!record) return;
+    const title = window.prompt("Assignment title", record.title);
+    if (!title || title.trim() === record.title) return;
+    try {
+      const updated = await updateAssignment(record.id, {
+        title: title.trim(),
+        description: record.description,
+        instructions: record.instructions,
+        startDate: record.startDate,
+        dueDate: record.dueDate,
+        maxMarks: record.maxMarks,
+        allowedAttempts: record.allowedAttempts,
+        allowLateSubmission: record.allowLateSubmission,
+        latePenaltyPercentage: record.latePenaltyPercentage,
+      });
+      setBackendAssignments((current) =>
+        current.map((entry) => (entry.id === updated.id ? updated : entry)),
+      );
+      setAssignments((current) =>
+        current.map((entry) =>
+          entry.id === updated.id ? toAssignment(updated, backendCourses) : entry,
+        ),
+      );
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Assignment could not be updated.",
+      );
+    }
+  };
+
+  const handleDelete = async (assignment: Assignment) => {
+    if (!window.confirm(`Delete ${assignment.title}?`)) return;
+    try {
+      await deleteAssignment(assignment.id);
+      setBackendAssignments((current) => current.filter((entry) => entry.id !== assignment.id));
+      setAssignments((current) => current.filter((entry) => entry.id !== assignment.id));
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Assignment could not be deleted.",
+      );
+    }
+  };
 
   const filtered = assignments.filter((a) => {
     const matchesSearch =
@@ -130,9 +268,9 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
             className="px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
           >
             <option value="All">All Courses</option>
-            {mockCourses.map((c) => (
+            {backendCourses.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.code}
+                {c.subject || c.courseName}
               </option>
             ))}
           </select>
@@ -143,6 +281,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
             className="px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
           >
             <option value="All">All Statuses</option>
+            <option value="Draft">Draft</option>
             <option value="Active">Active</option>
             <option value="Grading">Grading</option>
             <option value="Closed">Closed</option>
@@ -151,6 +290,24 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
       </div>
 
       {/* Assignments List */}
+      {error && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+          {error}
+        </div>
+      )}
+      {isLoading ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          Loading assignments...
+        </div>
+      ) : backendCourses.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          No courses are assigned to you yet.
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          No assignments found.
+        </div>
+      ) : null}
       <div className="space-y-3">
         {filtered.map((asg) => {
           const progressPercent =
@@ -216,6 +373,42 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                   <span>Grade Now</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
+                <div className="flex items-center gap-1">
+                  {asg.status === "Draft" && (
+                    <button
+                      type="button"
+                      onClick={() => void handleStatusChange(asg, "publish")}
+                      className="px-2 py-1 text-[10px] font-medium text-emerald-700 border border-emerald-200 rounded-md"
+                    >
+                      Publish
+                    </button>
+                  )}
+                  {asg.status === "Active" && (
+                    <button
+                      type="button"
+                      onClick={() => void handleStatusChange(asg, "close")}
+                      className="px-2 py-1 text-[10px] font-medium text-amber-700 border border-amber-200 rounded-md"
+                    >
+                      Close
+                    </button>
+                  )}
+                  {asg.status === "Draft" && (
+                    <button
+                      type="button"
+                      onClick={() => void handleEdit(asg)}
+                      className="px-2 py-1 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete(asg)}
+                    className="px-2 py-1 text-[10px] font-medium text-rose-700 border border-rose-200 rounded-md"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           );

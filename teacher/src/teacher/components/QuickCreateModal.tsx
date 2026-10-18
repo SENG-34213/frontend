@@ -13,6 +13,8 @@ import {
 import { mockCourses } from "../data/mockData";
 import type { BackendCourse } from "../api/courseApi";
 import type { QuizDraft } from "../api/quizApi";
+import { createAssignment } from "../api/assignmentApi";
+import { getCourseModules, type CourseContentModule } from "../api/courseContentApi";
 
 export type QuickCreateType =
   | "course"
@@ -54,6 +56,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [dueDate, setDueDate] = useState("2026-10-30");
   const [maxMarks, setMaxMarks] = useState("100");
   const [duration, setDuration] = useState("45");
+  const [assignmentModuleId, setAssignmentModuleId] = useState("");
+  const [assignmentModules, setAssignmentModules] = useState<CourseContentModule[]>([]);
 
   React.useEffect(() => {
     if (type) setActiveType(type);
@@ -61,13 +65,25 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
   React.useEffect(() => {
     if (
-      activeType === "quiz" &&
+      (activeType === "quiz" || activeType === "assignment") &&
       backendCourses[0] &&
       !backendCourses.some((course) => course.id === selectedCourseId)
     ) {
       setSelectedCourseId(backendCourses[0].id);
     }
   }, [activeType, backendCourses, selectedCourseId]);
+
+  React.useEffect(() => {
+    if (activeType !== "assignment" || !selectedCourseId) return;
+    const controller = new AbortController();
+    getCourseModules(selectedCourseId, controller.signal)
+      .then((modules) => {
+        setAssignmentModules(modules);
+        setAssignmentModuleId((current) => current || modules[0]?.id || "");
+      })
+      .catch(() => setAssignmentModules([]));
+    return () => controller.abort();
+  }, [activeType, selectedCourseId]);
 
   if (!isOpen) return null;
 
@@ -103,6 +119,42 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       } catch {
         // Preserve the existing local mock flow when the quiz API is unavailable.
       }
+    }
+
+    if (activeType === "assignment" && backendCourses.length > 0 && assignmentModuleId) {
+      try {
+        const created = await createAssignment({
+          courseId: selectedCourseId,
+          moduleId: assignmentModuleId,
+          title,
+          description,
+          startDate: new Date().toISOString().slice(0, 19),
+          dueDate: `${dueDate}T23:59:00`,
+          maxMarks: Number(maxMarks) || 100,
+          allowedAttempts: 1,
+          allowLateSubmission: false,
+          latePenaltyPercentage: 0,
+          rubricItems: [],
+        });
+        setIsSubmitting(false);
+        setSuccessMsg("Created ASSIGNMENT successfully!");
+        onCreated(activeType, created);
+        setTimeout(() => {
+          setSuccessMsg("");
+          onClose();
+        }, 900);
+        return;
+      } catch {
+        setIsSubmitting(false);
+        setSuccessMsg("");
+        return;
+      }
+    }
+
+    if (activeType === "assignment" && backendCourses.length > 0 && !assignmentModuleId) {
+      setIsSubmitting(false);
+      setSuccessMsg("Create a module before adding an assignment.");
+      return;
     }
 
     setTimeout(() => {
@@ -215,6 +267,23 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       ))
                     )}
                   </select>
+                  {activeType === "assignment" && (
+                    <select
+                      value={assignmentModuleId}
+                      onChange={(e) => setAssignmentModuleId(e.target.value)}
+                      required
+                      className="mt-2 w-full px-3 py-2 text-xs text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
+                    >
+                      <option value="" disabled>
+                        {assignmentModules.length ? "Select module" : "No modules available"}
+                      </option>
+                      {assignmentModules.map((module) => (
+                        <option key={module.id} value={module.id}>
+                          {module.title}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               )}
 

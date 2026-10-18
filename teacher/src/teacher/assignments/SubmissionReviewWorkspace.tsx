@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle,
@@ -18,12 +18,72 @@ import {
 import { StudentSubmission, Assignment, NavigationTab } from "../types";
 import { mockSubmissions, mockAssignments } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
+import {
+  getAssignment,
+  getAssignmentSubmissions,
+  gradeSubmission,
+  returnSubmission,
+  type BackendAssignment,
+  type BackendSubmission,
+} from "../api/assignmentApi";
 
 interface SubmissionReviewWorkspaceProps {
   initialAssignmentId?: string;
   onBack: () => void;
   onNavigate: (tab: NavigationTab) => void;
 }
+
+const mapBackendAssignment = (item: BackendAssignment): Assignment => {
+  const due = new Date(item.dueDate);
+  return {
+    id: item.id,
+    courseId: item.courseId,
+    courseCode: item.courseId,
+    title: item.title,
+    description: item.description || item.instructions || "",
+    dueDate: Number.isNaN(due.getTime()) ? item.dueDate : due.toLocaleDateString(),
+    dueTime: Number.isNaN(due.getTime())
+      ? ""
+      : due.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+    maxMarks: item.maxMarks,
+    weightagePercent: 0,
+    status: item.status === "PUBLISHED" ? "Active" : item.status === "CLOSED" ? "Closed" : "Draft",
+    totalSubmissions: 0,
+    gradedCount: 0,
+    totalStudents: 0,
+    rubricItems: (item.rubricItems || []).map((rubric) => ({
+      criterion: rubric.criterion,
+      marks: rubric.marks,
+    })),
+  };
+};
+
+const mapBackendSubmission = (item: BackendSubmission): StudentSubmission => {
+  const mock = mockSubmissions.find((submission) => submission.id === item.id);
+  return {
+    id: item.id,
+    assignmentId: item.assignmentId,
+    studentId: item.studentId,
+    studentName: mock?.studentName || item.studentId,
+    studentEmail: mock?.studentEmail || "",
+    submissionDate: item.submittedAt
+      ? new Date(item.submittedAt).toLocaleString()
+      : "Not submitted",
+    status:
+      item.status === "LATE"
+        ? "Late"
+        : item.status === "GRADED" || item.status === "RETURNED"
+          ? "Graded"
+          : "Submitted",
+    score: item.marks,
+    maxMarks: mock?.maxMarks || 100,
+    feedback: item.feedback,
+    submittedContentText: item.content,
+    submittedFileName: mock?.submittedFileName,
+    fileSizeBytes: mock?.fileSizeBytes,
+    codeSnippet: mock?.codeSnippet,
+  };
+};
 
 export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps> = ({
   initialAssignmentId = "asg-01",
@@ -35,18 +95,43 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string>(
     mockSubmissions[0]?.id || "",
   );
+  const [assignment, setAssignment] = useState<Assignment | null>(
+    mockAssignments.find((item) => item.id === initialAssignmentId) || mockAssignments[0],
+  );
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Scoring states for currently selected submission
   const currentSubmission =
     submissions.find((s) => s.id === selectedSubmissionId) || submissions[0];
-  const currentAssignment =
-    mockAssignments.find((a) => a.id === selectedAssignmentId) || mockAssignments[0];
+  const currentAssignment = assignment || mockAssignments[0];
 
   const [inputScore, setInputScore] = useState<string>(
     currentSubmission?.score !== undefined ? String(currentSubmission.score) : "",
   );
   const [feedback, setFeedback] = useState<string>(currentSubmission?.feedback || "");
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all([
+      getAssignment(selectedAssignmentId, controller.signal),
+      getAssignmentSubmissions(selectedAssignmentId, controller.signal),
+    ])
+      .then(([backendAssignment, backendSubmissions]) => {
+        if (backendAssignment) setAssignment(mapBackendAssignment(backendAssignment));
+        const mapped = backendSubmissions.map((submission) => mapBackendSubmission(submission));
+        setSubmissions(mapped);
+        setSelectedSubmissionId(mapped[0]?.id || "");
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setLoadError(
+            requestError instanceof Error ? requestError.message : "Submissions failed to load.",
+          );
+        }
+      });
+    return () => controller.abort();
+  }, [selectedAssignmentId]);
 
   // When switching submission, update local inputs
   const handleSelectSubmission = (sub: StudentSubmission) => {
@@ -57,11 +142,15 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
 
   const handleSaveGrade = (goToNext = false) => {
     const numericScore = Number(inputScore);
-    if (isNaN(numericScore) || numericScore < 0 || numericScore > currentAssignment.maxMarks) {
-      alert(`Please enter a valid mark between 0 and ${currentAssignment.maxMarks}.`);
+    const maximumAllowedScore = Math.min(currentAssignment.maxMarks, 100);
+    if (isNaN(numericScore) || numericScore < 0 || numericScore > maximumAllowedScore) {
+      alert(`Please enter a valid mark between 0 and ${maximumAllowedScore}.`);
       return;
     }
 
+    void gradeSubmission(currentSubmission.id, { marks: numericScore, feedback }).catch(
+      () => undefined,
+    );
     setSubmissions((prev) =>
       prev.map((sub) =>
         sub.id === currentSubmission.id
@@ -86,6 +175,21 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
         }
       }
     }, 600);
+  };
+
+  const handleReturnSubmission = async () => {
+    try {
+      await returnSubmission(currentSubmission.id);
+      setSubmissions((current) =>
+        current.map((submission) =>
+          submission.id === currentSubmission.id ? { ...submission, status: "Graded" } : submission,
+        ),
+      );
+    } catch (requestError: unknown) {
+      setLoadError(
+        requestError instanceof Error ? requestError.message : "Submission could not be returned.",
+      );
+    }
   };
 
   const gradedCount = submissions.filter((s) => s.status === "Graded").length;
@@ -136,6 +240,12 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="absolute top-16 right-4 z-10 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 shadow-sm">
+          {loadError}
+        </div>
+      )}
 
       {/* 3-Column Split Workspace */}
       <div className="flex-1 flex overflow-hidden">
@@ -270,13 +380,13 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
             {/* Direct Score Input */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2">
               <label className="block text-xs font-semibold text-slate-700">
-                Assigned Mark (0 - {currentAssignment.maxMarks})
+                Assigned Mark (0 - {Math.min(currentAssignment.maxMarks, 100)})
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   min="0"
-                  max={currentAssignment.maxMarks}
+                  max={Math.min(currentAssignment.maxMarks, 100)}
                   value={inputScore}
                   onChange={(e) => setInputScore(e.target.value)}
                   placeholder="e.g. 95"
@@ -380,6 +490,12 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               className="w-full py-1.5 px-3 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             >
               Save Grade Only
+            </button>
+            <button
+              onClick={() => void handleReturnSubmission()}
+              className="w-full py-1.5 px-3 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+            >
+              Return Submission
             </button>
           </div>
         </aside>
