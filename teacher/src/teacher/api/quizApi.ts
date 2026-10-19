@@ -56,6 +56,25 @@ export type QuizQuestionDraft = {
   options: Array<{ optionText: string; correct: boolean; optionOrder: number }>;
 };
 
+export type AiQuizDraft = {
+  courseId: string;
+  questionCount: number;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER";
+  creationMethod: "AI_GENERATED";
+  questions: Array<QuizQuestionDraft & { explanation?: string }>;
+  provider?: string;
+  model?: string;
+};
+
+export async function generateAiQuizDraft(formData: FormData): Promise<AiQuizDraft> {
+  const response = await apiRequest<ApiResponse<AiQuizDraft>>("/api/assignments/quizzes/ai/generate", {
+    method: "POST",
+    body: formData,
+  });
+  return response.data as AiQuizDraft;
+}
+
 export type QuizAnalytics = {
   date: string;
   resultType: string;

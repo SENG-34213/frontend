@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { X, Plus, Trash2, Check, Sparkles, Save } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, Plus, Trash2, Save } from "lucide-react";
 import { QuizQuestion } from "../types";
 
 interface QuestionBuilderModalProps {
@@ -15,8 +15,6 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
   onClose,
   onSaveQuestion,
 }) => {
-  if (!isOpen) return null;
-
   const [type, setType] = useState<QuizQuestion["type"]>("multiple-choice");
   const [questionText, setQuestionText] = useState("");
   const [options, setOptions] = useState<string[]>([
@@ -28,6 +26,16 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
   const [correctOptionIdx, setCorrectOptionIdx] = useState(1);
   const [explanation, setExplanation] = useState("");
   const [marks, setMarks] = useState(5);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setType("multiple-choice");
+    setQuestionText("");
+    setOptions(["Choice A", "Choice B", "Choice C", "Choice D"]);
+    setCorrectOptionIdx(0);
+    setExplanation("");
+    setMarks(5);
+  }, [isOpen, quizId]);
 
   const handleOptionChange = (idx: number, val: string) => {
     const updated = [...options];
@@ -50,15 +58,15 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!questionText.trim()) return;
+    if (!questionText.trim() || type !== "multiple-choice") return;
 
     const newQuestion: QuizQuestion = {
       id: `q-${Date.now()}`,
       quizId,
       type,
       question: questionText,
-      options: type === "true-false" ? ["True", "False"] : options,
-      correctAnswer: type === "true-false" ? "True" : options[correctOptionIdx] || options[0],
+      options,
+      correctAnswer: options[correctOptionIdx] || options[0],
       explanation,
       marks: Number(marks) || 5,
     };
@@ -66,6 +74,8 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
     await onSaveQuestion(newQuestion);
     onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
@@ -99,9 +109,9 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
               >
                 <option value="multiple-choice">Multiple Choice (Single Answer)</option>
-                <option value="true-false">True / False</option>
-                <option value="multi-select">Multi-Select (Checkboxes)</option>
-                <option value="short-answer">Short Text Answer</option>
+                <option value="true-false" disabled>True / False (coming soon)</option>
+                <option value="multi-select" disabled>Multi-Select (coming soon)</option>
+                <option value="short-answer" disabled>Short Text Answer (coming soon)</option>
               </select>
             </div>
 
@@ -139,7 +149,7 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Answer Options & Correct Answer
+                  Answer Options ({options.length}/5) & Correct Answer
                 </label>
                 {type === "multiple-choice" && (
                   <button
