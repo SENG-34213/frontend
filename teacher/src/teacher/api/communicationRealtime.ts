@@ -91,10 +91,13 @@ export function useCommunicationRealtime(
 
       desiredGroups.forEach((groupId) => {
         if (subscriptionsRef.current.has(groupId)) return;
-        const subscription = client.subscribe(`/topic/groups/${encodeURIComponent(groupId)}`, (frame) => {
-          const message = parseMessage(frame);
-          if (message && message.groupId === groupId) onMessageRef.current(message);
-        });
+        const subscription = client.subscribe(
+          `/topic/groups/${encodeURIComponent(groupId)}`,
+          (frame) => {
+            const message = parseMessage(frame);
+            if (message && message.groupId === groupId) onMessageRef.current(message);
+          },
+        );
         subscriptionsRef.current.set(groupId, subscription);
       });
     };
@@ -139,10 +142,13 @@ export function useCommunicationRealtime(
     });
     desiredGroups.forEach((groupId) => {
       if (subscriptionsRef.current.has(groupId)) return;
-      const subscription = clientRef.current?.subscribe(`/topic/groups/${encodeURIComponent(groupId)}`, (frame) => {
-        const message = parseMessage(frame);
-        if (message && message.groupId === groupId) onMessageRef.current(message);
-      });
+      const subscription = clientRef.current?.subscribe(
+        `/topic/groups/${encodeURIComponent(groupId)}`,
+        (frame) => {
+          const message = parseMessage(frame);
+          if (message && message.groupId === groupId) onMessageRef.current(message);
+        },
+      );
       if (subscription) subscriptionsRef.current.set(groupId, subscription);
     });
   }, [groupIds]);

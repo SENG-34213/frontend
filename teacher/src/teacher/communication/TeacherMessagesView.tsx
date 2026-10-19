@@ -302,15 +302,16 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       return;
     }
     try {
-       const content = announcementText.trim();
-       if (!realtime.sendMessage(group.id, content)) {
-         const message = await sendCommunicationMessage(group.id, content);
-         if (!message) throw new Error("The announcement was not returned by the messaging service.");
-         setMessagesByGroup((current) => ({
-           ...current,
-           [group.id]: [...(current[group.id] ?? []), message],
-         }));
-       }
+      const content = announcementText.trim();
+      if (!realtime.sendMessage(group.id, content)) {
+        const message = await sendCommunicationMessage(group.id, content);
+        if (!message)
+          throw new Error("The announcement was not returned by the messaging service.");
+        setMessagesByGroup((current) => ({
+          ...current,
+          [group.id]: [...(current[group.id] ?? []), message],
+        }));
+      }
       setAnnouncementSuccess(true);
       setAnnouncementText("");
       setTimeout(() => setAnnouncementSuccess(false), 2200);
@@ -408,10 +409,17 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                   className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
                 />
                 <div className="flex justify-end gap-2">
-                  <button type="button" onClick={() => setIsCreateGroupOpen(false)} className="text-xs text-slate-500">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateGroupOpen(false)}
+                    className="text-xs text-slate-500"
+                  >
                     Cancel
                   </button>
-                  <button type="submit" className="rounded bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white">
+                  <button
+                    type="submit"
+                    className="rounded bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white"
+                  >
                     Create
                   </button>
                 </div>

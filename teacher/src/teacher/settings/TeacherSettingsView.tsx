@@ -22,7 +22,9 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [communicationSettings, setCommunicationSettings] = useState<CommunicationSettings | null>(null);
+  const [communicationSettings, setCommunicationSettings] = useState<CommunicationSettings | null>(
+    null,
+  );
   const [isCommunicationLoading, setIsCommunicationLoading] = useState(true);
   const [isCommunicationSaving, setIsCommunicationSaving] = useState(false);
   const [communicationSaved, setCommunicationSaved] = useState(false);
@@ -277,7 +279,9 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
               Control privacy and notification behavior for teacher conversations.
             </p>
           </div>
-          {communicationSaved && <span className="text-xs font-semibold text-emerald-700">Saved</span>}
+          {communicationSaved && (
+            <span className="text-xs font-semibold text-emerald-700">Saved</span>
+          )}
         </div>
         {communicationSettings ? (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -307,7 +311,9 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
           </div>
         ) : (
           <p className="text-xs text-slate-500">
-            {isCommunicationLoading ? "Loading communication preferences..." : "Communication preferences are unavailable."}
+            {isCommunicationLoading
+              ? "Loading communication preferences..."
+              : "Communication preferences are unavailable."}
           </p>
         )}
         <div className="flex justify-end border-t border-slate-100 pt-3">
