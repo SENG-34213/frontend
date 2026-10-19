@@ -1,111 +1,43 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Download, Search, Check } from "lucide-react";
+import { Check, Download, Search } from "lucide-react";
 import type { NavigationTab } from "../types";
 import type { BackendCourse } from "../api/courseApi";
-import {
-  getCourseAssignments,
-  getAssignmentSubmissions,
-  type BackendAssignment,
-} from "../api/assignmentApi";
-import { getCourseExams, getExamResults, type BackendExam, type ExamResult } from "../api/examApi";
-import { getCourseEnrollments } from "../api/enrollmentApi";
+import { getTeacherGradebook, type TeacherGradebook } from "../api/gradebookApi";
 
-type Row = {
-  studentId: string;
-  assignments: Record<string, number | null>;
-  exams: Record<string, number | null>;
-};
 interface GradebookViewProps {
   onNavigate: (tab: NavigationTab) => void;
   courses: BackendCourse[];
 }
-function valueOf(value: number | string | null | undefined) {
-  return value === null || value === undefined || value === "" ? null : Number(value);
-}
-function grade(percent: number) {
-  return percent >= 90
-    ? "A"
-    : percent >= 80
-      ? "B"
-      : percent >= 70
-        ? "C"
-        : percent >= 60
-          ? "D"
-          : "F";
-}
+
+const numberValue = (value: number | string | null | undefined) =>
+  value === null || value === undefined || value === "" ? null : Number(value);
 
 export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
   const [courseId, setCourseId] = useState("");
   const [search, setSearch] = useState("");
-  const [assignments, setAssignments] = useState<BackendAssignment[]>([]);
-  const [exams, setExams] = useState<BackendExam[]>([]);
-  const [rows, setRows] = useState<Row[]>([]);
+  const [gradebook, setGradebook] = useState<TeacherGradebook | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exported, setExported] = useState(false);
+
   useEffect(() => {
     if (!courseId && courses[0]?.id) setCourseId(courses[0].id);
+    if (courseId && !courses.some((course) => course.id === courseId)) setCourseId("");
   }, [courseId, courses]);
+
   useEffect(() => {
     if (!courseId) {
-      setRows([]);
-      setAssignments([]);
-      setExams([]);
+      setGradebook(null);
       return;
     }
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    Promise.all([
-      getCourseEnrollments(courseId, controller.signal),
-      getCourseAssignments(courseId, controller.signal),
-      getCourseExams(courseId, controller.signal),
-    ])
-      .then(async ([enrollments, nextAssignments, nextExams]) => {
-        const map = new Map<string, Row>();
-        enrollments.forEach((item) =>
-          map.set(item.studentId, { studentId: item.studentId, assignments: {}, exams: {} }),
-        );
-        const [submissions, resultSheets] = await Promise.all([
-          Promise.all(
-            nextAssignments.map((item) => getAssignmentSubmissions(item.id, controller.signal)),
-          ),
-          Promise.all(nextExams.map((item) => getExamResults(item.id))),
-        ]);
-        submissions.forEach((items, index) =>
-          items.forEach((item) => {
-            const row = map.get(item.studentId) ?? {
-              studentId: item.studentId,
-              assignments: {},
-              exams: {},
-            };
-            const marks = valueOf(item.marks);
-            row.assignments[nextAssignments[index].id] =
-              marks === null ? null : (marks / nextAssignments[index].maxMarks) * 100;
-            map.set(item.studentId, row);
-          }),
-        );
-        resultSheets.forEach((sheet, index) =>
-          sheet.results.forEach((item: ExamResult) => {
-            const row = map.get(item.studentId) ?? {
-              studentId: item.studentId,
-              assignments: {},
-              exams: {},
-            };
-            const marks = valueOf(item.marksObtained);
-            const totalMarks = Number(nextExams[index].totalMarks);
-            row.exams[nextExams[index].id] =
-              marks === null || !totalMarks ? null : (marks / totalMarks) * 100;
-            map.set(item.studentId, row);
-          }),
-        );
-        setAssignments(nextAssignments);
-        setExams(nextExams);
-        setRows(Array.from(map.values()));
-      })
+    getTeacherGradebook(courseId, controller.signal)
+      .then(setGradebook)
       .catch((requestError: unknown) => {
         if (!controller.signal.aborted) {
-          setRows([]);
+          setGradebook(null);
           setError(
             requestError instanceof Error ? requestError.message : "Unable to load gradebook data.",
           );
@@ -116,28 +48,61 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
       });
     return () => controller.abort();
   }, [courseId]);
-  const filtered = useMemo(
-    () => rows.filter((row) => row.studentId.toLowerCase().includes(search.toLowerCase())),
-    [rows, search],
+
+  const rows = gradebook?.students ?? [];
+  const filtered = useMemo(() => {
+    const query = search.toLowerCase();
+    return rows.filter((row) =>
+      [row.studentId, row.studentNumber, row.studentName, row.email]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(query)),
+    );
+  }, [rows, search]);
+  const uniqueItems = (items: (typeof rows)[number]["assignments"]) =>
+    items.filter(
+      (item, index, all) =>
+        all.findIndex((candidate) => candidate.assessmentId === item.assessmentId) === index,
+    );
+  const assignments = uniqueItems(rows.flatMap((row) => row.assignments));
+  const quizzes = uniqueItems(rows.flatMap((row) => row.quizzes));
+  const exams = uniqueItems(rows.flatMap((row) => row.exams));
+  const allItems = rows.flatMap((row) => [...row.assignments, ...row.quizzes, ...row.exams]);
+  const marksReturned = allItems.filter(
+    (item) => numberValue(item.status === "MISSING" ? null : item.score) !== null,
   );
-  const marks = rows
-    .flatMap((row) => [...Object.values(row.assignments), ...Object.values(row.exams)])
-    .filter((item): item is number => item !== null);
-  const average = marks.length ? marks.reduce((sum, item) => sum + item, 0) / marks.length : null;
+
   const exportCsv = () => {
     const csv = [
-      "Student ID,Assignments,Exams",
+      "Student ID,Student Name,Assignments,Quizzes,Exams,Overall,Letter",
       ...filtered.map((row) =>
-        [row.studentId, ...Object.values(row.assignments), ...Object.values(row.exams)].join(","),
+        [
+          row.studentNumber || row.studentId,
+          row.studentName || "Unavailable",
+          row.assignments.map((item) => item.percentage ?? "").join(";"),
+          row.quizzes.map((item) => item.percentage ?? "").join(";"),
+          row.exams.map((item) => item.percentage ?? "").join(";"),
+          row.overallPercentage ?? row.percentage ?? "",
+          row.letterGrade ?? row.grade ?? "",
+        ].join(","),
       ),
     ].join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     link.download = "gradebook.csv";
     link.click();
+    URL.revokeObjectURL(link.href);
     setExported(true);
     window.setTimeout(() => setExported(false), 2000);
   };
+
+  const renderPercentage = (row: (typeof rows)[number], id: string) => {
+    const item = [...row.assignments, ...row.quizzes, ...row.exams].find(
+      (entry) => entry.assessmentId === id,
+    );
+    const percentage = numberValue(item?.percentage);
+    return percentage === null ? "—" : `${percentage.toFixed(1)}%`;
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -146,7 +111,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
             Gradebook & Academic Results
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Live assignment and examination results for your courses.
+            Live assignment, quiz, and examination results for your courses.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -169,13 +134,11 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
           >
             {exported ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                Exported!
+                <Check className="w-3.5 h-3.5 text-emerald-600" /> Exported!
               </>
             ) : (
               <>
-                <Download className="w-3.5 h-3.5 text-slate-500" />
-                Export CSV
+                <Download className="w-3.5 h-3.5 text-slate-500" /> Export CSV
               </>
             )}
           </button>
@@ -185,12 +148,22 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
         {[
           [
             "Class Grade Average",
-            average === null ? "—" : String(average.toFixed(1)) + "%",
-            "From returned marks",
+            gradebook?.summary?.averagePercentage == null
+              ? "—"
+              : `${Number(gradebook.summary.averagePercentage).toFixed(1)}%`,
+            "From completed assessments",
           ],
-          ["Total Roster Size", rows.length, "Live enrollment roster"],
-          ["Assessments", assignments.length + exams.length, "Assignments and exams"],
-          ["Marks Returned", marks.length, "Backend result records"],
+          [
+            "Total Roster Size",
+            gradebook?.summary?.studentCount ?? rows.length,
+            "Live enrollment roster",
+          ],
+          [
+            "Assessments",
+            assignments.length + quizzes.length + exams.length,
+            "Assignments, quizzes, and exams",
+          ],
+          ["Marks Returned", marksReturned.length, "Backend result records"],
         ].map(([label, value, hint]) => (
           <div key={label} className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-xs text-slate-500 font-medium">{label}</span>
@@ -206,7 +179,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search students by ID..."
+            placeholder="Search students by name, ID, or email..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-xs text-slate-900 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
@@ -221,18 +194,15 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
         )}
         {loading ? (
           <div className="px-5 py-12 text-center text-xs text-slate-500">Loading gradebook...</div>
+        ) : !courseId ? (
+          <div className="px-5 py-12 text-center text-xs text-slate-400">No courses available.</div>
         ) : (
-          <table className="w-full text-left text-xs min-w-[750px]">
+          <table className="w-full text-left text-xs min-w-[900px]">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="px-5 py-3 sticky left-0 bg-slate-50 z-10">Student ID</th>
-                {assignments.map((item) => (
-                  <th key={item.id} className="px-4 py-3 text-right">
-                    {item.title}
-                  </th>
-                ))}
-                {exams.map((item) => (
-                  <th key={item.id} className="px-4 py-3 text-right">
+                <th className="px-5 py-3 sticky left-0 bg-slate-50 z-10">Student</th>
+                {[...assignments, ...quizzes, ...exams].map((item) => (
+                  <th key={item.assessmentId} className="px-4 py-3 text-right">
                     {item.title}
                   </th>
                 ))}
@@ -244,51 +214,36 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={assignments.length + exams.length + 3}
+                    colSpan={assignments.length + quizzes.length + exams.length + 3}
                     className="px-5 py-10 text-center text-slate-400"
                   >
                     No gradebook records available.
                   </td>
                 </tr>
               ) : (
-                filtered.map((row) => {
-                  const values = [
-                    ...Object.values(row.assignments),
-                    ...Object.values(row.exams),
-                  ].filter((item): item is number => item !== null);
-                  const percent = values.length
-                    ? values.reduce((sum, item) => sum + item, 0) / values.length
-                    : null;
-                  return (
-                    <tr key={row.studentId} className="hover:bg-slate-50/70">
-                      <td className="px-5 py-3.5 sticky left-0 bg-white font-sans font-semibold text-slate-900">
-                        {row.studentId}
+                filtered.map((row) => (
+                  <tr key={row.studentId} className="hover:bg-slate-50/70">
+                    <td className="px-5 py-3.5 sticky left-0 bg-white font-sans font-semibold text-slate-900">
+                      <div>{row.studentName || "Name unavailable"}</div>
+                      <div className="text-[10px] text-slate-400 font-normal">
+                        {row.studentNumber || row.studentId}
+                      </div>
+                    </td>
+                    {[...assignments, ...quizzes, ...exams].map((item) => (
+                      <td key={item.assessmentId} className="px-4 py-3.5 text-right">
+                        {renderPercentage(row, item.assessmentId)}
                       </td>
-                      {assignments.map((item) => (
-                        <td key={item.id} className="px-4 py-3.5 text-right">
-                          {row.assignments[item.id] ?? "—"}
-                        </td>
-                      ))}
-                      {exams.map((item) => (
-                        <td key={item.id} className="px-4 py-3.5 text-right">
-                          {row.exams[item.id] ?? "—"}
-                        </td>
-                      ))}
-                      <td className="px-4 py-3.5 text-right font-bold">
-                        {percent === null ? "—" : String(percent.toFixed(1)) + "%"}
-                      </td>
-                      <td className="px-5 py-3.5 text-center">
-                        {percent === null ? (
-                          "—"
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-bold font-sans bg-indigo-50 text-indigo-700">
-                            {grade(percent)}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
+                    ))}
+                    <td className="px-4 py-3.5 text-right font-bold">
+                      {numberValue(row.overallPercentage ?? row.percentage) === null
+                        ? "—"
+                        : `${Number(row.overallPercentage ?? row.percentage).toFixed(1)}%`}
+                    </td>
+                    <td className="px-5 py-3.5 text-center">
+                      {row.letterGrade || row.grade || "—"}
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

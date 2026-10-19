@@ -76,6 +76,19 @@ export type QuizAnalytics = {
   }>;
 };
 
+export type TeacherQuizResults = {
+  quizId: string;
+  totalMarks?: number | string | null;
+  results: Array<{
+    studentId: string;
+    studentName?: string | null;
+    marksObtained?: number | string | null;
+    percentage?: number | string | null;
+    passed: boolean;
+    submittedAt?: string | null;
+  }>;
+};
+
 export async function getTeacherQuizzes(signal?: AbortSignal): Promise<BackendQuiz[]> {
   const response = await apiRequest<ApiResponse<BackendQuiz[]>>("/api/quizzes/teacher", {
     signal,
@@ -157,4 +170,12 @@ export async function getTodayQuizAnalytics(signal?: AbortSignal) {
     { signal },
   );
   return response.data as QuizAnalytics;
+}
+
+export async function getTeacherQuizResults(quizId: string, signal?: AbortSignal) {
+  const response = await apiRequest<ApiResponse<TeacherQuizResults>>(
+    `/api/quizzes/${encodeURIComponent(quizId)}/results`,
+    { signal },
+  );
+  return response.data as TeacherQuizResults;
 }
