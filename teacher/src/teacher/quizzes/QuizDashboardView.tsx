@@ -11,6 +11,9 @@ import {
   Layers,
   Sparkles,
   BookOpen,
+  Trash2,
+  Send,
+  Eye,
 } from "lucide-react";
 import { Course, Quiz, QuizQuestion, NavigationTab } from "../types";
 import {
@@ -24,10 +27,14 @@ import {
   type BackendQuiz,
   type BackendQuizQuestion,
   type QuizAnalytics,
+  type AiQuizDraft,
 } from "../api/quizApi";
 import { useTeacherQuizzes } from "../hooks/useTeacherQuizzes";
 import { StatusBadge } from "../components/StatusBadge";
 import { QuestionBuilderModal } from "./QuestionBuilderModal";
+import { CreateQuizModal } from "./CreateQuizModal";
+import { AiQuizGeneratorCard } from "./AiQuizGeneratorCard";
+import { AiQuizCardSliderModal } from "./AiQuizCardSliderModal";
 
 interface QuizDashboardViewProps {
   teacherCourses: Course[];
@@ -38,16 +45,18 @@ interface QuizDashboardViewProps {
 
 export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   teacherCourses,
-  onOpenCreateQuiz,
   onNavigate,
-  onOpenAIWithPrompt,
 }) => {
   const teacherQuizState = useTeacherQuizzes(true);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState<"All" | "Draft" | "Active" | "Completed">("All");
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isQuestionBuilderOpen, setIsQuestionBuilderOpen] = useState(false);
+  const [isCreateQuizOpen, setIsCreateQuizOpen] = useState(false);
+  const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
+  const [sliderPreviewQuiz, setSliderPreviewQuiz] = useState<Quiz | null>(null);
   const [todayAnalytics, setTodayAnalytics] = useState<QuizAnalytics | null>(null);
   const [analyticsUnavailable, setAnalyticsUnavailable] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -92,7 +101,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       q.title.toLowerCase().includes(search.toLowerCase()) ||
       q.courseCode.toLowerCase().includes(search.toLowerCase());
     const matchesCourse = courseFilter === "All" || q.courseId === courseFilter;
-    return matchesSearch && matchesCourse;
+    const matchesStatus = statusFilter === "All" || q.status === statusFilter;
+    return matchesSearch && matchesCourse && matchesStatus;
   });
 
   const appendQuestion = (newQuestion: QuizQuestion) => {
@@ -250,30 +260,31 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Quiz Management
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Quiz & Assessment Workspace
+            </h1>
+            <span className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+              assignment-service
+            </span>
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Configure diagnostic assessments, question banks, automated grading, and concept
-            retention checks.
+            Formulate automated grading quizzes, diagnostic concept checks, and AI-generated
+            assessments from course documents.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() =>
-              onOpenAIWithPrompt(
-                "Generate 5 conceptual multiple-choice questions for CS-201 on AVL Tree balance factors",
-              )
-            }
-            className="px-3.5 py-2 text-xs font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors flex items-center gap-1.5"
+            onClick={() => setIsAiGeneratorOpen((current) => !current)}
+            className={`px-3.5 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 ${isAiGeneratorOpen ? "bg-violet-700 text-white border-violet-800 shadow-md ring-2 ring-violet-500/20" : "text-violet-700 bg-violet-50 hover:bg-violet-100 border-violet-200 shadow-xs"}`}
           >
             <Sparkles className="w-3.5 h-3.5 text-violet-600" />
-            <span>AI Question Generator</span>
+            <span>{isAiGeneratorOpen ? "Hide AI Generator" : "AI Quiz from Docs"}</span>
           </button>
           <button
-            onClick={onOpenCreateQuiz}
-            className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+            onClick={() => setIsCreateQuizOpen(true)}
+            className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Quiz</span>
@@ -286,6 +297,17 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
           {actionError}
         </div>
+      )}
+      {isAiGeneratorOpen && (
+        <AiQuizGeneratorCard
+          courses={teacherCourses}
+          onClose={() => setIsAiGeneratorOpen(false)}
+          onQuizCreated={(createdQuiz) => {
+            const mapped = mapBackendQuiz(createdQuiz, teacherCourses);
+            setQuizzes((current) => [mapped, ...current.filter((quiz) => quiz.id !== mapped.id)]);
+            setSelectedQuiz(mapped);
+          }}
+        />
       )}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
@@ -337,6 +359,30 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={courseFilter}
+                onChange={(e) => setCourseFilter(e.target.value)}
+                className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-hidden"
+              >
+                <option value="All">All Courses</option>
+                {teacherCourses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.code}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-hidden"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Published / Active</option>
+                <option value="Draft">Draft</option>
+                <option value="Completed">Completed</option>
+              </select>
             </div>
           </div>
 
@@ -395,7 +441,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                       {quiz.totalQuestions} Questions · {quiz.totalMarks} Marks
                     </span>
                     <span className="text-indigo-600 font-semibold">
-                      {quiz.averageScorePercent}% Avg
+                      {quiz.durationMinutes} mins
                     </span>
                   </div>
                 </div>
@@ -414,60 +460,78 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
               <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-indigo-700">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-100/60 px-2 py-0.5 rounded">
                       {selectedQuiz.courseCode}
                     </span>
                     <h2 className="text-sm font-bold text-slate-900">{selectedQuiz.title}</h2>
+                    <StatusBadge status={selectedQuiz.status} />
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Duration: {selectedQuiz.durationMinutes} mins · Total Marks:{" "}
-                    {selectedQuiz.totalMarks} · {selectedQuiz.attemptsCount} attempts
+                    Duration:{" "}
+                    <strong className="text-slate-700">{selectedQuiz.durationMinutes} mins</strong>{" "}
+                    · Total Marks:{" "}
+                    <strong className="text-slate-700">{selectedQuiz.totalMarks}</strong> ·{" "}
+                    {selectedQuiz.attemptsCount} student attempts
                   </p>
                 </div>
 
-                <button
-                  onClick={() => setIsQuestionBuilderOpen(true)}
-                  disabled={selectedQuiz.status !== "Draft"}
-                  className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Question</span>
-                </button>
-                {selectedQuiz.status === "Draft" && (
-                  <>
+                <div className="flex items-center gap-2 shrink-0">
+                  {selectedQuiz.questions.length > 0 && (
                     <button
-                      onClick={() => void handleEditQuiz()}
-                      className="text-xs text-slate-600 hover:text-indigo-600"
+                      onClick={() => setSliderPreviewQuiz(selectedQuiz)}
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5"
+                      title="Preview quiz questions in Card Slider view"
                     >
-                      Edit
+                      <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Card Slider</span>
                     </button>
+                  )}
+                  {selectedQuiz.status === "Draft" && (
                     <button
                       onClick={() => void handlePublishQuiz()}
-                      className="text-xs text-emerald-700 hover:text-emerald-900"
+                      className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
                     >
+                      <Send className="w-3.5 h-3.5" />
                       Publish
                     </button>
-                  </>
-                )}
-                {selectedQuiz.status === "Draft" && (
+                  )}
                   <button
-                    onClick={() => void handleDeleteQuiz()}
-                    className="text-xs text-rose-700 hover:text-rose-900"
+                    onClick={() => setIsQuestionBuilderOpen(true)}
+                    disabled={selectedQuiz.status !== "Draft"}
+                    className="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
-                    Delete
+                    <Plus className="w-3.5 h-3.5" />
+                    Add Question
                   </button>
-                )}
+                  {selectedQuiz.status === "Draft" && (
+                    <button
+                      onClick={() => void handleDeleteQuiz()}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition-colors"
+                      title="Delete quiz"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Questions List */}
               <div className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Question Bank ({selectedQuiz.questions.length})
-                  </h3>
-                  <span className="text-xs text-slate-400">
-                    Randomized for each student attempt
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-indigo-600" />
+                      Question Bank ({selectedQuiz.questions.length})
+                    </h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Contract: MULTIPLE_CHOICE_SINGLE_ANSWER with 4–5 options &amp; single verified
+                      correct answer
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">
+                    Total Marks:{" "}
+                    <strong className="text-indigo-600">{selectedQuiz.totalMarks}</strong>
                   </span>
                 </div>
 
@@ -498,7 +562,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                                 {q.question}
                               </p>
                               <span className="text-[10px] text-slate-400 font-mono uppercase mt-0.5 block">
-                                {q.type.replace("-", " ")}
+                                MULTIPLE CHOICE SINGLE ANSWER
                               </span>
                             </div>
                           </div>
@@ -556,7 +620,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
 
                         {q.explanation && (
                           <div className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 pl-8 leading-relaxed">
-                            <strong className="text-slate-700">Rationale: </strong>
+                            <strong className="text-slate-700">Pedagogical Rationale: </strong>
                             {q.explanation}
                           </div>
                         )}
@@ -583,9 +647,63 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           onSaveQuestion={handleSaveQuestion}
         />
       )}
+
+      {sliderPreviewQuiz && (
+        <AiQuizCardSliderModal
+          draft={quizToSliderDraft(sliderPreviewQuiz)}
+          initialTitle={sliderPreviewQuiz.title}
+          initialDescription={sliderPreviewQuiz.description}
+          initialDuration={sliderPreviewQuiz.durationMinutes}
+          initialPassMark={Math.round(sliderPreviewQuiz.totalMarks * 0.6)}
+          course={teacherCourses.find((course) => course.id === sliderPreviewQuiz.courseId)}
+          onClose={() => setSliderPreviewQuiz(null)}
+          onRegenerate={() => setSliderPreviewQuiz(null)}
+          onQuizCreated={(createdQuiz) => {
+            const mapped = mapBackendQuiz(createdQuiz, teacherCourses);
+            setQuizzes((current) => [mapped, ...current.filter((quiz) => quiz.id !== mapped.id)]);
+            setSelectedQuiz(mapped);
+            setSliderPreviewQuiz(null);
+          }}
+        />
+      )}
+
+      <CreateQuizModal
+        isOpen={isCreateQuizOpen}
+        courses={teacherCourses}
+        onClose={() => setIsCreateQuizOpen(false)}
+        onQuizCreated={(createdQuiz) => {
+          const mapped = mapBackendQuiz(createdQuiz, teacherCourses);
+          setQuizzes((current) => [mapped, ...current.filter((quiz) => quiz.id !== mapped.id)]);
+          setSelectedQuiz(mapped);
+        }}
+      />
     </div>
   );
 };
+
+function quizToSliderDraft(quiz: Quiz): AiQuizDraft {
+  return {
+    courseId: quiz.courseId,
+    questionCount: quiz.questions.length,
+    difficulty: "MEDIUM",
+    questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
+    creationMethod: "AI_GENERATED",
+    provider: "Mentify Assessment Engine",
+    model: "assignment-service",
+    questions: quiz.questions.map((question, index) => ({
+      questionText: question.question,
+      questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
+      marks: question.marks,
+      questionOrder: index + 1,
+      options: (question.options ?? []).map((option, optionIndex) => ({
+        optionText: option,
+        correct: option === question.correctAnswer,
+        optionOrder: optionIndex + 1,
+      })),
+      explanation: question.explanation,
+    })),
+  };
+}
 
 function mapBackendQuiz(quiz: BackendQuiz, courses: Course[]): Quiz {
   const course = courses.find((item) => item.id === quiz.courseId);
