@@ -383,7 +383,12 @@ export default function App() {
             <TeacherCalendarView backendCourses={teacherCourses.courses} />
           )}
 
-          {currentTab === "messages" && <TeacherMessagesView />}
+          {currentTab === "messages" && (
+            <TeacherMessagesView
+              backendCourses={teacherCourses.courses}
+              teacherId={teacherProfile.id}
+            />
+          )}
 
           {currentTab === "ai-assistant" && (
             <MentifyAIWorkspaceView initialPrompt={aiPreloadedPrompt} />
