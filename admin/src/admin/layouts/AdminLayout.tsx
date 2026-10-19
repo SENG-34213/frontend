@@ -64,6 +64,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -147,6 +148,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         unreadNotificationsCount={notifications.filter((n) => !n.read).length}
         isOpenMobile={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
       />
 
       {/* Main Content Area */}
@@ -160,6 +163,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           notifications={notifications}
           onMarkNotificationRead={onMarkNotificationRead}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
           onQuickAction={onQuickAction}
           onOpenSearch={() => setIsSearchOpen(true)}
           isDarkMode={isDarkMode}

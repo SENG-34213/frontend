@@ -27,6 +27,7 @@ import {
   ChevronRight,
   Shield,
   X,
+  ChevronLeft,
 } from "lucide-react";
 import { AdminRole } from "../types";
 
@@ -65,6 +66,8 @@ interface AdminSidebarProps {
   unreadNotificationsCount?: number;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -75,7 +78,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   unreadNotificationsCount = 2,
   isOpenMobile = false,
   onCloseMobile,
+  isCollapsed = false,
+  onToggleCollapse,
 }) => {
+  const compact = isCollapsed && !isOpenMobile;
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     OVERVIEW: false,
     USER_MANAGEMENT: false,
@@ -164,25 +170,40 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const sidebarContent = (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 select-none">
       {/* Brand Header */}
-      <div className="flex items-center justify-between px-5 h-16 border-b border-slate-200 dark:border-slate-800 shrink-0">
+      <div
+        className={`flex items-center justify-between h-16 border-b border-slate-200 dark:border-slate-800 shrink-0 ${compact ? "px-3" : "px-5"}`}
+      >
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
             M
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white">
-                Mentify
-              </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                Admin
-              </span>
+          {!compact && (
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white">
+                  Mentify
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  Admin
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">Enterprise Workspace</p>
             </div>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">Enterprise Workspace</p>
-          </div>
+          )}
         </div>
 
-        {onCloseMobile && (
+        {onToggleCollapse && !isOpenMobile && (
+          <button
+            onClick={onToggleCollapse}
+            className="hidden md:block p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            title={compact ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={compact ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {compact ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        )}
+
+        {onCloseMobile && isOpenMobile && (
           <button
             onClick={onCloseMobile}
             className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -193,18 +214,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </div>
 
       {/* Role Banner Indicator */}
-      <div className="px-5 py-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-            {role === "SUPER_ADMIN" ? "Super Admin Mode" : "Admin Mode"}
-          </span>
+      {!compact && (
+        <div className="px-5 py-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {role === "SUPER_ADMIN" ? "Super Admin Mode" : "Admin Mode"}
+            </span>
+          </div>
+          <span className="text-[10px] font-medium text-slate-500 tabular-nums">Keycloak RBAC</span>
         </div>
-        <span className="text-[10px] font-medium text-slate-500 tabular-nums">Keycloak RBAC</span>
-      </div>
+      )}
 
       {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+      <div className={`flex-1 overflow-y-auto py-3 space-y-4 ${compact ? "px-2" : "px-3"}`}>
         {navSections.map((section) => {
           // Check if section has any visible items for current role
           const visibleItems = section.items.filter(
@@ -216,20 +239,22 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
           return (
             <div key={section.key} className="space-y-0.5">
-              <button
-                type="button"
-                onClick={() => toggleSection(section.key)}
-                className="w-full flex items-center justify-between px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              >
-                <span>{section.label}</span>
-                {isCollapsed ? (
-                  <ChevronRight className="w-3 h-3" />
-                ) : (
-                  <ChevronDown className="w-3 h-3" />
-                )}
-              </button>
+              {!compact && (
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.key)}
+                  className="w-full flex items-center justify-between px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  <span>{section.label}</span>
+                  {isCollapsed ? (
+                    <ChevronRight className="w-3 h-3" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3" />
+                  )}
+                </button>
+              )}
 
-              {!isCollapsed && (
+              {(!isCollapsed || compact) && (
                 <div className="mt-1 space-y-0.5">
                   {visibleItems.map((item) => {
                     const Icon = item.icon;
@@ -243,7 +268,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                           onNavigate(item.id);
                           if (onCloseMobile) onCloseMobile();
                         }}
-                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-colors ${
+                        className={`w-full flex items-center justify-between rounded-lg text-xs font-medium transition-colors ${
+                          compact ? "px-2.5 py-2 justify-center" : "px-2.5 py-2"
+                        } ${
                           isActive
                             ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-semibold"
                             : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60"
@@ -257,10 +284,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                                 : "text-slate-400 dark:text-slate-500"
                             }`}
                           />
-                          <span className="truncate">{item.label}</span>
+                          {!compact && <span className="truncate">{item.label}</span>}
                         </div>
 
-                        {item.badge !== undefined && (
+                        {!compact && item.badge !== undefined && (
                           <span
                             className={`px-1.5 py-0.5 text-[10px] font-semibold rounded tabular-nums ${
                               isActive
@@ -283,16 +310,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
       {/* Footer Info */}
       <div className="p-3 border-t border-slate-200 dark:border-slate-800 shrink-0">
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
+        <div
+          className={`flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 ${compact ? "justify-center" : ""}`}
+        >
           <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold text-xs flex items-center justify-center shrink-0">
             AM
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-              Alex Mercer
-            </p>
-            <p className="text-[11px] text-slate-400 truncate">alex.mercer@mentify.edu</p>
-          </div>
+          {!compact && (
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                Alex Mercer
+              </p>
+              <p className="text-[11px] text-slate-400 truncate">alex.mercer@mentify.edu</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -301,7 +332,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   return (
     <>
       {/* Desktop Persistent Sidebar */}
-      <aside className="hidden md:block w-64 h-screen sticky top-0 shrink-0 z-30">
+      <aside
+        className={`hidden md:block h-screen sticky top-0 shrink-0 z-30 transition-all duration-200 ${isCollapsed ? "w-18" : "w-64"}`}
+      >
         {sidebarContent}
       </aside>
 
