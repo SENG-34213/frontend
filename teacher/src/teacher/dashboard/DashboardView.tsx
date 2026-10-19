@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   BookOpen,
   Users,
@@ -9,17 +9,12 @@ import {
   Clock,
   ArrowRight,
   Sparkles,
-  CheckCircle2,
   ChevronRight,
-  TrendingUp,
-  AlertCircle,
-  FileText,
   UserCheck,
-  Send,
 } from "lucide-react";
-import { mockCourses, mockAssignments, mockCalendarEvents } from "../data/mockData";
 import { NavigationTab, NotificationItem, TeacherProfile } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
+import { getTeacherDashboard, type TeacherDashboardData } from "../api/dashboardApi";
 
 interface DashboardViewProps {
   teacher: TeacherProfile;
@@ -38,17 +33,79 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   recentNotifications,
   notificationsLoading,
 }) => {
+  const [dashboard, setDashboard] = useState<TeacherDashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const firstName = teacher.name.trim().split(/\s+/)[0] || "Professor";
-  const activeCourses = mockCourses.filter((c) => c.status === "Active");
-  const todayClasses = mockCalendarEvents.filter(
-    (e) => e.date === "2026-10-17" && e.type === "Class",
-  );
-  const pendingGradingAssignments = mockAssignments.filter(
-    (a) => a.totalSubmissions > a.gradedCount,
-  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setIsLoading(true);
+    setError(null);
+
+    getTeacherDashboard(controller.signal)
+      .then((data) => setDashboard(data ?? null))
+      .catch((requestError) => {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+        setError(
+          requestError instanceof Error
+            ? requestError
+            : new Error("Dashboard data could not be loaded."),
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const formatDateTime = (value?: string | null) =>
+    value ? new Date(value).toLocaleString() : "Not available";
+  const formatTime = (value?: string | null) =>
+    value ? new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—";
+
+  const todayClasses = (dashboard?.todaySchedule ?? [])
+    .filter((event) => event.eventType.toUpperCase() === "CLASS")
+    .map((event) => ({
+      id: event.id,
+      title: event.title,
+      startTime: formatTime(event.startDateTime),
+      location: event.location || "Not specified",
+      description: formatDateTime(event.startDateTime),
+    }));
+  const pendingGradingAssignments = (dashboard?.pendingGrading ?? []).map((item) => ({
+    id: item.assignmentId,
+    submissionId: item.submissionId,
+    courseCode: item.courseId.slice(0, 8),
+    title: item.assignmentTitle,
+    dueDate: formatDateTime(item.submittedAt),
+    gradedCount: 0,
+    totalSubmissions: 1,
+  }));
+  const activeCourses = (dashboard?.coursePerformance ?? []).map((course) => ({
+    id: course.courseId,
+    code: course.courseId.slice(0, 8),
+    title: course.courseName,
+    description: `${course.activeAssignmentCount} active assignments · ${course.submissionCount} submissions`,
+    status: "Active",
+    enrolledCount: course.studentCount,
+    averageGrade: course.gradingRate,
+  }));
 
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
+      {error && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <span>{error.message}</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {/* 1. Welcome Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs">
         <div>
@@ -57,15 +114,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Fall Semester 2026
             </span>
             <span className="text-xs text-slate-400">·</span>
-            <span className="text-xs text-slate-500 font-medium">Saturday, October 17, 2026</span>
+            <span className="text-xs text-slate-500 font-medium">
+              {new Date().toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
             Good morning, {firstName}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Here's what's happening across your classes today. You have{" "}
-            <span className="font-semibold text-slate-800">2 upcoming lectures</span> and{" "}
-            <span className="font-semibold text-indigo-700">18 submissions</span> awaiting review.
+            <span className="font-semibold text-slate-800">
+              {dashboard?.todayClassCount ?? 0} upcoming lectures
+            </span>{" "}
+            and{" "}
+            <span className="font-semibold text-indigo-700">
+              {dashboard?.pendingReviewCount ?? 0} submissions
+            </span>{" "}
+            awaiting review.
           </p>
         </div>
 
@@ -98,8 +168,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs font-medium text-slate-500">My Courses</span>
             <BookOpen className="w-4 h-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">4</div>
-          <p className="text-[11px] text-slate-500 mt-1">3 active · 1 draft</p>
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+            {isLoading ? "—" : (dashboard?.courseCount ?? 0)}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Assigned teacher courses</p>
         </div>
 
         {/* Card 2: Total Students */}
@@ -111,8 +183,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs font-medium text-slate-500">Total Students</span>
             <Users className="w-4 h-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">142</div>
-          <p className="text-[11px] text-emerald-600 font-medium mt-1">94.8% avg attendance</p>
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+            {isLoading ? "—" : (dashboard?.studentCount ?? 0)}
+          </div>
+          <p className="text-[11px] text-emerald-600 font-medium mt-1">Unique enrolled students</p>
         </div>
 
         {/* Card 3: Active Assignments */}
@@ -124,8 +198,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs font-medium text-slate-500">Active Assignments</span>
             <FileCheck className="w-4 h-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">3</div>
-          <p className="text-[11px] text-slate-500 mt-1">Next due Oct 20</p>
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+            {isLoading ? "—" : (dashboard?.activeAssignmentCount ?? 0)}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Published and not overdue</p>
         </div>
 
         {/* Card 4: Pending Submissions */}
@@ -137,7 +213,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs font-medium text-indigo-900">Pending Review</span>
             <ClipboardList className="w-4 h-4" />
           </div>
-          <div className="text-2xl font-bold text-indigo-700 font-mono tabular-nums">18</div>
+          <div className="text-2xl font-bold text-indigo-700 font-mono tabular-nums">
+            {isLoading ? "—" : (dashboard?.pendingReviewCount ?? 0)}
+          </div>
           <p className="text-[11px] text-indigo-600 font-medium mt-1">Ready to grade</p>
         </div>
 
@@ -150,8 +228,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs font-medium text-slate-500">Upcoming Exams</span>
             <GraduationCap className="w-4 h-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">2</div>
-          <p className="text-[11px] text-slate-500 mt-1">Midterms scheduled</p>
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+            {isLoading ? "—" : (dashboard?.upcomingExamCount ?? 0)}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Scheduled or marking</p>
         </div>
 
         {/* Card 6: Today's Classes */}
@@ -163,8 +243,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span className="text-xs font-medium text-slate-500">Today's Classes</span>
             <Calendar className="w-4 h-4" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">2</div>
-          <p className="text-[11px] text-slate-500 mt-1">Starting 10:00 AM</p>
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+            {isLoading ? "—" : (dashboard?.todayClassCount ?? 0)}
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Classes scheduled today</p>
         </div>
       </div>
 
@@ -189,6 +271,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             <div className="mt-4 space-y-3">
+              {!isLoading && todayClasses.length === 0 && (
+                <p className="py-6 text-center text-xs text-slate-400">
+                  No classes scheduled today.
+                </p>
+              )}
               {todayClasses.map((item) => (
                 <div
                   key={item.id}
@@ -203,7 +290,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span className="font-semibold text-xs sm:text-sm text-slate-900">
                           {item.title}
                         </span>
-                        <StatusBadge status="Confirmed" variant="clean" />
+                        <StatusBadge status="Scheduled" variant="clean" />
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
                         Room: <span className="text-slate-700 font-medium">{item.location}</span> ·{" "}
@@ -252,7 +339,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 const pending = asg.totalSubmissions - asg.gradedCount;
                 return (
                   <div
-                    key={asg.id}
+                    key={asg.submissionId}
                     className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div>
