@@ -122,6 +122,8 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
   const [rename, setRename] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const messageLoadIdRef = useRef(0);
+  const skipNextMessageLoadRef = useRef<string | null>(null);
   const active = conversations.find((item) => item.id === activeId);
   const filtered = useMemo(
     () =>
@@ -147,10 +149,21 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
     })();
   }, []);
   useEffect(() => {
-    if (!activeId) return;
+    if (!activeId) {
+      setMessages([]);
+      return;
+    }
+    if (skipNextMessageLoadRef.current === activeId) return;
+    const loadId = ++messageLoadIdRef.current;
     void fetchAiMessages(activeId)
-      .then(setMessages)
-      .catch((e) => setError(e instanceof Error ? e.message : "Unable to load this conversation."));
+      .then((loadedMessages) => {
+        if (loadId === messageLoadIdRef.current) setMessages(loadedMessages);
+      })
+      .catch((e) => {
+        if (loadId === messageLoadIdRef.current) {
+          setError(e instanceof Error ? e.message : "Unable to load this conversation.");
+        }
+      });
   }, [activeId]);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -165,6 +178,7 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
   const send = async (value = input) => {
     const prompt = value.trim();
     if (!prompt || sending) return;
+    messageLoadIdRef.current += 1;
     const clientMessageId = `client-${crypto.randomUUID?.() || Date.now()}`;
     setInput("");
     setError("");
@@ -173,11 +187,16 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
       { id: clientMessageId, role: "USER", message: prompt, timestamp: new Date().toISOString() },
     ]);
     setSending(true);
+    let createdConversationId: string | null = null;
     try {
       let conversation = active;
       if (!conversation) {
         conversation = await createAiConversation(prompt.slice(0, 80));
         setConversations((current) => [conversation!, ...current]);
+        // The first message is already being assembled locally. Do not let the
+        // active-conversation loader replace it while the send is in flight.
+        skipNextMessageLoadRef.current = conversation.id;
+        createdConversationId = conversation.id;
         setActiveId(conversation.id);
       }
       const result = await sendAiMessage(conversation.id, prompt, clientMessageId);
@@ -193,8 +212,11 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
       ]);
     } catch (e) {
       setMessages((current) => current.filter((item) => item.id !== clientMessageId));
-      setError(e instanceof Error ? e.message : "Unable to reach the AI service.");
+      setError(e instanceof Error ? e.message : "The AI assistant is temporarily unavailable.");
     } finally {
+      if (createdConversationId && skipNextMessageLoadRef.current === createdConversationId) {
+        skipNextMessageLoadRef.current = null;
+      }
       setSending(false);
     }
   };
@@ -339,7 +361,7 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
                   {active?.title || "New AI workspace"}
                 </p>
                 <p className="flex items-center gap-1 text-[10px] text-emerald-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Teacher API connected
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Workspace connected
                 </p>
               </div>
             </div>

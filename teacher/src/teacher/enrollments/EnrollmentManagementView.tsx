@@ -125,7 +125,7 @@ export const EnrollmentManagementView: React.FC<EnrollmentManagementViewProps> =
           [
             "Enrolled Students",
             studentState.students.length,
-            "Live from enrollment service",
+            "Updated just now",
             "text-indigo-600",
           ],
           [
@@ -211,7 +211,7 @@ export const EnrollmentManagementView: React.FC<EnrollmentManagementViewProps> =
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="px-5 py-3">Student</th>
-                <th className="px-4 py-3">Student ID</th>
+                <th className="px-4 py-3">Student Number</th>
                 <th className="px-4 py-3">Course</th>
                 <th className="px-4 py-3">Attendance</th>
                 <th className="px-5 py-3 text-right">Status</th>

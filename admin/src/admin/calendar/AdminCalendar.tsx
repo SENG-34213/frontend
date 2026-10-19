@@ -225,6 +225,14 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   onCancelEvent,
   onFilterEvents,
 }) => {
+  const courseOptions = courses.length
+    ? courses.map((course) => ({
+        code: course.code,
+        title: course.title,
+        dept: course.category,
+      }))
+    : KNOWN_COURSES;
+
   // Calendar base state (anchor date: October 18, 2026)
   const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 9, 18));
   const [view, setView] = useState<CalendarViewMode>("month");
@@ -333,8 +341,10 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   const [formStartTime, setFormStartTime] = useState("09:00 AM");
   const [formEndTime, setFormEndTime] = useState("11:30 AM");
   const [formLocation, setFormLocation] = useState("Science Hall Auditorium B");
-  const [formCourseCode, setFormCourseCode] = useState("MATH-401");
-  const [formCourseTitle, setFormCourseTitle] = useState("Advanced Calculus & Real Analysis");
+  const [formCourseCode, setFormCourseCode] = useState(courseOptions[0]?.code || "MATH-401");
+  const [formCourseTitle, setFormCourseTitle] = useState(
+    courseOptions[0]?.title || "Advanced Calculus & Real Analysis",
+  );
   const [formInstructorName, setFormInstructorName] = useState("Dr. Marcus Sterling");
   const [formInstructorEmail, setFormInstructorEmail] = useState("marcus.sterling@mentify.edu");
   const [formDescription, setFormDescription] = useState("");
@@ -356,8 +366,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     setFormStartTime("09:00 AM");
     setFormEndTime("11:30 AM");
     setFormLocation("Science Hall Auditorium B");
-    setFormCourseCode("MATH-401");
-    setFormCourseTitle("Advanced Calculus & Real Analysis");
+    setFormCourseCode(courseOptions[0]?.code || "MATH-401");
+    setFormCourseTitle(courseOptions[0]?.title || "Advanced Calculus & Real Analysis");
     setFormInstructorName("Dr. Marcus Sterling");
     setFormInstructorEmail("marcus.sterling@mentify.edu");
     setFormDescription("Supervised examination in designated campus facility.");
@@ -380,8 +390,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     setFormEndTime(times[1] || "10:30 AM");
 
     setFormLocation(evt.location);
-    setFormCourseCode(evt.courseCode || "MATH-401");
-    setFormCourseTitle(evt.courseTitle || "Advanced Calculus & Real Analysis");
+    setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "MATH-401");
+    setFormCourseTitle(evt.courseTitle || courseOptions[0]?.title || "Advanced Calculus & Real Analysis");
     setFormInstructorName(evt.instructorName || "Dr. Marcus Sterling");
     setFormInstructorEmail(evt.instructorEmail || "marcus.sterling@mentify.edu");
     setFormDescription(evt.description || "");
@@ -446,7 +456,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   // Course change in form: auto-populate courseTitle
   const handleCourseSelectionChange = (code: string) => {
     setFormCourseCode(code);
-    const found = KNOWN_COURSES.find((c) => c.code === code);
+    const found = courseOptions.find((c) => c.code === code);
     if (found) {
       setFormCourseTitle(found.title);
     }
@@ -1282,8 +1292,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 onChange={(e) => setSelectedCourse(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
               >
-                <option value="ALL">All Courses ({KNOWN_COURSES.length})</option>
-                {KNOWN_COURSES.map((c) => (
+                <option value="ALL">All Courses ({courseOptions.length})</option>
+                {courseOptions.map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.code} — {c.title}
                   </option>
@@ -2041,7 +2051,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
               >
                 <option value="ALL">All Courses</option>
-                {KNOWN_COURSES.map((c) => (
+                {courseOptions.map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.code} - {c.title}
                   </option>
@@ -2486,7 +2496,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                     onChange={(e) => handleCourseSelectionChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                   >
-                    {KNOWN_COURSES.map((c) => (
+                    {courseOptions.map((c) => (
                       <option key={c.code} value={c.code}>
                         {c.code} ({c.title})
                       </option>

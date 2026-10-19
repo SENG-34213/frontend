@@ -177,7 +177,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       const content = inputText.trim();
       if (!realtime.sendMessage(activeGroup.id, content)) {
         const message = await sendCommunicationMessage(activeGroup.id, content);
-        if (!message) throw new Error("The messaging service did not return the sent message.");
+        if (!message) throw new Error("Your message could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
           [activeGroup.id]: [...(current[activeGroup.id] ?? []), message],
@@ -198,7 +198,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     if (!activeGroup || !content || content === message.content) return;
     try {
       const updated = await updateCommunicationMessage(activeGroup.id, message.id, content);
-      if (!updated) throw new Error("The messaging service did not return the updated message.");
+      if (!updated) throw new Error("Your message could not be updated.");
       setMessagesByGroup((current) => ({
         ...current,
         [activeGroup.id]: current[activeGroup.id].map((item) =>
@@ -242,7 +242,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         name,
         description: createGroupDescription.trim() || undefined,
       });
-      if (!created) throw new Error("The communication service did not return the new group.");
+      if (!created) throw new Error("The new group could not be created.");
       setGroups((current) => [created, ...current]);
       setSelectedGroupId(created.id);
       setCreateGroupName("");
@@ -306,7 +306,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       if (!realtime.sendMessage(group.id, content)) {
         const message = await sendCommunicationMessage(group.id, content);
         if (!message)
-          throw new Error("The announcement was not returned by the messaging service.");
+          throw new Error("The announcement could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
           [group.id]: [...(current[group.id] ?? []), message],
@@ -342,7 +342,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
           </div>
         </div>
         <span className="text-xs text-slate-400 font-mono hidden sm:inline">
-          Mentify Messaging Service · TLS Encrypted
+          Mentify Messaging · Secure
         </span>
       </div>
 

@@ -198,7 +198,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
   };
   const samples = [
     "CS-201: AVL Trees & Rotations Syllabus.pdf",
-    "CS-350: Keycloak JWT & OAuth2 Spec.pdf",
+    "CS-350: Security & Access Control Spec.pdf",
     "CS-420: Backprop & Matrix Calculus.pdf",
   ];
 

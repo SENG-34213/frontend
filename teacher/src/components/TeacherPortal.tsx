@@ -55,6 +55,16 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [assignmentRefreshToken, setAssignmentRefreshToken] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    const savedTab = window.localStorage.getItem("teacher-current-tab");
+    if (savedTab) setCurrentTab(savedTab as NavigationTab);
+  }, []);
 
   // Quick Create Modal state
   const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
@@ -120,10 +130,19 @@ export default function App() {
   useEffect(() => {
     if (!isSearchOpen || !teacherCourses.courses.length) return;
     const controller = new AbortController();
-    Promise.all(
+    Promise.allSettled(
       teacherCourses.courses.map((course) => getCourseAssignments(course.id, controller.signal)),
     )
-      .then((results) => setSearchAssignments(results.flat()))
+      .then((results) =>
+        setSearchAssignments(
+          results
+            .filter(
+              (result): result is PromiseFulfilledResult<BackendAssignment[]> =>
+                result.status === "fulfilled",
+            )
+            .flatMap((result) => result.value),
+        ),
+      )
       .catch(() => {
         if (!controller.signal.aborted) setSearchAssignments([]);
       });
@@ -136,6 +155,7 @@ export default function App() {
       setSelectedCourseForDetail(null);
     }
     setCurrentTab(tab);
+    window.localStorage.setItem("teacher-current-tab", tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -264,6 +284,8 @@ export default function App() {
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenQuickCreate={handleOpenQuickCreate}
           onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
+          isDarkMode={isDarkMode}
+          onToggleTheme={() => setIsDarkMode((current) => !current)}
           teacher={teacherProfile}
           onLogout={async () => {
             await logoutTeacher();

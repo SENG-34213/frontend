@@ -22,6 +22,7 @@ import {
   type BackendAssignment,
 } from "../api/assignmentApi";
 import { StatusBadge } from "../components/StatusBadge";
+import { ApiError } from "../api/client";
 
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
@@ -82,16 +83,33 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     const controller = new AbortController();
     setIsLoading(true);
     setError(null);
-    Promise.all(backendCourses.map((course) => getCourseAssignments(course.id, controller.signal)))
-      .then((responses) => {
-        const loaded = responses.flat();
+    Promise.allSettled(backendCourses.map((course) => getCourseAssignments(course.id, controller.signal)))
+      .then((results) => {
+        if (controller.signal.aborted) return;
+
+        const successfulResponses = results.filter(
+          (result): result is PromiseFulfilledResult<BackendAssignment[]> =>
+            result.status === "fulfilled",
+        );
+        const failedResponses = results.filter((result) => result.status === "rejected");
+        const loaded = successfulResponses.flatMap((result) => result.value);
+        const nonNotFoundFailures = failedResponses.filter(
+          (result) => !(result.reason instanceof ApiError && result.reason.status === 404),
+        );
+
         setBackendAssignments(loaded);
         setAssignments(loaded.map((item) => toAssignment(item, backendCourses)));
-      })
-      .catch((requestError: unknown) => {
-        if (!controller.signal.aborted) {
+
+        // A course can legitimately have no assignment resource yet. One failed
+        // course must not hide assignments belonging to the other courses.
+        if (successfulResponses.length > 0 || nonNotFoundFailures.length === 0) {
+          setError(null);
+        } else {
+          const firstFailure = nonNotFoundFailures[0].reason;
           setError(
-            requestError instanceof Error ? requestError.message : "Assignments failed to load.",
+            firstFailure instanceof Error
+              ? firstFailure.message
+              : "Assignments failed to load.",
           );
         }
       })
@@ -228,7 +246,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
             {totalSubmissions}
           </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">Logged in Spring Boot repository</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Across your active courses</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-indigo-200 shadow-2xs bg-indigo-50/20">
