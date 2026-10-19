@@ -1,11 +1,27 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Clock, Loader2, MapPin, X } from "lucide-react";
+import {
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Edit2,
+  Loader2,
+  MapPin,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import {
+  cancelCalendarEvent,
+  createCalendarEvent,
   getCalendarEvents,
   getUpcomingCalendarEvents,
+  updateCalendarEvent,
+  type CalendarEventRequest,
   type BackendCalendarEvent,
 } from "../api/calendarApi";
 
@@ -48,14 +64,37 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
   const [viewMode, setViewMode] = useState<"Month" | "Agenda">("Month");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<BackendCalendarEvent | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    eventType: "CLASS" as BackendCalendarEvent["eventType"],
+    startDateTime: "",
+    endDateTime: "",
+    courseId: "",
+    location: "",
+  });
 
   const days = useMemo(
     () => Array.from({ length: monthEnd(month).getDate() }, (_, index) => index + 1),
     [month],
   );
   const firstDayOffset = month.getDay();
-  const filteredEvents =
-    courseFilter === "all" ? events : events.filter((event) => event.courseId === courseFilter);
+  const filteredEvents = events.filter((event) => {
+    const matchesCourse = courseFilter === "all" || event.courseId === courseFilter;
+    const matchesType = typeFilter === "all" || event.eventType === typeFilter;
+    const query = search.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      `${event.title} ${event.description || ""} ${event.location || ""}`
+        .toLowerCase()
+        .includes(query);
+    return matchesCourse && matchesType && matchesSearch;
+  });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -89,6 +128,69 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
     return () => controller.abort();
   }, [courseFilter, month]);
 
+  const refreshCalendar = () => setMonth(new Date(month));
+  const openCreate = (date?: string) => {
+    setEditingEvent(null);
+    setForm({
+      title: "",
+      description: "",
+      eventType: "CLASS",
+      startDateTime: date ? `${date}T09:00` : "",
+      endDateTime: date ? `${date}T10:00` : "",
+      courseId: courseFilter === "all" ? "" : courseFilter,
+      location: "",
+    });
+    setIsFormOpen(true);
+  };
+  const openEdit = (event: BackendCalendarEvent) => {
+    setEditingEvent(event);
+    setForm({
+      title: event.title,
+      description: event.description || "",
+      eventType: event.eventType,
+      startDateTime: event.startDateTime.slice(0, 16),
+      endDateTime: event.endDateTime?.slice(0, 16) || "",
+      courseId: event.courseId || "",
+      location: event.location || "",
+    });
+    setIsFormOpen(true);
+  };
+  const saveEvent = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.title.trim() || !form.startDateTime) return;
+    setIsSaving(true);
+    setError(null);
+    const request: CalendarEventRequest = {
+      ...form,
+      title: form.title.trim(),
+      endDateTime: form.endDateTime || null,
+      courseId: form.courseId || null,
+      visibility: form.courseId ? "COURSE" : "ROLE",
+      targetRole: "TEACHER",
+      allDay: false,
+    };
+    try {
+      if (editingEvent) await updateCalendarEvent(editingEvent.id, request);
+      else await createCalendarEvent(request);
+      setIsFormOpen(false);
+      refreshCalendar();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to save calendar event.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  const cancelEvent = async (event: BackendCalendarEvent) => {
+    if (!window.confirm(`Cancel “${event.title}”?`)) return;
+    try {
+      await cancelCalendarEvent(event.id);
+      setSelectedEvent(null);
+      refreshCalendar();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to cancel calendar event.");
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -100,7 +202,13 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
             View course schedules, upcoming events, and academic commitments.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            onClick={() => openCreate()}
+            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700"
+          >
+            <Plus className="h-3.5 w-3.5" /> New event
+          </button>
           <select
             value={courseFilter}
             onChange={(event) => setCourseFilter(event.target.value)}
@@ -110,6 +218,18 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
             {backendCourses.map((course) => (
               <option key={course.id} value={course.id}>
                 {course.courseName}
+              </option>
+            ))}
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(event) => setTypeFilter(event.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700"
+          >
+            <option value="all">All types</option>
+            {Object.keys(eventColors).map((type) => (
+              <option key={type} value={type}>
+                {type}
               </option>
             ))}
           </select>
@@ -136,7 +256,7 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
       )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-          <div className="p-3 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 p-3">
             <div className="flex items-center gap-3">
               <span className="text-sm font-bold text-slate-900">
                 {month.toLocaleDateString([], { month: "long", year: "numeric" })}
@@ -160,7 +280,18 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-            {isLoading && <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />}
+            <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1 sm:flex">
+                <Search className="h-3.5 w-3.5 text-slate-400" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search events"
+                  className="w-28 text-xs outline-none"
+                />
+              </div>
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />}
+            </div>
           </div>
           {viewMode === "Month" ? (
             <>
@@ -258,6 +389,24 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
                   {selectedEvent.description}
                 </p>
               )}
+              <div className="flex gap-2 border-t border-slate-100 pt-3">
+                {selectedEvent.canEdit && (
+                  <button
+                    onClick={() => openEdit(selectedEvent)}
+                    className="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" /> Edit
+                  </button>
+                )}
+                {selectedEvent.canCancel && selectedEvent.status !== "CANCELLED" && (
+                  <button
+                    onClick={() => void cancelEvent(selectedEvent)}
+                    className="flex items-center gap-1 rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Cancel
+                  </button>
+                )}
+              </div>
             </div>
           )}
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3">
@@ -287,6 +436,125 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
           </div>
         </div>
       </div>
+      {isFormOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
+          <form
+            onSubmit={saveEvent}
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  {editingEvent ? "Edit calendar event" : "Create calendar event"}
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Changes are saved through the teacher calendar service.
+                </p>
+              </div>
+              <button type="button" onClick={() => setIsFormOpen(false)}>
+                <X className="h-4 w-4 text-slate-400" />
+              </button>
+            </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label className="sm:col-span-2">
+                <span className="mb-1 block text-xs font-semibold text-slate-700">Title</span>
+                <input
+                  required
+                  value={form.title}
+                  onChange={(event) => setForm({ ...form, title: event.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                />
+              </label>
+              <label>
+                <span className="mb-1 block text-xs font-semibold text-slate-700">Event type</span>
+                <select
+                  value={form.eventType}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      eventType: event.target.value as BackendCalendarEvent["eventType"],
+                    })
+                  }
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  {Object.keys(eventColors).map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span className="mb-1 block text-xs font-semibold text-slate-700">Course</span>
+                <select
+                  value={form.courseId}
+                  onChange={(event) => setForm({ ...form, courseId: event.target.value })}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                >
+                  <option value="">All teacher courses</option>
+                  {backendCourses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.courseName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span className="mb-1 block text-xs font-semibold text-slate-700">Starts</span>
+                <input
+                  required
+                  type="datetime-local"
+                  value={form.startDateTime}
+                  onChange={(event) => setForm({ ...form, startDateTime: event.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </label>
+              <label>
+                <span className="mb-1 block text-xs font-semibold text-slate-700">Ends</span>
+                <input
+                  type="datetime-local"
+                  value={form.endDateTime}
+                  onChange={(event) => setForm({ ...form, endDateTime: event.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="sm:col-span-2">
+                <span className="mb-1 block text-xs font-semibold text-slate-700">Location</span>
+                <input
+                  value={form.location}
+                  onChange={(event) => setForm({ ...form, location: event.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="sm:col-span-2">
+                <span className="mb-1 block text-xs font-semibold text-slate-700">Description</span>
+                <textarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(event) => setForm({ ...form, description: event.target.value })}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsFormOpen(false)}
+                className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-500"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isSaving}
+                className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                <CalendarPlus className="h-3.5 w-3.5" />
+                {isSaving ? "Saving..." : editingEvent ? "Save changes" : "Create event"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
