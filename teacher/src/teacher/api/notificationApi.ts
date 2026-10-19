@@ -47,7 +47,7 @@ export async function getNotifications(
 
 export async function markNotificationRead(notificationId: string) {
   const response = await apiRequest<ApiResponse<BackendNotification>>(
-    `/api/v1/notifications/${notificationId}/read`,
+    `/api/v1/notifications/${encodeURIComponent(notificationId)}/read`,
     { method: "PATCH" },
   );
   return response.data;
@@ -61,7 +61,10 @@ export async function markAllNotificationsRead() {
 }
 
 export async function deleteNotification(notificationId: string) {
-  await apiRequest<ApiResponse<null>>(`/api/v1/notifications/${notificationId}`, {
-    method: "DELETE",
-  });
+  await apiRequest<ApiResponse<null>>(
+    `/api/v1/notifications/${encodeURIComponent(notificationId)}`,
+    {
+      method: "DELETE",
+    },
+  );
 }

@@ -39,11 +39,24 @@ function unwrap<T>(response: T | ApiEnvelope<T>): T {
   return response as T;
 }
 
+function coursePath(courseId: string) {
+  return encodeURIComponent(courseId);
+}
+
+function modulePath(courseId: string, moduleId: string) {
+  return `/api/v1/course/${coursePath(courseId)}/modules/${encodeURIComponent(moduleId)}`;
+}
+
+function listData<T>(response: T[] | ApiEnvelope<T[]>): T[] {
+  const value = unwrap(response);
+  return Array.isArray(value) ? value : [];
+}
+
 export function getCourseModules(courseId: string, signal?: AbortSignal) {
   return apiRequest<CourseContentModule[] | ApiEnvelope<CourseContentModule[]>>(
-    `/api/v1/course/${courseId}/modules`,
+    `/api/v1/course/${coursePath(courseId)}/modules`,
     { signal },
-  ).then(unwrap);
+  ).then(listData);
 }
 
 export function createCourseModule(
@@ -51,7 +64,7 @@ export function createCourseModule(
   payload: { title: string; description?: string; sequenceOrder: number; isVisible?: boolean },
 ) {
   return apiRequest<CourseContentModule | ApiEnvelope<CourseContentModule>>(
-    `/api/v1/course/${courseId}/modules`,
+    `/api/v1/course/${coursePath(courseId)}/modules`,
     { method: "POST", body: payload },
   ).then(unwrap);
 }
@@ -62,20 +75,20 @@ export function updateCourseModule(
   payload: { title: string; description?: string; sequenceOrder: number; isVisible?: boolean },
 ) {
   return apiRequest<CourseContentModule | ApiEnvelope<CourseContentModule>>(
-    `/api/v1/course/${courseId}/modules/${moduleId}`,
+    modulePath(courseId, moduleId),
     { method: "PUT", body: payload },
   ).then(unwrap);
 }
 
 export function deleteCourseModule(courseId: string, moduleId: string) {
-  return apiRequest<void>(`/api/v1/course/${courseId}/modules/${moduleId}`, { method: "DELETE" });
+  return apiRequest<void>(modulePath(courseId, moduleId), { method: "DELETE" });
 }
 
 export function getModuleLessons(courseId: string, moduleId: string, signal?: AbortSignal) {
   return apiRequest<CourseContentLesson[] | ApiEnvelope<CourseContentLesson[]>>(
-    `/api/v1/course/${courseId}/modules/${moduleId}/lessons`,
+    `${modulePath(courseId, moduleId)}/lessons`,
     { signal },
-  ).then(unwrap);
+  ).then(listData);
 }
 
 export function createModuleLesson(
@@ -84,7 +97,7 @@ export function createModuleLesson(
   payload: { title: string; description?: string; isVisible?: boolean; releaseDate?: string },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(
-    `/api/v1/course/${courseId}/modules/${moduleId}/lessons`,
+    `${modulePath(courseId, moduleId)}/lessons`,
     { method: "POST", body: payload },
   ).then(unwrap);
 }
@@ -96,22 +109,25 @@ export function updateModuleLesson(
   payload: { title: string; description?: string; isVisible?: boolean; releaseDate?: string },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(
-    `/api/v1/course/${courseId}/modules/${moduleId}/lessons/${lessonId}`,
+    `${modulePath(courseId, moduleId)}/lessons/${encodeURIComponent(lessonId)}`,
     { method: "PUT", body: payload },
   ).then(unwrap);
 }
 
 export function deleteModuleLesson(courseId: string, moduleId: string, lessonId: string) {
-  return apiRequest<void>(`/api/v1/course/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
-    method: "DELETE",
-  });
+  return apiRequest<void>(
+    `${modulePath(courseId, moduleId)}/lessons/${encodeURIComponent(lessonId)}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export function getModuleMaterials(courseId: string, moduleId: string, signal?: AbortSignal) {
   return apiRequest<CourseContentMaterial[] | ApiEnvelope<CourseContentMaterial[]>>(
-    `/api/v1/course/${courseId}/modules/${moduleId}/learning-materials`,
+    `${modulePath(courseId, moduleId)}/learning-materials`,
     { signal },
-  ).then(unwrap);
+  ).then(listData);
 }
 
 export function createModuleMaterial(
@@ -126,7 +142,7 @@ export function createModuleMaterial(
   },
 ) {
   return apiRequest<CourseContentMaterial | ApiEnvelope<CourseContentMaterial>>(
-    `/api/v1/course/${courseId}/modules/${moduleId}/learning-materials`,
+    `${modulePath(courseId, moduleId)}/learning-materials`,
     { method: "POST", body: payload },
   ).then(unwrap);
 }
@@ -144,14 +160,14 @@ export function updateModuleMaterial(
   },
 ) {
   return apiRequest<CourseContentMaterial | ApiEnvelope<CourseContentMaterial>>(
-    `/api/v1/course/${courseId}/modules/${moduleId}/learning-materials/${materialId}`,
+    `${modulePath(courseId, moduleId)}/learning-materials/${encodeURIComponent(materialId)}`,
     { method: "PUT", body: payload },
   ).then(unwrap);
 }
 
 export function deleteModuleMaterial(courseId: string, moduleId: string, materialId: string) {
   return apiRequest<void>(
-    `/api/v1/course/${courseId}/modules/${moduleId}/learning-materials/${materialId}`,
+    `${modulePath(courseId, moduleId)}/learning-materials/${encodeURIComponent(materialId)}`,
     { method: "DELETE" },
   );
 }
