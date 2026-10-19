@@ -20,6 +20,11 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
   const [name, setName] = useState(profile.name);
   const [phone, setPhone] = useState(profile.phone);
   const [specializations, setSpecializations] = useState(profile.specializations.join(", "));
+  const [title, setTitle] = useState(profile.title);
+  const [department, setDepartment] = useState(profile.department);
+  const [officeLocation, setOfficeLocation] = useState(profile.officeLocation);
+  const [officeHours, setOfficeHours] = useState(profile.officeHours);
+  const [bio, setBio] = useState(profile.bio);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -29,6 +34,11 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
     setName(teacher.name);
     setPhone(teacher.phone);
     setSpecializations(teacher.specializations.join(", "));
+    setTitle(teacher.title);
+    setDepartment(teacher.department);
+    setOfficeLocation(teacher.officeLocation);
+    setOfficeHours(teacher.officeHours);
+    setBio(teacher.bio);
   }, [teacher]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -58,6 +68,11 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         updateTeacherProfile({
           specializations: parsedSpecializations,
           phoneNumber: normalizedPhone || undefined,
+          title: title.trim() || undefined,
+          department: department.trim() || undefined,
+          officeLocation: officeLocation.trim() || undefined,
+          officeHours: officeHours.trim() || undefined,
+          bio: bio.trim() || undefined,
         }),
       ]);
 
@@ -76,6 +91,11 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         phone: mergedUser.phoneNumber ?? current.phone,
         teacherCode: mergedUser.teacherProfile?.teacherCode ?? current.teacherCode,
         specializations: mergedUser.teacherProfile?.specializations ?? current.specializations,
+        title: mergedUser.teacherProfile?.title ?? current.title,
+        department: mergedUser.teacherProfile?.department ?? current.department,
+        officeLocation: mergedUser.teacherProfile?.officeLocation ?? current.officeLocation,
+        officeHours: mergedUser.teacherProfile?.officeHours ?? current.officeHours,
+        bio: mergedUser.teacherProfile?.bio ?? current.bio,
       }));
       setIsEditing(false);
       setSaveSuccess(true);
@@ -194,13 +214,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={profile.title}
-                    disabled
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden"
                   />
-                  <p className="mt-1 text-[10px] text-slate-400">
-                    Not supported by the current backend.
-                  </p>
                 </div>
               </div>
 
@@ -211,13 +228,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={profile.officeHours}
-                    disabled
+                    value={officeHours}
+                    onChange={(e) => setOfficeHours(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden"
                   />
-                  <p className="mt-1 text-[10px] text-slate-400">
-                    Not supported by the current backend.
-                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -225,13 +239,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={profile.officeLocation}
-                    disabled
+                    value={officeLocation}
+                    onChange={(e) => setOfficeLocation(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden"
                   />
-                  <p className="mt-1 text-[10px] text-slate-400">
-                    Not supported by the current backend.
-                  </p>
                 </div>
               </div>
 
@@ -241,13 +252,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={profile.bio}
-                  disabled
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden resize-none"
                 />
-                <p className="mt-1 text-[10px] text-slate-400">
-                  Not supported by the current backend.
-                </p>
               </div>
 
               <div>
@@ -270,6 +278,11 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                     setName(profile.name);
                     setPhone(profile.phone);
                     setSpecializations(profile.specializations.join(", "));
+                    setTitle(profile.title);
+                    setDepartment(profile.department);
+                    setOfficeLocation(profile.officeLocation);
+                    setOfficeHours(profile.officeHours);
+                    setBio(profile.bio);
                     setIsEditing(false);
                     setSaveError(null);
                   }}

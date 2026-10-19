@@ -49,7 +49,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
     return () => controller.abort();
   }, [courseId]);
 
-  const rows = gradebook?.students ?? [];
+  const rows = useMemo(() => gradebook?.students ?? [], [gradebook]);
   const filtered = useMemo(() => {
     const query = search.toLowerCase();
     return rows.filter((row) =>

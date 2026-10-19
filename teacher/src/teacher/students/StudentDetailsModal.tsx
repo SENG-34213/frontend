@@ -3,6 +3,10 @@ import { X, MessageSquare, Send } from "lucide-react";
 import { Course, Student, StudentSubmission } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { getStudentAttendanceSummary } from "../api/studentApi";
+import {
+  getTeacherStudentAcademicSummary,
+  type TeacherStudentAcademicSummary,
+} from "../api/studentSummaryApi";
 
 interface StudentDetailsModalProps {
   isOpen: boolean;
@@ -32,6 +36,9 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
   );
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
+  const [academicSummaries, setAcademicSummaries] = useState<TeacherStudentAcademicSummary[]>([]);
+  const [academicLoading, setAcademicLoading] = useState(false);
+  const [academicError, setAcademicError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen || !student) return;
@@ -41,9 +48,12 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
     );
     setAttendanceRate(student.attendanceRate);
     setAttendanceError(null);
+    setAcademicSummaries([]);
+    setAcademicError(null);
     if (studentCourses.length === 0) return () => controller.abort();
 
     setAttendanceLoading(true);
+    setAcademicLoading(true);
     Promise.all(
       studentCourses.map((course) =>
         getStudentAttendanceSummary(student.id, course.id, controller.signal),
@@ -73,6 +83,33 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
         if (!controller.signal.aborted) setAttendanceLoading(false);
       });
 
+    Promise.all(
+      studentCourses.map((course) =>
+        getTeacherStudentAcademicSummary(student.id, course.id, controller.signal),
+      ),
+    )
+      .then((summaries) => {
+        if (!controller.signal.aborted) {
+          setAcademicSummaries(
+            summaries.filter((summary): summary is TeacherStudentAcademicSummary =>
+              Boolean(summary),
+            ),
+          );
+        }
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setAcademicError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Academic summary failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setAcademicLoading(false);
+      });
+
     return () => controller.abort();
   }, [courses, isOpen, student]);
 
@@ -80,6 +117,14 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 
   const studentCourses = courses.filter((c) => student.enrolledCourseIds.includes(c.id));
   const studentSubmissions: StudentSubmission[] = [];
+  const summaryAverage = (key: keyof TeacherStudentAcademicSummary) => {
+    const values = academicSummaries
+      .map((summary) => Number(summary[key]))
+      .filter((item) => Number.isFinite(item));
+    return values.length ? values.reduce((sum, item) => sum + item, 0) / values.length : null;
+  };
+  const academicGpa = summaryAverage("gpa");
+  const academicGradeAverage = summaryAverage("overallPercentage");
 
   const handleAddFeedback = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,7 +217,11 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                     Cumulative GPA
                   </span>
                   <div className="text-xl font-bold text-slate-900 font-mono mt-0.5">
-                    {student.gpa === null ? "Unavailable" : student.gpa.toFixed(2)}
+                    {academicLoading
+                      ? "Loading..."
+                      : academicGpa === null
+                        ? "Unavailable"
+                        : academicGpa.toFixed(2)}
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
@@ -188,7 +237,11 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                     Recent Grade Avg
                   </span>
                   <div className="text-xl font-bold text-indigo-600 font-mono mt-0.5">
-                    {student.recentGradeAvg === null ? "Unavailable" : `${student.recentGradeAvg}%`}
+                    {academicLoading
+                      ? "Loading..."
+                      : academicGradeAverage === null
+                        ? "Unavailable"
+                        : `${academicGradeAverage.toFixed(1)}%`}
                   </div>
                 </div>
               </div>
@@ -273,6 +326,12 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                 </span>
               </div>
             </div>
+          )}
+
+          {academicError && activeTab === "overview" && (
+            <p className="text-xs text-amber-700" role="status">
+              {academicError}
+            </p>
           )}
 
           {activeTab === "notes" && (
