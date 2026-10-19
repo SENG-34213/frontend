@@ -5,25 +5,30 @@ import {
   Users,
   FileText,
   HelpCircle,
-  FolderOpen,
   Calendar,
   X,
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { mockCourses, mockStudents, mockAssignments, mockMaterials } from "../data/mockData";
-import { NavigationTab } from "../types";
+import { Course, NavigationTab, Student } from "../types";
+import type { BackendAssignment } from "../api/assignmentApi";
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (tab: NavigationTab, param?: string) => void;
+  courses: Course[];
+  students: Student[];
+  assignments?: BackendAssignment[];
 }
 
 export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   isOpen,
   onClose,
   onNavigate,
+  courses,
+  students,
+  assignments = [],
 }) => {
   const [query, setQuery] = useState("");
 
@@ -43,28 +48,22 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
   if (!isOpen) return null;
 
-  const filteredCourses = mockCourses.filter(
+  const filteredCourses = courses.filter(
     (c) =>
       c.code.toLowerCase().includes(query.toLowerCase()) ||
       c.title.toLowerCase().includes(query.toLowerCase()),
   );
 
-  const filteredStudents = mockStudents.filter(
+  const filteredStudents = students.filter(
     (s) =>
       s.name.toLowerCase().includes(query.toLowerCase()) ||
       s.studentId.toLowerCase().includes(query.toLowerCase()),
   );
 
-  const filteredAssignments = mockAssignments.filter(
+  const filteredAssignments = assignments.filter(
     (a) =>
       a.title.toLowerCase().includes(query.toLowerCase()) ||
-      a.courseCode.toLowerCase().includes(query.toLowerCase()),
-  );
-
-  const filteredMaterials = mockMaterials.filter(
-    (m) =>
-      m.title.toLowerCase().includes(query.toLowerCase()) ||
-      m.courseCode.toLowerCase().includes(query.toLowerCase()),
+      a.courseId.toLowerCase().includes(query.toLowerCase()),
   );
 
   return (
@@ -199,36 +198,11 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                     <div className="flex items-center gap-2.5">
                       <FileText className="w-4 h-4 text-amber-500" />
                       <div>
-                        <span className="font-medium text-slate-900 mr-1.5">[{a.courseCode}]</span>
+                        <span className="font-medium text-slate-900 mr-1.5">[{a.courseId}]</span>
                         <span className="text-slate-700">{a.title}</span>
                       </div>
                     </div>
                     <span className="text-slate-400 tabular-nums">Due {a.dueDate}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Materials */}
-          {filteredMaterials.length > 0 && (
-            <div>
-              <p className="px-2 pb-1.5 text-xs font-semibold text-slate-400">Learning Materials</p>
-              <div className="space-y-1">
-                {filteredMaterials.slice(0, 2).map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => {
-                      onNavigate("materials");
-                      onClose();
-                    }}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors text-left text-xs"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <FolderOpen className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-700 truncate max-w-md">{m.title}</span>
-                    </div>
-                    <span className="text-slate-400 tabular-nums">{m.fileSize}</span>
                   </button>
                 ))}
               </div>
