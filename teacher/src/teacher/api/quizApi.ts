@@ -68,10 +68,13 @@ export type AiQuizDraft = {
 };
 
 export async function generateAiQuizDraft(formData: FormData): Promise<AiQuizDraft> {
-  const response = await apiRequest<ApiResponse<AiQuizDraft>>("/api/assignments/quizzes/ai/generate", {
-    method: "POST",
-    body: formData,
-  });
+  const response = await apiRequest<ApiResponse<AiQuizDraft>>(
+    "/api/assignments/quizzes/ai/generate",
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
   return response.data as AiQuizDraft;
 }
 

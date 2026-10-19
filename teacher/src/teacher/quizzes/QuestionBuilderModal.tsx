@@ -109,9 +109,15 @@ export const QuestionBuilderModal: React.FC<QuestionBuilderModalProps> = ({
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
               >
                 <option value="multiple-choice">Multiple Choice (Single Answer)</option>
-                <option value="true-false" disabled>True / False (coming soon)</option>
-                <option value="multi-select" disabled>Multi-Select (coming soon)</option>
-                <option value="short-answer" disabled>Short Text Answer (coming soon)</option>
+                <option value="true-false" disabled>
+                  True / False (coming soon)
+                </option>
+                <option value="multi-select" disabled>
+                  Multi-Select (coming soon)
+                </option>
+                <option value="short-answer" disabled>
+                  Short Text Answer (coming soon)
+                </option>
               </select>
             </div>
 
