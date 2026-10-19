@@ -193,9 +193,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
 
         <div className="pt-2 flex items-center justify-between">
           <button
-            onClick={() =>
-              alert("Opening account security settings...")
-            }
+            onClick={() => alert("Opening account security settings...")}
             className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
           >
             <KeyRound className="w-3.5 h-3.5" />
@@ -341,9 +339,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
       {/* 4. Sign Out */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-3">
         <h2 className="text-sm font-bold text-slate-900">Sign Out</h2>
-        <p className="text-xs text-slate-500">
-          Sign out of the faculty workspace on this device.
-        </p>
+        <p className="text-xs text-slate-500">Sign out of the faculty workspace on this device.</p>
 
         <button
           onClick={() => void handleLogout()}

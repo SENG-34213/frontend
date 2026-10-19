@@ -113,9 +113,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
     if (activeType === "event") {
       setIsSubmitting(false);
-      setFormError(
-        "Calendar event creation is currently unavailable. Please try again later.",
-      );
+      setFormError("Calendar event creation is currently unavailable. Please try again later.");
       return;
     }
 

@@ -91,8 +91,7 @@ function toTeacherRequest(request: AdminCalendarEventRequest): CalendarEventRequ
     allDay: request.allDay,
     courseId: request.courseId,
     visibility: request.visibility,
-    targetRole:
-      request.targetRole === "SUPER_ADMIN" ? "ADMIN" : request.targetRole,
+    targetRole: request.targetRole === "SUPER_ADMIN" ? "ADMIN" : request.targetRole,
     location: request.location,
   };
 }
@@ -131,15 +130,22 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
   const handleUpdateEvent = useCallback(
     async (eventId: string, request: AdminCalendarEventRequest) => {
       const updated = await updateCalendarEvent(eventId, toTeacherRequest(request));
-      setEvents((current) => current.map((event) => (event.id === eventId ? mapEvent(updated, courses) : event)));
+      setEvents((current) =>
+        current.map((event) => (event.id === eventId ? mapEvent(updated, courses) : event)),
+      );
     },
     [courses],
   );
 
-  const handleCancelEvent = useCallback(async (eventId: string) => {
-    const cancelled = await cancelCalendarEvent(eventId);
-    setEvents((current) => current.map((event) => (event.id === eventId ? mapEvent(cancelled, courses) : event)));
-  }, [courses]);
+  const handleCancelEvent = useCallback(
+    async (eventId: string) => {
+      const cancelled = await cancelCalendarEvent(eventId);
+      setEvents((current) =>
+        current.map((event) => (event.id === eventId ? mapEvent(cancelled, courses) : event)),
+      );
+    },
+    [courses],
+  );
 
   const handleFilterEvents = useCallback(
     async (filters: AdminCalendarEventFilters, start: Date, end: Date) => {

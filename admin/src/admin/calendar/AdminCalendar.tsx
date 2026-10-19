@@ -391,7 +391,9 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
 
     setFormLocation(evt.location);
     setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "MATH-401");
-    setFormCourseTitle(evt.courseTitle || courseOptions[0]?.title || "Advanced Calculus & Real Analysis");
+    setFormCourseTitle(
+      evt.courseTitle || courseOptions[0]?.title || "Advanced Calculus & Real Analysis",
+    );
     setFormInstructorName(evt.instructorName || "Dr. Marcus Sterling");
     setFormInstructorEmail(evt.instructorEmail || "marcus.sterling@mentify.edu");
     setFormDescription(evt.description || "");

@@ -373,9 +373,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   {currentSubmission.submittedFileName}
                 </span>
                 <button
-                  onClick={() =>
-                    alert(`Downloading ${currentSubmission.submittedFileName}...`)
-                  }
+                  onClick={() => alert(`Downloading ${currentSubmission.submittedFileName}...`)}
                   className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors flex items-center gap-1"
                 >
                   <Download className="w-3.5 h-3.5" />

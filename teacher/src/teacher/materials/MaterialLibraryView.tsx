@@ -333,9 +333,7 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
         <div className="rounded-2xl border border-slate-200 bg-white p-14 text-center">
           <FolderOpen className="mx-auto h-8 w-8 text-slate-400" />
           <h3 className="mt-3 text-sm font-bold text-slate-800">No learning materials found</h3>
-          <p className="mt-1 text-xs text-slate-500">
-            No resources match the active filters.
-          </p>
+          <p className="mt-1 text-xs text-slate-500">No resources match the active filters.</p>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -845,7 +843,11 @@ function UploadModal({
     }
   };
   return (
-    <Modal title="Upload Learning Material" subtitle="Add a new resource to your course" onClose={onClose}>
+    <Modal
+      title="Upload Learning Material"
+      subtitle="Add a new resource to your course"
+      onClose={onClose}
+    >
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <p className="rounded-lg bg-rose-50 p-2 text-xs text-rose-700">{error}</p>}
         <div>
@@ -1046,9 +1048,7 @@ function EditModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Edit Material Metadata</h3>
-              <p className="font-mono text-xs text-slate-500">
-                Update the resource details
-              </p>
+              <p className="font-mono text-xs text-slate-500">Update the resource details</p>
             </div>
           </div>
           <button
@@ -1528,9 +1528,7 @@ function PreviewModal({
                   <div className="border-b border-slate-200 pb-1 text-[11px] text-slate-400">
                     Section {currentPage}.0 — Document Preview
                   </div>
-                  <p>
-                    This file is ready to preview. File type: {material.contentType}.
-                  </p>
+                  <p>This file is ready to preview. File type: {material.contentType}.</p>
                 </div>
               </div>
             </div>

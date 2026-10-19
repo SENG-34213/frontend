@@ -305,8 +305,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       const content = announcementText.trim();
       if (!realtime.sendMessage(group.id, content)) {
         const message = await sendCommunicationMessage(group.id, content);
-        if (!message)
-          throw new Error("The announcement could not be sent.");
+        if (!message) throw new Error("The announcement could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
           [group.id]: [...(current[group.id] ?? []), message],

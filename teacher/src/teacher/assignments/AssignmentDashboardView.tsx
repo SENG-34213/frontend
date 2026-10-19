@@ -83,7 +83,9 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     const controller = new AbortController();
     setIsLoading(true);
     setError(null);
-    Promise.allSettled(backendCourses.map((course) => getCourseAssignments(course.id, controller.signal)))
+    Promise.allSettled(
+      backendCourses.map((course) => getCourseAssignments(course.id, controller.signal)),
+    )
       .then((results) => {
         if (controller.signal.aborted) return;
 
@@ -107,9 +109,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
         } else {
           const firstFailure = nonNotFoundFailures[0].reason;
           setError(
-            firstFailure instanceof Error
-              ? firstFailure.message
-              : "Assignments failed to load.",
+            firstFailure instanceof Error ? firstFailure.message : "Assignments failed to load.",
           );
         }
       })

@@ -124,7 +124,9 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-slate-400 dark:text-slate-500">{currentMeta.category}</span>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0" />
-          <span className="font-semibold text-slate-800 dark:text-white truncate">{currentMeta.title}</span>
+          <span className="font-semibold text-slate-800 dark:text-white truncate">
+            {currentMeta.title}
+          </span>
         </div>
 
         <div className="sm:hidden font-semibold text-sm text-slate-900 dark:text-white truncate">
@@ -141,7 +143,9 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           title="Search anything (Cmd+K)"
         >
           <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
-          <span className="hidden md:inline text-slate-500 dark:text-slate-300">Search curriculum, students...</span>
+          <span className="hidden md:inline text-slate-500 dark:text-slate-300">
+            Search curriculum, students...
+          </span>
           <span className="text-[10px] font-mono bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-600 text-slate-400">
             ⌘K
           </span>
