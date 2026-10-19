@@ -435,7 +435,15 @@ export default function App() {
             />
           )}
 
-          {currentTab === "settings" && <TeacherSettingsView teacher={teacherProfile} />}
+          {currentTab === "settings" && (
+            <TeacherSettingsView
+              teacher={teacherProfile}
+              onLogout={async () => {
+                await logoutTeacher();
+                setSession(null);
+              }}
+            />
+          )}
         </main>
       </div>
 
