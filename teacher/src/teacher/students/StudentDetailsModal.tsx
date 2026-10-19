@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   X,
   User,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Course, Student, StudentSubmission } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
+import { getStudentAttendanceSummary } from "../api/studentApi";
 
 interface StudentDetailsModalProps {
   isOpen: boolean;
@@ -32,14 +33,60 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
   onSendMessage,
   courses,
 }) => {
-  if (!isOpen || !student) return null;
-
   const [activeTab, setActiveTab] = useState<StudentTab>("overview");
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackList, setFeedbackList] = useState<string[]>([
     "Strong grasp of asymptotic recurrence relations. Keep up the thorough unit testing!",
     "Recommended attending Thursday office hours for graph edge relaxation concepts.",
   ]);
+  const [attendanceRate, setAttendanceRate] = useState(student?.attendanceRate ?? 0);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !student) return;
+    const controller = new AbortController();
+    const studentCourses = courses.filter((course) =>
+      student.enrolledCourseIds.includes(course.id),
+    );
+    setAttendanceRate(student.attendanceRate);
+    setAttendanceError(null);
+    if (studentCourses.length === 0) return () => controller.abort();
+
+    setAttendanceLoading(true);
+    Promise.all(
+      studentCourses.map((course) =>
+        getStudentAttendanceSummary(student.id, course.id, controller.signal),
+      ),
+    )
+      .then((summaries) => {
+        if (controller.signal.aborted) return;
+        const rates = summaries
+          .map((summary) => Number(summary?.attendancePercentage))
+          .filter((rate) => Number.isFinite(rate));
+        if (rates.length > 0) {
+          setAttendanceRate(
+            Math.round((rates.reduce((total, rate) => total + rate, 0) / rates.length) * 10) / 10,
+          );
+        }
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setAttendanceError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Attendance summary failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setAttendanceLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [courses, isOpen, student]);
+
+  if (!isOpen || !student) return null;
 
   const studentCourses = courses.filter((c) => student.enrolledCourseIds.includes(c.id));
   const studentSubmissions: StudentSubmission[] = [];
@@ -139,7 +186,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                     Attendance Rate
                   </span>
                   <div className="text-xl font-bold text-emerald-600 font-mono mt-0.5">
-                    {student.attendanceRate}%
+                    {attendanceRate}%
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
@@ -211,6 +258,11 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
 
           {activeTab === "attendance" && (
             <div className="space-y-3">
+              {attendanceError && (
+                <p className="text-xs text-rose-600" role="alert">
+                  {attendanceError}
+                </p>
+              )}
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <div>
                   <h4 className="text-xs font-bold text-slate-900">Attendance Invariant</h4>
@@ -219,7 +271,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                   </p>
                 </div>
                 <span className="text-lg font-bold font-mono text-emerald-600">
-                  {student.attendanceRate}%
+                  {attendanceLoading ? "Loading..." : `${attendanceRate}%`}
                 </span>
               </div>
             </div>

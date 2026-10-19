@@ -65,6 +65,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const [selectedCourseId, setSelectedCourseId] = useState(backendCourses[0]?.id || "");
   const [modules, setModules] = useState<Module[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [lessonsLoading, setLessonsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedModuleIds, setExpandedModuleIds] = useState<Record<string, boolean>>({
@@ -105,12 +106,20 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const courseModules = modules.filter((m) => m.courseId === selectedCourseId);
 
   useEffect(() => {
+    if (!backendCourses.some((course) => course.id === selectedCourseId)) {
+      setSelectedCourseId(backendCourses[0]?.id || "");
+    }
+  }, [backendCourses, selectedCourseId]);
+
+  useEffect(() => {
     if (!selectedCourseId) {
       setModules([]);
+      setLessonsLoading(false);
       return;
     }
     const controller = new AbortController();
     setIsLoading(true);
+    setLessonsLoading(true);
     setError(null);
     getCourseModules(selectedCourseId, controller.signal)
       .then(async (items) => {
@@ -131,7 +140,10 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+          setLessonsLoading(false);
+        }
       });
     return () => controller.abort();
   }, [selectedCourseId]);
@@ -401,6 +413,11 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
       {selectedCourseId && isLoading && (
         <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
           Loading course content...
+        </div>
+      )}
+      {selectedCourseId && !isLoading && lessonsLoading && (
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-xs text-slate-500">
+          Loading lessons...
         </div>
       )}
 

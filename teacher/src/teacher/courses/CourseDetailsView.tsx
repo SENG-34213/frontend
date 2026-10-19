@@ -78,6 +78,8 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   const [courseEventsLoading, setCourseEventsLoading] = useState(true);
   const [courseEventsError, setCourseEventsError] = useState<string | null>(null);
   const [courseModules, setCourseModules] = useState<Module[]>([]);
+  const [courseModulesLoading, setCourseModulesLoading] = useState(true);
+  const [courseModulesError, setCourseModulesError] = useState<string | null>(null);
   const [courseAssignments, setCourseAssignments] = useState<Assignment[]>([]);
   const [displayCourse, setDisplayCourse] = useState(course);
 
@@ -119,6 +121,8 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
 
   useEffect(() => {
     const controller = new AbortController();
+    setCourseModulesLoading(true);
+    setCourseModulesError(null);
     getCourseModules(course.id, controller.signal)
       .then(async (modules) => {
         const withLessons = await Promise.all(
@@ -147,8 +151,18 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
         );
         if (!controller.signal.aborted) setCourseModules(withLessons);
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setCourseModules([]);
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseModules([]);
+          setCourseModulesError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Course modules and lessons failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseModulesLoading(false);
       });
     return () => controller.abort();
   }, [course.id]);
@@ -245,6 +259,18 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
             </div>
           </div>
         </div>
+
+        {(courseModulesLoading || courseModulesError) && (
+          <div
+            className={`px-6 py-3 text-xs ${
+              courseModulesError
+                ? "border-b border-rose-200 bg-rose-50 text-rose-700"
+                : "border-b border-slate-200 bg-slate-50 text-slate-500"
+            }`}
+          >
+            {courseModulesError || "Loading course modules and lessons..."}
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex overflow-x-auto px-6 border-b border-slate-200 gap-6 scrollbar-none bg-slate-50/50">
@@ -371,25 +397,31 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  {courseModules.map((mod) => (
-                    <div
-                      key={mod.id}
-                      className="p-3.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs font-mono">
-                          {mod.order}
+                  {courseModules.length === 0 ? (
+                    <p className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+                      No modules have been added to this course yet.
+                    </p>
+                  ) : (
+                    courseModules.map((mod) => (
+                      <div
+                        key={mod.id}
+                        className="p-3.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs font-mono">
+                            {mod.order}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">{mod.title}</p>
+                            <p className="text-[11px] text-slate-500">{mod.description}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-900">{mod.title}</p>
-                          <p className="text-[11px] text-slate-500">{mod.description}</p>
-                        </div>
+                        <span className="text-xs font-medium text-slate-600 tabular-nums">
+                          {mod.lessons.length} lessons
+                        </span>
                       </div>
-                      <span className="text-xs font-medium text-slate-600 tabular-nums">
-                        {mod.lessons.length} lessons
-                      </span>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -412,45 +444,56 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
               </div>
 
               <div className="space-y-4">
-                {courseModules.map((mod) => (
-                  <div key={mod.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                    <div className="bg-slate-50 p-3.5 border-b border-slate-200 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xs font-mono font-bold text-indigo-700">
-                          Module {mod.order}
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-900">{mod.title}</h4>
+                {courseModules.length === 0 ? (
+                  <p className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+                    No modules have been added to this course yet.
+                  </p>
+                ) : (
+                  courseModules.map((mod) => (
+                    <div
+                      key={mod.id}
+                      className="border border-slate-200 rounded-xl overflow-hidden"
+                    >
+                      <div className="bg-slate-50 p-3.5 border-b border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xs font-mono font-bold text-indigo-700">
+                            Module {mod.order}
+                          </span>
+                          <h4 className="text-xs font-bold text-slate-900">{mod.title}</h4>
+                        </div>
+                        <StatusBadge status={mod.status} />
                       </div>
-                      <StatusBadge status={mod.status} />
-                    </div>
 
-                    <div className="divide-y divide-slate-100">
-                      {mod.lessons.map((lesson) => (
-                        <div
-                          key={lesson.id}
-                          className="p-3.5 hover:bg-slate-50/60 transition-colors flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-mono text-slate-400">
-                              {mod.order}.{lesson.order}
-                            </span>
-                            <div>
-                              <p className="text-xs font-semibold text-slate-900">{lesson.title}</p>
-                              <p className="text-[11px] text-slate-500">{lesson.description}</p>
+                      <div className="divide-y divide-slate-100">
+                        {mod.lessons.map((lesson) => (
+                          <div
+                            key={lesson.id}
+                            className="p-3.5 hover:bg-slate-50/60 transition-colors flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-mono text-slate-400">
+                                {mod.order}.{lesson.order}
+                              </span>
+                              <div>
+                                <p className="text-xs font-semibold text-slate-900">
+                                  {lesson.title}
+                                </p>
+                                <p className="text-[11px] text-slate-500">{lesson.description}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                              <span className="font-mono tabular-nums">
+                                {lesson.durationMinutes} min
+                              </span>
+                              <StatusBadge status={lesson.contentType} />
                             </div>
                           </div>
-
-                          <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <span className="font-mono tabular-nums">
-                              {lesson.durationMinutes} min
-                            </span>
-                            <StatusBadge status={lesson.contentType} />
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}

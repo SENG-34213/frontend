@@ -72,13 +72,14 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
     [records],
   );
 
-  async function loadSessions() {
+  async function loadSessions(signal?: AbortSignal) {
     setIsLoading(true);
     setError(null);
     try {
       const result = await Promise.all(
-        backendCourses.map((course) => getCourseAttendanceSessions(course.id)),
+        backendCourses.map((course) => getCourseAttendanceSessions(course.id, signal)),
       );
+      if (signal?.aborted) return;
       const nextSessions = result.flat();
       setSessions(nextSessions);
       const first =
@@ -95,7 +96,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
           : "Attendance sessions failed to load.",
       );
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }
 
@@ -119,13 +120,15 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
   }
 
   useEffect(() => {
-    if (backendCourses.length > 0) void loadSessions();
+    const controller = new AbortController();
+    if (backendCourses.length > 0) void loadSessions(controller.signal);
     else {
       setSessions([]);
       setSelectedSession(null);
       setRecords([]);
       setIsLoading(false);
     }
+    return () => controller.abort();
     // The teacher course list is the data dependency for this workspace.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendCourses]);
