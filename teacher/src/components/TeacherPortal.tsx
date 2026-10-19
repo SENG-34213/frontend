@@ -42,6 +42,8 @@ import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
 import { createQuiz } from "../teacher/api/quizApi";
 import { mapBackendCourse } from "../teacher/api/courseApi";
+import { useTeacherStudents } from "../teacher/hooks/useTeacherStudents";
+import { getCourseAssignments, type BackendAssignment } from "../teacher/api/assignmentApi";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -64,6 +66,8 @@ export default function App() {
   const [aiPreloadedPrompt, setAiPreloadedPrompt] = useState<string>("");
   const shellData = useTeacherShellData(Boolean(session));
   const teacherCourses = useTeacherCourses(Boolean(session));
+  const teacherStudents = useTeacherStudents(Boolean(session), teacherCourses.courses);
+  const [searchAssignments, setSearchAssignments] = useState<BackendAssignment[]>([]);
   const recentNotifications = useTeacherNotifications(Boolean(session), 4);
 
   // Course state
@@ -112,6 +116,19 @@ export default function App() {
   useEffect(() => {
     setNotificationUnreadCount(shellData.unreadNotificationsCount);
   }, [shellData.unreadNotificationsCount]);
+
+  useEffect(() => {
+    if (!isSearchOpen || !teacherCourses.courses.length) return;
+    const controller = new AbortController();
+    Promise.all(
+      teacherCourses.courses.map((course) => getCourseAssignments(course.id, controller.signal)),
+    )
+      .then((results) => setSearchAssignments(results.flat()))
+      .catch(() => {
+        if (!controller.signal.aborted) setSearchAssignments([]);
+      });
+    return () => controller.abort();
+  }, [isSearchOpen, teacherCourses.courses]);
 
   // Navigation handler
   const handleNavigate = (tab: NavigationTab, param?: string) => {
@@ -369,7 +386,9 @@ export default function App() {
             />
           )}
 
-          {currentTab === "grades" && <GradebookView onNavigate={handleNavigate} />}
+          {currentTab === "grades" && (
+            <GradebookView onNavigate={handleNavigate} courses={teacherCourses.courses} />
+          )}
 
           {currentTab === "attendance" && (
             <AttendanceWorkspaceView courses={courses} backendCourses={teacherCourses.courses} />
@@ -420,6 +439,9 @@ export default function App() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onNavigate={handleNavigate}
+        courses={courses}
+        students={teacherStudents.students}
+        assignments={searchAssignments}
       />
 
       {/* Quick Create Dialog */}

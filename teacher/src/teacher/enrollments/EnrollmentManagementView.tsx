@@ -1,8 +1,15 @@
-import React, { useMemo, useState } from "react";
-import { RefreshCw, Search, Users } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { RefreshCw, Search, Users, UserPlus, UserMinus } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import { useTeacherStudents } from "../hooks/useTeacherStudents";
 import type { Course } from "../types";
+import {
+  createEnrollment,
+  deleteEnrollment,
+  getCourseEnrollments,
+  updateEnrollment,
+  type BackendEnrollment,
+} from "../api/enrollmentApi";
 
 type EnrollmentManagementViewProps = { courses: Course[]; backendCourses: BackendCourse[] };
 
@@ -11,7 +18,71 @@ export const EnrollmentManagementView: React.FC<EnrollmentManagementViewProps> =
   backendCourses,
 }) => {
   const [search, setSearch] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [courseId, setCourseId] = useState(backendCourses[0]?.id ?? "");
+  const [enrollments, setEnrollments] = useState<BackendEnrollment[]>([]);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const studentState = useTeacherStudents(true, backendCourses);
+  useEffect(() => {
+    if (!courseId && backendCourses[0]?.id) setCourseId(backendCourses[0].id);
+  }, [backendCourses, courseId]);
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all(backendCourses.map((course) => getCourseEnrollments(course.id, controller.signal)))
+      .then((results) => setEnrollments(results.flat()))
+      .catch(() => {
+        if (!controller.signal.aborted) setEnrollments([]);
+      });
+    return () => controller.abort();
+  }, [backendCourses, studentState.students.length]);
+  const refreshEnrollments = () => studentState.retry();
+  const handleCreate = async () => {
+    if (!studentId || !courseId) return;
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await createEnrollment({ studentId, courseIds: [courseId], status: "ACTIVE" });
+      setStudentId("");
+      refreshEnrollments();
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Unable to create enrollment.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+  const handleStatus = async (enrollment: BackendEnrollment) => {
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await updateEnrollment(enrollment.id, {
+        status: enrollment.status === "INACTIVE" ? "ACTIVE" : "INACTIVE",
+      });
+      refreshEnrollments();
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Unable to update enrollment.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+  const handleDelete = async (enrollmentId: string) => {
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await deleteEnrollment(enrollmentId);
+      refreshEnrollments();
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Unable to delete enrollment.",
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
   const rows = useMemo(
     () =>
       studentState.students.flatMap((student) =>
@@ -86,6 +157,42 @@ export const EnrollmentManagementView: React.FC<EnrollmentManagementViewProps> =
         </div>
       </div>
 
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+          <UserPlus className="w-4 h-4 text-indigo-600" />
+          Add student enrollment
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            value={studentId}
+            onChange={(event) => setStudentId(event.target.value)}
+            placeholder="Student UUID"
+            className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+          />
+          <select
+            value={courseId}
+            onChange={(event) => setCourseId(event.target.value)}
+            className="px-3 py-2 text-xs border border-slate-200 rounded-lg"
+          >
+            <option value="">Select course</option>
+            {backendCourses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.courseName}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            disabled={actionLoading || !studentId || !courseId}
+            onClick={handleCreate}
+            className="px-3 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50"
+          >
+            Enroll student
+          </button>
+        </div>
+        {actionError && <p className="text-xs text-rose-700">{actionError}</p>}
+      </div>
+
       <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         {studentState.error && (
           <div className="border-b border-rose-200 bg-rose-50 px-5 py-3 text-xs text-rose-800">
@@ -118,36 +225,63 @@ export const EnrollmentManagementView: React.FC<EnrollmentManagementViewProps> =
                   </td>
                 </tr>
               ) : (
-                filtered.map(({ id, student, course }) => (
-                  <tr key={id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-7 h-7 rounded-full bg-indigo-600 text-white text-[10px] font-semibold flex items-center justify-center">
-                          {student.initials}
-                        </span>
-                        <div>
-                          <p className="font-semibold text-slate-900">{student.name}</p>
-                          <p className="text-[11px] text-slate-400">{student.email}</p>
+                filtered.map(({ id, student, course }) => {
+                  const enrollment = enrollments.find(
+                    (item) =>
+                      item.studentId === student.id && item.courseIds.includes(course?.id ?? ""),
+                  );
+                  return (
+                    <tr key={id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-7 h-7 rounded-full bg-indigo-600 text-white text-[10px] font-semibold flex items-center justify-center">
+                            {student.initials}
+                          </span>
+                          <div>
+                            <p className="font-semibold text-slate-900">{student.name}</p>
+                            <p className="text-[11px] text-slate-400">{student.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 font-mono text-slate-600">{student.studentId}</td>
-                    <td className="px-4 py-3.5">
-                      <span className="font-mono font-bold text-indigo-700">
-                        {course?.code ?? "Course"}
-                      </span>
-                      <p className="text-[11px] text-slate-500">{course?.title ?? "Unavailable"}</p>
-                    </td>
-                    <td className="px-4 py-3.5 font-mono text-slate-700">
-                      {student.attendanceRate}%
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-1 text-[11px] font-semibold">
-                        <Users className="w-3 h-3" /> Enrolled
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-4 py-3.5 font-mono text-slate-600">{student.studentId}</td>
+                      <td className="px-4 py-3.5">
+                        <span className="font-mono font-bold text-indigo-700">
+                          {course?.code ?? "Course"}
+                        </span>
+                        <p className="text-[11px] text-slate-500">
+                          {course?.title ?? "Unavailable"}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3.5 font-mono text-slate-700">
+                        {student.attendanceRate}%
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex justify-end gap-1">
+                          <button
+                            type="button"
+                            disabled={!enrollment || actionLoading}
+                            onClick={() => enrollment && handleStatus(enrollment)}
+                            className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 text-[11px] font-semibold disabled:opacity-50"
+                          >
+                            <UserMinus className="w-3 h-3" />
+                            {enrollment?.status === "INACTIVE" ? "Activate" : "Deactivate"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!enrollment || actionLoading}
+                            onClick={() => enrollment && handleDelete(enrollment.id)}
+                            className="text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-2 py-1 text-[11px] font-semibold disabled:opacity-50"
+                          >
+                            Remove
+                          </button>
+                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-1 text-[11px] font-semibold">
+                            <Users className="w-3 h-3" /> Enrolled
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

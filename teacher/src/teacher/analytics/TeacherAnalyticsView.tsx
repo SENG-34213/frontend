@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart3,
   TrendingUp,
@@ -9,8 +9,8 @@ import {
   Filter,
   Calendar,
 } from "lucide-react";
-import { mockCourses, mockStudents } from "../data/mockData";
-import { NavigationTab } from "../types";
+import { NavigationTab, Student } from "../types";
+import { getTeacherAnalytics } from "../api/analyticsApi";
 
 interface TeacherAnalyticsViewProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -18,7 +18,29 @@ interface TeacherAnalyticsViewProps {
 
 export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNavigate }) => {
   const [timeRange, setTimeRange] = useState<"Term" | "Month" | "Week">("Term");
-  const atRiskStudents = mockStudents.filter((s) => s.status === "At Risk");
+  const [analytics, setAnalytics] = useState<Awaited<ReturnType<typeof getTeacherAnalytics>>>({
+    dashboard: null,
+    quiz: null,
+  });
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const controller = new AbortController();
+    getTeacherAnalytics(controller.signal)
+      .then(setAnalytics)
+      .finally(() => setLoading(false));
+    return () => controller.abort();
+  }, []);
+  const dashboard = analytics.dashboard;
+  const atRiskStudents: Student[] = [];
+  const attendanceCorrelation: { bracket: string; avgScore: number; color: string }[] = [];
+  const gradingRate = dashboard?.coursePerformance.length
+    ? dashboard.coursePerformance.reduce((sum, item) => sum + item.gradingRate, 0) /
+      dashboard.coursePerformance.length
+    : null;
+  const quizAverage = analytics.quiz?.quizzes.length
+    ? analytics.quiz.quizzes.reduce((sum, item) => sum + (item.averagePercentage ?? 0), 0) /
+      analytics.quiz.quizzes.length
+    : null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -56,13 +78,17 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-400 mb-1">
-            <span className="text-xs font-medium text-slate-500">Overall GPA</span>
+            <span className="text-xs font-medium text-slate-500">Quiz Average</span>
             <Award className="w-4 h-4 text-indigo-600" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">3.68</div>
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+            {quizAverage === null ? "—" : `${quizAverage.toFixed(2)}%`}
+          </div>
           <p className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
-            <span>+0.14 vs last cohort</span>
+            <span>
+              {analytics.quiz ? "From today's quiz analytics" : "Unavailable from backend"}
+            </span>
           </p>
         </div>
 
@@ -71,8 +97,10 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
             <span className="text-xs font-medium text-slate-500">Submission Rate</span>
             <Users className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">96.2%</div>
-          <p className="text-[11px] text-slate-400 mt-1">Across 4 assigned milestones</p>
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
+            {gradingRate === null ? "—" : `${gradingRate.toFixed(1)}%`}
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1">Live grading rate from dashboard</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
@@ -80,9 +108,9 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
             <span className="text-xs font-medium text-slate-500">Attendance Average</span>
             <Calendar className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">94.8%</div>
-          <p className="text-[11px] text-emerald-600 font-medium mt-1">
-            Compliant with accreditation
+          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">—</div>
+          <p className="text-[11px] text-slate-400 font-medium mt-1">
+            Requires analytics aggregation API
           </p>
         </div>
 
@@ -91,8 +119,8 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
             <span className="text-xs font-medium text-rose-900">Intervention Alerts</span>
             <AlertTriangle className="w-4 h-4" />
           </div>
-          <div className="text-2xl font-bold text-rose-700 font-mono tabular-nums">2</div>
-          <p className="text-[11px] text-rose-600 mt-1">Students below 75% attendance</p>
+          <div className="text-2xl font-bold text-rose-700 font-mono tabular-nums">—</div>
+          <p className="text-[11px] text-rose-600 mt-1">Requires student analytics data</p>
         </div>
       </div>
 
@@ -103,37 +131,44 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                Grade Distribution by Letter
+                Course Grading Rate
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Fall 2026 Academic Cohort (142 students)
+                {loading
+                  ? "Loading live course performance..."
+                  : `${dashboard?.studentCount ?? 0} students in the live dashboard`}
               </p>
             </div>
           </div>
 
           {/* Bar Distribution */}
           <div className="space-y-3 pt-2">
-            {[
-              { grade: "A / A- (90-100%)", pct: 44, count: 62, color: "bg-indigo-600" },
-              { grade: "B+ / B / B- (80-89%)", pct: 36, count: 51, color: "bg-violet-600" },
-              { grade: "C+ / C (70-79%)", pct: 14, count: 20, color: "bg-amber-500" },
-              { grade: "D / F (<70%)", pct: 6, count: 9, color: "bg-rose-500" },
-            ].map((item) => (
-              <div key={item.grade} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-800">{item.grade}</span>
-                  <span className="font-mono text-slate-600 tabular-nums">
-                    {item.count} students ({item.pct}%)
-                  </span>
+            {(dashboard?.coursePerformance ?? [])
+              .map((item) => ({
+                grade: item.courseName,
+                pct: Math.round(item.gradingRate),
+                count: item.studentCount,
+                color: "bg-indigo-600",
+              }))
+              .map((item) => (
+                <div key={item.grade} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-800">{item.grade}</span>
+                    <span className="font-mono text-slate-600 tabular-nums">
+                      {item.count} students ({item.pct}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${item.color}`}
+                      style={{ width: `${item.pct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${item.color}`}
-                    style={{ width: `${item.pct}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            {!dashboard?.coursePerformance.length && (
+              <p className="text-xs text-slate-400">No course analytics are available.</p>
+            )}
           </div>
         </div>
 
@@ -149,12 +184,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({ onNa
           </div>
 
           <div className="space-y-3 pt-2">
-            {[
-              { bracket: "90% - 100% Attendance", avgScore: 92.4, color: "bg-emerald-600" },
-              { bracket: "80% - 89% Attendance", avgScore: 84.8, color: "bg-indigo-600" },
-              { bracket: "70% - 79% Attendance", avgScore: 75.1, color: "bg-amber-500" },
-              { bracket: "< 70% Attendance", avgScore: 61.2, color: "bg-rose-500" },
-            ].map((b) => (
+            {attendanceCorrelation.map((b) => (
               <div key={b.bracket} className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-800">{b.bracket}</span>
