@@ -407,7 +407,8 @@ export default function App() {
           {currentTab === "messages" && (
             <TeacherMessagesView
               backendCourses={teacherCourses.courses}
-              teacherId={teacherProfile.id}
+              students={teacherStudents.students}
+              teacherId={session.user.keycloakUserId ?? teacherProfile.id}
             />
           )}
 
@@ -434,7 +435,15 @@ export default function App() {
             />
           )}
 
-          {currentTab === "settings" && <TeacherSettingsView teacher={teacherProfile} />}
+          {currentTab === "settings" && (
+            <TeacherSettingsView
+              teacher={teacherProfile}
+              onLogout={async () => {
+                await logoutTeacher();
+                setSession(null);
+              }}
+            />
+          )}
         </main>
       </div>
 

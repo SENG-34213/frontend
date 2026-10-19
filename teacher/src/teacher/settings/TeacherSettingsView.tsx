@@ -3,12 +3,18 @@ import { Shield, Bell, LogOut, Check, KeyRound, ExternalLink } from "lucide-reac
 import type { TeacherProfile } from "../types";
 import { getCurrentTeacher } from "../api/auth";
 import { updateCurrentTeacher } from "../api/teacherApi";
+import {
+  getCommunicationSettings,
+  updateCommunicationSettings,
+  type CommunicationSettings,
+} from "../api/settingsApi";
 
 interface TeacherSettingsViewProps {
   teacher: TeacherProfile;
+  onLogout: () => Promise<void>;
 }
 
-export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teacher }) => {
+export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teacher, onLogout }) => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [submissionPushes, setSubmissionPushes] = useState(true);
   const [dailyDigest, setDailyDigest] = useState(false);
@@ -17,6 +23,13 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [communicationSettings, setCommunicationSettings] = useState<CommunicationSettings | null>(
+    null,
+  );
+  const [isCommunicationLoading, setIsCommunicationLoading] = useState(true);
+  const [isCommunicationSaving, setIsCommunicationSaving] = useState(false);
+  const [communicationSaved, setCommunicationSaved] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -39,6 +52,27 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
       })
       .finally(() => {
         if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getCommunicationSettings(controller.signal)
+      .then((settings) => {
+        if (!controller.signal.aborted && settings) setCommunicationSettings(settings);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Unable to load communication preferences.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsCommunicationLoading(false);
       });
     return () => controller.abort();
   }, []);
@@ -68,6 +102,43 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveCommunicationPreferences = async () => {
+    if (!communicationSettings) return;
+    setIsCommunicationSaving(true);
+    setError(null);
+    try {
+      const saved = await updateCommunicationSettings({
+        readReceiptsEnabled: communicationSettings.readReceiptsEnabled,
+        lastSeenVisible: communicationSettings.lastSeenVisible,
+        profilePhotoVisible: communicationSettings.profilePhotoVisible,
+        groupNotificationsEnabled: communicationSettings.groupNotificationsEnabled,
+        directNotificationsEnabled: communicationSettings.directNotificationsEnabled,
+      });
+      if (saved) setCommunicationSettings(saved);
+      setCommunicationSaved(true);
+      window.setTimeout(() => setCommunicationSaved(false), 2000);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to save communication preferences.",
+      );
+    } finally {
+      setIsCommunicationSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    setError(null);
+    try {
+      await onLogout();
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to sign out.");
+      setIsLoggingOut(false);
     }
   };
 
@@ -212,7 +283,64 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         </div>
       </div>
 
-      {/* 3. Session & Logout */}
+      {/* 3. Communication Preferences */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Communication Preferences</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Control privacy and notification behavior for teacher conversations.
+            </p>
+          </div>
+          {communicationSaved && (
+            <span className="text-xs font-semibold text-emerald-700">Saved</span>
+          )}
+        </div>
+        {communicationSettings ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["readReceiptsEnabled", "Read receipts"],
+                ["lastSeenVisible", "Show last seen"],
+                ["profilePhotoVisible", "Show profile photos"],
+                ["groupNotificationsEnabled", "Group notifications"],
+                ["directNotificationsEnabled", "Direct notifications"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="flex items-center gap-3 text-xs text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={communicationSettings[key]}
+                  onChange={(event) =>
+                    setCommunicationSettings((current) =>
+                      current ? { ...current, [key]: event.target.checked } : current,
+                    )
+                  }
+                  className="rounded text-indigo-600"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-slate-500">
+            {isCommunicationLoading
+              ? "Loading communication preferences..."
+              : "Communication preferences are unavailable."}
+          </p>
+        )}
+        <div className="flex justify-end border-t border-slate-100 pt-3">
+          <button
+            onClick={handleSaveCommunicationPreferences}
+            disabled={isCommunicationLoading || isCommunicationSaving || !communicationSettings}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {isCommunicationSaving ? "Saving..." : "Save Communication Settings"}
+          </button>
+        </div>
+      </div>
+
+      {/* 4. Session & Logout */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-3">
         <h2 className="text-sm font-bold text-slate-900">Portal Session</h2>
         <p className="text-xs text-slate-500">
@@ -221,11 +349,12 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         </p>
 
         <button
-          onClick={() => alert("Logging out of Mentify Teacher Portal...")}
-          className="px-3.5 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center gap-1.5"
+          onClick={() => void handleLogout()}
+          disabled={isLoggingOut}
+          className="px-3.5 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <LogOut className="w-3.5 h-3.5" />
-          <span>Sign Out of Faculty Workspace</span>
+          <span>{isLoggingOut ? "Signing Out..." : "Sign Out of Faculty Workspace"}</span>
         </button>
       </div>
     </div>
