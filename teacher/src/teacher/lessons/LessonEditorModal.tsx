@@ -17,15 +17,16 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
   onClose,
   onSave,
 }) => {
-  if (!isOpen || !lesson) return null;
-
-  const [title, setTitle] = useState(lesson.title);
-  const [description, setDescription] = useState(lesson.description);
-  const [durationMinutes, setDurationMinutes] = useState(lesson.durationMinutes);
-  const [contentType, setContentType] = useState(lesson.contentType);
-  const [status, setStatus] = useState(lesson.status);
+  // Keep hooks unconditional. This modal is mounted even while it is closed,
+  // and returning before hooks run causes React's static-flag error when it
+  // transitions between open and closed states.
+  const [title, setTitle] = useState(lesson?.title ?? "");
+  const [description, setDescription] = useState(lesson?.description ?? "");
+  const [durationMinutes, setDurationMinutes] = useState(lesson?.durationMinutes ?? 0);
+  const [contentType, setContentType] = useState(lesson?.contentType ?? "Lecture");
+  const [status, setStatus] = useState(lesson?.status ?? "Draft");
   const [contentMarkdown, setContentMarkdown] = useState(
-    lesson.contentMarkdown ||
+    lesson?.contentMarkdown ||
       `### Learning Objectives\n- Master fundamental asymptotic invariants.\n- Implement core balancing rotations without memory leaks.\n- Benchmark algorithmic execution against baseline implementations.`,
   );
   const [mode, setMode] = useState<"edit" | "preview">("edit");
@@ -44,6 +45,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
   }, [lesson]);
 
   const handleSave = () => {
+    if (!lesson) return;
     setIsSaved(true);
     const updated: Lesson = {
       ...lesson,
@@ -61,6 +63,8 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
       onClose();
     }, 700);
   };
+
+  if (!isOpen || !lesson) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
