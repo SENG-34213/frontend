@@ -415,7 +415,9 @@ export default function App() {
             <MentifyAIWorkspaceView initialPrompt={aiPreloadedPrompt} />
           )}
 
-          {currentTab === "analytics" && <TeacherAnalyticsView onNavigate={handleNavigate} />}
+          {currentTab === "analytics" && (
+            <TeacherAnalyticsView onNavigate={handleNavigate} courses={teacherCourses.courses} />
+          )}
 
           {currentTab === "notifications" && (
             <NotificationCenterView
