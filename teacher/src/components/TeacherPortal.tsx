@@ -156,11 +156,13 @@ export default function App() {
 
   const handleItemCreated = (type: QuickCreateType, item: any) => {
     if (type === "course") {
+      const courseTitle = item.courseName || item.title || "Untitled course";
       const newCourse: Course = {
         id: item.id,
-        code: item.title.split(" ")[0] || "CS-999",
-        title: item.title,
-        description: item.description || "Newly created academic course syllabus.",
+        code: item.subject || courseTitle.split(" ")[0] || "COURSE",
+        title: courseTitle,
+        description:
+          item.courseDescription || item.description || "No course description available.",
         category: "Computer Science",
         level: "Undergraduate",
         semester: "Fall Semester",
@@ -451,6 +453,7 @@ export default function App() {
         onClose={() => setIsQuickCreateOpen(false)}
         onCreated={handleItemCreated}
         backendCourses={teacherCourses.courses}
+        teacherId={session?.user.id}
         onCreateQuiz={createQuiz}
       />
     </div>

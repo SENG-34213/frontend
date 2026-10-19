@@ -2,10 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   BookOpen,
-  Users,
   FileText,
-  HelpCircle,
-  Calendar,
   X,
   ArrowRight,
   Sparkles,
@@ -171,7 +168,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                       </div>
                     </div>
                     <span className="text-slate-500 tabular-nums font-mono">
-                      GPA {s.gpa.toFixed(2)}
+                      GPA {s.gpa === null ? "Unavailable" : s.gpa.toFixed(2)}
                     </span>
                   </button>
                 ))}

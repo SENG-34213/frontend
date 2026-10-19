@@ -18,12 +18,33 @@ export type BackendCourse = {
   numberOfStudents?: number;
 };
 
+export type CreateCoursePayload = {
+  courseName: string;
+  courseDescription: string;
+  courseThumbnail?: string;
+  gradeId: string;
+  assignedTeacherId: string;
+  subject: string;
+  isOnline?: boolean;
+  isVisible?: boolean;
+  isPublished?: boolean;
+};
+
 export async function getTeacherCourses(signal?: AbortSignal): Promise<BackendCourse[]> {
   const response = await apiRequest<ApiResponse<BackendCourse[]>>("/api/v1/course/my-courses", {
     signal,
   });
 
   return response.data ?? [];
+}
+
+export async function createCourse(payload: CreateCoursePayload) {
+  const response = await apiRequest<ApiResponse<BackendCourse>>("/api/v1/course", {
+    method: "POST",
+    body: payload,
+  });
+  if (!response.data) throw new Error("The server returned no created course.");
+  return response.data;
 }
 
 export async function getCourseById(

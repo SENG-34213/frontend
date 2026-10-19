@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { BackendCourse } from "../api/courseApi";
-import { getCourseStudentIds, getStudentAttendanceSummary } from "../api/studentApi";
+import {
+  getCourseStudentIds,
+  getStudentAttendanceSummary,
+  getStudentProfiles,
+  type BackendStudentProfile,
+} from "../api/studentApi";
 import type { Student } from "../types";
 
 type TeacherStudentsState = {
@@ -12,12 +17,20 @@ type TeacherStudentsState = {
   retry: () => void;
 };
 
-function shortId(value: string) {
-  return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
+function studentStatus(attendanceRate: number | null, profileStatus?: string): Student["status"] {
+  if (attendanceRate === null) return profileStatus === "ACTIVE" ? "Active" : "At Risk";
+  return attendanceRate >= 90 ? "Excelling" : attendanceRate >= 75 ? "Active" : "At Risk";
 }
 
-function studentStatus(attendanceRate: number): Student["status"] {
-  return attendanceRate >= 90 ? "Excelling" : attendanceRate >= 75 ? "Active" : "At Risk";
+function initials(name: string) {
+  const result = name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  return result || "?";
 }
 
 export function useTeacherStudents(
@@ -44,60 +57,88 @@ export function useTeacherStudents(
 
     async function loadStudents() {
       try {
-        const byStudent = new Map<string, Student>();
         const rosterResults = await Promise.all(
           courses.map(async (course) => ({
             course,
             studentIds: await getCourseStudentIds(course.id, controller.signal),
           })),
         );
+        const studentIds = Array.from(new Set(rosterResults.flatMap(({ studentIds: ids }) => ids)));
+        const profiles = await getStudentProfiles(studentIds, controller.signal);
+        const profilesById = new Map<string, BackendStudentProfile>(
+          profiles.map((profile) => [profile.id, profile]),
+        );
+        const enrolledCourseIds = new Map<string, string[]>();
 
-        await Promise.all(
-          rosterResults.flatMap(({ course, studentIds }) =>
-            studentIds.map(async (studentId) => {
-              let attendanceRate = 0;
-              let absences = 0;
+        rosterResults.forEach(({ course, studentIds: ids }) => {
+          ids.forEach((studentId) => {
+            const current = enrolledCourseIds.get(studentId) ?? [];
+            enrolledCourseIds.set(studentId, Array.from(new Set([...current, course.id])));
+          });
+        });
+
+        const attendanceResults = await Promise.all(
+          rosterResults.flatMap(({ course, studentIds: ids }) =>
+            ids.map(async (studentId) => {
               try {
                 const summary = await getStudentAttendanceSummary(
                   studentId,
                   course.id,
                   controller.signal,
                 );
-                attendanceRate = Number(summary?.attendancePercentage ?? 0);
-                absences = Number(summary?.absentCount ?? 0);
+                const rate = Number(summary?.attendancePercentage);
+                const absences = Number(summary?.absentCount);
+                return {
+                  studentId,
+                  rate: Number.isFinite(rate) ? rate : null,
+                  absences: Number.isFinite(absences) ? absences : undefined,
+                };
               } catch (requestError) {
                 if (controller.signal.aborted) throw requestError;
+                return { studentId, rate: null, absences: undefined };
               }
-
-              const current = byStudent.get(studentId);
-              const courseIds = current
-                ? Array.from(new Set([...current.enrolledCourseIds, course.id]))
-                : [course.id];
-              const nextAttendance = current
-                ? Math.round(((current.attendanceRate + attendanceRate) / 2) * 10) / 10
-                : Math.round(attendanceRate * 10) / 10;
-              byStudent.set(studentId, {
-                id: studentId,
-                studentId,
-                name: `Student ${shortId(studentId)}`,
-                email: "Not provided by the current API",
-                avatarBg: "bg-indigo-600",
-                initials: "ST",
-                enrolledCourseIds: courseIds,
-                attendanceRate: nextAttendance,
-                gpa: 0,
-                status: studentStatus(nextAttendance),
-                lastActive: "Not available",
-                submissionsPending: 0,
-                recentGradeAvg: 0,
-                absences: (current?.absences ?? 0) + absences,
-              });
             }),
           ),
         );
+        const attendanceByStudent = new Map<string, { rates: number[]; absences: number }>();
+        attendanceResults.forEach(({ studentId, rate, absences }) => {
+          const current = attendanceByStudent.get(studentId) ?? { rates: [], absences: 0 };
+          if (rate !== null) current.rates.push(rate);
+          if (absences !== undefined) current.absences += absences;
+          attendanceByStudent.set(studentId, current);
+        });
+
+        const directoryStudents: Student[] = studentIds.map((studentId) => {
+          const profile = profilesById.get(studentId);
+          const attendance = attendanceByStudent.get(studentId);
+          const attendanceRate = attendance?.rates.length
+            ? Math.round(
+                (attendance.rates.reduce((sum, rate) => sum + rate, 0) / attendance.rates.length) *
+                  10,
+              ) / 10
+            : null;
+          const name = profile?.name?.trim() || "Unavailable";
+          return {
+            id: studentId,
+            studentId: profile?.studentNumber || studentId,
+            name,
+            email: profile?.email || "Unavailable",
+            avatar: profile?.avatar,
+            avatarBg: "bg-indigo-600",
+            initials: initials(name),
+            enrolledCourseIds: enrolledCourseIds.get(studentId) ?? [],
+            attendanceRate,
+            gpa: null,
+            status: studentStatus(attendanceRate, profile?.status),
+            lastActive: "Unavailable",
+            submissionsPending: 0,
+            recentGradeAvg: null,
+            absences: attendance?.absences,
+          };
+        });
 
         if (!controller.signal.aborted) {
-          setState({ students: Array.from(byStudent.values()), isLoading: false, error: null });
+          setState({ students: directoryStudents, isLoading: false, error: null });
         }
       } catch (requestError) {
         if (!controller.signal.aborted) {

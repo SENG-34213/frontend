@@ -1,17 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  X,
-  User,
-  BookOpen,
-  FileCheck,
-  HelpCircle,
-  GraduationCap,
-  ClipboardCheck,
-  MessageSquare,
-  Award,
-  Send,
-  Check,
-} from "lucide-react";
+import { X, MessageSquare, Send } from "lucide-react";
 import { Course, Student, StudentSubmission } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { getStudentAttendanceSummary } from "../api/studentApi";
@@ -39,7 +27,9 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
     "Strong grasp of asymptotic recurrence relations. Keep up the thorough unit testing!",
     "Recommended attending Thursday office hours for graph edge relaxation concepts.",
   ]);
-  const [attendanceRate, setAttendanceRate] = useState(student?.attendanceRate ?? 0);
+  const [attendanceRate, setAttendanceRate] = useState<number | null>(
+    student?.attendanceRate ?? null,
+  );
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
 
@@ -104,11 +94,15 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
         {/* Header */}
         <div className="p-6 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-4 shrink-0">
           <div className="flex items-center gap-4">
-            <div
-              className={`w-12 h-12 rounded-full text-white font-bold text-base flex items-center justify-center shadow-xs ${student.avatarBg}`}
-            >
-              {student.initials}
-            </div>
+            {student.avatar ? (
+              <img src={student.avatar} alt="" className="w-12 h-12 rounded-full object-cover" />
+            ) : (
+              <div
+                className={`w-12 h-12 rounded-full text-white font-bold text-base flex items-center justify-center shadow-xs ${student.avatarBg}`}
+              >
+                {student.initials}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-slate-900">{student.name}</h2>
@@ -178,7 +172,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                     Cumulative GPA
                   </span>
                   <div className="text-xl font-bold text-slate-900 font-mono mt-0.5">
-                    {student.gpa.toFixed(2)}
+                    {student.gpa === null ? "Unavailable" : student.gpa.toFixed(2)}
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
@@ -194,7 +188,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                     Recent Grade Avg
                   </span>
                   <div className="text-xl font-bold text-indigo-600 font-mono mt-0.5">
-                    {student.recentGradeAvg}%
+                    {student.recentGradeAvg === null ? "Unavailable" : `${student.recentGradeAvg}%`}
                   </div>
                 </div>
               </div>
@@ -271,7 +265,11 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                   </p>
                 </div>
                 <span className="text-lg font-bold font-mono text-emerald-600">
-                  {attendanceLoading ? "Loading..." : `${attendanceRate}%`}
+                  {attendanceLoading
+                    ? "Loading..."
+                    : attendanceRate === null
+                      ? "Unavailable"
+                      : `${attendanceRate}%`}
                 </span>
               </div>
             </div>

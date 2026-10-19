@@ -26,6 +26,7 @@ export interface TeacherProfile {
   teacherCode: string;
   department: string;
   email: string;
+  avatar?: string;
   phone: string;
   officeLocation: string;
   officeHours: string;
@@ -85,16 +86,17 @@ export interface Student {
   studentId: string;
   name: string;
   email: string;
+  avatar?: string;
   avatarBg: string;
   initials: string;
   enrolledCourseIds: string[];
-  attendanceRate: number;
+  attendanceRate: number | null;
   absences?: number;
-  gpa: number;
+  gpa: number | null;
   status: "Active" | "At Risk" | "Excelling";
   lastActive: string;
   submissionsPending: number;
-  recentGradeAvg: number;
+  recentGradeAvg: number | null;
 }
 
 export interface EnrollmentRequest {

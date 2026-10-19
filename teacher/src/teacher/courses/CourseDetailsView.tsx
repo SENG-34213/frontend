@@ -1,29 +1,15 @@
-import React, { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  Users,
-  Layers,
-  FileCheck,
-  FolderOpen,
-  HelpCircle,
-  GraduationCap,
-  Award,
-  Calendar,
-  Edit3,
-  Archive,
-  Share2,
-  Plus,
-  Clock,
-  Sparkles,
-  ExternalLink,
-} from "lucide-react";
-import { Assignment, Course, Module, NavigationTab } from "../types";
-import { mockStudents, mockQuizzes, mockExaminations, mockMaterials } from "../data/mockData";
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Users, Layers, Award, Edit3, Plus, Clock } from "lucide-react";
+import { Assignment, Course, LearningMaterial, Module, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
 import { getCourseById, mapBackendCourse } from "../api/courseApi";
 import { getCourseModules, getModuleLessons } from "../api/courseContentApi";
 import { getCourseAssignments, type BackendAssignment } from "../api/assignmentApi";
+import { getTeacherQuizzes, type BackendQuiz } from "../api/quizApi";
+import { getCourseExams, type BackendExam } from "../api/examApi";
+import { getModuleMaterials } from "../api/courseContentApi";
+import { useTeacherStudents } from "../hooks/useTeacherStudents";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -81,7 +67,21 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   const [courseModulesLoading, setCourseModulesLoading] = useState(true);
   const [courseModulesError, setCourseModulesError] = useState<string | null>(null);
   const [courseAssignments, setCourseAssignments] = useState<Assignment[]>([]);
+  const [courseQuizzes, setCourseQuizzes] = useState<BackendQuiz[]>([]);
+  const [courseExams, setCourseExams] = useState<BackendExam[]>([]);
+  const [courseMaterials, setCourseMaterials] = useState<LearningMaterial[]>([]);
+  const [courseQuizzesLoading, setCourseQuizzesLoading] = useState(true);
+  const [courseExamsLoading, setCourseExamsLoading] = useState(true);
+  const [courseMaterialsLoading, setCourseMaterialsLoading] = useState(true);
+  const [courseQuizzesError, setCourseQuizzesError] = useState<string | null>(null);
+  const [courseExamsError, setCourseExamsError] = useState<string | null>(null);
+  const [courseMaterialsError, setCourseMaterialsError] = useState<string | null>(null);
   const [displayCourse, setDisplayCourse] = useState(course);
+  const backendCourseForRoster = useMemo(
+    () => [{ id: course.id, courseName: course.title }],
+    [course.id, course.title],
+  );
+  const studentState = useTeacherStudents(true, backendCourseForRoster);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -179,10 +179,103 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
     return () => controller.abort();
   }, [course.id]);
 
-  const enrolledStudents = mockStudents.filter((s) => s.enrolledCourseIds.includes(course.id));
-  const courseQuizzes = mockQuizzes.filter((q) => q.courseId === course.id);
-  const courseExams = mockExaminations.filter((e) => e.courseId === course.id);
-  const courseMaterials = mockMaterials.filter((m) => m.courseId === course.id);
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseQuizzesLoading(true);
+    setCourseQuizzesError(null);
+    getTeacherQuizzes(controller.signal)
+      .then((quizzes) => {
+        if (!controller.signal.aborted)
+          setCourseQuizzes(quizzes.filter((quiz) => quiz.courseId === course.id));
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseQuizzes([]);
+          setCourseQuizzesError(
+            requestError instanceof Error ? requestError.message : "Course quizzes failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseQuizzesLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseExamsLoading(true);
+    setCourseExamsError(null);
+    getCourseExams(course.id, controller.signal)
+      .then((exams) => {
+        if (!controller.signal.aborted) setCourseExams(exams);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseExams([]);
+          setCourseExamsError(
+            requestError instanceof Error ? requestError.message : "Course exams failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseExamsLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseMaterialsLoading(true);
+    setCourseMaterialsError(null);
+    Promise.all(
+      courseModules.map((module) => getModuleMaterials(course.id, module.id, controller.signal)),
+    )
+      .then((materialsByModule) => {
+        if (controller.signal.aborted) return;
+        setCourseMaterials(
+          materialsByModule.flatMap((materials, index) =>
+            materials.map((material) => ({
+              id: material.id,
+              courseId: course.id,
+              courseCode: course.code,
+              title: material.title,
+              description: "",
+              fileType:
+                material.type === "DOC"
+                  ? "DOCX"
+                  : material.type === "PPT" || material.type === "VIDEO"
+                    ? material.type === "PPT"
+                      ? "SLIDES"
+                      : "VIDEO"
+                    : "PDF",
+              fileSize: "Unavailable",
+              uploadDate: "Unavailable",
+              s3Key: material.fileUrl || material.materialId || "",
+              downloadsCount: 0,
+              visibility: "Published",
+              moduleAssociation: courseModules[index]?.title,
+            })),
+          ),
+        );
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseMaterials([]);
+          setCourseMaterialsError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Course materials failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseMaterialsLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id, course.code, courseModules]);
+
+  const enrolledStudents = studentState.students;
 
   const tabs: { id: CourseTab; label: string; count?: number }[] = [
     { id: "overview", label: "Overview" },
@@ -513,57 +606,76 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 </button>
               </div>
 
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
-                    <tr>
-                      <th className="px-4 py-3">Student</th>
-                      <th className="px-4 py-3">Student ID</th>
-                      <th className="px-4 py-3">Attendance</th>
-                      <th className="px-4 py-3">GPA</th>
-                      <th className="px-4 py-3">Academic Status</th>
-                      <th className="px-4 py-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {enrolledStudents.map((st) => (
-                      <tr key={st.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className={`w-7 h-7 rounded-full text-white text-xs font-semibold flex items-center justify-center ${st.avatarBg}`}
-                            >
-                              {st.initials}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-slate-900">{st.name}</p>
-                              <p className="text-[11px] text-slate-400">{st.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-mono text-slate-600">{st.studentId}</td>
-                        <td className="px-4 py-3 font-mono tabular-nums text-slate-700">
-                          {st.attendanceRate}%
-                        </td>
-                        <td className="px-4 py-3 font-mono tabular-nums font-semibold text-slate-900">
-                          {st.gpa.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <StatusBadge status={st.status} />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => onNavigate("students")}
-                            className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                          >
-                            View Record
-                          </button>
-                        </td>
+              {studentState.error && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {studentState.error.message}
+                </div>
+              )}
+              {studentState.isLoading ? (
+                <div className="rounded-lg border border-slate-200 px-4 py-8 text-center text-xs text-slate-500">
+                  Loading enrolled students...
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="px-4 py-3">Student</th>
+                        <th className="px-4 py-3">Student ID</th>
+                        <th className="px-4 py-3">Attendance</th>
+                        <th className="px-4 py-3">GPA</th>
+                        <th className="px-4 py-3">Academic Status</th>
+                        <th className="px-4 py-3 text-right">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {enrolledStudents.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-xs text-slate-400">
+                            No enrolled students found.
+                          </td>
+                        </tr>
+                      ) : (
+                        enrolledStudents.map((st) => (
+                          <tr key={st.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className={`w-7 h-7 rounded-full text-white text-xs font-semibold flex items-center justify-center ${st.avatarBg}`}
+                                >
+                                  {st.initials}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-slate-900">{st.name}</p>
+                                  <p className="text-[11px] text-slate-400">{st.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 font-mono text-slate-600">{st.studentId}</td>
+                            <td className="px-4 py-3 font-mono tabular-nums text-slate-700">
+                              {st.attendanceRate === null ? "Unavailable" : `${st.attendanceRate}%`}
+                            </td>
+                            <td className="px-4 py-3 font-mono tabular-nums font-semibold text-slate-900">
+                              {st.gpa === null ? "Unavailable" : st.gpa.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <StatusBadge status={st.status} />
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                onClick={() => onNavigate("students")}
+                                className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                              >
+                                View Record
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -583,33 +695,52 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {courseMaterials.map((mat) => (
-                  <div
-                    key={mat.id}
-                    className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors flex items-start justify-between gap-3"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs font-mono border border-indigo-100">
-                        {mat.fileType}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
-                          {mat.title}
-                        </h4>
-                        <p className="text-[11px] text-slate-500 line-clamp-1">{mat.description}</p>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
-                          <span className="font-mono">{mat.fileSize}</span>
-                          <span>·</span>
-                          <span>{mat.downloadsCount} downloads</span>
+              {courseMaterialsError && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {courseMaterialsError}
+                </div>
+              )}
+              {courseMaterialsLoading ? (
+                <div className="rounded-lg border border-slate-200 px-4 py-8 text-center text-xs text-slate-500">
+                  Loading course materials...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {courseMaterials.length === 0 ? (
+                    <p className="col-span-full rounded-lg border border-slate-200 px-4 py-8 text-center text-xs text-slate-400">
+                      No learning materials found.
+                    </p>
+                  ) : (
+                    courseMaterials.map((mat) => (
+                      <div
+                        key={mat.id}
+                        className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors flex items-start justify-between gap-3"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs font-mono border border-indigo-100">
+                            {mat.fileType}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                              {mat.title}
+                            </h4>
+                            <p className="text-[11px] text-slate-500 line-clamp-1">
+                              {mat.description}
+                            </p>
+                            <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                              <span className="font-mono">{mat.fileSize}</span>
+                              <span>·</span>
+                              <span>{mat.downloadsCount} downloads</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
 
-                    <StatusBadge status={mat.visibility} />
-                  </div>
-                ))}
-              </div>
+                        <StatusBadge status={mat.visibility} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -669,9 +800,25 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
           {/* 6. QUIZZES & EXAMS & GRADES TABS */}
           {(activeTab === "quizzes" || activeTab === "exams" || activeTab === "grades") && (
             <div className="text-center py-8">
-              <p className="text-xs text-slate-500 mb-3">
-                Viewing dedicated assessment module for {displayCourse.code}.
-              </p>
+              {activeTab === "quizzes" || activeTab === "exams" ? (
+                <>
+                  <p className="text-xs text-slate-500 mb-3">
+                    {activeTab === "quizzes"
+                      ? courseQuizzesLoading
+                        ? "Loading course quizzes..."
+                        : courseQuizzesError ||
+                          `${courseQuizzes.length} quizzes found for ${displayCourse.code}.`
+                      : courseExamsLoading
+                        ? "Loading course exams..."
+                        : courseExamsError ||
+                          `${courseExams.length} exams found for ${displayCourse.code}.`}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-slate-500 mb-3">
+                  Gradebook data is available in the dedicated grades module.
+                </p>
+              )}
               <button
                 onClick={() => onNavigate(activeTab as NavigationTab)}
                 className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs"

@@ -1,15 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  Users,
-  Search,
-  Filter,
-  Download,
-  Mail,
-  MoreVertical,
-  ArrowRight,
-  UserCheck,
-  AlertTriangle,
-} from "lucide-react";
+import { Search, UserCheck } from "lucide-react";
 import { Student, Course, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { StudentDetailsModal } from "./StudentDetailsModal";
@@ -178,11 +168,19 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`w-8 h-8 rounded-full text-white text-xs font-semibold flex items-center justify-center shrink-0 ${st.avatarBg}`}
-                        >
-                          {st.initials}
-                        </div>
+                        {st.avatar ? (
+                          <img
+                            src={st.avatar}
+                            alt=""
+                            className="w-8 h-8 rounded-full object-cover shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className={`w-8 h-8 rounded-full text-white text-xs font-semibold flex items-center justify-center shrink-0 ${st.avatarBg}`}
+                          >
+                            {st.initials}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-900 truncate">{st.name}</p>
                           <p className="text-[11px] text-slate-400 truncate">{st.email}</p>
@@ -208,14 +206,16 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
                     <td className="px-4 py-3.5 font-mono tabular-nums text-slate-700">
                       <span
                         className={`font-semibold ${
-                          st.attendanceRate < 80 ? "text-rose-600" : "text-slate-800"
+                          st.attendanceRate !== null && st.attendanceRate < 80
+                            ? "text-rose-600"
+                            : "text-slate-800"
                         }`}
                       >
-                        {st.attendanceRate}%
+                        {st.attendanceRate === null ? "Unavailable" : `${st.attendanceRate}%`}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 font-mono tabular-nums font-bold text-slate-900">
-                      {st.gpa.toFixed(2)}
+                      {st.gpa === null ? "Unavailable" : st.gpa.toFixed(2)}
                     </td>
                     <td className="px-4 py-3.5">
                       <StatusBadge status={st.status} />
