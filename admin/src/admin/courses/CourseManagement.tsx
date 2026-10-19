@@ -22,14 +22,11 @@ import {
   AlertTriangle,
   Info,
   ExternalLink,
-  Check,
-  Copy,
   CheckCircle,
   FileText,
   Image as ImageIcon,
   HelpCircle,
   ChevronRight,
-  ShieldCheck,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
@@ -156,8 +153,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   const [formData, setFormData] = useState<CreateCourseRequest>(initialFormState);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPayloadPreview, setShowPayloadPreview] = useState(false);
-  const [copiedJson, setCopiedJson] = useState(false);
 
   // Sync preselected grade if passed
   useEffect(() => {
@@ -753,9 +748,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span>{editingCourse ? "Edit Academic Course" : "Create Academic Course"}</span>
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-medium">
-                      {editingCourse ? "PUT /api/v1/course" : "POST /api/v1/course"}
-                    </span>
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     Configure institutional curriculum attributes, grade assignment, and faculty
@@ -1247,7 +1239,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN: Sticky Real-Time Student Preview & API Inspector (Span 5) */}
+                {/* RIGHT COLUMN: Sticky real-time student preview (Span 5) */}
                 <div className="lg:col-span-5 sticky top-0 space-y-5">
                   {/* LIVE STUDENT CARD PREVIEW */}
                   <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-2xs">
@@ -1346,155 +1338,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       </div>
                     </div>
                   </div>
-
-                  {/* SPRING BOOT MICROSERVICE READINESS CHECKLIST */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 space-y-3 shadow-2xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
-                        <span>Backend Contract Health</span>
-                      </span>
-                      {formData.courseName.trim() &&
-                      formData.subject.trim() &&
-                      formData.gradeId &&
-                      formData.assignedTeacherId &&
-                      formData.courseDescription.trim() ? (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold">
-                          Valid Payload
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 text-[10px] font-semibold">
-                          Incomplete
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-1.5 text-[11px]">
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-600 dark:text-slate-400">
-                          Course Title (3-150 chars)
-                        </span>
-                        {formData.courseName.trim().length >= 3 ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                            <Check className="w-3 h-3" /> Ready
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">Required</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-600 dark:text-slate-400">
-                          Subject Classification
-                        </span>
-                        {formData.subject.trim().length >= 2 ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                            <Check className="w-3 h-3" /> Ready
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">Required</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-600 dark:text-slate-400">
-                          Target Grade Level UUID
-                        </span>
-                        {formData.gradeId ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                            <Check className="w-3 h-3" /> Linked
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">Select Grade</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-600 dark:text-slate-400">
-                          Lead Faculty Teacher UUID
-                        </span>
-                        {formData.assignedTeacherId ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                            <Check className="w-3 h-3" /> Assigned
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">Select Faculty</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between py-1">
-                        <span className="text-slate-600 dark:text-slate-400">
-                          Syllabus Description
-                        </span>
-                        {formData.courseDescription.trim().length >= 10 ? (
-                          <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-semibold">
-                            <Check className="w-3 h-3" /> Detailed
-                          </span>
-                        ) : (
-                          <span className="text-slate-400">Required</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* SPRING BOOT API PAYLOAD INSPECTOR */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-4 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                        POST /api/v1/course Request DTO
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const payload = {
-                            courseName: formData.courseName || "Advanced Calculus",
-                            courseDescription:
-                              formData.courseDescription || "Curriculum description...",
-                            courseThumbnail: formData.courseThumbnail || null,
-                            gradeId: formData.gradeId || "SELECTED_GRADE_UUID",
-                            assignedTeacherId:
-                              formData.assignedTeacherId || "SELECTED_TEACHER_UUID",
-                            subject: formData.subject || "Mathematics",
-                            isOnline: Boolean(formData.isOnline),
-                            isVisible: Boolean(formData.isVisible),
-                            isPublished: Boolean(formData.isPublished),
-                            courseEnrollmentId: formData.courseEnrollmentId || null,
-                          };
-                          navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-                          setCopiedJson(true);
-                          setTimeout(() => setCopiedJson(false), 2000);
-                        }}
-                        className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-                      >
-                        <Copy className="w-3 h-3" />
-                        <span>{copiedJson ? "Copied!" : "Copy JSON"}</span>
-                      </button>
-                    </div>
-
-                    <pre className="p-3 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-[10px] text-slate-800 dark:text-slate-200 overflow-x-auto max-h-40">
-                      {JSON.stringify(
-                        {
-                          courseName: formData.courseName || "Advanced Calculus",
-                          courseDescription:
-                            formData.courseDescription || "Curriculum description...",
-                          courseThumbnail: formData.courseThumbnail || null,
-                          gradeId: formData.gradeId || "SELECTED_GRADE_UUID",
-                          assignedTeacherId: formData.assignedTeacherId || "SELECTED_TEACHER_UUID",
-                          subject: formData.subject || "Mathematics",
-                          isOnline: Boolean(formData.isOnline),
-                          isVisible: Boolean(formData.isVisible),
-                          isPublished: Boolean(formData.isPublished),
-                          courseEnrollmentId: formData.courseEnrollmentId || null,
-                        },
-                        null,
-                        2,
-                      )}
-                    </pre>
-                    <span className="text-[10px] text-slate-400 block">
-                      Note: Per backend commit 9968370, pricing is owned by Grade entity (
-                      <code className="font-mono text-indigo-500">gradeMonthlyFee</code>).
-                    </span>
-                  </div>
                 </div>
               </div>
 
@@ -1502,9 +1345,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>
-                    Ready to dispatch to Course Microservice with Grade inherited tuition standard.
-                  </span>
+                  <span>Course details are ready to save.</span>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 shrink-0">
@@ -1524,7 +1365,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     className="px-5 py-2 font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
                     {isSubmitting ? (
-                      <span>Submitting to Microservice...</span>
+                      <span>Saving course...</span>
                     ) : (
                       <span>{editingCourse ? "Save Course Changes" : "Create Course"}</span>
                     )}
