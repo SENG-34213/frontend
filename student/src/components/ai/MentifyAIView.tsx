@@ -3,21 +3,14 @@ import React, { useState } from "react";
 import {
   Sparkles,
   Send,
-  Plus,
   Copy,
   Check,
-  RotateCcw,
-  BookOpen,
-  Code,
-  GraduationCap,
-  MessageSquare,
   ArrowRight,
-  BrainCircuit,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
 export const MentifyAIView: React.FC = () => {
-  const { aiChats, sendAiQuery, isAiLoading, courses, showToast } = useStudent();
+  const { aiChats, sendAiQuery, isAiLoading, showToast } = useStudent();
   const [inputQuery, setInputQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 

@@ -7,11 +7,9 @@ import {
   Download,
   Upload,
   CheckCircle2,
-  AlertCircle,
   FileText,
   Trash2,
   Award,
-  Sparkles,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
@@ -148,7 +146,7 @@ export const AssignmentDetailView: React.FC = () => {
                 Instructor Written Feedback
               </span>
               <p className="mt-1 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                "{assignment.feedback}"
+                &ldquo;{assignment.feedback}&rdquo;
               </p>
             </div>
           )}

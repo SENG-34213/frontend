@@ -7,10 +7,7 @@ import {
   PlayCircle,
   BookOpen,
   User,
-  Clock,
   Sparkles,
-  ChevronRight,
-  Filter,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
@@ -121,7 +118,7 @@ export const MyCoursesView: React.FC = () => {
             {/* Sort Dropdown */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as "progress" | "title" | "credits")}
               aria-label="Sort courses by"
               className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 focus:outline-none"
             >

@@ -112,7 +112,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [materials, setMaterials] = useState<LearningMaterial[]>(INITIAL_MATERIALS);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(INITIAL_CALENDAR_EVENTS);
   const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
+  const [announcements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
   const [aiChats, setAiChats] = useState<ChatMessage[]>(INITIAL_AI_CHATS);
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
@@ -158,11 +158,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Synchronize Live Backend Data
   const refreshData = useCallback(async () => {
     const token = getToken();
-    if (!token) {
-      setIsAuthenticated(false);
-      setIsLiveConnected(false);
-      return;
-    }
+    if (!token) return;
 
     try {
       setIsAuthenticated(true);
@@ -351,7 +347,10 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   useEffect(() => {
-    refreshData();
+    const timer = setTimeout(() => {
+      void refreshData();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [refreshData]);
 
   const signOut = async () => {
@@ -525,6 +524,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const submitExam = (examId: string, _answers: Record<string, string[]>) => {
+    void _answers;
     const simulatedScore = 92;
     setExaminations((prev) =>
       prev.map((ex) => {
