@@ -407,7 +407,8 @@ export default function App() {
           {currentTab === "messages" && (
             <TeacherMessagesView
               backendCourses={teacherCourses.courses}
-              teacherId={teacherProfile.id}
+              students={teacherStudents.students}
+              teacherId={session.user.keycloakUserId ?? teacherProfile.id}
             />
           )}
 

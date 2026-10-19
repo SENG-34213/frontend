@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { BellRing, CheckCheck, Plus, Search, Send, Users } from "lucide-react";
+import { BellRing, CheckCheck, Plus, Search, Send, UserPlus, Users } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
+import type { Student } from "../types";
+import { useCommunicationRealtime } from "../api/communicationRealtime";
 import {
   archiveCommunicationGroup,
+  addStudentToCommunicationGroup,
   createCommunicationGroup,
   deleteCommunicationMessage,
   getCommunicationGroupMembers,
@@ -20,6 +23,7 @@ import {
 
 interface TeacherMessagesViewProps {
   backendCourses: BackendCourse[];
+  students?: Student[];
   teacherId?: string;
 }
 
@@ -43,6 +47,7 @@ function formatTime(value?: string) {
 
 export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   backendCourses,
+  students = [],
   teacherId,
 }) => {
   const [groups, setGroups] = useState<CommunicationGroup[]>([]);
@@ -59,6 +64,12 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementTarget, setAnnouncementTarget] = useState("");
   const [announcementSuccess, setAnnouncementSuccess] = useState(false);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [createCourseId, setCreateCourseId] = useState(backendCourses[0]?.id ?? "");
+  const [createGroupName, setCreateGroupName] = useState("");
+  const [createGroupDescription, setCreateGroupDescription] = useState("");
+  const [studentToAdd, setStudentToAdd] = useState("");
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -71,6 +82,24 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     () => groups.filter((group) => group.name.toLowerCase().includes(search.toLowerCase())),
     [groups, search],
   );
+  const realtime = useCommunicationRealtime(
+    groups.map((group) => group.id),
+    (message) => {
+      setMessagesByGroup((current) => {
+        const existing = current[message.groupId] ?? [];
+        if (existing.some((item) => item.id === message.id)) return current;
+        return { ...current, [message.groupId]: [...existing, message] };
+      });
+    },
+  );
+
+  useEffect(() => {
+    setCreateCourseId((current) =>
+      backendCourses.some((course) => course.id === current)
+        ? current
+        : (backendCourses[0]?.id ?? ""),
+    );
+  }, [backendCourses]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -113,10 +142,17 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     ])
       .then(([messagePage, members]) => {
         if (controller.signal.aborted) return;
-        setMessagesByGroup((current) => ({
-          ...current,
-          [selectedGroupId]: messagePage.content,
-        }));
+        setMessagesByGroup((current) => {
+          const realtimeMessages = current[selectedGroupId] ?? [];
+          const historyIds = new Set(messagePage.content.map((message) => message.id));
+          return {
+            ...current,
+            [selectedGroupId]: [
+              ...messagePage.content,
+              ...realtimeMessages.filter((message) => !historyIds.has(message.id)),
+            ],
+          };
+        });
         setMembersByGroup((current) => ({ ...current, [selectedGroupId]: members }));
       })
       .catch((requestError: unknown) => {
@@ -138,12 +174,15 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     setIsSending(true);
     setActionError(null);
     try {
-      const message = await sendCommunicationMessage(activeGroup.id, inputText.trim());
-      if (!message) throw new Error("The messaging service did not return the sent message.");
-      setMessagesByGroup((current) => ({
-        ...current,
-        [activeGroup.id]: [...(current[activeGroup.id] ?? []), message],
-      }));
+      const content = inputText.trim();
+      if (!realtime.sendMessage(activeGroup.id, content)) {
+        const message = await sendCommunicationMessage(activeGroup.id, content);
+        if (!message) throw new Error("The messaging service did not return the sent message.");
+        setMessagesByGroup((current) => ({
+          ...current,
+          [activeGroup.id]: [...(current[activeGroup.id] ?? []), message],
+        }));
+      }
       setInputText("");
     } catch (requestError) {
       setActionError(
@@ -191,22 +230,50 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   }
 
   async function handleCreateGroup() {
-    const course = backendCourses[0];
+    const course = backendCourses.find((item) => item.id === createCourseId) ?? backendCourses[0];
     if (!course) {
       setActionError("No courses are available to create a communication group.");
       return;
     }
-    const name = window.prompt("Group name", `${course.courseName} Discussion`)?.trim();
-    if (!name) return;
+    const name = createGroupName.trim() || `${course.courseName} Discussion`;
     try {
-      const created = await createCommunicationGroup({ courseId: course.id, name });
+      const created = await createCommunicationGroup({
+        courseId: course.id,
+        name,
+        description: createGroupDescription.trim() || undefined,
+      });
       if (!created) throw new Error("The communication service did not return the new group.");
       setGroups((current) => [created, ...current]);
       setSelectedGroupId(created.id);
+      setCreateGroupName("");
+      setCreateGroupDescription("");
+      setIsCreateGroupOpen(false);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Group could not be created.",
       );
+    }
+  }
+
+  async function handleAddStudent() {
+    if (!activeGroup || !studentToAdd) return;
+    setIsAddingStudent(true);
+    setActionError(null);
+    try {
+      const member = await addStudentToCommunicationGroup(activeGroup.id, studentToAdd);
+      if (member) {
+        setMembersByGroup((current) => ({
+          ...current,
+          [activeGroup.id]: [...(current[activeGroup.id] ?? []), member],
+        }));
+      }
+      setStudentToAdd("");
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Student could not be added.",
+      );
+    } finally {
+      setIsAddingStudent(false);
     }
   }
 
@@ -235,12 +302,15 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       return;
     }
     try {
-      const message = await sendCommunicationMessage(group.id, announcementText.trim());
-      if (!message) throw new Error("The announcement was not returned by the messaging service.");
-      setMessagesByGroup((current) => ({
-        ...current,
-        [group.id]: [...(current[group.id] ?? []), message],
-      }));
+       const content = announcementText.trim();
+       if (!realtime.sendMessage(group.id, content)) {
+         const message = await sendCommunicationMessage(group.id, content);
+         if (!message) throw new Error("The announcement was not returned by the messaging service.");
+         setMessagesByGroup((current) => ({
+           ...current,
+           [group.id]: [...(current[group.id] ?? []), message],
+         }));
+       }
       setAnnouncementSuccess(true);
       setAnnouncementText("");
       setTimeout(() => setAnnouncementSuccess(false), 2200);
@@ -275,9 +345,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         </span>
       </div>
 
-      {(error || actionError) && (
+      {(error || actionError || realtime.error) && (
         <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-700">
-          {error || actionError}
+          {error || actionError || realtime.error}
         </div>
       )}
 
@@ -296,13 +366,57 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                 />
               </div>
               <button
-                onClick={() => void handleCreateGroup()}
+                onClick={() => setIsCreateGroupOpen(true)}
                 className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
                 aria-label="Create group"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
+            {isCreateGroupOpen && (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleCreateGroup();
+                }}
+                className="border-b border-slate-200 bg-white p-3 space-y-2"
+              >
+                <select
+                  value={createCourseId}
+                  onChange={(event) => setCreateCourseId(event.target.value)}
+                  required
+                  className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                >
+                  <option value="">Select course</option>
+                  {backendCourses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.subject || course.courseName}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={createGroupName}
+                  onChange={(event) => setCreateGroupName(event.target.value)}
+                  placeholder="Group name"
+                  maxLength={150}
+                  className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                />
+                <input
+                  value={createGroupDescription}
+                  onChange={(event) => setCreateGroupDescription(event.target.value)}
+                  placeholder="Description (optional)"
+                  className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                />
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={() => setIsCreateGroupOpen(false)} className="text-xs text-slate-500">
+                    Cancel
+                  </button>
+                  <button type="submit" className="rounded bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white">
+                    Create
+                  </button>
+                </div>
+              </form>
+            )}
             <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
               {isLoading ? (
                 <p className="p-6 text-center text-xs text-slate-500">Loading groups...</p>
@@ -415,6 +529,38 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     })
                   )}
                 </div>
+                {activeGroup.status !== "ARCHIVED" && students.length > 0 && (
+                  <div className="border-t border-slate-100 px-3 py-2 flex items-center gap-2">
+                    <UserPlus className="h-3.5 w-3.5 text-slate-400" />
+                    <select
+                      value={studentToAdd}
+                      onChange={(event) => setStudentToAdd(event.target.value)}
+                      className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1 text-[11px]"
+                    >
+                      <option value="">Add enrolled student...</option>
+                      {students
+                        .filter(
+                          (student) =>
+                            !membersByGroup[activeGroup.id]?.some(
+                              (member) => member.userId === student.id,
+                            ),
+                        )
+                        .map((student) => (
+                          <option key={student.id} value={student.id}>
+                            {student.name} ({student.email})
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => void handleAddStudent()}
+                      disabled={!studentToAdd || isAddingStudent}
+                      className="rounded bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
                 <form
                   onSubmit={handleSendMessage}
                   className="p-3 border-t border-slate-200 bg-white flex items-center gap-2"
