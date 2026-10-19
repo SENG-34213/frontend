@@ -1,21 +1,8 @@
 import React, { useEffect, useState } from "react";
-import {
-  Settings,
-  Shield,
-  Bell,
-  Sun,
-  Lock,
-  LogOut,
-  Check,
-  KeyRound,
-  ExternalLink,
-} from "lucide-react";
+import { Shield, Bell, LogOut, Check, KeyRound, ExternalLink } from "lucide-react";
 import type { TeacherProfile } from "../types";
-import {
-  getCommunicationSettings,
-  updateCommunicationSettings,
-  type CommunicationSettings,
-} from "../api/settingsApi";
+import { getCurrentTeacher } from "../api/auth";
+import { updateCurrentTeacher } from "../api/teacherApi";
 
 interface TeacherSettingsViewProps {
   teacher: TeacherProfile;
@@ -26,26 +13,24 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [submissionPushes, setSubmissionPushes] = useState(true);
   const [dailyDigest, setDailyDigest] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [settings, setSettings] = useState<CommunicationSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    getCommunicationSettings(controller.signal)
+    getCurrentTeacher()
       .then((data) => {
         if (controller.signal.aborted) return;
-        setSettings(data);
-        setSubmissionPushes(data.groupNotificationsEnabled);
-        setEmailAlerts(data.directNotificationsEnabled);
+        setSubmissionPushes(data.pushNotifications ?? false);
+        setEmailAlerts(data.emailNotifications ?? false);
       })
       .catch((requestError: unknown) => {
         if (!controller.signal.aborted) {
           setError(
             requestError instanceof Error
               ? requestError.message
-              : "Unable to load communication settings.",
+              : "Unable to load notification preferences.",
           );
         }
       })
@@ -59,20 +44,20 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
     setIsSaving(true);
     setError(null);
     try {
-      const data = await updateCommunicationSettings({
-        groupNotificationsEnabled: submissionPushes,
-        directNotificationsEnabled: emailAlerts,
+      await updateCurrentTeacher({
+        pushNotifications: submissionPushes,
+        emailNotifications: emailAlerts,
       });
-      setSettings(data);
-      setSubmissionPushes(data.groupNotificationsEnabled);
-      setEmailAlerts(data.directNotificationsEnabled);
+      const refreshedTeacher = await getCurrentTeacher();
+      setSubmissionPushes(refreshedTeacher.pushNotifications ?? false);
+      setEmailAlerts(refreshedTeacher.emailNotifications ?? false);
       setSavedSuccess(true);
       window.setTimeout(() => setSavedSuccess(false), 2000);
     } catch (requestError) {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "Unable to save communication settings.",
+          : "Unable to save notification preferences.",
       );
     } finally {
       setIsSaving(false);
@@ -148,9 +133,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-4">
         <div className="flex items-center gap-2 text-indigo-700">
           <Bell className="w-4 h-4" />
-          <h2 className="text-sm font-bold text-slate-900">
-            Communication & Notification Preferences
-          </h2>
+          <h2 className="text-sm font-bold text-slate-900">User Notification Preferences</h2>
         </div>
 
         <div className="space-y-3 pt-1">
@@ -164,8 +147,8 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
             <div>
               <span className="font-semibold text-slate-800 block">Instant Submission Alerts</span>
               <span className="text-slate-500">
-                Receive browser and notification center pings when students submit code or milestone
-                deliverables.
+                Receive browser and notification center push alerts when students submit code or
+                milestone deliverables.
               </span>
             </div>
           </label>
@@ -210,7 +193,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         <div className="pt-2 border-t border-slate-100 flex justify-end">
           <button
             onClick={handleSavePreferences}
-            disabled={isLoading || isSaving || !settings}
+            disabled={isLoading || isSaving}
             className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors disabled:opacity-50"
           >
             {isSaving ? "Saving..." : "Save Preferences"}
