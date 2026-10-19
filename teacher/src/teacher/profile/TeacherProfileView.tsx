@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   User,
   Mail,
@@ -8,7 +8,6 @@ import {
   BookOpen,
   Award,
   Edit3,
-  Check,
   Save,
   Building,
 } from "lucide-react";
@@ -32,21 +31,22 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
   const [officeHours, setOfficeHours] = useState(profile.officeHours);
   const [officeLocation, setOfficeLocation] = useState(profile.officeLocation);
   const [bio, setBio] = useState(profile.bio);
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProfile(teacher);
+    setName(teacher.name);
+    setTitle(teacher.title);
+    setOfficeHours(teacher.officeHours);
+    setOfficeLocation(teacher.officeLocation);
+    setBio(teacher.bio);
+  }, [teacher]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setProfile({
-      ...profile,
-      name,
-      title,
-      officeHours,
-      officeLocation,
-      bio,
-    });
-    setIsEditing(false);
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2200);
+    setSaveError(
+      "Profile updates are not available from the current backend. The displayed profile remains read-only until a teacher profile update endpoint is provided.",
+    );
   };
 
   return (
@@ -64,7 +64,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         </div>
 
         <button
-          onClick={() => setIsEditing(!isEditing)}
+          onClick={() => {
+            setSaveError(null);
+            setIsEditing(!isEditing);
+          }}
           className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
         >
           <Edit3 className="w-3.5 h-3.5 text-slate-500" />
@@ -72,10 +75,9 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         </button>
       </div>
 
-      {savedSuccess && (
-        <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-          <Check className="w-4 h-4 text-emerald-600" />
-          <span>Faculty profile details successfully updated and synchronized!</span>
+      {saveError && (
+        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+          {saveError}
         </div>
       )}
 

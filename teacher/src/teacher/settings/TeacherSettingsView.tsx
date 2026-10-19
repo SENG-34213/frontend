@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Settings,
   Shield,
@@ -11,6 +11,11 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { TeacherProfile } from "../types";
+import {
+  getCommunicationSettings,
+  updateCommunicationSettings,
+  type CommunicationSettings,
+} from "../api/settingsApi";
 
 interface TeacherSettingsViewProps {
   teacher: TeacherProfile;
@@ -21,10 +26,57 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [submissionPushes, setSubmissionPushes] = useState(true);
   const [dailyDigest, setDailyDigest] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [settings, setSettings] = useState<CommunicationSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSavePreferences = () => {
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2000);
+  useEffect(() => {
+    const controller = new AbortController();
+    getCommunicationSettings(controller.signal)
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        setSettings(data);
+        setSubmissionPushes(data.groupNotificationsEnabled);
+        setEmailAlerts(data.directNotificationsEnabled);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Unable to load communication settings.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const handleSavePreferences = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      const data = await updateCommunicationSettings({
+        groupNotificationsEnabled: submissionPushes,
+        directNotificationsEnabled: emailAlerts,
+      });
+      setSettings(data);
+      setSubmissionPushes(data.groupNotificationsEnabled);
+      setEmailAlerts(data.directNotificationsEnabled);
+      setSavedSuccess(true);
+      window.setTimeout(() => setSavedSuccess(false), 2000);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to save communication settings.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -44,6 +96,11 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
           <Check className="w-4 h-4 text-emerald-600" />
           <span>Settings saved successfully.</span>
+        </div>
+      )}
+      {error && (
+        <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+          {error}
         </div>
       )}
 
@@ -133,6 +190,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
               type="checkbox"
               checked={dailyDigest}
               onChange={(e) => setDailyDigest(e.target.checked)}
+              disabled
               className="mt-0.5 text-indigo-600 rounded"
             />
             <div>
@@ -142,6 +200,9 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
               <span className="text-slate-500">
                 Receive a 7:30 AM summary with today's classes, room numbers, and grading deadlines.
               </span>
+              <span className="block text-[11px] text-amber-700 mt-0.5">
+                Daily digest is not supported by the current backend.
+              </span>
             </div>
           </label>
         </div>
@@ -149,9 +210,10 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         <div className="pt-2 border-t border-slate-100 flex justify-end">
           <button
             onClick={handleSavePreferences}
-            className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors"
+            disabled={isLoading || isSaving || !settings}
+            className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors disabled:opacity-50"
           >
-            Save Preferences
+            {isSaving ? "Saving..." : "Save Preferences"}
           </button>
         </div>
       </div>
