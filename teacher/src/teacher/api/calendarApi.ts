@@ -13,6 +13,19 @@ export type CalendarEventType =
   | "ATTENDANCE";
 export type CalendarEventStatus = "SCHEDULED" | "CANCELLED";
 
+export type CalendarEventRequest = {
+  title: string;
+  description?: string;
+  eventType: CalendarEventType;
+  startDateTime: string;
+  endDateTime?: string | null;
+  allDay: boolean;
+  courseId?: string | null;
+  visibility: "PRIVATE" | "COURSE" | "ROLE" | "GLOBAL";
+  targetRole?: "ADMIN" | "TEACHER" | "STUDENT" | null;
+  location?: string;
+};
+
 export type BackendCalendarEvent = {
   id: string;
   title: string;
@@ -61,4 +74,36 @@ export async function getUpcomingCalendarEvents(limit = 20, signal?: AbortSignal
     { signal },
   );
   return response.data ?? [];
+}
+
+export async function createCalendarEvent(request: CalendarEventRequest) {
+  const response = await apiRequest<ApiResponse<BackendCalendarEvent>>("/api/v1/calendar/events", {
+    method: "POST",
+    body: request,
+  });
+  if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
+  return response.data;
+}
+
+export async function updateCalendarEvent(id: string, request: CalendarEventRequest) {
+  const response = await apiRequest<ApiResponse<BackendCalendarEvent>>(
+    `/api/v1/calendar/events/${id}`,
+    {
+      method: "PUT",
+      body: request,
+    },
+  );
+  if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
+  return response.data;
+}
+
+export async function cancelCalendarEvent(id: string) {
+  const response = await apiRequest<ApiResponse<BackendCalendarEvent>>(
+    `/api/v1/calendar/events/${id}/cancel`,
+    {
+      method: "POST",
+    },
+  );
+  if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
+  return response.data;
 }
