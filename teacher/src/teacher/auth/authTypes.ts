@@ -10,7 +10,18 @@ export interface TeacherUserSummary {
   email: string;
   firstName?: string;
   lastName?: string;
+  phoneNumber?: string;
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
   role: string;
+  teacherProfile?: {
+    id?: string;
+    teacherCode?: string;
+    dateOfBirth?: string;
+    nic?: string;
+    specializations?: string[];
+    hireDate?: string;
+  } | null;
   [key: string]: unknown;
 }
 

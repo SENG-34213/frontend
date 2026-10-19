@@ -1,16 +1,7 @@
 import React, { useEffect, useState } from "react";
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Clock,
-  BookOpen,
-  Award,
-  Edit3,
-  Save,
-  Building,
-} from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Edit3, Save, Building, Check } from "lucide-react";
+import { updateCurrentTeacher, updateTeacherProfile } from "../api/teacherApi";
+import type { TeacherUserSummary } from "../auth/authTypes";
 import { Course, TeacherProfile, NavigationTab } from "../types";
 
 interface TeacherProfileViewProps {
@@ -27,26 +18,72 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
   const [profile, setProfile] = useState<TeacherProfile>(teacher);
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(profile.name);
-  const [title, setTitle] = useState(profile.title);
-  const [officeHours, setOfficeHours] = useState(profile.officeHours);
-  const [officeLocation, setOfficeLocation] = useState(profile.officeLocation);
-  const [bio, setBio] = useState(profile.bio);
+  const [phone, setPhone] = useState(profile.phone);
+  const [specializations, setSpecializations] = useState(profile.specializations.join(", "));
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setProfile(teacher);
     setName(teacher.name);
-    setTitle(teacher.title);
-    setOfficeHours(teacher.officeHours);
-    setOfficeLocation(teacher.officeLocation);
-    setBio(teacher.bio);
+    setPhone(teacher.phone);
+    setSpecializations(teacher.specializations.join(", "));
   }, [teacher]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveError(
-      "Profile updates are not available from the current backend. The displayed profile remains read-only until a teacher profile update endpoint is provided.",
-    );
+    setSaveError(null);
+    setSaveSuccess(false);
+    const nameParts = name.trim().split(/\s+/).filter(Boolean);
+    if (!nameParts.length) {
+      setSaveError("Full name is required.");
+      return;
+    }
+
+    const normalizedPhone = phone.trim();
+    const parsedSpecializations = specializations
+      .split(/[\n,]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    setIsSaving(true);
+    try {
+      const [updatedUser, updatedTeacherProfile] = await Promise.all([
+        updateCurrentTeacher({
+          firstName: nameParts[0],
+          lastName: nameParts.slice(1).join(" ") || undefined,
+          phoneNumber: normalizedPhone || undefined,
+        }),
+        updateTeacherProfile({
+          specializations: parsedSpecializations,
+          phoneNumber: normalizedPhone || undefined,
+        }),
+      ]);
+
+      const mergedUser: TeacherUserSummary = {
+        ...updatedUser,
+        phoneNumber: updatedTeacherProfile.phoneNumber ?? updatedUser.phoneNumber,
+        teacherProfile: updatedTeacherProfile.teacherProfile ?? updatedUser.teacherProfile,
+      };
+      const updatedName = [mergedUser.firstName, mergedUser.lastName]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(" ");
+      setProfile((current) => ({
+        ...current,
+        name: updatedName || current.name,
+        phone: mergedUser.phoneNumber ?? current.phone,
+        teacherCode: mergedUser.teacherProfile?.teacherCode ?? current.teacherCode,
+        specializations: mergedUser.teacherProfile?.specializations ?? current.specializations,
+      }));
+      setIsEditing(false);
+      setSaveSuccess(true);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Profile could not be updated.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -66,6 +103,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         <button
           onClick={() => {
             setSaveError(null);
+            setSaveSuccess(false);
             setIsEditing(!isEditing);
           }}
           className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
@@ -78,6 +116,13 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
       {saveError && (
         <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
           {saveError}
+        </div>
+      )}
+
+      {saveSuccess && (
+        <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+          <Check className="w-4 h-4" />
+          Profile details updated successfully.
         </div>
       )}
 
@@ -133,14 +178,29 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="0712345678"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Academic Title
                   </label>
                   <input
                     type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                    value={profile.title}
+                    disabled
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden"
                   />
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Not supported by the current backend.
+                  </p>
                 </div>
               </div>
 
@@ -151,10 +211,13 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={officeHours}
-                    onChange={(e) => setOfficeHours(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                    value={profile.officeHours}
+                    disabled
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden"
                   />
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Not supported by the current backend.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -162,10 +225,13 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={officeLocation}
-                    onChange={(e) => setOfficeLocation(e.target.value)}
-                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                    value={profile.officeLocation}
+                    disabled
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden"
                   />
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Not supported by the current backend.
+                  </p>
                 </div>
               </div>
 
@@ -175,26 +241,49 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden resize-none"
+                  value={profile.bio}
+                  disabled
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden resize-none"
+                />
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Not supported by the current backend.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Research & Teaching Specialties
+                </label>
+                <input
+                  type="text"
+                  value={specializations}
+                  onChange={(e) => setSpecializations(e.target.value)}
+                  placeholder="Separate specialties with commas"
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setName(profile.name);
+                    setPhone(profile.phone);
+                    setSpecializations(profile.specializations.join(", "));
+                    setIsEditing(false);
+                    setSaveError(null);
+                  }}
                   className="px-3.5 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  disabled={isSaving}
                   className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1.5"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>Save Changes</span>
+                  <span>{isSaving ? "Saving..." : "Save Changes"}</span>
                 </button>
               </div>
             </form>
