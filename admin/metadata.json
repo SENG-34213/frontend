@@ -1,0 +1,6 @@
+{
+  "name": "Mentify - Enterprise Admin Portal",
+  "description": "Comprehensive enterprise education management and administration workspace for Mentify.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

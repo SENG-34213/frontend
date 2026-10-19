@@ -1,5 +1,5 @@
-import TeacherDashboard from "../components/TeacherDashboard";
+import TeacherPortal from "../components/TeacherPortal";
 
-export default function Home() {
-  return <TeacherDashboard />;
+export default function Page() {
+  return <TeacherPortal />;
 }

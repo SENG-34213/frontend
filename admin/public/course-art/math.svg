@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="Mathematics course illustration">
-  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#312e81"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
-  <rect width="640" height="360" rx="28" fill="url(#bg)"/><circle cx="520" cy="65" r="110" fill="#a5b4fc" opacity=".25"/><circle cx="80" cy="300" r="130" fill="#818cf8" opacity=".2"/>
-  <path d="M90 265 192 88l102 177Z" fill="none" stroke="#fff" stroke-width="12" stroke-linejoin="round"/><path d="M130 212h124M175 178l28-48 28 48M360 95v180M305 225h110" stroke="#c7d2fe" stroke-width="12" stroke-linecap="round"/>
-  <text x="48" y="55" fill="#e0e7ff" font-family="Arial,sans-serif" font-size="20" font-weight="700" letter-spacing="3">MENTIFY ACADEMY</text>
-</svg>
