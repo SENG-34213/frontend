@@ -253,7 +253,9 @@ export const EnrollmentManagementView: React.FC<EnrollmentManagementViewProps> =
                         </p>
                       </td>
                       <td className="px-4 py-3.5 font-mono text-slate-700">
-                        {student.attendanceRate}%
+                        {student.attendanceRate === null
+                          ? "Unavailable"
+                          : `${student.attendanceRate}%`}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex justify-end gap-1">

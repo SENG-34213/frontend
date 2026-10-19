@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Search,
-  BookOpen,
-  Users,
-  FileText,
-  HelpCircle,
-  Calendar,
-  X,
-  ArrowRight,
-  Sparkles,
-} from "lucide-react";
+import { Search, BookOpen, FileText, X, ArrowRight, Sparkles } from "lucide-react";
 import { Course, NavigationTab, Student } from "../types";
 import type { BackendAssignment } from "../api/assignmentApi";
 
@@ -171,7 +161,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                       </div>
                     </div>
                     <span className="text-slate-500 tabular-nums font-mono">
-                      GPA {s.gpa.toFixed(2)}
+                      GPA {s.gpa === null ? "Unavailable" : s.gpa.toFixed(2)}
                     </span>
                   </button>
                 ))}

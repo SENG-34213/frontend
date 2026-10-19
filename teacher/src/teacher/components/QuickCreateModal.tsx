@@ -11,9 +11,16 @@ import {
   Check,
 } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
+import { createCourse } from "../api/courseApi";
 import type { QuizDraft } from "../api/quizApi";
 import { createAssignment } from "../api/assignmentApi";
-import { getCourseModules, type CourseContentModule } from "../api/courseContentApi";
+import {
+  createCourseModule,
+  createModuleLesson,
+  getCourseModules,
+  type CourseContentModule,
+} from "../api/courseContentApi";
+import { createExam } from "../api/examApi";
 
 export type QuickCreateType =
   | "course"
@@ -30,6 +37,7 @@ interface QuickCreateModalProps {
   onClose: () => void;
   onCreated: (type: QuickCreateType, item: any) => void;
   backendCourses?: BackendCourse[];
+  teacherId?: string;
   onCreateQuiz?: (draft: QuizDraft) => Promise<unknown>;
 }
 
@@ -40,6 +48,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   onCreated,
   backendCourses = [],
   onCreateQuiz,
+  teacherId,
 }) => {
   const [activeType, setActiveType] = useState<QuickCreateType>(type || "assignment");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,6 +67,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [duration, setDuration] = useState("45");
   const [assignmentModuleId, setAssignmentModuleId] = useState("");
   const [assignmentModules, setAssignmentModules] = useState<CourseContentModule[]>([]);
+  const [courseGradeId, setCourseGradeId] = useState("");
 
   React.useEffect(() => {
     if (type) setActiveType(type);
@@ -71,7 +81,11 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   }, [activeType, backendCourses, selectedCourseId]);
 
   React.useEffect(() => {
-    if (activeType !== "assignment" || !selectedCourseId) return;
+    if (
+      !(activeType === "assignment" || activeType === "lesson" || activeType === "module") ||
+      !selectedCourseId
+    )
+      return;
     const controller = new AbortController();
     getCourseModules(selectedCourseId, controller.signal)
       .then((modules) => {
@@ -95,6 +109,134 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       setIsSubmitting(false);
       setSuccessMsg("No courses available.");
       return;
+    }
+
+    if (activeType === "event") {
+      setIsSubmitting(false);
+      setFormError(
+        "Calendar event creation is unavailable until the backend permission and gateway contract are confirmed.",
+      );
+      return;
+    }
+
+    if (activeType === "course") {
+      if (!teacherId || !courseGradeId) {
+        setIsSubmitting(false);
+        setFormError("Course creation requires a teacher ID and grade ID.");
+        return;
+      }
+      try {
+        const created = await createCourse({
+          courseName: courseTitle,
+          courseDescription: description,
+          gradeId: courseGradeId,
+          assignedTeacherId: teacherId,
+          subject: courseCode || courseCategory,
+          isOnline: true,
+          isVisible: true,
+          isPublished: false,
+        });
+        setIsSubmitting(false);
+        setSuccessMsg("Created COURSE successfully!");
+        onCreated(activeType, created);
+        setTimeout(() => {
+          setSuccessMsg("");
+          onClose();
+        }, 900);
+        return;
+      } catch (requestError) {
+        setIsSubmitting(false);
+        setFormError(
+          requestError instanceof Error ? requestError.message : "Course could not be created.",
+        );
+        return;
+      }
+    }
+
+    if (activeType === "module") {
+      try {
+        const created = await createCourseModule(selectedCourseId, {
+          title,
+          description,
+          sequenceOrder: assignmentModules.length + 1,
+          isVisible: true,
+        });
+        setIsSubmitting(false);
+        setSuccessMsg("Created MODULE successfully!");
+        onCreated(activeType, created);
+        setTimeout(() => {
+          setSuccessMsg("");
+          onClose();
+        }, 900);
+        return;
+      } catch (requestError) {
+        setIsSubmitting(false);
+        setFormError(
+          requestError instanceof Error ? requestError.message : "Module could not be created.",
+        );
+        return;
+      }
+    }
+
+    if (activeType === "lesson") {
+      if (!assignmentModuleId) {
+        setIsSubmitting(false);
+        setFormError("Select a module before creating a lesson.");
+        return;
+      }
+      try {
+        const created = await createModuleLesson(selectedCourseId, assignmentModuleId, {
+          title,
+          description,
+          isVisible: true,
+        });
+        setIsSubmitting(false);
+        setSuccessMsg("Created LESSON successfully!");
+        onCreated(activeType, created);
+        setTimeout(() => {
+          setSuccessMsg("");
+          onClose();
+        }, 900);
+        return;
+      } catch (requestError) {
+        setIsSubmitting(false);
+        setFormError(
+          requestError instanceof Error ? requestError.message : "Lesson could not be created.",
+        );
+        return;
+      }
+    }
+
+    if (activeType === "exam") {
+      try {
+        const startTime = `${dueDate}T09:00:00`;
+        const endTime = `${dueDate}T${String(9 + Math.ceil(Number(duration) / 60)).padStart(2, "0")}:00:00`;
+        const created = await createExam({
+          courseId: selectedCourseId,
+          title,
+          description,
+          examDate: dueDate,
+          startTime,
+          endTime,
+          totalMarks: Number(maxMarks) || 100,
+          passMarks: Math.round((Number(maxMarks) || 100) * 0.4),
+          type: "OTHER",
+        });
+        setIsSubmitting(false);
+        setSuccessMsg("Created EXAM successfully!");
+        onCreated(activeType, created);
+        setTimeout(() => {
+          setSuccessMsg("");
+          onClose();
+        }, 900);
+        return;
+      } catch (requestError) {
+        setIsSubmitting(false);
+        setFormError(
+          requestError instanceof Error ? requestError.message : "Exam could not be created.",
+        );
+        return;
+      }
     }
 
     if (activeType === "quiz" && onCreateQuiz && backendCourses.length > 0) {
@@ -164,29 +306,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       return;
     }
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSuccessMsg(`Created ${activeType.toUpperCase()} successfully!`);
-
-      const createdPayload = {
-        id: `gen-${Date.now()}`,
-        title: title || courseTitle || `${activeType} #${Math.floor(Math.random() * 900 + 100)}`,
-        courseId: selectedCourseId,
-        courseCode:
-          backendCourses.find((course) => course.id === selectedCourseId)?.subject || "COURSE",
-        description,
-        dueDate,
-        maxMarks: Number(maxMarks) || 100,
-        status: "Active",
-      };
-
-      onCreated(activeType, createdPayload);
-
-      setTimeout(() => {
-        setSuccessMsg("");
-        onClose();
-      }, 900);
-    }, 400);
+    setIsSubmitting(false);
+    setFormError("This quick-create action is not available.");
   };
 
   const typesList: { id: QuickCreateType; label: string; icon: React.ElementType }[] = [
@@ -297,6 +418,23 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       ))}
                     </select>
                   )}
+                  {activeType === "lesson" && (
+                    <select
+                      value={assignmentModuleId}
+                      onChange={(e) => setAssignmentModuleId(e.target.value)}
+                      required
+                      className="mt-2 w-full px-3 py-2 text-xs text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
+                    >
+                      <option value="" disabled>
+                        {assignmentModules.length ? "Select module" : "No modules available"}
+                      </option>
+                      {assignmentModules.map((module) => (
+                        <option key={module.id} value={module.id}>
+                          {module.title}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               )}
 
@@ -347,6 +485,19 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       <option>Cybersecurity</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Grade ID
+                    </label>
+                    <input
+                      type="text"
+                      value={courseGradeId}
+                      onChange={(e) => setCourseGradeId(e.target.value)}
+                      placeholder="Required grade UUID"
+                      required
+                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
                 </>
               ) : (
                 <div>
@@ -373,6 +524,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   placeholder={`Describe objectives, requirements, and instructions for students...`}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  required={activeType === "course"}
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                 />
               </div>
