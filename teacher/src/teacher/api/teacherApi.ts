@@ -8,6 +8,38 @@ export type TeacherShellData = {
   notificationsError?: Error;
 };
 
+export type UpdateCurrentTeacherPayload = {
+  displayName?: string;
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
+};
+
+export type UpdateTeacherProfilePayload = {
+  specializations?: string[];
+  phoneNumber?: string;
+};
+
+async function updateTeacher<T>(path: string, payload: T): Promise<TeacherUserSummary> {
+  const response = await apiRequest<ApiResponse<TeacherUserSummary>>(path, {
+    method: "PATCH",
+    body: payload,
+  });
+
+  if (!response.data) throw new Error("The server returned no updated teacher profile.");
+  return response.data;
+}
+
+export function updateCurrentTeacher(payload: UpdateCurrentTeacherPayload) {
+  return updateTeacher("/api/v1/users/me", payload);
+}
+
+export function updateTeacherProfile(payload: UpdateTeacherProfilePayload) {
+  return updateTeacher("/api/v1/users/teachers/me", payload);
+}
+
 export async function getTeacherShellData(signal?: AbortSignal): Promise<TeacherShellData> {
   const [userResult, notificationsResult] = await Promise.allSettled([
     getCurrentTeacher(),
