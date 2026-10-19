@@ -135,6 +135,7 @@ export interface StudentSubmission {
   studentEmail: string;
   submissionDate: string;
   status: "Submitted" | "Late" | "Graded" | "Pending";
+  isReturned?: boolean;
   score?: number;
   maxMarks: number;
   feedback?: string;

@@ -86,12 +86,20 @@ export async function getCourseExams(courseId: string, signal?: AbortSignal) {
   return response.data ?? [];
 }
 
+export async function getExam(examId: string, signal?: AbortSignal) {
+  const response = await apiRequest<ApiResponse<BackendExam>>(
+    `/api/v1/exams/${encodeURIComponent(examId)}`,
+    { signal },
+  );
+  return response.data as BackendExam;
+}
+
 export async function createExam(draft: ExamDraft) {
   const response = await apiRequest<ApiResponse<BackendExam>>("/api/v1/exams", {
     method: "POST",
     body: draft,
   });
-  return response.data;
+  return response.data as BackendExam;
 }
 
 export async function updateExam(examId: string, draft: ExamUpdateDraft) {
@@ -99,7 +107,7 @@ export async function updateExam(examId: string, draft: ExamUpdateDraft) {
     `/api/v1/exams/${encodeURIComponent(examId)}`,
     { method: "PUT", body: draft },
   );
-  return response.data;
+  return response.data as BackendExam;
 }
 
 async function transitionExam(
@@ -110,7 +118,7 @@ async function transitionExam(
     `/api/v1/exams/${encodeURIComponent(examId)}/${transition}`,
     { method: "POST" },
   );
-  return response.data;
+  return response.data as BackendExam;
 }
 
 export const scheduleExam = (examId: string) => transitionExam(examId, "schedule");
@@ -122,19 +130,19 @@ export async function getExamResults(examId: string) {
   const response = await apiRequest<ApiResponse<ExamResultSheet>>(
     `/api/v1/exams/${encodeURIComponent(examId)}/results`,
   );
-  return response.data;
+  return response.data as ExamResultSheet;
 }
 
 export async function getExamSummary(examId: string) {
   const response = await apiRequest<ApiResponse<ExamSummary>>(
     `/api/v1/exams/${encodeURIComponent(examId)}/summary`,
   );
-  return response.data;
+  return response.data as ExamSummary;
 }
 
 export async function enterExamMarks(examId: string, results: ExamMarkEntry[]) {
   const response = await apiRequest<
     ApiResponse<{ examId: string; updatedCount: number; results: ExamResult[] }>
   >(`/api/v1/exams/${encodeURIComponent(examId)}/results`, { method: "PUT", body: { results } });
-  return response.data;
+  return response.data as { examId: string; updatedCount: number; results: ExamResult[] };
 }

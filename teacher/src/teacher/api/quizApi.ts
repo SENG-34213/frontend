@@ -89,37 +89,45 @@ export async function createQuiz(draft: QuizDraft) {
     method: "POST",
     body: draft,
   });
-  return response.data;
+  return response.data as BackendQuiz;
 }
 
 export async function updateQuiz(
   quizId: string,
   draft: Omit<QuizDraft, "courseId" | "creationMethod">,
 ) {
-  const response = await apiRequest<ApiResponse<BackendQuiz>>(`/api/quizzes/${quizId}`, {
-    method: "PUT",
-    body: draft,
-  });
-  return response.data;
+  const response = await apiRequest<ApiResponse<BackendQuiz>>(
+    `/api/quizzes/${encodeURIComponent(quizId)}`,
+    {
+      method: "PUT",
+      body: draft,
+    },
+  );
+  return response.data as BackendQuiz;
 }
 
 export async function deleteQuiz(quizId: string) {
-  await apiRequest<ApiResponse<unknown>>(`/api/quizzes/${quizId}`, { method: "DELETE" });
+  await apiRequest<ApiResponse<unknown>>(`/api/quizzes/${encodeURIComponent(quizId)}`, {
+    method: "DELETE",
+  });
 }
 
 export async function publishQuiz(quizId: string) {
-  const response = await apiRequest<ApiResponse<BackendQuiz>>(`/api/quizzes/${quizId}/publish`, {
-    method: "POST",
-  });
-  return response.data;
+  const response = await apiRequest<ApiResponse<BackendQuiz>>(
+    `/api/quizzes/${encodeURIComponent(quizId)}/publish`,
+    {
+      method: "POST",
+    },
+  );
+  return response.data as BackendQuiz;
 }
 
 export async function createQuizQuestion(quizId: string, draft: QuizQuestionDraft) {
   const response = await apiRequest<ApiResponse<BackendQuizQuestion>>(
-    `/api/quizzes/${quizId}/questions`,
+    `/api/quizzes/${encodeURIComponent(quizId)}/questions`,
     { method: "POST", body: draft },
   );
-  return response.data;
+  return response.data as BackendQuizQuestion;
 }
 
 export async function updateQuizQuestion(
@@ -128,16 +136,19 @@ export async function updateQuizQuestion(
   draft: QuizQuestionDraft,
 ) {
   const response = await apiRequest<ApiResponse<BackendQuizQuestion>>(
-    `/api/quizzes/${quizId}/questions/${questionId}`,
+    `/api/quizzes/${encodeURIComponent(quizId)}/questions/${encodeURIComponent(questionId)}`,
     { method: "PUT", body: draft },
   );
-  return response.data;
+  return response.data as BackendQuizQuestion;
 }
 
 export async function deleteQuizQuestion(quizId: string, questionId: string) {
-  await apiRequest<ApiResponse<unknown>>(`/api/quizzes/${quizId}/questions/${questionId}`, {
-    method: "DELETE",
-  });
+  await apiRequest<ApiResponse<unknown>>(
+    `/api/quizzes/${encodeURIComponent(quizId)}/questions/${encodeURIComponent(questionId)}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export async function getTodayQuizAnalytics(signal?: AbortSignal) {
@@ -145,5 +156,5 @@ export async function getTodayQuizAnalytics(signal?: AbortSignal) {
     "/api/internal/quizzes/analytics/today/performance",
     { signal },
   );
-  return response.data;
+  return response.data as QuizAnalytics;
 }
