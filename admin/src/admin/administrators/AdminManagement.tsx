@@ -292,7 +292,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                   Administrator Registration Wizard
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Provision institutional ADMIN credentials (Super Admin Endpoint)
+                  Add a new administrator to the institution
                 </p>
               </div>
               <button onClick={resetWizard} className="text-slate-400 hover:text-slate-600 p-1">

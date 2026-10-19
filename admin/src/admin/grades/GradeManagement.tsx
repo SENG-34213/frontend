@@ -14,7 +14,6 @@ import {
   Layers,
   Calendar,
   User,
-  Coins,
   DollarSign,
   Info,
 } from "lucide-react";
@@ -241,25 +240,6 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
         }
       />
 
-      {/* Backend Architecture Callout */}
-      <div className="p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/60 text-xs text-indigo-900 dark:text-indigo-200 flex items-start gap-3">
-        <Coins className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-semibold text-indigo-950 dark:text-white">
-            Grade Metadata API (Backend Contract:{" "}
-            <code className="font-mono text-[11px] bg-white/70 dark:bg-slate-800 px-1 py-0.5 rounded">
-              /api/v1/course/grades
-            </code>
-            )
-          </p>
-          <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-[11px]">
-            The current backend persists the grade name and description. Monthly fee and currency
-            fields shown in this UI are reserved for a future backend contract and are not sent to
-            the API.
-          </p>
-        </div>
-      </div>
-
       {/* Success Notification Banner with Course Creation Quick Link */}
       {successNotice && (
         <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
@@ -451,7 +431,6 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Create Academic Grade & Fee
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">POST /api/v1/course/grades</p>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
@@ -586,25 +565,6 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                 )}
               </div>
 
-              {/* API payload preview */}
-              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-[11px]">
-                <span className="text-slate-400 block font-mono text-[10px] uppercase mb-1">
-                  Request Payload (JSON)
-                </span>
-                <pre className="font-mono text-slate-700 dark:text-slate-300">
-                  {JSON.stringify(
-                    {
-                      name: formData.name || "Grade 10",
-                      description: formData.description || undefined,
-                      monthlyFee: parseFloat(formData.monthlyFee) || 4500.0,
-                      currencyCode: formData.currencyCode || "LKR",
-                    },
-                    null,
-                    2,
-                  )}
-                </pre>
-              </div>
-
               <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
                 <button
                   type="button"
@@ -642,9 +602,6 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Edit Grade & Tuition Fee
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  PUT /api/v1/course/grades/{editingGrade.id}
-                </p>
               </div>
               <button
                 onClick={() => setEditingGrade(null)}
