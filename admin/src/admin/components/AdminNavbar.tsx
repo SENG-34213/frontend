@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   BookOpen,
   Calendar,
+  ChevronRight,
   CheckCircle2,
   Menu,
   Shield,
@@ -30,6 +31,8 @@ interface AdminNavbarProps {
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
   onOpenMobileMenu: () => void;
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
   onQuickAction: (action: string) => void;
   onOpenSearch: () => void;
   isDarkMode: boolean;
@@ -45,6 +48,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   notifications,
   onMarkNotificationRead,
   onOpenMobileMenu,
+  isSidebarCollapsed,
+  onToggleSidebar,
   onQuickAction,
   onOpenSearch,
   isDarkMode,
@@ -110,6 +115,14 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
     <header className="sticky top-0 z-20 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between gap-4">
       {/* Left: Mobile trigger & Page breadcrumb title */}
       <div className="flex items-center gap-3 min-w-0">
+        <button
+          onClick={onToggleSidebar}
+          className="hidden md:flex p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
         <button
           onClick={onOpenMobileMenu}
           className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -257,6 +270,21 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
             </div>
           )}
         </div>
+
+        {/* Mentify AI Shortcut */}
+        {/* Calendar Shortcut */}
+        <button
+          onClick={() => onNavigate("calendar")}
+          className={`p-2 rounded-lg transition-colors relative ${
+            currentRoute === "calendar"
+              ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40"
+              : "text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          }`}
+          title="Academic Calendar"
+          aria-label="Open academic calendar"
+        >
+          <Calendar className="w-4 h-4" />
+        </button>
 
         {/* Mentify AI Shortcut */}
         <button
