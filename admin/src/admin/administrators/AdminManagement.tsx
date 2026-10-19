@@ -291,9 +291,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Administrator Registration Wizard
                 </h3>
-                <p className="text-xs text-slate-500">
-                  Add a new administrator to the institution
-                </p>
+                <p className="text-xs text-slate-500">Add a new administrator to the institution</p>
               </div>
               <button onClick={resetWizard} className="text-slate-400 hover:text-slate-600 p-1">
                 <X className="w-5 h-5" />

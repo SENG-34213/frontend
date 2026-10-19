@@ -1338,7 +1338,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
 
@@ -1346,9 +1345,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>
-                    Course details are ready to save.
-                  </span>
+                  <span>Course details are ready to save.</span>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 shrink-0">
