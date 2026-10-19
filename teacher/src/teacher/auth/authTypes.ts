@@ -13,6 +13,8 @@ export interface TeacherUserSummary {
   phoneNumber?: string;
   emailNotifications?: boolean;
   pushNotifications?: boolean;
+  dailyDigestEnabled?: boolean;
+  dailyDigestTime?: string | null;
   role: string;
   teacherProfile?: {
     id?: string;
@@ -20,6 +22,12 @@ export interface TeacherUserSummary {
     dateOfBirth?: string;
     nic?: string;
     specializations?: string[];
+    title?: string;
+    department?: string;
+    officeLocation?: string;
+    officeHours?: string;
+    bio?: string;
+    avatarUrl?: string;
     hireDate?: string;
   } | null;
   [key: string]: unknown;

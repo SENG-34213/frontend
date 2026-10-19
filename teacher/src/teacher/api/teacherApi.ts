@@ -15,11 +15,19 @@ export type UpdateCurrentTeacherPayload = {
   phoneNumber?: string;
   emailNotifications?: boolean;
   pushNotifications?: boolean;
+  dailyDigestEnabled?: boolean;
+  dailyDigestTime?: string;
 };
 
 export type UpdateTeacherProfilePayload = {
   specializations?: string[];
   phoneNumber?: string;
+  title?: string;
+  department?: string;
+  officeLocation?: string;
+  officeHours?: string;
+  bio?: string;
+  avatarUrl?: string;
 };
 
 async function updateTeacher<T>(path: string, payload: T): Promise<TeacherUserSummary> {

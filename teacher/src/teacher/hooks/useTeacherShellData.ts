@@ -21,15 +21,22 @@ function toTeacherProfile(user: TeacherUserSummary): TeacherProfile {
   return {
     id: user.id ?? user.keycloakUserId ?? "",
     name: name || user.email || "Teacher",
-    title: typeof user.title === "string" ? user.title : "",
+    title: user.teacherProfile?.title ?? (typeof user.title === "string" ? user.title : ""),
     teacherCode: user.teacherProfile?.teacherCode ?? "",
-    department: typeof user.department === "string" ? user.department : "",
+    department:
+      user.teacherProfile?.department ??
+      (typeof user.department === "string" ? user.department : ""),
     email: user.email,
     phone: user.phoneNumber ?? "",
-    officeLocation: typeof user.officeLocation === "string" ? user.officeLocation : "",
-    officeHours: typeof user.officeHours === "string" ? user.officeHours : "",
-    avatarUrl: typeof user.avatarUrl === "string" ? user.avatarUrl : "",
-    bio: typeof user.bio === "string" ? user.bio : "",
+    officeLocation:
+      user.teacherProfile?.officeLocation ??
+      (typeof user.officeLocation === "string" ? user.officeLocation : ""),
+    officeHours:
+      user.teacherProfile?.officeHours ??
+      (typeof user.officeHours === "string" ? user.officeHours : ""),
+    avatarUrl:
+      user.teacherProfile?.avatarUrl ?? (typeof user.avatarUrl === "string" ? user.avatarUrl : ""),
+    bio: user.teacherProfile?.bio ?? (typeof user.bio === "string" ? user.bio : ""),
     specializations: Array.isArray(user.teacherProfile?.specializations)
       ? user.teacherProfile.specializations.filter(
           (item): item is string => typeof item === "string",

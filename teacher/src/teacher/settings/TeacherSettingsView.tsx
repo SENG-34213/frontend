@@ -12,6 +12,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [submissionPushes, setSubmissionPushes] = useState(true);
   const [dailyDigest, setDailyDigest] = useState(false);
+  const [dailyDigestTime, setDailyDigestTime] = useState("07:30");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,6 +25,8 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         if (controller.signal.aborted) return;
         setSubmissionPushes(data.pushNotifications ?? false);
         setEmailAlerts(data.emailNotifications ?? false);
+        setDailyDigest(data.dailyDigestEnabled ?? false);
+        setDailyDigestTime(data.dailyDigestTime?.slice(0, 5) ?? "07:30");
       })
       .catch((requestError: unknown) => {
         if (!controller.signal.aborted) {
@@ -47,10 +50,14 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
       await updateCurrentTeacher({
         pushNotifications: submissionPushes,
         emailNotifications: emailAlerts,
+        dailyDigestEnabled: dailyDigest,
+        dailyDigestTime: dailyDigestTime || undefined,
       });
       const refreshedTeacher = await getCurrentTeacher();
       setSubmissionPushes(refreshedTeacher.pushNotifications ?? false);
       setEmailAlerts(refreshedTeacher.emailNotifications ?? false);
+      setDailyDigest(refreshedTeacher.dailyDigestEnabled ?? false);
+      setDailyDigestTime(refreshedTeacher.dailyDigestTime?.slice(0, 5) ?? "07:30");
       setSavedSuccess(true);
       window.setTimeout(() => setSavedSuccess(false), 2000);
     } catch (requestError) {
@@ -173,7 +180,6 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
               type="checkbox"
               checked={dailyDigest}
               onChange={(e) => setDailyDigest(e.target.checked)}
-              disabled
               className="mt-0.5 text-indigo-600 rounded"
             />
             <div>
@@ -183,9 +189,14 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
               <span className="text-slate-500">
                 Receive a 7:30 AM summary with today's classes, room numbers, and grading deadlines.
               </span>
-              <span className="block text-[11px] text-amber-700 mt-0.5">
-                Daily digest is not supported by the current backend.
-              </span>
+              {dailyDigest && (
+                <input
+                  type="time"
+                  value={dailyDigestTime}
+                  onChange={(e) => setDailyDigestTime(e.target.value)}
+                  className="mt-2 px-2 py-1 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                />
+              )}
             </div>
           </label>
         </div>
