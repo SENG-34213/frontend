@@ -15,7 +15,12 @@ import {
 import { Course, Quiz, QuizQuestion, NavigationTab } from "../types";
 import {
   createQuizQuestion,
+  deleteQuiz,
+  deleteQuizQuestion,
   getTodayQuizAnalytics,
+  publishQuiz,
+  updateQuiz,
+  updateQuizQuestion,
   type BackendQuiz,
   type BackendQuizQuestion,
   type QuizAnalytics,
@@ -44,15 +49,20 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isQuestionBuilderOpen, setIsQuestionBuilderOpen] = useState(false);
   const [todayAnalytics, setTodayAnalytics] = useState<QuizAnalytics | null>(null);
+  const [analyticsUnavailable, setAnalyticsUnavailable] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
     getTodayQuizAnalytics(controller.signal)
       .then((analytics) => {
-        if (!controller.signal.aborted) setTodayAnalytics(analytics ?? null);
+        if (!controller.signal.aborted) {
+          setTodayAnalytics(analytics ?? null);
+          setAnalyticsUnavailable(!analytics);
+        }
       })
       .catch(() => {
-        // Analytics are optional; the existing placeholder remains visible.
+        if (!controller.signal.aborted) setAnalyticsUnavailable(true);
       });
 
     return () => controller.abort();
@@ -112,28 +122,127 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   };
 
   const handleSaveQuestion = async (newQuestion: QuizQuestion) => {
-    if (selectedQuiz && newQuestion.type === "multiple-choice" && newQuestion.options?.length) {
-      try {
-        const created = await createQuizQuestion(selectedQuiz.id, {
-          questionText: newQuestion.question,
-          questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
-          marks: newQuestion.marks,
-          questionOrder: selectedQuiz.questions.length + 1,
-          options: newQuestion.options.map((option, index) => ({
-            optionText: option,
-            correct: option === newQuestion.correctAnswer,
-            optionOrder: index + 1,
-          })),
-        });
-        if (created) {
-          appendQuestion(mapBackendQuestion(created, selectedQuiz.id));
-          return;
-        }
-      } catch {
-        // Keep the current local question behavior when the API is unavailable.
-      }
+    if (!selectedQuiz || newQuestion.type !== "multiple-choice" || !newQuestion.options?.length) {
+      setActionError("Only multiple-choice questions are supported by the quiz service.");
+      throw new Error("Only multiple-choice questions are supported by the quiz service.");
     }
-    appendQuestion(newQuestion);
+    try {
+      const created = await createQuizQuestion(selectedQuiz.id, {
+        questionText: newQuestion.question,
+        questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
+        marks: newQuestion.marks,
+        questionOrder: selectedQuiz.questions.length + 1,
+        options: newQuestion.options.map((option, index) => ({
+          optionText: option,
+          correct: option === newQuestion.correctAnswer,
+          optionOrder: index + 1,
+        })),
+      });
+      appendQuestion(mapBackendQuestion(created, selectedQuiz.id));
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Question could not be saved.",
+      );
+      throw requestError;
+    }
+  };
+
+  const handlePublishQuiz = async () => {
+    if (!selectedQuiz || selectedQuiz.status !== "Draft") return;
+    try {
+      const published = await publishQuiz(selectedQuiz.id);
+      const mapped = mapBackendQuiz(published, teacherCourses);
+      setQuizzes((current) => current.map((quiz) => (quiz.id === mapped.id ? mapped : quiz)));
+      setSelectedQuiz(mapped);
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Quiz could not be published.",
+      );
+    }
+  };
+
+  const handleEditQuiz = async () => {
+    if (!selectedQuiz || selectedQuiz.status !== "Draft") return;
+    const title = window.prompt("Quiz title", selectedQuiz.title)?.trim();
+    if (!title || title === selectedQuiz.title) return;
+    try {
+      const updated = await updateQuiz(selectedQuiz.id, {
+        title,
+        description: selectedQuiz.description,
+        durationMinutes: selectedQuiz.durationMinutes,
+        passMark: 0,
+        maxAttempts: 1,
+        showResultImmediately: true,
+      });
+      const mapped = mapBackendQuiz(updated, teacherCourses);
+      setQuizzes((current) => current.map((quiz) => (quiz.id === mapped.id ? mapped : quiz)));
+      setSelectedQuiz(mapped);
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Quiz could not be updated.",
+      );
+    }
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!selectedQuiz || !window.confirm(`Delete ${selectedQuiz.title}?`)) return;
+    try {
+      await deleteQuiz(selectedQuiz.id);
+      const remaining = quizzes.filter((quiz) => quiz.id !== selectedQuiz.id);
+      setQuizzes(remaining);
+      setSelectedQuiz(remaining[0] ?? null);
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Quiz could not be deleted.",
+      );
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!selectedQuiz || !window.confirm("Delete this question?")) return;
+    try {
+      await deleteQuizQuestion(selectedQuiz.id, questionId);
+      const updated = {
+        ...selectedQuiz,
+        questions: selectedQuiz.questions.filter((q) => q.id !== questionId),
+      };
+      setSelectedQuiz(updated);
+      setQuizzes((current) => current.map((quiz) => (quiz.id === updated.id ? updated : quiz)));
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Question could not be deleted.",
+      );
+    }
+  };
+
+  const handleEditQuestion = async (question: QuizQuestion) => {
+    if (!selectedQuiz || selectedQuiz.status !== "Draft") return;
+    const questionText = window.prompt("Question text", question.question)?.trim();
+    if (!questionText || questionText === question.question || !question.options?.length) return;
+    try {
+      const updated = await updateQuizQuestion(selectedQuiz.id, question.id, {
+        questionText,
+        questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
+        marks: question.marks,
+        questionOrder: selectedQuiz.questions.indexOf(question) + 1,
+        options: question.options.map((option, index) => ({
+          optionText: option,
+          correct: option === question.correctAnswer,
+          optionOrder: index + 1,
+        })),
+      });
+      const mapped = mapBackendQuestion(updated, selectedQuiz.id);
+      const next = {
+        ...selectedQuiz,
+        questions: selectedQuiz.questions.map((item) => (item.id === question.id ? mapped : item)),
+      };
+      setSelectedQuiz(next);
+      setQuizzes((current) => current.map((quiz) => (quiz.id === next.id ? next : quiz)));
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Question could not be updated.",
+      );
+    }
   };
 
   return (
@@ -173,6 +282,11 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       </div>
 
       {/* KPI Cards */}
+      {actionError && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+          {actionError}
+        </div>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <span className="text-xs text-slate-500 font-medium">Total Quizzes</span>
@@ -198,7 +312,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
             {averageTodayScore === null ? "—" : `${averageTodayScore}%`}
           </div>
           <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
-            Live analytics coming later
+            {analyticsUnavailable ? "Analytics unavailable" : "Live analytics"}
           </p>
         </div>
 
@@ -314,11 +428,36 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
 
                 <button
                   onClick={() => setIsQuestionBuilderOpen(true)}
+                  disabled={selectedQuiz.status !== "Draft"}
                   className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add Question</span>
                 </button>
+                {selectedQuiz.status === "Draft" && (
+                  <>
+                    <button
+                      onClick={() => void handleEditQuiz()}
+                      className="text-xs text-slate-600 hover:text-indigo-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => void handlePublishQuiz()}
+                      className="text-xs text-emerald-700 hover:text-emerald-900"
+                    >
+                      Publish
+                    </button>
+                  </>
+                )}
+                {selectedQuiz.status === "Draft" && (
+                  <button
+                    onClick={() => void handleDeleteQuiz()}
+                    className="text-xs text-rose-700 hover:text-rose-900"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
 
               {/* Questions List */}
@@ -367,6 +506,24 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                           <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 shrink-0">
                             {q.marks} marks
                           </span>
+                          <div className="flex gap-2 shrink-0">
+                            {selectedQuiz.status === "Draft" && (
+                              <button
+                                onClick={() => void handleEditQuestion(q)}
+                                className="text-[10px] text-slate-600 hover:text-indigo-600"
+                              >
+                                Edit
+                              </button>
+                            )}
+                            {selectedQuiz.status === "Draft" && (
+                              <button
+                                onClick={() => void handleDeleteQuestion(q.id)}
+                                className="text-[10px] text-rose-700 hover:text-rose-900"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Options */}

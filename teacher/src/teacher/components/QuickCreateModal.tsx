@@ -44,6 +44,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [activeType, setActiveType] = useState<QuickCreateType>(type || "assignment");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [formError, setFormError] = useState("");
 
   // Form states
   const [courseCode, setCourseCode] = useState("");
@@ -60,6 +61,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
   React.useEffect(() => {
     if (type) setActiveType(type);
+    setFormError("");
   }, [type]);
 
   React.useEffect(() => {
@@ -74,7 +76,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     getCourseModules(selectedCourseId, controller.signal)
       .then((modules) => {
         setAssignmentModules(modules);
-        setAssignmentModuleId((current) => current || modules[0]?.id || "");
+        setAssignmentModuleId((current) =>
+          modules.some((module) => module.id === current) ? current : modules[0]?.id || "",
+        );
       })
       .catch(() => setAssignmentModules([]));
     return () => controller.abort();
@@ -85,6 +89,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setFormError("");
 
     if (activeType !== "course" && backendCourses.length === 0) {
       setIsSubmitting(false);
@@ -112,8 +117,12 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           onClose();
         }, 900);
         return;
-      } catch {
-        // Preserve the existing local mock flow when the quiz API is unavailable.
+      } catch (requestError) {
+        setIsSubmitting(false);
+        setFormError(
+          requestError instanceof Error ? requestError.message : "Quiz could not be created.",
+        );
+        return;
       }
     }
 
@@ -140,9 +149,11 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           onClose();
         }, 900);
         return;
-      } catch {
+      } catch (requestError) {
         setIsSubmitting(false);
-        setSuccessMsg("");
+        setFormError(
+          requestError instanceof Error ? requestError.message : "Assignment could not be created.",
+        );
         return;
       }
     }
@@ -242,6 +253,11 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
             </div>
           ) : (
             <>
+              {formError && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                  {formError}
+                </div>
+              )}
               {activeType !== "course" && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">

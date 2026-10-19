@@ -1,9 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { Plus, Calendar, Clock, MapPin, CheckCircle, ChevronRight } from "lucide-react";
 import { Examination, NavigationTab } from "../types";
-import { mockExaminations } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
-import { createExam, getCourseExams, type BackendExam } from "../api/examApi";
+import {
+  cancelExam,
+  completeExam,
+  createExam,
+  enterExamMarks,
+  getCourseExams,
+  getExamResults,
+  getExamSummary,
+  scheduleExam,
+  startExamMarking,
+  updateExam,
+  type BackendExam,
+  type ExamResultSheet,
+  type ExamSummary,
+} from "../api/examApi";
 import type { BackendCourse } from "../api/courseApi";
 
 interface ExamManagementViewProps {
@@ -52,7 +65,7 @@ const fromDisplayTime = (time: string) => {
 
 const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examination => {
   const course = courses.find((item) => item.id === exam.courseId);
-  const start = exam.startTime.slice(0, 5);
+  const start = exam.startTime?.slice(0, 5) || "00:00";
   return {
     id: exam.id,
     courseId: exam.courseId,
@@ -61,7 +74,7 @@ const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examinatio
     examType: examTypeLabel(exam.type),
     scheduledDate: exam.examDate,
     startTime: toDisplayTime(start),
-    durationMinutes: minutesBetween(start, exam.endTime.slice(0, 5)),
+    durationMinutes: minutesBetween(start, exam.endTime?.slice(0, 5) || start),
     roomOrPlatform: "Venue not provided",
     totalMarks: Number(exam.totalMarks),
     weightagePercent: 0,
@@ -77,7 +90,10 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   backendCoursesLoading = false,
   backendCoursesError = null,
 }) => {
-  const [exams, setExams] = useState<Examination[]>(mockExaminations);
+  const [exams, setExams] = useState<Examination[]>([]);
+  const [backendExams, setBackendExams] = useState<BackendExam[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
 
@@ -90,6 +106,12 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [wizardDuration, setWizardDuration] = useState("120");
   const [wizardRoom, setWizardRoom] = useState("Alan Turing Auditorium");
   const [wizardWeight, setWizardWeight] = useState("30");
+  const [resultsExam, setResultsExam] = useState<BackendExam | null>(null);
+  const [resultSheet, setResultSheet] = useState<ExamResultSheet | null>(null);
+  const [examSummary, setExamSummary] = useState<ExamSummary | null>(null);
+  const [resultMarks, setResultMarks] = useState<Record<string, string>>({});
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [resultsError, setResultsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (
@@ -101,31 +123,153 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   }, [backendCourses, wizardCourseId]);
 
   useEffect(() => {
-    if (backendCoursesLoading || backendCoursesError || backendCourses.length === 0) return;
+    if (backendCoursesLoading) return;
+    if (backendCoursesError) {
+      setError(backendCoursesError.message);
+      setIsLoading(false);
+      return;
+    }
+    if (backendCourses.length === 0) {
+      setBackendExams([]);
+      setExams([]);
+      setIsLoading(false);
+      return;
+    }
     const controller = new AbortController();
-
-    Promise.allSettled(
-      backendCourses.map((course) => getCourseExams(course.id, controller.signal)),
-    ).then((results) => {
-      const liveExams = results
-        .filter(
-          (result): result is PromiseFulfilledResult<BackendExam[]> =>
-            result.status === "fulfilled",
-        )
-        .flatMap((result) => result.value)
-        .map((exam) => mapBackendExam(exam, backendCourses));
-      if (liveExams.length > 0) {
-        setExams(liveExams);
-      }
-    });
+    setIsLoading(true);
+    setError(null);
+    Promise.all(backendCourses.map((course) => getCourseExams(course.id, controller.signal)))
+      .then((responses) => {
+        if (controller.signal.aborted) return;
+        const liveExams = responses.flat();
+        setBackendExams(liveExams);
+        setExams(liveExams.map((exam) => mapBackendExam(exam, backendCourses)));
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(requestError instanceof Error ? requestError.message : "Exams failed to load.");
+          setBackendExams([]);
+          setExams([]);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
 
     return () => controller.abort();
   }, [backendCourses, backendCoursesError, backendCoursesLoading]);
 
+  const replaceExam = (updated: BackendExam) => {
+    setBackendExams((current) => current.map((exam) => (exam.id === updated.id ? updated : exam)));
+    setExams((current) =>
+      current.map((exam) =>
+        exam.id === updated.id ? mapBackendExam(updated, backendCourses) : exam,
+      ),
+    );
+  };
+
+  const handleTransition = async (
+    exam: BackendExam,
+    transition: "schedule" | "start-marking" | "complete" | "cancel",
+  ) => {
+    try {
+      const updated =
+        transition === "schedule"
+          ? await scheduleExam(exam.id)
+          : transition === "start-marking"
+            ? await startExamMarking(exam.id)
+            : transition === "complete"
+              ? await completeExam(exam.id)
+              : await cancelExam(exam.id);
+      replaceExam(updated);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Exam transition failed.");
+    }
+  };
+
+  const handleEditExam = async (exam: BackendExam) => {
+    if (exam.status !== "DRAFT") return;
+    const title = window.prompt("Exam title", exam.title)?.trim();
+    if (!title || title === exam.title) return;
+    try {
+      const updated = await updateExam(exam.id, {
+        title,
+        description: exam.description,
+        examDate: exam.examDate,
+        startTime: exam.startTime,
+        endTime: exam.endTime,
+        totalMarks: Number(exam.totalMarks),
+        passMarks: Number(exam.passMarks),
+        type: exam.type,
+      });
+      replaceExam(updated);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Exam could not be updated.");
+    }
+  };
+
+  const openResults = async (exam: BackendExam) => {
+    setResultsExam(exam);
+    setResultsLoading(true);
+    setResultsError(null);
+    try {
+      const [sheet, summary] = await Promise.all([
+        getExamResults(exam.id),
+        getExamSummary(exam.id),
+      ]);
+      setResultSheet(sheet);
+      setExamSummary(summary);
+      setResultMarks(
+        Object.fromEntries(
+          sheet.results.map((result) => [result.studentId, result.marksObtained?.toString() ?? ""]),
+        ),
+      );
+    } catch (requestError) {
+      setResultsError(
+        requestError instanceof Error ? requestError.message : "Exam results failed to load.",
+      );
+    } finally {
+      setResultsLoading(false);
+    }
+  };
+
+  const saveExamMarks = async () => {
+    if (!resultsExam || !resultSheet || resultsExam.status !== "MARKING") return;
+    try {
+      const results = resultSheet.results.map((result) => {
+        const raw = resultMarks[result.studentId];
+        const marks = raw === "" ? undefined : Number(raw);
+        if (
+          marks !== undefined &&
+          (!Number.isFinite(marks) || marks < 0 || marks > Number(resultsExam.totalMarks))
+        ) {
+          throw new Error(
+            `Marks for ${result.studentId} must be between 0 and ${resultsExam.totalMarks}.`,
+          );
+        }
+        return {
+          studentId: result.studentId,
+          attendanceStatus: result.attendanceStatus,
+          ...(marks === undefined ? {} : { marksObtained: marks }),
+          remarks: result.remarks,
+        };
+      });
+      const saved = await enterExamMarks(resultsExam.id, results);
+      setResultSheet((current) => (current ? { ...current, results: saved.results } : current));
+    } catch (requestError) {
+      setResultsError(
+        requestError instanceof Error ? requestError.message : "Exam marks could not be saved.",
+      );
+    }
+  };
+
   const handleFinishWizard = async (e: React.FormEvent) => {
     e.preventDefault();
     const backendCourse = backendCourses.find((item) => item.id === wizardCourseId);
-    if (!backendCourse) return;
+    if (!backendCourse) {
+      setError("Select a course before creating an exam.");
+      return;
+    }
     const courseCode = backendCourse.subject || backendCourse.courseName;
     const startTime = fromDisplayTime(wizardTime);
     const startDate = new Date(`1970-01-01T${startTime}`);
@@ -152,54 +296,20 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                 : "MIDTERM",
         });
         if (created) {
+          setBackendExams((current) => [created, ...current]);
           setExams((current) => [mapBackendExam(created, backendCourses), ...current]);
           setIsWizardOpen(false);
           setWizardStep(1);
           setWizardTitle("");
           return;
         }
-
-        // Some deployments return 201 without a response body. Re-query the
-        // backend before falling back to local mock state so a successful
-        // create is still visible after a reload.
-        const refreshedExams = (
-          await Promise.all(backendCourses.map((item) => getCourseExams(item.id)))
-        )
-          .flat()
-          .map((item) => mapBackendExam(item, backendCourses));
-        if (refreshedExams.length > 0) {
-          setExams(refreshedExams);
-          setIsWizardOpen(false);
-          setWizardStep(1);
-          setWizardTitle("");
-          return;
-        }
-      } catch {
-        // Keep the original local-only behavior when the API is unavailable.
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error ? requestError.message : "Exam could not be created.",
+        );
+        return;
       }
     }
-
-    const newExam: Examination = {
-      id: `exm-${Date.now()}`,
-      courseId: backendCourse.id,
-      courseCode,
-      title: wizardTitle || `${courseCode} ${wizardType} Examination`,
-      examType: wizardType,
-      scheduledDate: wizardDate,
-      startTime: wizardTime,
-      durationMinutes: Number(wizardDuration) || 120,
-      roomOrPlatform: wizardRoom,
-      totalMarks: 100,
-      weightagePercent: Number(wizardWeight) || 30,
-      status: "Scheduled",
-      enrolledStudents: backendCourse.numberOfStudents ?? 0,
-      gradedStudents: 0,
-    };
-
-    setExams((current) => [newExam, ...current]);
-    setIsWizardOpen(false);
-    setWizardStep(1);
-    setWizardTitle("");
   };
 
   return (
@@ -493,6 +603,24 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       )}
 
       {/* Scheduled Exams List */}
+      {error && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+          {error}
+        </div>
+      )}
+      {isLoading ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          Loading exams...
+        </div>
+      ) : backendCourses.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          No courses are assigned to you yet.
+        </div>
+      ) : exams.length === 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+          No exams have been created for your courses yet.
+        </div>
+      ) : null}
       <div className="space-y-4">
         {exams.map((exam) => (
           <div
@@ -534,16 +662,142 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                 </span>
               </div>
 
-              <button
-                onClick={() => onNavigate?.("grades")}
-                className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                <span>View Results Sheet</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {backendExams.find((item) => item.id === exam.id)?.status === "DRAFT" && (
+                  <>
+                    <button
+                      onClick={() => {
+                        const record = backendExams.find((item) => item.id === exam.id);
+                        if (record) void handleEditExam(record);
+                      }}
+                      className="px-2.5 py-1.5 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        const record = backendExams.find((item) => item.id === exam.id);
+                        if (record) void handleTransition(record, "schedule");
+                      }}
+                      className="px-2.5 py-1.5 text-[10px] font-medium text-indigo-700 border border-indigo-200 rounded-md"
+                    >
+                      Schedule
+                    </button>
+                  </>
+                )}
+                {backendExams.find((item) => item.id === exam.id)?.status === "SCHEDULED" && (
+                  <button
+                    onClick={() => {
+                      const record = backendExams.find((item) => item.id === exam.id);
+                      if (record) void handleTransition(record, "start-marking");
+                    }}
+                    className="px-2.5 py-1.5 text-[10px] font-medium text-indigo-700 border border-indigo-200 rounded-md"
+                  >
+                    Start marking
+                  </button>
+                )}
+                {backendExams.find((item) => item.id === exam.id)?.status === "MARKING" && (
+                  <button
+                    onClick={() => {
+                      const record = backendExams.find((item) => item.id === exam.id);
+                      if (record) void handleTransition(record, "complete");
+                    }}
+                    className="px-2.5 py-1.5 text-[10px] font-medium text-emerald-700 border border-emerald-200 rounded-md"
+                  >
+                    Complete
+                  </button>
+                )}
+                {(backendExams.find((item) => item.id === exam.id)?.status === "SCHEDULED" ||
+                  backendExams.find((item) => item.id === exam.id)?.status === "MARKING") && (
+                  <button
+                    onClick={() => {
+                      const record = backendExams.find((item) => item.id === exam.id);
+                      if (record) void handleTransition(record, "cancel");
+                    }}
+                    className="px-2.5 py-1.5 text-[10px] font-medium text-rose-700 border border-rose-200 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const record = backendExams.find((item) => item.id === exam.id);
+                    if (record) void openResults(record);
+                  }}
+                  className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  <span>View Results Sheet</span>
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {resultsExam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">{resultsExam.title} results</h2>
+                {examSummary && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {examSummary.presentStudents} present · {examSummary.passedStudents} passed ·
+                    Average {examSummary.averageMarks ?? "—"}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setResultsExam(null)}
+                className="text-xs text-slate-500 hover:text-slate-900"
+              >
+                Close
+              </button>
+            </div>
+            {resultsLoading ? (
+              <p className="p-8 text-center text-xs text-slate-500">Loading results...</p>
+            ) : resultsError ? (
+              <p className="p-8 text-center text-xs text-rose-700">{resultsError}</p>
+            ) : resultSheet?.results.length ? (
+              <div className="mt-4 space-y-3">
+                {resultSheet.results.map((result) => (
+                  <div
+                    key={result.studentId}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
+                  >
+                    <span className="text-xs font-semibold text-slate-900">{result.studentId}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max={Number(resultsExam.totalMarks)}
+                      value={resultMarks[result.studentId] ?? ""}
+                      disabled={resultsExam.status !== "MARKING"}
+                      onChange={(event) =>
+                        setResultMarks((current) => ({
+                          ...current,
+                          [result.studentId]: event.target.value,
+                        }))
+                      }
+                      className="w-24 rounded border border-slate-200 px-2 py-1 text-xs disabled:bg-slate-50"
+                    />
+                    <span className="text-xs text-slate-500">/ {resultsExam.totalMarks}</span>
+                  </div>
+                ))}
+                {resultsExam.status === "MARKING" && (
+                  <button
+                    onClick={() => void saveExamMarks()}
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
+                  >
+                    Save marks
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="p-8 text-center text-xs text-slate-500">No result records available.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

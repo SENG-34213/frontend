@@ -16,11 +16,11 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { StudentSubmission, Assignment, NavigationTab } from "../types";
-import { mockSubmissions, mockAssignments } from "../data/mockData";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   getAssignment,
   getAssignmentSubmissions,
+  getSubmission,
   gradeSubmission,
   returnSubmission,
   type BackendAssignment,
@@ -58,14 +58,13 @@ const mapBackendAssignment = (item: BackendAssignment): Assignment => {
   };
 };
 
-const mapBackendSubmission = (item: BackendSubmission): StudentSubmission => {
-  const mock = mockSubmissions.find((submission) => submission.id === item.id);
+const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentSubmission => {
   return {
     id: item.id,
     assignmentId: item.assignmentId,
     studentId: item.studentId,
-    studentName: mock?.studentName || item.studentId,
-    studentEmail: mock?.studentEmail || "",
+    studentName: item.studentId,
+    studentEmail: "",
     submissionDate: item.submittedAt
       ? new Date(item.submittedAt).toLocaleString()
       : "Not submitted",
@@ -76,12 +75,13 @@ const mapBackendSubmission = (item: BackendSubmission): StudentSubmission => {
           ? "Graded"
           : "Submitted",
     score: item.marks,
-    maxMarks: mock?.maxMarks || 100,
+    isReturned: item.status === "RETURNED",
+    maxMarks,
     feedback: item.feedback,
     submittedContentText: item.content,
-    submittedFileName: mock?.submittedFileName,
-    fileSizeBytes: mock?.fileSizeBytes,
-    codeSnippet: mock?.codeSnippet,
+    submittedFileName: undefined,
+    fileSizeBytes: undefined,
+    codeSnippet: undefined,
   };
 };
 
@@ -91,19 +91,16 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   onNavigate,
 }) => {
   const [selectedAssignmentId, setSelectedAssignmentId] = useState(initialAssignmentId);
-  const [submissions, setSubmissions] = useState<StudentSubmission[]>(mockSubmissions);
-  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string>(
-    mockSubmissions[0]?.id || "",
-  );
-  const [assignment, setAssignment] = useState<Assignment | null>(
-    mockAssignments.find((item) => item.id === initialAssignmentId) || mockAssignments[0],
-  );
+  const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string>("");
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Scoring states for currently selected submission
   const currentSubmission =
     submissions.find((s) => s.id === selectedSubmissionId) || submissions[0];
-  const currentAssignment = assignment || mockAssignments[0];
+  const currentAssignment = assignment;
 
   const [inputScore, setInputScore] = useState<string>(
     currentSubmission?.score !== undefined ? String(currentSubmission.score) : "",
@@ -113,13 +110,20 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
 
   useEffect(() => {
     const controller = new AbortController();
+    setIsLoading(true);
+    setLoadError(null);
+    setSubmissions([]);
+    setSelectedSubmissionId("");
+    setAssignment(null);
     Promise.all([
       getAssignment(selectedAssignmentId, controller.signal),
       getAssignmentSubmissions(selectedAssignmentId, controller.signal),
     ])
       .then(([backendAssignment, backendSubmissions]) => {
         if (backendAssignment) setAssignment(mapBackendAssignment(backendAssignment));
-        const mapped = backendSubmissions.map((submission) => mapBackendSubmission(submission));
+        const mapped = backendSubmissions.map((submission) =>
+          mapBackendSubmission(submission, backendAssignment?.maxMarks ?? 100),
+        );
         setSubmissions(mapped);
         setSelectedSubmissionId(mapped[0]?.id || "");
       })
@@ -128,29 +132,57 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           setLoadError(
             requestError instanceof Error ? requestError.message : "Submissions failed to load.",
           );
+          setSubmissions([]);
+          setAssignment(null);
         }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
       });
     return () => controller.abort();
   }, [selectedAssignmentId]);
 
   // When switching submission, update local inputs
-  const handleSelectSubmission = (sub: StudentSubmission) => {
+  useEffect(() => {
+    setInputScore(currentSubmission?.score !== undefined ? String(currentSubmission.score) : "");
+    setFeedback(currentSubmission?.feedback || "");
+  }, [currentSubmission?.id, currentSubmission?.feedback, currentSubmission?.score]);
+
+  const handleSelectSubmission = async (sub: StudentSubmission) => {
     setSelectedSubmissionId(sub.id);
-    setInputScore(sub.score !== undefined ? String(sub.score) : "");
-    setFeedback(sub.feedback || "");
+    try {
+      const detail = await getSubmission(sub.id);
+      const mapped = mapBackendSubmission(detail, currentAssignment?.maxMarks ?? 100);
+      setSubmissions((current) =>
+        current.map((submission) => (submission.id === mapped.id ? mapped : submission)),
+      );
+    } catch (requestError: unknown) {
+      setLoadError(
+        requestError instanceof Error ? requestError.message : "Submission details failed to load.",
+      );
+    }
   };
 
-  const handleSaveGrade = (goToNext = false) => {
+  const handleSaveGrade = async (goToNext = false) => {
+    if (!currentSubmission || !currentAssignment || currentSubmission.isReturned) return;
     const numericScore = Number(inputScore);
-    const maximumAllowedScore = Math.min(currentAssignment.maxMarks, 100);
-    if (isNaN(numericScore) || numericScore < 0 || numericScore > maximumAllowedScore) {
+    const maximumAllowedScore = currentAssignment.maxMarks;
+    if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > maximumAllowedScore) {
       alert(`Please enter a valid mark between 0 and ${maximumAllowedScore}.`);
       return;
     }
 
-    void gradeSubmission(currentSubmission.id, { marks: numericScore, feedback }).catch(
-      () => undefined,
-    );
+    try {
+      const saved = await gradeSubmission(currentSubmission.id, { marks: numericScore, feedback });
+      const mapped = mapBackendSubmission(saved, currentAssignment.maxMarks);
+      setSubmissions((prev) => prev.map((sub) => (sub.id === currentSubmission.id ? mapped : sub)));
+    } catch (requestError: unknown) {
+      setLoadError(
+        requestError instanceof Error ? requestError.message : "Grade could not be saved.",
+      );
+      return;
+    }
+
     setSubmissions((prev) =>
       prev.map((sub) =>
         sub.id === currentSubmission.id
@@ -178,11 +210,14 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   };
 
   const handleReturnSubmission = async () => {
+    if (!currentSubmission || currentSubmission.isReturned) return;
     try {
       await returnSubmission(currentSubmission.id);
       setSubmissions((current) =>
         current.map((submission) =>
-          submission.id === currentSubmission.id ? { ...submission, status: "Graded" } : submission,
+          submission.id === currentSubmission.id
+            ? { ...submission, status: "Graded", isReturned: true }
+            : submission,
         ),
       );
     } catch (requestError: unknown) {
@@ -193,6 +228,23 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   };
 
   const gradedCount = submissions.filter((s) => s.status === "Graded").length;
+
+  if (isLoading) {
+    return <div className="p-10 text-center text-sm text-slate-500">Loading submissions...</div>;
+  }
+
+  if (!currentAssignment || !currentSubmission) {
+    return (
+      <div className="p-10 text-center text-sm text-slate-500">
+        {loadError || "No submissions are available for this assignment."}
+        <button onClick={onBack} className="ml-3 text-indigo-600 underline">
+          Back to assignments
+        </button>
+      </div>
+    );
+  }
+
+  const isReadOnly = currentSubmission.isReturned;
 
   return (
     <div className="h-[calc(100vh-5rem)] flex flex-col bg-slate-100 overflow-hidden -m-4 lg:-m-6">
@@ -389,6 +441,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   max={Math.min(currentAssignment.maxMarks, 100)}
                   value={inputScore}
                   onChange={(e) => setInputScore(e.target.value)}
+                  disabled={isReadOnly}
                   placeholder="e.g. 95"
                   className="w-24 px-3 py-2 text-base font-bold font-mono text-indigo-700 bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
                 />
@@ -440,6 +493,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                 rows={4}
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
+                disabled={isReadOnly}
                 placeholder="Write actionable, constructive guidance for the student..."
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 resize-none leading-relaxed"
               />
@@ -467,8 +521,8 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           {/* Bottom Actions */}
           <div className="p-4 border-t border-slate-200 bg-white space-y-2">
             <button
-              onClick={() => handleSaveGrade(true)}
-              disabled={saveSuccess}
+              onClick={() => void handleSaveGrade(true)}
+              disabled={saveSuccess || isReadOnly}
               className="w-full py-2 px-3 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5"
             >
               {saveSuccess ? (
@@ -486,13 +540,15 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
             </button>
 
             <button
-              onClick={() => handleSaveGrade(false)}
+              onClick={() => void handleSaveGrade(false)}
+              disabled={isReadOnly}
               className="w-full py-1.5 px-3 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
             >
               Save Grade Only
             </button>
             <button
               onClick={() => void handleReturnSubmission()}
+              disabled={isReadOnly}
               className="w-full py-1.5 px-3 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
             >
               Return Submission

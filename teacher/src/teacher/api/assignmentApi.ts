@@ -85,7 +85,7 @@ export async function getAssignment(assignmentId: string, signal?: AbortSignal) 
     `/api/v1/assignments/${encodeURIComponent(assignmentId)}`,
     { signal },
   );
-  return response.data;
+  return response.data as BackendAssignment;
 }
 
 export async function createAssignment(draft: AssignmentDraft) {
@@ -139,6 +139,14 @@ export async function getAssignmentSubmissions(assignmentId: string, signal?: Ab
     { signal },
   );
   return response.data ?? [];
+}
+
+export async function getSubmission(submissionId: string, signal?: AbortSignal) {
+  const response = await apiRequest<ApiResponse<BackendSubmission>>(
+    `/api/v1/submissions/${encodeURIComponent(submissionId)}`,
+    { signal },
+  );
+  return response.data as BackendSubmission;
 }
 
 export async function gradeSubmission(
