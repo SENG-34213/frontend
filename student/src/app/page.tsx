@@ -1,1147 +1,157 @@
 "use client";
+import React, { useState } from "react";
+import { StudentProvider, useStudent } from "../context/StudentContext";
+import { Sidebar } from "../components/layout/Sidebar";
+import { TopNavbar } from "../components/layout/TopNavbar";
+import { CommandPalette } from "../components/layout/CommandPalette";
+import { SignInModal } from "../components/auth/SignInModal";
+import { StudentDashboard } from "../components/dashboard/StudentDashboard";
+import { MyCoursesView } from "../components/courses/MyCoursesView";
+import { ExploreCoursesView } from "../components/courses/ExploreCoursesView";
+import { CourseDetailsView } from "../components/courses/CourseDetailsView";
+import { CourseWorkspaceView } from "../components/courses/CourseWorkspaceView";
+import { EnrollmentsView } from "../components/enrollments/EnrollmentsView";
+import { LearningMaterialsView } from "../components/materials/LearningMaterialsView";
+import { AssignmentsView } from "../components/assignments/AssignmentsView";
+import { AssignmentDetailView } from "../components/assignments/AssignmentDetailView";
+import { QuizzesView } from "../components/quizzes/QuizzesView";
+import { QuizTakingView } from "../components/quizzes/QuizTakingView";
+import { ExaminationsView } from "../components/examinations/ExaminationsView";
+import { ExamTakingView } from "../components/examinations/ExamTakingView";
+import { GradesView } from "../components/grades/GradesView";
+import { StudentCalendarView } from "../components/calendar/StudentCalendarView";
+import { MessagesView } from "../components/messages/MessagesView";
+import { MentifyAIView } from "../components/ai/MentifyAIView";
+import { NotificationsView } from "../components/notifications/NotificationsView";
+import { ProfileView } from "../components/profile/ProfileView";
+import { SettingsView } from "../components/profile/SettingsView";
+import { X, CheckCircle2 } from "lucide-react";
 
-import { useEffect, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
-import {
-  Award,
-  BookOpen,
-  CalendarDays,
-  ChevronRight,
-  CircleHelp,
-  Compass,
-  CreditCard,
-  FileCheck2,
-  FolderArchive,
-  GraduationCap,
-  LayoutDashboard,
-  LifeBuoy,
-  LogOut,
-  Menu,
-  MessagesSquare,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Search,
-  Sparkles,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
-import {
-  configuredCourseIds,
-  getToken,
-  login,
-  studentApi,
-  type Assignment,
-  type Attendance,
-  type CalendarEvent,
-  type Course,
-  type ExamResult,
-  type Group,
-  type Material,
-  type Payment,
-  type Quiz,
-  type QuizQuestion,
-  type Student,
-  type StudentQuiz,
-  type Submission,
-} from "../lib/studentApi";
-import StudentMaterialsWorkspace from "../components/StudentMaterialsWorkspace";
-import ThemeToggle from "../components/ThemeToggle";
-
-type Section =
-  | "Dashboard"
-  | "My Courses"
-  | "Browse Courses"
-  | "Assignments"
-  | "Quizzes"
-  | "Attendance"
-  | "Exams"
-  | "Calendar"
-  | "Materials"
-  | "Messages"
-  | "Payments"
-  | "AI Insights"
-  | "Profile";
-const navGroups: { name: string; items: { label: Section; icon: LucideIcon }[] }[] = [
-  {
-    name: "Learning",
-    items: [
-      { label: "Dashboard", icon: LayoutDashboard },
-      { label: "My Courses", icon: BookOpen },
-      { label: "Browse Courses", icon: Compass },
-      { label: "Materials", icon: FolderArchive },
-    ],
-  },
-  {
-    name: "Assessments",
-    items: [
-      { label: "Assignments", icon: FileCheck2 },
-      { label: "Quizzes", icon: CircleHelp },
-      { label: "Exams", icon: Award },
-      { label: "Attendance", icon: GraduationCap },
-    ],
-  },
-  {
-    name: "Collaboration",
-    items: [
-      { label: "Calendar", icon: CalendarDays },
-      { label: "Messages", icon: MessagesSquare },
-      { label: "AI Insights", icon: Sparkles },
-    ],
-  },
-  {
-    name: "Account",
-    items: [
-      { label: "Payments", icon: CreditCard },
-      { label: "Profile", icon: UserRound },
-    ],
-  },
-];
-type Activity = {
-  assignments: Assignment[];
-  submissions: Submission[];
-  quizzes: Quiz[];
-  groups: Group[];
-  attendance: Attendance[];
-  exams: ExamResult[];
-  events: CalendarEvent[];
-  materials: Material[];
-  payments: Payment[];
-  courses: Course[];
-  courseIds: string[];
-  loading: boolean;
-  error: string;
-};
-const emptyActivity: Activity = {
-  assignments: [],
-  submissions: [],
-  quizzes: [],
-  groups: [],
-  attendance: [],
-  exams: [],
-  events: [],
-  materials: [],
-  payments: [],
-  courses: [],
-  courseIds: [],
-  loading: true,
-  error: "",
-};
-
-function useActivity(ready: boolean, studentId?: string): Activity {
-  const [activity, setActivity] = useState<Activity>(emptyActivity);
-  useEffect(() => {
-    if (!ready) return;
-    let cancelled = false;
-    async function load() {
-      const ids = studentId
-        ? await studentApi.courseIds(studentId).catch(() => configuredCourseIds())
-        : configuredCourseIds();
-      const results = await Promise.allSettled([
-        studentApi.groups(),
-        studentApi.submissions(),
-        studentApi.examResults(),
-        studentApi.upcomingEvents(),
-        studentApi.payments(),
-        ...ids.flatMap((id) => [
-          studentApi.course(id),
-          studentApi.assignments(id),
-          studentApi.quizzes(id),
-          studentApi.attendance(id),
-          studentApi.materials(id),
-        ]),
-      ]);
-      if (cancelled) return;
-      const groups = results[0].status === "fulfilled" ? results[0].value || [] : [];
-      const submissions = results[1].status === "fulfilled" ? results[1].value || [] : [];
-      const exams = results[2].status === "fulfilled" ? results[2].value.results || [] : [];
-      const events = results[3].status === "fulfilled" ? results[3].value || [] : [];
-      const payments = results[4].status === "fulfilled" ? results[4].value || [] : [];
-      const courses: Course[] = [];
-      const assignments: Assignment[] = [];
-      const quizzes: Quiz[] = [];
-      const attendance: Attendance[] = [];
-      const materials: Material[] = [];
-      results.slice(5).forEach((result, index) => {
-        if (result.status !== "fulfilled") return;
-        const kind = index % 5;
-        if (kind === 0) courses.push(result.value as Course);
-        if (kind === 1) assignments.push(...(result.value as Assignment[]));
-        if (kind === 2) quizzes.push(...(result.value as Quiz[]));
-        if (kind === 3) attendance.push(result.value as Attendance);
-        if (kind === 4)
-          materials.push(...((result.value as { content?: Material[] }).content || []));
-      });
-      setActivity({
-        groups,
-        submissions,
-        exams,
-        events,
-        payments,
-        courses,
-        assignments,
-        quizzes,
-        attendance,
-        materials,
-        courseIds: ids,
-        loading: false,
-        error: results.every((result) => result.status === "rejected")
-          ? "We could not reach the student services."
-          : "",
-      });
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [ready, studentId]);
-  return activity;
-}
-
-function SignIn({ onDone }: { onDone: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [apiUrl, setApiUrl] = useState("http://localhost:8080");
-  const [courses, setCourses] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      const result = await login(email.trim(), password, apiUrl);
-      if (result.user?.role && result.user.role !== "STUDENT")
-        throw new Error("Please use a student account.");
-      sessionStorage.setItem("mentify_api_url", apiUrl.replace(/\/$/, ""));
-      sessionStorage.setItem("mentify_access_token", result.accessToken || "");
-      if (result.refreshToken) sessionStorage.setItem("mentify_refresh_token", result.refreshToken);
-      if (courses.trim()) sessionStorage.setItem("mentify_student_course_ids", courses);
-      onDone();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Unable to sign in.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <main className="auth-page">
-      <form className="auth-card" onSubmit={submit}>
-        <div className="brand">
-          <span className="brand-mark">âŒ</span>
-          <span>Mentify</span>
-        </div>
-        <p className="brand-caption">ACADEMIC EDITORIAL</p>
-        <h1>Welcome back.</h1>
-        <p className="auth-copy">Sign in to continue your intellectual journey.</p>
-        {error && <div className="error">{error}</div>}
-        <label className="field-label">
-          API base URL
-          <input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} />
-        </label>
-        <label className="field-label">
-          Email address
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-          />
-        </label>
-        <label className="field-label">
-          Password
-          <input
-            required
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Your password"
-          />
-        </label>
-        <label className="field-label">
-          Course IDs{" "}
-          <span className="helper">optional fallback if enrollment lookup is unavailable</span>
-          <input
-            value={courses}
-            onChange={(event) => setCourses(event.target.value)}
-            placeholder="course-id-1, course-id-2"
-          />
-        </label>
-        <button className="primary-button" disabled={busy}>
-          {busy ? "Signing inâ€¦" : "Sign in to workspace"}
-        </button>
-      </form>
-    </main>
-  );
-}
-
-function AssignmentPanel({
-  assignments,
-  submissions,
-  onRefresh,
-}: {
-  assignments: Assignment[];
-  submissions: Submission[];
-  onRefresh: () => void;
-}) {
-  const [selected, setSelected] = useState<Assignment | null>(null);
-  const [content, setContent] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  async function save(submit: boolean) {
-    if (!selected) return;
-    setBusy(true);
-    setMessage("");
-    try {
-      const existing = submissions.find(
-        (item) => item.assignmentId === selected.id && item.status !== "SUBMITTED",
-      );
-      const draft = existing
-        ? await studentApi.updateSubmission(existing.id, content)
-        : await studentApi.createSubmission(selected.id, content);
-      if (submit) await studentApi.submitAssignment(draft.id);
-      setMessage(submit ? "Assignment submitted." : "Draft saved.");
-      onRefresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save the assignment.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <section className="student-feature-grid">
-      <div className="card feature-card">
-        <div className="section-heading">
-          <h2>Assignments</h2>
-          <span>{assignments.length} available</span>
-        </div>
-        <div className="student-list">
-          {assignments.map((assignment) => (
-            <button
-              type="button"
-              className={selected?.id === assignment.id ? "selected" : ""}
-              key={assignment.id}
-              onClick={() => {
-                setSelected(assignment);
-                setContent(
-                  submissions.find((item) => item.assignmentId === assignment.id)?.content || "",
-                );
-              }}
-            >
-              <strong>{assignment.title}</strong>
-              <small>
-                {assignment.dueDate ? new Date(assignment.dueDate).toLocaleString() : "No due date"}
-              </small>
-              <em>{assignment.status || "PUBLISHED"}</em>
-            </button>
-          ))}
-          {!assignments.length && <p className="muted">No assignments are available.</p>}
-        </div>
-      </div>
-      <div className="card feature-card feature-detail">
-        {selected ? (
-          <>
-            <span className="eyebrow">ASSIGNMENT DETAILS</span>
-            <h2>{selected.title}</h2>
-            <p>
-              {selected.description ||
-                selected.instructions ||
-                "Review the assignment instructions and submit your work."}
-            </p>
-            <p className="muted">
-              Maximum marks: {selected.maxMarks ?? "â€”"} Â· Attempts:{" "}
-              {selected.allowedAttempts ?? "â€”"}
-            </p>
-            <textarea
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              placeholder="Write your submission hereâ€¦"
-            />
-            <div className="feature-actions">
-              <button className="outline-button" disabled={busy} onClick={() => void save(false)}>
-                Save draft
-              </button>
-              <button
-                className="primary-button"
-                disabled={busy || !content.trim()}
-                onClick={() => void save(true)}
-              >
-                Submit assignment
-              </button>
-            </div>
-            {message && <div className="inline-message">{message}</div>}
-          </>
-        ) : (
-          <div className="empty-state">
-            <h3>Select an assignment</h3>
-            <p>Choose an assignment to review instructions or save a submission.</p>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function QuizPanel({ quizzes }: { quizzes: Quiz[] }) {
-  const [selected, setSelected] = useState<Quiz | null>(null);
-  const [quiz, setQuiz] = useState<StudentQuiz | null>(null);
-  const [attemptId, setAttemptId] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function start(item: Quiz) {
-    setBusy(true);
-    setMessage("");
-    try {
-      const detail = await studentApi.quiz(item.id);
-      const attempt = await studentApi.startQuiz(item.id);
-      setQuiz(detail);
-      setAttemptId(attempt.attemptId);
-      setSelected(item);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not start the quiz.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <section className="student-feature-grid">
-      <div className="card feature-card">
-        <div className="section-heading">
-          <h2>Quizzes</h2>
-          <span>{quizzes.length} available</span>
-        </div>
-        <div className="student-list">
-          {quizzes.map((item) => (
-            <article className="student-list-item" key={item.id}>
-              <div>
-                <strong>{item.title || "Quiz"}</strong>
-                <small>
-                  {item.description ||
-                    `${item.totalMarks ?? "â€”"} marks Â· ${item.durationMinutes ?? "â€”"} minutes`}
-                </small>
-              </div>
-              <button disabled={busy} onClick={() => void start(item)}>
-                Start
-              </button>
-            </article>
-          ))}
-          {!quizzes.length && <p className="muted">No published quizzes are available.</p>}
-        </div>
-      </div>
-      <div className="card feature-card feature-detail">
-        {selected && quiz ? (
-          <>
-            <span className="eyebrow">QUIZ ATTEMPT</span>
-            <h2>{selected.title}</h2>
-            {quiz.questions?.map((question: QuizQuestion) => (
-              <div className="quiz-question" key={question.id}>
-                <strong>{question.questionText}</strong>
-                {question.options?.map((option) => (
-                  <label key={option.id}>
-                    <input
-                      type="radio"
-                      name={question.id}
-                      onChange={() =>
-                        void studentApi.saveQuizAnswer(attemptId, question.id, option.id)
-                      }
-                    />{" "}
-                    {option.optionText}
-                  </label>
-                ))}
-              </div>
-            ))}
-            <button
-              className="primary-button"
-              disabled={busy}
-              onClick={() =>
-                void (async () => {
-                  setBusy(true);
-                  try {
-                    await studentApi.submitQuiz(attemptId);
-                    setMessage("Quiz submitted.");
-                  } catch (error) {
-                    setMessage(
-                      error instanceof Error ? error.message : "Could not submit the quiz.",
-                    );
-                  } finally {
-                    setBusy(false);
-                  }
-                })()
-              }
-            >
-              Submit quiz
-            </button>
-            {message && <div className="inline-message">{message}</div>}
-          </>
-        ) : (
-          <div className="empty-state">
-            <h3>Select a quiz</h3>
-            <p>Starting a quiz creates a backend-tracked attempt.</p>
-            {message && <div className="inline-message">{message}</div>}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function MessagesPanel({ groups }: { groups: Group[] }) {
-  const [group, setGroup] = useState<Group | null>(groups[0] || null);
-  const [messages, setMessages] = useState<Array<{ id: string; content?: string }>>([]);
-  const [text, setText] = useState("");
-  useEffect(() => {
-    if (!group) return;
-    studentApi
-      .messages(group.id)
-      .then((result) => setMessages(result.content || []))
-      .catch(() => setMessages([]));
-  }, [group]);
-  return (
-    <section className="student-feature-grid">
-      <div className="card feature-card">
-        <div className="section-heading">
-          <h2>Messages</h2>
-          <span>{groups.length} groups</span>
-        </div>
-        <div className="student-list">
-          {groups.map((item) => (
-            <button
-              type="button"
-              className={group?.id === item.id ? "selected" : ""}
-              key={item.id}
-              onClick={() => setGroup(item)}
-            >
-              <strong>{item.name || "Course group"}</strong>
-              <small>{item.description || "Course communication"}</small>
-            </button>
-          ))}
-          {!groups.length && (
-            <p className="muted">You are not a member of any communication group.</p>
-          )}
-        </div>
-      </div>
-      <div className="card feature-card feature-detail">
-        <h2>{group?.name || "Select a group"}</h2>
-        <div className="message-list">
-          {messages.map((item) => (
-            <p key={item.id}>{item.content}</p>
-          ))}
-        </div>
-        {group && (
-          <form
-            className="message-compose"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!text.trim()) return;
-              studentApi
-                .sendMessage(group.id, text)
-                .then(() => {
-                  setText("");
-                  return studentApi.messages(group.id);
-                })
-                .then((result) => setMessages(result.content || []));
-            }}
-          >
-            <input
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              placeholder="Write a messageâ€¦"
-            />
-            <button className="primary-button">Send</button>
-          </form>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function DataSection({
-  title,
-  kicker,
-  children,
-}: {
-  title: string;
-  kicker: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="feature-page">
-      <span className="eyebrow">{kicker}</span>
-      <h1>{title}</h1>
-      {title === "Learning Materials" ? <StudentMaterialsWorkspace /> : children}
-    </section>
-  );
-}
-
-function Dashboard({
-  student,
-  activity,
-  onSignOut,
-  onRefresh,
-}: {
-  student?: Student;
-  activity: Activity;
-  onSignOut: () => void;
-  onRefresh: () => void;
-}) {
-  const [section, setSection] = useState<Section>("Dashboard");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+const MainLayout: React.FC = () => {
+  const {
+    currentView,
+    isSidebarCollapsed,
+    toastMessage,
+    isAuthModalOpen,
+    closeAuthModal,
+    refreshData,
+  } = useStudent();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [browseId, setBrowseId] = useState("");
-  const [browseResult, setBrowseResult] = useState<Course | null>(null);
-  const firstName = student?.firstName || "Student";
-  const fullName = `${student?.firstName || "Student"} ${student?.lastName || ""}`.trim();
-  const initials = `${firstName[0] || "S"}${student?.lastName?.[0] || ""}`;
-  const submittedIds = new Set(activity.submissions.map((item) => item.assignmentId));
-  const completed = activity.assignments.filter((item) => submittedIds.has(item.id)).length;
-  const completion = activity.assignments.length
-    ? Math.round((completed / activity.assignments.length) * 100)
-    : 0;
-  const pendingAssignments = activity.assignments.length - completed;
-  const currentGroup =
-    navGroups.find((group) => group.items.some((item) => item.label === section))?.name ?? "Account";
-  function navigateTo(sectionName: Section) {
-    setSection(sectionName);
-    setMobileMenuOpen(false);
-  }
-  const averageAttendance = activity.attendance.length
-    ? Math.round(
-        activity.attendance.reduce(
-          (sum, item) => sum + (item.attendancePercentage ?? item.percentage ?? 0),
-          0,
-        ) / activity.attendance.length,
-      )
-    : null;
-  const formatDate = (date?: string) =>
-    date
-      ? new Date(date).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "No date";
-  function signOut() {
-    sessionStorage.clear();
-    onSignOut();
-  }
-  const content =
-    section === "Dashboard" ? (
-      <>
-        <div className="welcome">
-          <div className="welcome-copy">
-            <div className="welcome-kicker">
-              <span />
-              STUDENT PORTAL
-              <span className="welcome-divider">·</span>
-              {activity.loading ? "SYNCING YOUR WORKSPACE" : `${activity.courses.length} ACTIVE COURSES`}
-            </div>
-            <h1>Good to see you, {firstName}.</h1>
-            <p>
-              {activity.loading
-                ? "Your courses, assessments, and schedule are being updated."
-                : `You have ${pendingAssignments} assignments to complete and ${activity.events.length} upcoming events in your schedule.`}
-            </p>
-            <div className="welcome-actions">
-              <button onClick={() => navigateTo("My Courses")}>
-                <BookOpen aria-hidden="true" />
-                Continue learning
-              </button>
-              <button onClick={() => navigateTo("Calendar")}>
-                <CalendarDays aria-hidden="true" />
-                View schedule
-              </button>
-            </div>
-          </div>
-          <div className="welcome-art" aria-hidden="true">
-            <GraduationCap />
-            <span><Sparkles /></span>
-          </div>
-        </div>
-        <div className="summary-grid">
-          {[
-            { label: "Enrolled", value: activity.courses.length, hint: "Active courses", Icon: BookOpen, tone: "indigo" },
-            { label: "Assignments", value: pendingAssignments, hint: "Awaiting submission", Icon: FileCheck2, tone: "amber" },
-            { label: "Quizzes", value: activity.quizzes.length, hint: "Available to take", Icon: CircleHelp, tone: "blue" },
-            { label: "Examinations", value: activity.exams.length, hint: "Exam records", Icon: Award, tone: "violet" },
-            { label: "Attendance", value: averageAttendance === null ? "—" : `${averageAttendance}%`, hint: "Across your courses", Icon: GraduationCap, tone: "emerald" },
-            { label: "Submitted", value: completed, hint: "Assignment submissions", Icon: LayoutDashboard, tone: "rose" },
-          ].map(({ label, value, hint, Icon, tone }) => (
-            <article className="summary-card" key={label}>
-              <div className="summary-card-heading">
-                <span>{label}</span>
-                <span className={`summary-icon ${tone}`}><Icon aria-hidden="true" /></span>
-              </div>
-              <strong>{activity.loading ? "—" : value}</strong>
-              <small>{hint}</small>
-            </article>
-          ))}
-        </div>
-        <div className="dashboard-grid">
-          <section className="primary-column">
-            <div className="dashboard-section-heading">
-              <div>
-                <h2>Continue learning</h2>
-                <p>Your enrolled courses and progress</p>
-              </div>
-              <button onClick={() => navigateTo("My Courses")}>View all courses <ChevronRight /></button>
-            </div>
-            <div className="course-grid">
-              {activity.courses.slice(0, 3).map((course, index) => {
-                const courseAssignments = activity.assignments.filter(
-                  (item) => item.courseId === course.id,
-                );
-                const done = courseAssignments.filter((item) => submittedIds.has(item.id)).length;
-                const progress = courseAssignments.length
-                  ? Math.round((done / courseAssignments.length) * 100)
-                  : 0;
-                return (
-                  <article className="course-card" key={course.id}>
-                    <div className={`course-icon ${index ? "violet" : "mint"}`}>
-                      {index ? "âˆ‘" : "â™¨"}
-                    </div>
-                    <h3>{course.courseName}</h3>
-                    <p>{course.subject || course.courseDescription || "Active course"}</p>
-                    <div className="progress-label">
-                      <span>Progress</span>
-                      <b>{progress}%</b>
-                    </div>
-                    <div className="progress-track">
-                      <i className={index ? "violet" : "mint"} style={{ width: `${progress}%` }} />
-                    </div>
-                  </article>
-                );
-              })}
-              {!activity.courses.length && (
-                <div className="course-card empty-state">
-                  <h3>No enrolled courses found</h3>
-                  <p>Course membership will appear automatically after enrollment.</p>
-                </div>
-              )}
-            </div>
-            <section className="momentum card">
-              <div className="section-heading">
-                <h2>
-                  Learning Momentum <span>LIVE DATA</span>
-                </h2>
-                <button onClick={() => setSection("Assignments")}>View Activity</button>
-              </div>
-              <div className="momentum-stats">
-                <div>
-                  <span>
-                    ASSIGNMENTS
-                    <br />
-                    DONE
-                  </span>
-                  <b>{completed}</b>
-                </div>
-                <div>
-                  <span>
-                    QUIZZES
-                    <br />
-                    AVAILABLE
-                  </span>
-                  <b>{activity.quizzes.length}</b>
-                </div>
-                <div>
-                  <span>
-                    SUBMISSION
-                    <br />
-                    RATE
-                  </span>
-                  <b>{completion}%</b>
-                </div>
-                <div>
-                  <span>ATTENDANCE</span>
-                  <b>{averageAttendance === null ? "â€”" : `${averageAttendance}%`}</b>
-                </div>
-              </div>
-            </section>
-          </section>
-          <aside className="right-column">
-            <section className="card deadlines">
-              <div className="section-heading">
-                <h2>Upcoming</h2>
-                <span>{activity.events.length} events</span>
-              </div>
-              {activity.events.slice(0, 4).map((event) => (
-                <div className="deadline" key={event.id}>
-                  <span className="deadline-icon">â–§</span>
-                  <div>
-                    <b>{event.title}</b>
-                    <small>{event.eventType}</small>
-                    <em>{formatDate(event.startDateTime)}</em>
-                  </div>
-                </div>
-              ))}
-              {!activity.events.length && (
-                <div className="empty-state">
-                  <p>No upcoming events found.</p>
-                </div>
-              )}
-              <button className="outline-button" onClick={() => navigateTo("Calendar")}>
-                Open Calendar
-              </button>
-            </section>
-            <section className="card performance">
-              <div className="section-heading">
-                <h2>Performance</h2>
-                <span>
-                  SUBMISSIONS <b>{activity.submissions.length}</b>
-                </span>
-              </div>
-              {activity.submissions.slice(0, 3).map((submission) => (
-                <div className="performance-row" key={submission.id}>
-                  <b>{submission.marks ?? "â€”"}</b>
-                  <div>
-                    <strong>
-                      {activity.assignments.find((item) => item.id === submission.assignmentId)
-                        ?.title || "Submitted work"}
-                    </strong>
-                    <small>{submission.status || "Submitted"}</small>
-                  </div>
-                  <span>{submission.status || "ACTIVE"}</span>
-                </div>
-              ))}
-              {!activity.submissions.length && (
-                <div className="empty-state">
-                  <p>Your submitted work will appear here.</p>
-                </div>
-              )}
-            </section>
-          </aside>
-        </div>
-      </>
-    ) : section === "Assignments" ? (
-      <DataSection title="Assignments" kicker="STUDENT WORKSPACE">
-        <AssignmentPanel
-          assignments={activity.assignments}
-          submissions={activity.submissions}
-          onRefresh={onRefresh}
-        />
-      </DataSection>
-    ) : section === "Quizzes" ? (
-      <DataSection title="Quizzes" kicker="ASSESSMENT CENTER">
-        <QuizPanel quizzes={activity.quizzes} />
-      </DataSection>
-    ) : section === "Messages" ? (
-      <DataSection title="Messages" kicker="COURSE COMMUNICATION">
-        <MessagesPanel groups={activity.groups} />
-      </DataSection>
-    ) : section === "My Courses" ? (
-      <DataSection title="My Courses" kicker="ENROLLED LEARNING">
-        <div className="course-grid">
-          {activity.courses.map((course) => (
-            <article className="course-card" key={course.id}>
-              <div className="course-icon mint">{course.courseName.charAt(0)}</div>
-              <h3>{course.courseName}</h3>
-              <p>{course.courseDescription || course.subject || "Active course"}</p>
-              <button className="outline-button" onClick={() => setSection("Materials")}>
-                View materials
-              </button>
-            </article>
-          ))}
-        </div>
-      </DataSection>
-    ) : section === "Attendance" ? (
-      <DataSection title="Attendance" kicker="STUDENT RECORDS">
-        <div className="data-card-grid">
-          {activity.attendance.map((item) => (
-            <article className="card feature-card" key={item.courseId}>
-              <h2>
-                {activity.courses.find((course) => course.id === item.courseId)?.courseName ||
-                  item.courseId}
-              </h2>
-              <div className="big-number">{item.attendancePercentage ?? item.percentage ?? 0}%</div>
-              <p>
-                {item.attendedCount ?? item.presentCount ?? 0} attended Â· {item.absentCount ?? 0}{" "}
-                absent Â· {item.completedSessions ?? item.totalSessions ?? 0} completed sessions
-              </p>
-            </article>
-          ))}
-        </div>
-      </DataSection>
-    ) : section === "Exams" ? (
-      <DataSection title="Exam Results" kicker="ACADEMIC RECORD">
-        <div className="student-table">
-          {activity.exams.map((exam) => (
-            <div className="student-table-row" key={exam.examId}>
-              <strong>{exam.title}</strong>
-              <span>{exam.examDate || ""}</span>
-              <span>
-                {exam.marksObtained ?? "â€”"} / {exam.totalMarks ?? "â€”"}
-              </span>
-              <em>{exam.grade || exam.resultStatus || exam.examStatus || "PENDING"}</em>
-            </div>
-          ))}
-          {!activity.exams.length && <p className="muted">No exam results are available yet.</p>}
-        </div>
-      </DataSection>
-    ) : section === "Calendar" ? (
-      <DataSection title="Calendar" kicker="UPCOMING ACTIVITY">
-        <div className="student-table">
-          {activity.events.map((event) => (
-            <div className="student-table-row" key={event.id}>
-              <strong>{event.title}</strong>
-              <span>{event.eventType}</span>
-              <span>{formatDate(event.startDateTime)}</span>
-              <em>{event.status || "SCHEDULED"}</em>
-            </div>
-          ))}
-          {!activity.events.length && <p className="muted">No calendar events are available.</p>}
-        </div>
-      </DataSection>
-    ) : section === "Materials" ? (
-      <DataSection title="Learning Materials" kicker="COURSE LIBRARY">
-        <div className="student-list materials-list">
-          {activity.materials.map((material) => (
-            <article className="student-list-item" key={material.id}>
-              <div>
-                <strong>{material.title}</strong>
-                <small>
-                  {material.description ||
-                    material.fileName ||
-                    material.purpose ||
-                    "Learning material"}
-                </small>
-              </div>
-              <button
-                onClick={() =>
-                  void studentApi.downloadMaterial(material.id).then((result) => {
-                    if (result.downloadUrl || result.url)
-                      window.open(
-                        result.downloadUrl || result.url,
-                        "_blank",
-                        "noopener,noreferrer",
-                      );
-                  })
-                }
-              >
-                Download
-              </button>
-            </article>
-          ))}
-          {!activity.materials.length && (
-            <p className="muted">No learning materials are available.</p>
-          )}
-        </div>
-      </DataSection>
-    ) : section === "Payments" ? (
-      <DataSection title="Payments" kicker="COURSE BILLING">
-        <div className="student-table">
-          {activity.payments.map((payment) => (
-            <div className="student-table-row" key={payment.paymentId}>
-              <strong>{payment.courseId}</strong>
-              <span>
-                {payment.amount ?? "â€”"} {payment.currency || ""}
-              </span>
-              <span>{payment.createdAt ? formatDate(payment.createdAt) : ""}</span>
-              <em>{payment.status || "PENDING"}</em>
-            </div>
-          ))}
-          {!activity.payments.length && <p className="muted">No payment records are available.</p>}
-        </div>
-      </DataSection>
-    ) : section === "Browse Courses" ? (
-      <DataSection title="Browse Courses" kicker="COURSE DISCOVERY">
-        <div className="browse-form">
-          <input
-            value={browseId}
-            onChange={(event) => setBrowseId(event.target.value)}
-            placeholder="Enter a course ID"
-          />
-          <button
-            className="primary-button"
-            onClick={() =>
-              void studentApi
-                .course(browseId)
-                .then(setBrowseResult)
-                .catch(() => setBrowseResult(null))
-            }
-          >
-            Find course
-          </button>
-        </div>
-        {browseResult && (
-          <article className="card feature-card">
-            <h2>{browseResult.courseName}</h2>
-            <p>{browseResult.courseDescription || browseResult.subject}</p>
-            <p>Grade monthly fee: {browseResult.courseFeeMonthly ?? "Contact admin"}</p>
-            <div className="feature-actions">
-              <button
-                className="outline-button"
-                onClick={() => void studentApi.enroll(browseResult.id).then(() => onRefresh())}
-              >
-                Request enrollment
-              </button>
-              <button
-                className="primary-button"
-                onClick={() =>
-                  void studentApi.startPayment(browseResult.id).then(() => setSection("Payments"))
-                }
-              >
-                Start payment
-              </button>
-            </div>
-          </article>
-        )}
-      </DataSection>
-    ) : section === "Profile" ? (
-      <DataSection title="Profile" kicker="ACCOUNT">
-        <article className="card feature-card profile-card">
-          <h2>{fullName}</h2>
-          <p>{student?.email}</p>
-          <p>
-            {student?.studentProfile?.grade ? `Grade ${student.studentProfile.grade}` : "Student"}
-          </p>
-          <p>Account status: {student?.accountStatus || "ACTIVE"}</p>
-        </article>
-      </DataSection>
-    ) : (
-      <DataSection title={section} kicker="STUDENT WORKSPACE">
-        <article className="card placeholder-card">
-          <span className="placeholder-icon">âœ¦</span>
-          <h2>
-            {section === "AI Insights"
-              ? "AI assistant is not enabled for students"
-              : "Feature available in your workspace"}
-          </h2>
-          <p>
-            {section === "AI Insights"
-              ? "The backend currently restricts AI chat and conversations to teachers and administrators."
-              : "This area is connected to your student workspace."}
-          </p>
-        </article>
-      </DataSection>
-    );
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case "dashboard":
+        return <StudentDashboard />;
+      case "my-courses":
+        return <MyCoursesView />;
+      case "explore-courses":
+        return <ExploreCoursesView />;
+      case "course-details":
+        return <CourseDetailsView />;
+      case "course-workspace":
+        return <CourseWorkspaceView />;
+      case "enrollments":
+        return <EnrollmentsView />;
+      case "materials":
+        return <LearningMaterialsView />;
+      case "assignments":
+        return <AssignmentsView />;
+      case "assignment-details":
+        return <AssignmentDetailView />;
+      case "quizzes":
+        return <QuizzesView />;
+      case "quiz-taking":
+        return <QuizTakingView />;
+      case "examinations":
+        return <ExaminationsView />;
+      case "exam-taking":
+        return <ExamTakingView />;
+      case "grades":
+        return <GradesView />;
+      case "calendar":
+        return <StudentCalendarView />;
+      case "messages":
+        return <MessagesView />;
+      case "mentify-ai":
+        return <MentifyAIView />;
+      case "notifications":
+        return <NotificationsView />;
+      case "profile":
+        return <ProfileView />;
+      case "settings":
+        return <SettingsView />;
+      default:
+        return <StudentDashboard />;
+    }
+  };
+
   return (
-    <div className="workspace">
-      <button
-        className={`sidebar-backdrop ${mobileMenuOpen ? "open" : ""}`}
-        type="button"
-        aria-label="Close navigation menu"
-        onClick={() => setMobileMenuOpen(false)}
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans transition-colors">
+      {/* Desktop Persistent Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+
+      {/* Mobile Drawer Sidebar */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="relative flex w-72 max-w-[80%] flex-1 flex-col bg-white dark:bg-slate-900 shadow-2xl">
+            <Sidebar />
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close mobile navigation menu"
+              className="absolute top-4 right-4 rounded-lg p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main Container Area with dynamic left margin for Sidebar */}
+      <div
+        className={`flex flex-col min-h-screen transition-all duration-300 ${
+          isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
+        }`}
+      >
+        <TopNavbar onMobileMenuOpen={() => setMobileMenuOpen(true)} />
+
+        <main className="flex-1 px-4 py-6 sm:px-8 max-w-7xl w-full mx-auto">
+          {renderCurrentView()}
+        </main>
+      </div>
+
+      {/* Command Palette Modal */}
+      <CommandPalette />
+
+      {/* Student Backend Authentication Modal */}
+      <SignInModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        onSuccess={() => {
+          refreshData();
+        }}
       />
-      <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""} ${mobileMenuOpen ? "mobile-open" : ""}`}>
-        <div className="sidebar-brand">
-          <button className="brand-home" type="button" onClick={() => navigateTo("Dashboard")}>
-            <span className="brand-mark">M</span>
-            <span className="brand-copy">
-              <strong>Mentify</strong>
-              <small>STUDENT PORTAL</small>
-            </span>
-          </button>
-          <button
-            className="sidebar-collapse"
-            type="button"
-            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}
-          </button>
+
+      {/* Global Interactive Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-xl border border-indigo-200 bg-white px-4 py-3 text-xs font-semibold text-slate-900 shadow-xl dark:border-indigo-900 dark:bg-slate-900 dark:text-white animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+          <span>{toastMessage}</span>
         </div>
-        <nav className="side-nav" aria-label="Student portal">
-          {navGroups.map((group) => (
-            <div className="nav-group" key={group.name}>
-              <h2>{group.name}</h2>
-              {group.items.map(({ label, icon: Icon }) => (
-                <button
-                  type="button"
-                  key={label}
-                  className={section === label ? "active" : ""}
-                  title={sidebarCollapsed ? label : undefined}
-                  aria-current={section === label ? "page" : undefined}
-                  onClick={() => navigateTo(label)}
-                >
-                  <Icon aria-hidden="true" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </div>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <button className="new-session" type="button" title={sidebarCollapsed ? "Mentify AI" : undefined} onClick={() => navigateTo("AI Insights")}>
-            <Sparkles aria-hidden="true" />
-            <span>Mentify AI</span>
-          </button>
-          <button type="button" title={sidebarCollapsed ? "Support" : undefined} onClick={() => navigateTo("Messages")}>
-            <LifeBuoy aria-hidden="true" />
-            <span>Support</span>
-          </button>
-          <button type="button" title={sidebarCollapsed ? "Log out" : undefined} onClick={signOut}>
-            <LogOut aria-hidden="true" />
-            <span>Log out</span>
-          </button>
-        </div>
-      </aside>
-      <main className="main-area">
-        <header className="topbar">
-          <div className="topbar-leading">
-            <button className="mobile-menu" type="button" aria-label="Open navigation menu" onClick={() => setMobileMenuOpen(true)}>
-              <Menu aria-hidden="true" />
-            </button>
-            <nav className="breadcrumbs" aria-label="Breadcrumb">
-              <button type="button" onClick={() => navigateTo("Dashboard")}>Mentify</button>
-              <ChevronRight aria-hidden="true" />
-              <span>{currentGroup}</span>
-              <ChevronRight aria-hidden="true" />
-              <strong>{section}</strong>
-            </nav>
-          </div>
-          <label className="search">
-            <Search aria-hidden="true" />
-            <input aria-label="Search" placeholder="Search courses, notes, or AI insights..." />
-          </label>
-          <div className="topbar-actions">
-            <button className="header-action calendar-shortcut" type="button" aria-label="Open calendar" title="Student calendar" onClick={() => navigateTo("Calendar")}>
-              <CalendarDays aria-hidden="true" />
-            </button>
-            <ThemeToggle />
-          <div className="profile">
-            <div className="profile-copy">
-              <strong>{fullName}</strong>
-              <span>
-                {student?.studentProfile?.grade
-                  ? `Grade ${student.studentProfile.grade}`
-                  : "Student workspace"}
-              </span>
-            </div>
-            <button className="avatar" type="button" aria-label="Open student profile" onClick={() => navigateTo("Profile")}>
-              {initials}
-            </button>
-          </div>
-          </div>
-        </header>
-        <div className="content-area">{content}</div>
-      </main>
+      )}
     </div>
   );
-}
+};
 
 export default function Home() {
-  const [ready, setReady] = useState(() => Boolean(getToken()));
-  const [student, setStudent] = useState<Student>();
-  const activity = useActivity(ready, student?.id);
-  useEffect(() => {
-    if (ready)
-      studentApi
-        .me()
-        .then(setStudent)
-        .catch(() => setReady(false));
-  }, [ready]);
-  const refresh = () => {
-    setReady(false);
-    window.setTimeout(() => setReady(true), 0);
-  };
-  if (!ready) return <SignIn onDone={() => setReady(true)} />;
   return (
-    <Dashboard
-      student={student}
-      activity={activity}
-      onSignOut={() => setReady(false)}
-      onRefresh={refresh}
-    />
+    <StudentProvider>
+      <MainLayout />
+    </StudentProvider>
   );
 }
