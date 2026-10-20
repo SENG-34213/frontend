@@ -96,3 +96,22 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
   return responseBody as T;
 }
+
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const accessToken = getAccessToken();
+  const headers = new Headers({ Accept: "application/json" });
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+  const body = await readJson(response);
+  if (!response.ok)
+    throw new ApiError(
+      body?.message || `Request failed with status ${response.status}`,
+      response.status,
+      body,
+    );
+  return body as T;
+}

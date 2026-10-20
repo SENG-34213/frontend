@@ -1,0 +1,424 @@
+import { apiRequest, apiUpload } from "./client";
+import type {
+  Assignment,
+  CalendarEvent,
+  Course,
+  Examination,
+  LearningMaterial,
+  NotificationItem,
+  Quiz,
+  StudentProfile,
+  Teacher,
+} from "../types";
+import type { StudentUserSummary } from "../auth/authTypes";
+
+type ApiEnvelope<T> = { data?: T; message?: string };
+// Backend DTOs are intentionally normalized at this boundary because services currently
+// return different envelopes while the contract is being consolidated.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JsonRecord = Record<string, any>;
+
+function dataOf<T>(response: ApiEnvelope<T> | T): T {
+  return (
+    response && typeof response === "object" && "data" in response ? response.data : response
+  ) as T;
+}
+
+function listOf<T>(response: unknown): T[] {
+  const value = dataOf(response as ApiEnvelope<unknown>);
+  if (Array.isArray(value)) return value as T[];
+  if (value && typeof value === "object") {
+    const record = value as JsonRecord;
+    for (const key of ["items", "content", "results", "notifications", "courses"]) {
+      if (Array.isArray(record[key])) return record[key] as T[];
+    }
+  }
+  return [];
+}
+
+const idOf = (value: unknown) => String(value ?? "");
+
+function toProfile(user: StudentUserSummary): StudentProfile {
+  const record = user as JsonRecord;
+  return {
+    id: idOf(user.keycloakUserId || user.id),
+    studentId: idOf(record.studentId || user.keycloakUserId || user.id),
+    name: [user.firstName, user.lastName].filter(Boolean).join(" "),
+    email: user.email,
+    avatar: idOf(record.avatar || record.profileImage),
+    role: "STUDENT",
+    institution: idOf(record.institution),
+    department: idOf(record.department),
+    degreeProgram: idOf(record.degreeProgram),
+    semester: idOf(record.semester),
+    currentGpa: Number(record.currentGpa ?? 0),
+    creditsCompleted: Number(record.creditsCompleted ?? 0),
+    totalCreditsRequired: Number(record.totalCreditsRequired ?? 0),
+    academicAdvisor: {
+      name: idOf(record.academicAdvisorName),
+      email: idOf(record.academicAdvisorEmail),
+      office: idOf(record.academicAdvisorOffice),
+    },
+    phone: idOf(record.phone),
+    bio: idOf(record.bio),
+    joinedDate: idOf(record.joinedDate || record.createdAt),
+  };
+}
+
+function toTeacher(value: JsonRecord | undefined): Teacher {
+  return {
+    id: idOf(value?.id || value?.teacherId || value?.assignedTeacherId),
+    name: idOf(value?.name || value?.fullName),
+    title: idOf(value?.title),
+    avatar: idOf(value?.avatar),
+    department: idOf(value?.department),
+    officeHours: idOf(value?.officeHours),
+    email: idOf(value?.email),
+  };
+}
+
+function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
+  const id = idOf(value.id || value.courseId);
+  return {
+    id,
+    code: idOf(value.courseCode || value.code),
+    title: idOf(value.courseName || value.title),
+    category: idOf(value.subject || value.category),
+    description: idOf(value.courseDescription || value.description),
+    instructor: toTeacher(value.instructor || value.teacher),
+    bannerColor: "from-indigo-600 to-indigo-900",
+    coverImage: idOf(value.courseThumbnail || value.coverImage),
+    enrolled: enrolledIds.has(id) || Boolean(value.enrolled),
+    enrollmentStatus: enrolledIds.has(id) ? "ACTIVE" : "AVAILABLE",
+    progressPercentage: Number(value.progressPercentage ?? value.progress ?? 0),
+    lastAccessedLessonId: idOf(value.lastAccessedLessonId),
+    lastAccessedLessonTitle: idOf(value.lastAccessedLessonTitle),
+    credits: Number(value.credits ?? value.creditCount ?? 0),
+    level: value.level || "Intermediate",
+    modules: [],
+    schedule: idOf(value.schedule),
+    room: idOf(value.room),
+    enrolledStudentsCount: Number(value.numberOfStudents ?? value.enrolledStudentsCount ?? 0),
+    rating: Number(value.rating ?? 0),
+    currentGrade: value.currentGrade,
+    currentScorePercentage: value.currentScorePercentage,
+  };
+}
+
+function toAssignment(value: JsonRecord, course?: Course): Assignment {
+  const status = String(value.status || "PENDING").toUpperCase();
+  return {
+    id: idOf(value.id),
+    courseId: idOf(value.courseId),
+    courseCode: course?.code || "",
+    courseTitle: course?.title || "",
+    title: idOf(value.title),
+    description: idOf(value.description),
+    instructions: idOf(value.instructions),
+    dueDate: idOf(value.dueDate),
+    maxScore: Number(value.maxMarks ?? value.maxScore ?? 0),
+    status: ["SUBMITTED", "GRADED", "OVERDUE"].includes(status)
+      ? (status as Assignment["status"])
+      : "PENDING",
+    priority: "MEDIUM",
+    submittedDate: value.submittedAt,
+    grade: value.marks,
+    feedback: value.feedback,
+    rubricCriteria: [],
+    attachments: [],
+    submissionText: value.content,
+    submittedFiles: [],
+  };
+}
+
+function toMaterial(value: JsonRecord): LearningMaterial {
+  return {
+    id: idOf(value.id || value.materialId),
+    courseId: idOf(value.courseId),
+    courseCode: "",
+    courseTitle: "",
+    title: idOf(value.title),
+    description: idOf(value.description),
+    type: value.type || "DOCUMENT",
+    fileSize: idOf(value.fileSize),
+    uploadedDate: idOf(value.createdAt || value.uploadedDate),
+    downloadsCount: Number(value.downloadsCount ?? 0),
+    previewUrl: value.fileUrl || value.downloadUrl,
+    contentSnippet: value.contentSnippet,
+  };
+}
+
+function toLesson(value: JsonRecord, moduleId: string) {
+  return {
+    id: idOf(value.id),
+    moduleId,
+    title: idOf(value.title),
+    durationMinutes: Number(value.durationMinutes ?? 0),
+    type: value.type || "reading",
+    completed: Boolean(value.completed),
+    videoUrl: value.videoUrl,
+    content: idOf(value.content || value.description),
+  } as Course["modules"][number]["lessons"][number];
+}
+
+function toModuleRecord(value: JsonRecord, courseId: string) {
+  return {
+    id: idOf(value.id),
+    title: idOf(value.title),
+    description: idOf(value.description),
+    courseId,
+    lessons: [] as Course["modules"][number]["lessons"],
+  };
+}
+
+function toCalendarEvent(value: JsonRecord): CalendarEvent {
+  const start = idOf(value.startDateTime || value.start);
+  const end = idOf(value.endDateTime || value.end);
+  return {
+    id: idOf(value.id),
+    title: idOf(value.title),
+    courseCode: "",
+    courseTitle: "",
+    type: value.eventType || "CLASS",
+    date: start.slice(0, 10),
+    startTime: start,
+    endTime: end,
+    location: idOf(value.location),
+    description: idOf(value.description),
+  };
+}
+
+function toNotification(value: JsonRecord): NotificationItem {
+  return {
+    id: idOf(value.id),
+    title: idOf(value.title),
+    description: idOf(value.message || value.description),
+    timestamp: idOf(value.occurredAt || value.createdAt),
+    type: value.type || "ANNOUNCEMENT",
+    read: Boolean(value.readAt),
+  };
+}
+
+export async function loadStudentWorkspace(user: StudentUserSummary) {
+  const studentId = idOf(user.keycloakUserId || user.id);
+  const profile = toProfile(user);
+  const [
+    courseResponse,
+    enrollmentResponse,
+    materialResponse,
+    calendarResponse,
+    notificationResponse,
+    examResponse,
+  ] = await Promise.allSettled([
+    apiRequest<unknown>("/api/v1/course"),
+    apiRequest<unknown>(`/api/v1/enrollments/students/${studentId}/courses`),
+    apiRequest<unknown>("/api/v1/materials"),
+    apiRequest<unknown>("/api/v1/calendar/upcoming?limit=100"),
+    apiRequest<unknown>("/api/v1/notifications?size=100"),
+    apiRequest<unknown>("/api/v1/exams/me"),
+  ]);
+
+  const enrollments =
+    enrollmentResponse.status === "fulfilled" ? listOf<JsonRecord>(enrollmentResponse.value) : [];
+  const enrolledIds = new Set(
+    enrollments.flatMap((item) =>
+      (Array.isArray(item.courseIds) ? item.courseIds : [item.courseId]).filter(Boolean).map(idOf),
+    ),
+  );
+  const rawCourses =
+    courseResponse.status === "fulfilled" ? listOf<JsonRecord>(courseResponse.value) : [];
+  const courses = rawCourses.map((course) => toCourse(course, enrolledIds));
+  await Promise.all(
+    courses.map(async (course) => {
+      try {
+        const modules = listOf<JsonRecord>(
+          await apiRequest<unknown>(`/api/v1/course/${course.id}/modules`),
+        );
+        course.modules = await Promise.all(
+          modules.map(async (module) => {
+            const result = toModuleRecord(module, course.id);
+            try {
+              const lessons = listOf<JsonRecord>(
+                await apiRequest<unknown>(
+                  `/api/v1/course/${course.id}/modules/${result.id}/lessons`,
+                ),
+              );
+              result.lessons = lessons.map((lesson) => toLesson(lesson, result.id));
+            } catch {
+              /* content can be unavailable while a course is being published */
+            }
+            return result;
+          }),
+        );
+      } catch {
+        /* preserve the course shell when content is unavailable */
+      }
+    }),
+  );
+  const courseMap = new Map(courses.map((course) => [course.id, course]));
+
+  const assignments = (
+    await Promise.all(
+      courses
+        .filter((course) => course.enrolled)
+        .map(async (course) => {
+          try {
+            const response = await apiRequest<unknown>(`/api/v1/courses/${course.id}/assignments`);
+            return listOf<JsonRecord>(response).map((item) => toAssignment(item, course));
+          } catch {
+            return [];
+          }
+        }),
+    )
+  ).flat();
+
+  const quizzes = (
+    await Promise.all(
+      courses
+        .filter((course) => course.enrolled)
+        .map(async (course) => {
+          try {
+            const response = await apiRequest<unknown>(`/api/courses/${course.id}/quizzes`);
+            return listOf<JsonRecord>(response).map(
+              (item) =>
+                ({
+                  id: idOf(item.id),
+                  courseId: course.id,
+                  courseCode: course.code,
+                  courseTitle: course.title,
+                  title: idOf(item.title),
+                  description: idOf(item.description),
+                  durationMinutes: Number(item.durationMinutes ?? 0),
+                  questionsCount: Number(item.questions?.length ?? item.questionsCount ?? 0),
+                  totalPoints: Number(item.totalMarks ?? 0),
+                  status: "AVAILABLE" as const,
+                  dueDate: idOf(item.endTime),
+                  attemptsAllowed: Number(item.maxAttempts ?? 0),
+                  attemptsUsed: 0,
+                  questions: [],
+                }) satisfies Quiz,
+            );
+          } catch {
+            return [];
+          }
+        }),
+    )
+  ).flat();
+
+  return {
+    profile,
+    courses,
+    assignments,
+    quizzes,
+    examinations:
+      examResponse.status === "fulfilled"
+        ? listOf<JsonRecord>(examResponse.value).map(
+            (item) =>
+              ({
+                id: idOf(item.examId || item.id),
+                courseId: idOf(item.courseId),
+                courseCode: "",
+                courseTitle: "",
+                title: idOf(item.title),
+                type: item.type || "FINAL",
+                scheduledDate: idOf(item.examDate),
+                startTime: "",
+                durationMinutes: 0,
+                location: "",
+                proctorName: "",
+                status: item.examStatus === "COMPLETED" ? "COMPLETED" : "UPCOMING",
+                totalMarks: Number(item.totalMarks ?? 0),
+                weightPercentage: 0,
+                rules: [],
+                score: item.marksObtained,
+                letterGrade: item.grade,
+              }) satisfies Examination,
+          )
+        : [],
+    materials:
+      materialResponse.status === "fulfilled"
+        ? listOf<JsonRecord>(materialResponse.value)
+            .map(toMaterial)
+            .map((material) => ({
+              ...material,
+              courseCode: courseMap.get(material.courseId)?.code || "",
+              courseTitle: courseMap.get(material.courseId)?.title || "",
+            }))
+        : [],
+    calendarEvents:
+      calendarResponse.status === "fulfilled"
+        ? listOf<JsonRecord>(calendarResponse.value).map(toCalendarEvent)
+        : [],
+    notifications:
+      notificationResponse.status === "fulfilled"
+        ? listOf<JsonRecord>(notificationResponse.value).map(toNotification)
+        : [],
+  };
+}
+
+export async function enrollStudent(courseId: string, studentId: string) {
+  return apiRequest<unknown>("/api/v1/enrollments/me", {
+    method: "POST",
+    body: { studentId, courseId },
+  });
+}
+
+export async function createAssignmentSubmission(assignmentId: string, content: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/v1/assignments/${assignmentId}/submissions`, {
+    method: "POST",
+    body: { content },
+  });
+}
+
+export async function uploadSubmissionFile(submissionId: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return apiUpload<ApiEnvelope<JsonRecord>>(`/api/v1/submissions/${submissionId}/files`, form);
+}
+
+export async function finalizeAssignmentSubmission(submissionId: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/v1/submissions/${submissionId}/submit`, {
+    method: "POST",
+  });
+}
+
+export async function startQuizAttempt(quizId: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/quizzes/${quizId}/attempts`, { method: "POST" });
+}
+
+export async function saveQuizAnswers(attemptId: string, answers: Record<string, string[]>) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/quiz-attempts/${attemptId}/answers`, {
+    method: "PUT",
+    body: { answers },
+  });
+}
+
+export async function finalizeQuizAttempt(attemptId: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/quiz-attempts/${attemptId}/submit`, {
+    method: "POST",
+  });
+}
+
+export async function markLesson(courseId: string, lessonId: string, complete: boolean) {
+  return apiRequest<unknown>(`/api/v1/progress/courses/${courseId}/lessons/${lessonId}`, {
+    method: "PUT",
+    body: { completed: complete },
+  });
+}
+
+export async function markNotificationRead(id: string) {
+  return apiRequest<unknown>(`/api/v1/notifications/${id}/read`, { method: "PATCH" });
+}
+
+export async function markAllNotificationsRead() {
+  return apiRequest<unknown>("/api/v1/notifications/read-all", { method: "PATCH" });
+}
+
+export async function sendAiMessage(query: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>("/api/ai/chat", {
+    method: "POST",
+    body: { message: query },
+  });
+}
+
+export { toProfile };
