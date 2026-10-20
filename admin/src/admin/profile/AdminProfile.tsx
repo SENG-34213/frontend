@@ -37,7 +37,9 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
       })
       .catch((requestError: unknown) => {
         if (active) {
-          setError(requestError instanceof Error ? requestError.message : "Unable to load profile.");
+          setError(
+            requestError instanceof Error ? requestError.message : "Unable to load profile.",
+          );
         }
       })
       .finally(() => {
@@ -119,129 +121,132 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
           Loading your profile...
         </div>
       ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Left Profile Card */}
+          <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center space-y-4">
+            <UserAvatar name={fullName} size="xl" />
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{fullName}</h3>
+              <p className="text-xs text-slate-400 mt-0.5">{profile?.email || "—"}</p>
+              <div className="mt-3 flex items-center justify-center gap-2">
+                <RoleBadge role={profileRole} />
+                <StatusBadge status={status} />
+              </div>
+            </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Profile Card */}
-        <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center space-y-4">
-          <UserAvatar name={fullName} size="xl" />
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">{fullName}</h3>
-            <p className="text-xs text-slate-400 mt-0.5">{profile?.email || "—"}</p>
-            <div className="mt-3 flex items-center justify-center gap-2">
-              <RoleBadge role={profileRole} />
-              <StatusBadge status={status} />
+            <div className="w-full pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs text-left">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Admin Code:</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">
+                  {profile?.adminProfile?.adminCode || "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Department:</span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  Administration
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Keycloak Realm:</span>
+                <span className="font-mono text-slate-600 dark:text-slate-400">mentify</span>
+              </div>
             </div>
           </div>
 
-          <div className="w-full pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs text-left">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Admin Code:</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-white">{profile?.adminProfile?.adminCode || "—"}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Department:</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">Administration</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Keycloak Realm:</span>
-              <span className="font-mono text-slate-600 dark:text-slate-400">mentify</span>
-            </div>
+          {/* Right Details & Edit Form */}
+          <div className="md:col-span-2 p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              Administrative Profile & Contact Information
+            </h3>
+
+            <form onSubmit={handleSave} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    Institutional Email (SSO Linked)
+                  </label>
+                  <input
+                    type="email"
+                    disabled
+                    value={profile?.email || ""}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    Emergency Phone Contact
+                  </label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    National Identity Identifier (NIC)
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value={profile?.adminProfile?.nic || "Not recorded"}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed font-mono"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
+                    Campus Office / Physical Address
+                  </label>
+                  <input
+                    type="text"
+                    value={address}
+                    readOnly
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSaving || !profile}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+                >
+                  {isSaving ? "Saving..." : "Save Contact Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-
-        {/* Right Details & Edit Form */}
-        <div className="md:col-span-2 p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-            Administrative Profile & Contact Information
-          </h3>
-
-          <form onSubmit={handleSave} className="space-y-4 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                  Institutional Email (SSO Linked)
-                </label>
-                <input
-                  type="email"
-                  disabled
-                  value={profile?.email || ""}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                  Emergency Phone Contact
-                </label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                  National Identity Identifier (NIC)
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  value={profile?.adminProfile?.nic || "Not recorded"}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed font-mono"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                  Campus Office / Physical Address
-                </label>
-                <input
-                  type="text"
-                  value={address}
-                  readOnly
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-500 cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-              <button
-                type="submit"
-                disabled={isSaving || !profile}
-                className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
-              >
-                {isSaving ? "Saving..." : "Save Contact Changes"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
       )}
     </div>
   );

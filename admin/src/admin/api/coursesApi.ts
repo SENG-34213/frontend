@@ -56,8 +56,7 @@ export function mapCourseResponse(course: CourseApiResponse): Course {
     ? course.numberOfStudents || 0
     : 0;
   const status = course.courseStatus?.toUpperCase();
-  const isPublished =
-    course.isPublished ?? course.published ?? status === "PUBLISHED";
+  const isPublished = course.isPublished ?? course.published ?? status === "PUBLISHED";
 
   return {
     id: course.id,

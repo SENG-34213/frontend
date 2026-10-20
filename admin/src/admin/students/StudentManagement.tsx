@@ -691,7 +691,8 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                     Student Registered
                   </h4>
                   <p className="text-xs text-slate-500 mt-1">
-                    The student account was created successfully. The invitation email is being sent in the background.
+                    The student account was created successfully. The invitation email is being sent
+                    in the background.
                   </p>
                 </div>
 
@@ -772,7 +773,14 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                     onClick={handleFinalSubmit}
                     className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white flex items-center gap-1.5"
                   >
-                    {isSubmitting ? <span>Registering...</span> : <><CheckCircle2 className="w-4 h-4" /><span>Confirm & Register Student</span></>}
+                    {isSubmitting ? (
+                      <span>Registering...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Confirm & Register Student</span>
+                      </>
+                    )}
                   </button>
                 )}
               </div>

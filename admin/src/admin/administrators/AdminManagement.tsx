@@ -490,7 +490,8 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                   Administrator Registered
                 </h4>
                 <p className="text-xs text-slate-500">
-                  The administrator account was created successfully. The invitation email is being sent in the background.
+                  The administrator account was created successfully. The invitation email is being
+                  sent in the background.
                 </p>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 max-w-sm mx-auto text-left text-xs space-y-2">
                   <div className="flex items-center justify-between">

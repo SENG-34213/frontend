@@ -113,31 +113,38 @@ function CourseThumbnailImage({
   className: string;
 }) {
   const materialId = materialIdFromThumbnail(source);
-  const [resolvedSource, setResolvedSource] = useState(materialId ? "" : source || "");
+  const [materialSource, setMaterialSource] = useState("");
+  const [loadedMaterialId, setLoadedMaterialId] = useState("");
 
   useEffect(() => {
-    let active = true;
-    if (!materialId) {
-      setResolvedSource(source || "");
-      return () => {
-        active = false;
-      };
-    }
+    if (!materialId) return;
 
-    setResolvedSource("");
+    let active = true;
     void createMaterialApi()
       .download(materialId)
       .then((response) => {
-        if (active) setResolvedSource(response.downloadUrl || response.url || "");
+        if (active) {
+          setMaterialSource(response.downloadUrl || response.url || "");
+          setLoadedMaterialId(materialId);
+        }
       })
       .catch(() => {
-        if (active) setResolvedSource("");
+        if (active) {
+          setMaterialSource("");
+          setLoadedMaterialId(materialId);
+        }
       });
 
     return () => {
       active = false;
     };
   }, [materialId, source]);
+
+  const resolvedSource = materialId
+    ? loadedMaterialId === materialId
+      ? materialSource
+      : ""
+    : source || "";
 
   if (!resolvedSource) return null;
   return <img src={resolvedSource} alt={alt} className={className} />;
@@ -226,7 +233,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setFormErrors((current) => ({ ...current, courseThumbnail: "Image must be 5 MB or smaller." }));
+      setFormErrors((current) => ({
+        ...current,
+        courseThumbnail: "Image must be 5 MB or smaller.",
+      }));
       return;
     }
 
@@ -384,7 +394,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   const teacherNameForCourse = (course: Course) => {
     const teacher = teacherForCourse(course);
-    return teacher ? `${teacher.firstName} ${teacher.lastName}` : course.teacherName || "Unassigned faculty";
+    return teacher
+      ? `${teacher.firstName} ${teacher.lastName}`
+      : course.teacherName || "Unassigned faculty";
   };
 
   // Submit the same form through the real Course Service API.
@@ -493,9 +505,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       }
       setFormErrors({
         api:
-          error instanceof Error
-            ? error.message
-            : "Unable to save the course. Please try again.",
+          error instanceof Error ? error.message : "Unable to save the course. Please try again.",
       });
     } finally {
       setThumbnailUploadProgress(null);
@@ -807,7 +817,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       {/* Faculty */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                            <UserAvatar name={teacherNameForCourse(course)} size="sm" />
+                          <UserAvatar name={teacherNameForCourse(course)} size="sm" />
                           <div>
                             <span className="font-medium text-slate-900 dark:text-white block">
                               {teacherNameForCourse(course)}

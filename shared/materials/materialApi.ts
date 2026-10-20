@@ -102,9 +102,7 @@ function uploadWithProgress(
           reject(new Error("Image is too large. Please choose an image smaller than 5 MB."));
           return;
         }
-        reject(
-          new Error(serverMessage || `Material upload failed (${xhr.status}).`),
-        );
+        reject(new Error(serverMessage || `Material upload failed (${xhr.status}).`));
         return;
       }
       resolve(read<Material>(payload));

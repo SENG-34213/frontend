@@ -521,7 +521,9 @@ export default function App() {
       teacherId: updated.assignedTeacherId || updated.teacherId,
     };
     setCourses((previous) =>
-      previous.map((course) => (course.id === courseId ? { ...course, ...enrichedUpdated } : course)),
+      previous.map((course) =>
+        course.id === courseId ? { ...course, ...enrichedUpdated } : course,
+      ),
     );
     addToast("success", "Course Updated", `${enrichedUpdated.title} was updated successfully.`);
     return enrichedUpdated;
