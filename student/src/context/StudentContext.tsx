@@ -194,7 +194,7 @@ export const StudentProvider: React.FC<{
         const conversationsResponse = await listAiConversations();
         const records = Array.isArray(conversationsResponse)
           ? conversationsResponse
-          : ((conversationsResponse as { data?: unknown }).data || []);
+          : (conversationsResponse as { data?: unknown }).data || [];
         const first = Array.isArray(records) ? (records[0] as Record<string, unknown>) : undefined;
         const conversationId = first?.id ? String(first.id) : undefined;
         const id =
@@ -204,7 +204,7 @@ export const StudentProvider: React.FC<{
         const messageResponse = await listAiConversationMessages(id);
         const messageRecords = Array.isArray(messageResponse)
           ? messageResponse
-          : ((messageResponse as { data?: unknown }).data || []);
+          : (messageResponse as { data?: unknown }).data || [];
         if (!active) return;
         setAiConversationId(id);
         setAiChats(
@@ -219,7 +219,8 @@ export const StudentProvider: React.FC<{
           }),
         );
       } catch (error) {
-        if (active) showToast(error instanceof Error ? error.message : "AI assistant is unavailable.");
+        if (active)
+          showToast(error instanceof Error ? error.message : "AI assistant is unavailable.");
       }
     };
     loadAiConversation();
@@ -430,9 +431,7 @@ export const StudentProvider: React.FC<{
     const page = (messagePages[conversationId] ?? 0) + 1;
     try {
       const response = await listCommunicationMessages(conversationId, page, 30);
-      const raw = Array.isArray(response)
-        ? response
-        : ((response as { data?: unknown }).data || []);
+      const raw = Array.isArray(response) ? response : (response as { data?: unknown }).data || [];
       const studentId = profile.id;
       const olderMessages = (Array.isArray(raw) ? raw : []).map((item) =>
         toCommunicationMessage(item as Record<string, unknown>, studentId),
@@ -442,9 +441,12 @@ export const StudentProvider: React.FC<{
           conversation.id === conversationId
             ? {
                 ...conversation,
-                messages: [...olderMessages, ...conversation.messages.filter(
-                  (message) => !olderMessages.some((older) => older.id === message.id),
-                )],
+                messages: [
+                  ...olderMessages,
+                  ...conversation.messages.filter(
+                    (message) => !olderMessages.some((older) => older.id === message.id),
+                  ),
+                ],
               }
             : conversation,
         ),
@@ -551,9 +553,15 @@ export const StudentProvider: React.FC<{
           studentId: profile.id,
           courseId: "",
           completedSessions,
-          presentCount: attendanceSummaries.reduce((total, summary) => total + summary.presentCount, 0),
+          presentCount: attendanceSummaries.reduce(
+            (total, summary) => total + summary.presentCount,
+            0,
+          ),
           lateCount: attendanceSummaries.reduce((total, summary) => total + summary.lateCount, 0),
-          absentCount: attendanceSummaries.reduce((total, summary) => total + summary.absentCount, 0),
+          absentCount: attendanceSummaries.reduce(
+            (total, summary) => total + summary.absentCount,
+            0,
+          ),
           attendedCount,
           attendancePercentage: completedSessions ? (attendedCount / completedSessions) * 100 : 0,
         };

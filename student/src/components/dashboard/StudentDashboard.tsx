@@ -242,10 +242,14 @@ export const StudentDashboard: React.FC = () => {
             <span className="font-display text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
               {attendanceOverall ? `${attendanceOverall.attendancePercentage.toFixed(1)}%` : "—"}
             </span>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">overall</span>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              overall
+            </span>
           </div>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {attendanceOverall ? `${attendanceOverall.attendedCount} attended sessions` : "No attendance data"}
+            {attendanceOverall
+              ? `${attendanceOverall.attendedCount} attended sessions`
+              : "No attendance data"}
           </p>
         </div>
       </div>
@@ -270,7 +274,10 @@ export const StudentDashboard: React.FC = () => {
             {attendanceSummaries.map((summary) => {
               const course = courses.find((item) => item.id === summary.courseId);
               return (
-                <div key={summary.courseId} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
+                <div
+                  key={summary.courseId}
+                  className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
                       {course?.code || summary.courseId}
