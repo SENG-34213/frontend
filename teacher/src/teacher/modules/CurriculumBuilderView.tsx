@@ -62,6 +62,7 @@ const toModule = (
   title: module.title,
   description: module.description || "",
   order: module.sequenceOrder,
+  dateDuration: module.dateDuration ?? 1,
   status: module.visible === false ? "Draft" : "Published",
   lessons: lessons.map((lesson, index) => toLesson(lesson as CourseContentLesson, index + 1)),
 });
@@ -91,6 +92,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [newModuleDesc, setNewModuleDesc] = useState("");
+  const [newModuleDuration, setNewModuleDuration] = useState("1");
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     type: "module" | "lesson";
@@ -266,6 +268,10 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     if (!newModuleTitle.trim()) return;
 
     if (!selectedCourseId) return;
+    if (!/^[1-9]\d*$/.test(newModuleDuration)) {
+      setError("Duration must be a positive whole number of days.");
+      return;
+    }
     setIsSaving(true);
     setError(null);
     try {
@@ -273,6 +279,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         title: newModuleTitle.trim(),
         description: newModuleDesc.trim(),
         sequenceOrder: editingModule?.order || courseModules.length + 1,
+        dateDuration: Number(newModuleDuration),
         isVisible: editingModule?.status !== "Draft",
       };
       const saved = editingModule
@@ -287,6 +294,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
       setExpandedModuleIds((prev) => ({ ...prev, [nextModule.id]: true }));
       setNewModuleTitle("");
       setNewModuleDesc("");
+      setNewModuleDuration("1");
       setEditingModule(null);
       setIsCreatingModule(false);
     } catch (requestError: unknown) {
@@ -363,6 +371,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
               setEditingModule(null);
               setNewModuleTitle("");
               setNewModuleDesc("");
+              setNewModuleDuration("1");
               setIsCreatingModule(true);
             }}
             className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
@@ -416,6 +425,23 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                 onChange={(e) => setNewModuleDesc(e.target.value)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Duration in days
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                required
+                value={newModuleDuration}
+                onChange={(e) => setNewModuleDuration(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+              />
+              <p className="mt-1 text-[10px] text-slate-400">
+                Use the arrows or type a whole number.
+              </p>
             </div>
           </div>
 
@@ -527,6 +553,9 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                   <span className="text-xs font-mono tabular-nums text-slate-500 hidden sm:inline">
                     {mod.lessons.length} lessons
                   </span>
+                  <span className="text-xs font-mono tabular-nums text-slate-500 hidden md:inline">
+                    Duration: {mod.dateDuration} days
+                  </span>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -534,6 +563,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                       setEditingModule(mod);
                       setNewModuleTitle(mod.title);
                       setNewModuleDesc(mod.description);
+                      setNewModuleDuration(String(mod.dateDuration));
                       setIsCreatingModule(true);
                     }}
                     className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"

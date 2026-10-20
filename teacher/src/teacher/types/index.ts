@@ -87,6 +87,7 @@ export interface Module {
   title: string;
   description: string;
   order: number;
+  dateDuration: number;
   status: "Published" | "Draft";
   lessons: Lesson[];
 }

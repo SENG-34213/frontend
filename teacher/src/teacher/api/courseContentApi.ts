@@ -6,7 +6,7 @@ export type CourseContentModule = {
   title: string;
   description?: string;
   sequenceOrder: number;
-  dateDuration?: number;
+  dateDuration: number;
   visible?: boolean;
   moduleImage?: string;
 };
@@ -67,7 +67,13 @@ export function getCourseModules(courseId: string, signal?: AbortSignal) {
 
 export function createCourseModule(
   courseId: string,
-  payload: { title: string; description?: string; sequenceOrder: number; isVisible?: boolean },
+  payload: {
+    title: string;
+    description?: string;
+    sequenceOrder: number;
+    dateDuration: number;
+    isVisible?: boolean;
+  },
 ) {
   return apiRequest<CourseContentModule | ApiEnvelope<CourseContentModule>>(
     `/api/v1/course/${coursePath(courseId)}/modules`,
@@ -78,7 +84,13 @@ export function createCourseModule(
 export function updateCourseModule(
   courseId: string,
   moduleId: string,
-  payload: { title: string; description?: string; sequenceOrder: number; isVisible?: boolean },
+  payload: {
+    title: string;
+    description?: string;
+    sequenceOrder: number;
+    dateDuration: number;
+    isVisible?: boolean;
+  },
 ) {
   return apiRequest<CourseContentModule | ApiEnvelope<CourseContentModule>>(
     modulePath(courseId, moduleId),
