@@ -6,6 +6,7 @@ interface QuizResultModalProps {
   score: number;
   maxScore: number;
   percentage: number;
+  passed: boolean;
   quizTitle: string;
   onClose: () => void;
   onRetake?: () => void;
@@ -15,6 +16,7 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
   score,
   maxScore,
   percentage,
+  passed,
   quizTitle,
   onClose,
   onRetake,
@@ -33,7 +35,7 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
     }
   }, [percentage]);
 
-  const isPassed = percentage >= 70;
+  const isPassed = passed;
 
   return (
     <div
@@ -83,7 +85,7 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
           {isPassed
             ? "Outstanding work! Your results have been officially recorded in your Mentify gradebook."
-            : "You scored below the 70% benchmark. Review the topic explanations and consult your TA notes."}
+            : "Your result has been recorded. Review the course material before your next attempt."}
         </p>
 
         <div className="flex items-center gap-3 pt-2">

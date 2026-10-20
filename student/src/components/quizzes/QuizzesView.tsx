@@ -110,7 +110,7 @@ export const QuizzesView: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span>Attempts:</span>
                     <span className="font-medium text-slate-700 dark:text-slate-300">
-                      {quiz.attemptsUsed} of {quiz.attemptsAllowed} used
+                      {quiz.attemptsUsed ?? "—"} of {quiz.attemptsAllowed ?? "—"} used
                     </span>
                   </div>
 

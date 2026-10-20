@@ -150,13 +150,12 @@ export interface Assignment {
 export interface QuizQuestion {
   id: string;
   prompt: string;
-  type: "multiple-choice" | "multi-select" | "true-false";
+  type: "multiple-choice";
   options: {
     id: string;
     text: string;
   }[];
-  correctAnswerIds: string[];
-  explanation: string;
+  explanation?: string;
   points: number;
 }
 
@@ -170,10 +169,10 @@ export interface Quiz {
   durationMinutes: number;
   questionsCount: number;
   totalPoints: number;
-  status: "AVAILABLE" | "UPCOMING" | "COMPLETED";
+  status: "AVAILABLE" | "UPCOMING" | "COMPLETED" | "IN_PROGRESS";
   dueDate: string;
-  attemptsAllowed: number;
-  attemptsUsed: number;
+  attemptsAllowed?: number;
+  attemptsUsed?: number;
   lastScore?: number;
   lastScorePercentage?: number;
   questions: QuizQuestion[];
@@ -211,17 +210,18 @@ export interface LearningMaterial {
   type: "PDF" | "VIDEO" | "CODE" | "SLIDES" | "DOCUMENT";
   fileSize: string;
   uploadedDate: string;
-  downloadsCount: number;
+  downloadsCount?: number;
   previewUrl?: string;
   contentSnippet?: string;
 }
 
 export interface CalendarEvent {
   id: string;
+  courseId?: string;
   title: string;
   courseCode?: string;
   courseTitle?: string;
-  type: "CLASS" | "ASSIGNMENT_DUE" | "QUIZ" | "EXAM" | "OFFICE_HOURS";
+  type: "CLASS" | "ASSIGNMENT_DUE" | "QUIZ" | "EXAM" | "OFFICE_HOURS" | "ATTENDANCE";
   date: string; // YYYY-MM-DD
   startTime: string;
   endTime: string;

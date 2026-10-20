@@ -155,6 +155,18 @@ function toAssignment(value: JsonRecord, course?: Course): Assignment {
 }
 
 function toMaterial(value: JsonRecord): LearningMaterial {
+  const type = String(value.type || "DOCUMENT").toUpperCase();
+  const materialType = ["PDF", "VIDEO", "CODE", "SLIDES", "DOCUMENT"].includes(type)
+    ? type
+    : type === "PRESENTATION"
+      ? "SLIDES"
+      : "DOCUMENT";
+  const bytes = Number(value.fileSize);
+  const fileSize = Number.isFinite(bytes)
+    ? bytes >= 1024 * 1024
+      ? `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+      : `${Math.max(1, Math.round(bytes / 1024))} KB`
+    : "";
   return {
     id: idOf(value.id || value.materialId),
     courseId: idOf(value.courseId),
@@ -162,12 +174,42 @@ function toMaterial(value: JsonRecord): LearningMaterial {
     courseTitle: "",
     title: idOf(value.title),
     description: idOf(value.description),
-    type: value.type || "DOCUMENT",
-    fileSize: idOf(value.fileSize),
+    type: materialType as LearningMaterial["type"],
+    fileSize,
     uploadedDate: idOf(value.createdAt || value.uploadedDate),
-    downloadsCount: Number(value.downloadsCount ?? 0),
-    previewUrl: value.fileUrl || value.downloadUrl,
-    contentSnippet: value.contentSnippet,
+  };
+}
+
+function toQuizQuestion(value: JsonRecord): Quiz["questions"][number] {
+  return {
+    id: idOf(value.id),
+    prompt: idOf(value.questionText),
+    type: "multiple-choice",
+    options: (Array.isArray(value.options) ? value.options : []).map((option: JsonRecord) => ({
+      id: idOf(option.id),
+      text: idOf(option.optionText),
+    })),
+    points: Number(value.marks ?? 0),
+  };
+}
+
+function toQuiz(value: JsonRecord, course?: Course): Quiz {
+  const questions = Array.isArray(value.questions) ? value.questions.map(toQuizQuestion) : [];
+  const endTime = idOf(value.endTime);
+  return {
+    id: idOf(value.id),
+    courseId: idOf(value.courseId || course?.id),
+    courseCode: course?.code || "",
+    courseTitle: course?.title || "",
+    title: idOf(value.title),
+    description: idOf(value.description),
+    durationMinutes: Number(value.durationMinutes ?? 0),
+    questionsCount: questions.length,
+    totalPoints: Number(value.totalMarks ?? 0),
+    status: "AVAILABLE",
+    dueDate: endTime,
+    attemptsAllowed: Number(value.maxAttempts ?? 0),
+    questions,
   };
 }
 
@@ -194,18 +236,33 @@ function toModuleRecord(value: JsonRecord, courseId: string) {
   };
 }
 
-function toCalendarEvent(value: JsonRecord): CalendarEvent {
+export function toCalendarEvent(value: JsonRecord): CalendarEvent {
   const start = idOf(value.startDateTime || value.start);
   const end = idOf(value.endDateTime || value.end);
+  const type = String(value.eventType || "CLASS").toUpperCase();
+  const mappedType = type === "ASSIGNMENT" ? "ASSIGNMENT_DUE" : type;
+  const parsedStart = start ? new Date(start) : null;
+  const parsedEnd = end ? new Date(end) : null;
+  const formatDate = (value: Date | null) =>
+    value && !Number.isNaN(value.getTime()) ? new Intl.DateTimeFormat("en-CA").format(value) : "";
+  const formatTime = (value: Date | null) =>
+    value && !Number.isNaN(value.getTime())
+      ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(value)
+      : "";
   return {
     id: idOf(value.id),
     title: idOf(value.title),
+    courseId: idOf(value.courseId),
     courseCode: "",
     courseTitle: "",
-    type: value.eventType || "CLASS",
-    date: start.slice(0, 10),
-    startTime: start,
-    endTime: end,
+    type: ["CLASS", "ASSIGNMENT_DUE", "QUIZ", "EXAM", "OFFICE_HOURS", "ATTENDANCE"].includes(
+      mappedType,
+    )
+      ? (mappedType as CalendarEvent["type"])
+      : "CLASS",
+    date: formatDate(parsedStart),
+    startTime: formatTime(parsedStart),
+    endTime: formatTime(parsedEnd),
     location: idOf(value.location),
     description: idOf(value.description),
   };
@@ -438,24 +495,18 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
         .map(async (course) => {
           try {
             const response = await apiRequest<unknown>(`/api/courses/${course.id}/quizzes`);
-            return listOf<JsonRecord>(response).map(
-              (item) =>
-                ({
-                  id: idOf(item.id),
-                  courseId: course.id,
-                  courseCode: course.code,
-                  courseTitle: course.title,
-                  title: idOf(item.title),
-                  description: idOf(item.description),
-                  durationMinutes: Number(item.durationMinutes ?? 0),
-                  questionsCount: Number(item.questions?.length ?? item.questionsCount ?? 0),
-                  totalPoints: Number(item.totalMarks ?? 0),
-                  status: "AVAILABLE" as const,
-                  dueDate: idOf(item.endTime),
-                  attemptsAllowed: Number(item.maxAttempts ?? 0),
-                  attemptsUsed: 0,
-                  questions: [],
-                }) satisfies Quiz,
+            const quizShells = listOf<JsonRecord>(response).map((item) => toQuiz(item, course));
+            return Promise.all(
+              quizShells.map(async (quiz) => {
+                try {
+                  const detail = dataOf<JsonRecord>(
+                    await apiRequest<JsonRecord>(`/api/quizzes/${quiz.id}/student`),
+                  );
+                  return { ...quiz, ...toQuiz({ ...detail, courseId: course.id }, course) };
+                } catch {
+                  return quiz;
+                }
+              }),
             );
           } catch {
             return [];
@@ -508,7 +559,11 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     ].filter((material, index, all) => all.findIndex((item) => item.id === material.id) === index),
     calendarEvents:
       calendarResponse.status === "fulfilled"
-        ? listOf<JsonRecord>(calendarResponse.value).map(toCalendarEvent)
+        ? listOf<JsonRecord>(calendarResponse.value).map((item) => {
+            const event = toCalendarEvent(item);
+            const course = courseMap.get(event.courseId || "");
+            return { ...event, courseCode: course?.code || "", courseTitle: course?.title || "" };
+          })
         : [],
     notifications:
       notificationResponse.status === "fulfilled"
@@ -632,10 +687,18 @@ export async function startQuizAttempt(quizId: string) {
   return apiRequest<ApiEnvelope<JsonRecord>>(`/api/quizzes/${quizId}/attempts`, { method: "POST" });
 }
 
-export async function saveQuizAnswers(attemptId: string, answers: Record<string, string[]>) {
+export async function getStudentQuiz(quizId: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/quizzes/${quizId}/student`);
+}
+
+export async function saveQuizAnswer(
+  attemptId: string,
+  questionId: string,
+  selectedOptionId: string,
+) {
   return apiRequest<ApiEnvelope<JsonRecord>>(`/api/quiz-attempts/${attemptId}/answers`, {
     method: "PUT",
-    body: { answers },
+    body: { questionId, selectedOptionId },
   });
 }
 
@@ -643,6 +706,22 @@ export async function finalizeQuizAttempt(attemptId: string) {
   return apiRequest<ApiEnvelope<JsonRecord>>(`/api/quiz-attempts/${attemptId}/submit`, {
     method: "POST",
   });
+}
+
+export async function listCalendarEvents(
+  start: string,
+  end: string,
+  filters: { type?: string; courseId?: string } = {},
+) {
+  const params = new URLSearchParams({ start, end });
+  if (filters.type) params.set("type", filters.type);
+  if (filters.courseId) params.set("courseId", filters.courseId);
+  const response = await apiRequest<unknown>(`/api/v1/calendar/events?${params.toString()}`);
+  return listOf<JsonRecord>(response).map(toCalendarEvent);
+}
+
+export async function getMaterialDownload(materialId: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/v1/materials/${materialId}/download`);
 }
 
 export async function markLesson(courseId: string, lessonId: string, complete: boolean) {

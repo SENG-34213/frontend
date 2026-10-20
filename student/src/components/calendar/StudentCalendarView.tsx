@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -15,13 +15,32 @@ import { useStudent } from "../../context/StudentContext";
 import { CalendarEvent } from "../../types";
 
 export const StudentCalendarView: React.FC = () => {
-  const { calendarEvents, navigateToCourseWorkspace, setSelectedAssignmentId, setCurrentView } =
-    useStudent();
+  const { calendarEvents, refreshCalendarEvents } = useStudent();
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [selectedEventType, setSelectedEventType] = useState<string>("All");
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [monthCursor, setMonthCursor] = useState(() => new Date());
 
-  const eventTypes = ["All", "CLASS", "ASSIGNMENT_DUE", "QUIZ", "EXAM", "OFFICE_HOURS"];
+  const eventTypes = [
+    "All",
+    "CLASS",
+    "ASSIGNMENT_DUE",
+    "QUIZ",
+    "EXAM",
+    "ATTENDANCE",
+    "OFFICE_HOURS",
+  ];
+
+  const toBackendDateTime = (value: Date) => {
+    const pad = (part: number) => String(part).padStart(2, "0");
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
+  };
+
+  useEffect(() => {
+    const start = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
+    const end = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0, 23, 59, 59);
+    refreshCalendarEvents(toBackendDateTime(start), toBackendDateTime(end)).catch(() => undefined);
+  }, [monthCursor, refreshCalendarEvents]);
 
   const filteredEvents = calendarEvents.filter((e) => {
     return selectedEventType === "All" || e.type === selectedEventType;
@@ -39,14 +58,20 @@ export const StudentCalendarView: React.FC = () => {
         return "bg-rose-50 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border-rose-200 dark:border-rose-900";
       case "OFFICE_HOURS":
         return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900";
+      case "ATTENDANCE":
+        return "bg-purple-50 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border-purple-200 dark:border-purple-900";
     }
   };
 
-  // 35 days calendar grid for October 2026
-  const days = Array.from({ length: 35 }, (_, i) => {
-    const dayNum = i - 3 + 1;
-    const isCurrentMonth = dayNum >= 1 && dayNum <= 31;
-    const dateStr = `2026-10-${String(Math.max(1, Math.min(31, dayNum))).padStart(2, "0")}`;
+  const monthLabel = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(
+    monthCursor,
+  );
+  const firstWeekday = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1).getDay();
+  const daysInMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0).getDate();
+  const days = Array.from({ length: Math.ceil((firstWeekday + daysInMonth) / 7) * 7 }, (_, i) => {
+    const dayNum = i - firstWeekday + 1;
+    const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth;
+    const dateStr = `${monthCursor.getFullYear()}-${String(monthCursor.getMonth() + 1).padStart(2, "0")}-${String(Math.max(1, Math.min(daysInMonth, dayNum))).padStart(2, "0")}`;
     const dayEvents = isCurrentMonth ? filteredEvents.filter((e) => e.date === dateStr) : [];
     return { dayNum, isCurrentMonth, dayEvents, dateStr };
   });
@@ -87,20 +112,33 @@ export const StudentCalendarView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
         <div className="flex items-center gap-3">
           <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-            October 2026
+            {monthLabel}
           </h2>
           <div className="flex items-center gap-1">
             <button
               aria-label="Previous month"
+              onClick={() =>
+                setMonthCursor(
+                  (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1),
+                )
+              }
               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <button
+              onClick={() => setMonthCursor(new Date())}
+              className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
               Today
             </button>
             <button
               aria-label="Next month"
+              onClick={() =>
+                setMonthCursor(
+                  (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1),
+                )
+              }
               className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800"
             >
               <ChevronRight className="h-4 w-4" />
@@ -288,17 +326,6 @@ export const StudentCalendarView: React.FC = () => {
               >
                 Close
               </button>
-              {selectedEvent.type === "CLASS" && (
-                <button
-                  onClick={() => {
-                    setSelectedEvent(null);
-                    navigateToCourseWorkspace("course-cs301");
-                  }}
-                  className="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs"
-                >
-                  Join Lecture Workspace
-                </button>
-              )}
             </div>
           </div>
         </div>

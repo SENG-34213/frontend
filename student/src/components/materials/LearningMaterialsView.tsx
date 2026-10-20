@@ -18,7 +18,7 @@ import { useStudent } from "../../context/StudentContext";
 import { LearningMaterial } from "../../types";
 
 export const LearningMaterialsView: React.FC = () => {
-  const { materials, courses, showToast } = useStudent();
+  const { materials, courses, showToast, downloadMaterial } = useStudent();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourse, setSelectedCourse] = useState<string>("All");
   const [selectedType, setSelectedType] = useState<string>("All");
@@ -183,7 +183,7 @@ export const LearningMaterialsView: React.FC = () => {
 
                 <div className="mt-4 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-100 pt-3 dark:border-slate-800">
                   <span>Size: {mat.fileSize}</span>
-                  <span>{mat.downloadsCount} downloads</span>
+                  {mat.downloadsCount !== undefined && <span>{mat.downloadsCount} downloads</span>}
                 </div>
               </div>
 
@@ -196,7 +196,11 @@ export const LearningMaterialsView: React.FC = () => {
                   <span>Preview</span>
                 </button>
                 <button
-                  onClick={() => showToast(`Downloaded: ${mat.title}`)}
+                  onClick={() =>
+                    downloadMaterial(mat.id).catch((error) =>
+                      showToast(error instanceof Error ? error.message : "Download failed."),
+                    )
+                  }
                   className="flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300"
                 >
                   <Download className="h-3.5 w-3.5" />
@@ -283,9 +287,11 @@ export const LearningMaterialsView: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    showToast(`Downloaded: ${previewMaterial.title}`);
-                  }}
+                  onClick={() =>
+                    downloadMaterial(previewMaterial.id).catch((error) =>
+                      showToast(error instanceof Error ? error.message : "Download failed."),
+                    )
+                  }
                   className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
                 >
                   <Download className="h-3.5 w-3.5" />
@@ -306,7 +312,7 @@ export const LearningMaterialsView: React.FC = () => {
               <div className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 font-serif leading-relaxed text-slate-800 dark:text-slate-200">
                 <div className="border-b border-slate-100 pb-4 mb-6 font-sans">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-600 font-bold">
-                    Mentify Academic Publishing Repository
+                    {previewMaterial.type} · {previewMaterial.fileSize}
                   </span>
                   <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white mt-1">
                     {previewMaterial.title}
@@ -321,7 +327,7 @@ export const LearningMaterialsView: React.FC = () => {
 
             {/* Modal Footer */}
             <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900">
-              <span>Page 1 of 8 · Institutional Reference Copy</span>
+              <span>Backend material preview</span>
               <button
                 onClick={() => setPreviewMaterial(null)}
                 className="font-medium hover:text-slate-900 dark:hover:text-white"

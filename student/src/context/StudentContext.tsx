@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
   StudentView,
   StudentProfile,
@@ -20,11 +20,16 @@ import {
   finalizeAssignmentSubmission,
   loadEnrollmentState,
   loadStudentWorkspace,
+  listCalendarEvents,
   markAllNotificationsRead as markAllNotificationsReadApi,
   markLesson,
   markNotificationRead,
+  saveQuizAnswer as saveQuizAnswerApi,
   sendAiMessage,
   startCoursePayment,
+  startQuizAttempt as startQuizAttemptApi,
+  finalizeQuizAttempt,
+  getMaterialDownload,
   toProfile,
   uploadSubmissionFile,
 } from "../api/student";
@@ -54,10 +59,16 @@ interface StudentContextType {
     files: { name: string; size: string; uploadedAt: string; file?: File }[],
   ) => void;
   quizzes: Quiz[];
+  startQuizAttempt: (quizId: string) => Promise<{ attemptId: string; startedAt?: string }>;
+  saveQuizAnswer: (
+    attemptId: string,
+    questionId: string,
+    selectedOptionId: string,
+  ) => Promise<void>;
   submitQuizAnswers: (
     quizId: string,
-    answers: Record<string, string[]>,
-  ) => { score: number; maxScore: number; percentage: number };
+    attemptId: string,
+  ) => Promise<{ score: number; maxScore: number; percentage: number; passed: boolean }>;
   examinations: Examination[];
   submitExam: (examId: string, answers: Record<string, string[]>) => void;
   materials: LearningMaterial[];
@@ -71,6 +82,7 @@ interface StudentContextType {
   aiChats: ChatMessage[];
   isAiLoading: boolean;
   sendAiQuery: (query: string) => Promise<void>;
+  refreshCalendarEvents: (start: string, end: string) => Promise<void>;
   theme: "light" | "dark";
   toggleTheme: () => void;
   isSidebarCollapsed: boolean;
@@ -80,6 +92,7 @@ interface StudentContextType {
   setIsCommandPaletteOpen: (open: boolean) => void;
   selectedMaterialForPreview: LearningMaterial | null;
   setSelectedMaterialForPreview: (material: LearningMaterial | null) => void;
+  downloadMaterial: (materialId: string) => Promise<void>;
   toastMessage: string | null;
   showToast: (msg: string) => void;
   navigateToCourseWorkspace: (courseId: string, lessonId?: string) => void;
@@ -250,35 +263,73 @@ export const StudentProvider: React.FC<{
       showToast(error instanceof Error ? error.message : "Assignment submission failed.");
     }
   };
-  const submitQuizAnswers = (quizId: string, answers: Record<string, string[]>) => {
-    const quiz = quizzes.find((item) => item.id === quizId);
-    if (!quiz) return { score: 0, maxScore: 0, percentage: 0 };
-    const score = quiz.questions.reduce((total, question) => {
-      const selected = answers[question.id] || [];
-      const correct = question.correctAnswerIds || [];
-      return (
-        total +
-        (selected.length === correct.length && selected.every((id) => correct.includes(id))
-          ? question.points
-          : 0)
-      );
-    }, 0);
-    const percentage = quiz.totalPoints ? Math.round((score / quiz.totalPoints) * 100) : 0;
+  const startQuizAttempt = async (quizId: string) => {
+    const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
+    const storedAttempt = window.localStorage.getItem(storageKey);
+    if (storedAttempt) {
+      try {
+        const parsed = JSON.parse(storedAttempt);
+        if (parsed && typeof parsed === "object" && parsed.attemptId) {
+          return parsed as { attemptId: string; startedAt?: string };
+        }
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        window.localStorage.removeItem(storageKey);
+      }
+    }
+    const response = await startQuizAttemptApi(quizId);
+    const attemptId = String(response.data?.attemptId || "");
+    if (!attemptId) throw new Error("The backend did not return a quiz attempt id.");
+    const attempt = { attemptId, startedAt: response.data?.startedAt };
+    window.localStorage.setItem(storageKey, JSON.stringify(attempt));
+    setQuizzes((current) =>
+      current.map((item) => (item.id === quizId ? { ...item, status: "IN_PROGRESS" } : item)),
+    );
+    return attempt;
+  };
+  const saveQuizAnswer = async (
+    attemptId: string,
+    questionId: string,
+    selectedOptionId: string,
+  ) => {
+    await saveQuizAnswerApi(attemptId, questionId, selectedOptionId);
+  };
+  const submitQuizAnswers = async (quizId: string, attemptId: string) => {
+    const response = await finalizeQuizAttempt(attemptId);
+    const result = response.data || {};
+    const score = Number(result.score);
+    const maxScore = Number(result.totalMarks);
+    const percentage = Number(result.percentage);
+    const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
+    window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(`student:quiz-answers:${attemptId}`);
     setQuizzes((current) =>
       current.map((item) =>
         item.id === quizId
-          ? {
-              ...item,
-              status: "COMPLETED",
-              attemptsUsed: item.attemptsUsed + 1,
-              lastScore: score,
-              lastScorePercentage: percentage,
-            }
+          ? { ...item, status: "COMPLETED", lastScore: score, lastScorePercentage: percentage }
           : item,
       ),
     );
-    showToast(`Quiz completed: ${score}/${quiz.totalPoints} (${percentage}%).`);
-    return { score, maxScore: quiz.totalPoints, percentage };
+    showToast(`Quiz completed: ${score}/${maxScore} (${percentage}%).`);
+    return { score, maxScore, percentage, passed: Boolean(result.passed) };
+  };
+  const refreshCalendarEvents = useCallback(
+    async (start: string, end: string) => {
+      const events = await listCalendarEvents(start, end);
+      setCalendarEvents(
+        events.map((event) => {
+          const course = courses.find((item) => item.id === event.courseId);
+          return { ...event, courseCode: course?.code || "", courseTitle: course?.title || "" };
+        }),
+      );
+    },
+    [courses],
+  );
+  const downloadMaterial = async (materialId: string) => {
+    const response = await getMaterialDownload(materialId);
+    const url = String(response.data?.downloadUrl || "");
+    if (!url) throw new Error("The backend did not return a material download URL.");
+    window.open(url, "_blank", "noopener,noreferrer");
   };
   const submitExam = (examId: string) => {
     showToast(`Exam ${examId} submission is not supported by the current backend contract.`);
@@ -369,11 +420,14 @@ export const StudentProvider: React.FC<{
         assignments,
         submitAssignment,
         quizzes,
+        startQuizAttempt,
+        saveQuizAnswer,
         submitQuizAnswers,
         examinations,
         submitExam,
         materials,
         calendarEvents,
+        refreshCalendarEvents,
         conversations,
         sendMessage,
         announcements,
@@ -392,6 +446,7 @@ export const StudentProvider: React.FC<{
         setIsCommandPaletteOpen,
         selectedMaterialForPreview,
         setSelectedMaterialForPreview,
+        downloadMaterial,
         toastMessage,
         showToast,
         navigateToCourseWorkspace,
