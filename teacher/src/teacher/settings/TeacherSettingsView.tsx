@@ -352,7 +352,12 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
           <span>{isLoggingOut ? "Signing Out..." : "Sign Out of Faculty Workspace"}</span>
         </button>
       </div>
-      <NoticeModal isOpen={securityNoticeOpen} title="Account security" message="Password and security management is handled by the account service and is not available in this workspace yet." onClose={() => setSecurityNoticeOpen(false)} />
+      <NoticeModal
+        isOpen={securityNoticeOpen}
+        title="Account security"
+        message="Password and security management is handled by the account service and is not available in this workspace yet."
+        onClose={() => setSecurityNoticeOpen(false)}
+      />
     </div>
   );
 };

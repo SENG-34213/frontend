@@ -92,7 +92,11 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [newModuleDesc, setNewModuleDesc] = useState("");
   const [editingModule, setEditingModule] = useState<Module | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: "module" | "lesson"; module: Module; lesson?: Lesson } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "module" | "lesson";
+    module: Module;
+    lesson?: Lesson;
+  } | null>(null);
 
   const currentBackendCourse = backendCourses.find((course) => course.id === selectedCourseId);
   const currentCourse: Course = {

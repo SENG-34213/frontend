@@ -170,7 +170,10 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     const numericScore = Number(inputScore);
     const maximumAllowedScore = currentAssignment.maxMarks;
     if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > maximumAllowedScore) {
-      setNotice({ title: "Invalid mark", message: `Enter a mark between 0 and ${maximumAllowedScore}.` });
+      setNotice({
+        title: "Invalid mark",
+        message: `Enter a mark between 0 and ${maximumAllowedScore}.`,
+      });
       return;
     }
 
@@ -375,7 +378,12 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   {currentSubmission.submittedFileName}
                 </span>
                 <button
-                  onClick={() => setNotice({ title: "Download unavailable", message: "This submission does not include a downloadable file URL yet." })}
+                  onClick={() =>
+                    setNotice({
+                      title: "Download unavailable",
+                      message: "This submission does not include a downloadable file URL yet.",
+                    })
+                  }
                   className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors flex items-center gap-1"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -556,7 +564,12 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           </div>
         </aside>
       </div>
-      <NoticeModal isOpen={Boolean(notice)} title={notice?.title ?? "Notice"} message={notice?.message ?? ""} onClose={() => setNotice(null)} />
+      <NoticeModal
+        isOpen={Boolean(notice)}
+        title={notice?.title ?? "Notice"}
+        message={notice?.message ?? ""}
+        onClose={() => setNotice(null)}
+      />
     </div>
   );
 };

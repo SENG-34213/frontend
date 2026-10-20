@@ -78,10 +78,18 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <p>{description}</p>
       </div>
       <div className="mt-6 flex justify-end gap-2">
-        <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        >
           Cancel
         </button>
-        <button type="button" onClick={() => void onConfirm()} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700">
+        <button
+          type="button"
+          onClick={() => void onConfirm()}
+          className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700"
+        >
           {confirmText}
         </button>
       </div>
@@ -129,26 +137,64 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
         <label className="block text-xs font-semibold text-slate-700">
           {label}
           {multiline ? (
-            <textarea value={value} onChange={(event) => setValue(event.target.value)} placeholder={placeholder} rows={4} className="mt-1.5 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+            <textarea
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              placeholder={placeholder}
+              rows={4}
+              className="mt-1.5 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            />
           ) : (
-            <input value={value} onChange={(event) => setValue(event.target.value)} placeholder={placeholder} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+            <input
+              value={value}
+              onChange={(event) => setValue(event.target.value)}
+              placeholder={placeholder}
+              className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+            />
           )}
         </label>
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
-          <button type="submit" className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700">Save changes</button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+          >
+            Save changes
+          </button>
         </div>
       </form>
     </ModalShell>
   );
 };
 
-export const NoticeModal: React.FC<{ isOpen: boolean; title: string; message: string; onClose: () => void }> = ({ isOpen, title, message, onClose }) => {
+export const NoticeModal: React.FC<{
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onClose: () => void;
+}> = ({ isOpen, title, message, onClose }) => {
   if (!isOpen) return null;
   return (
     <ModalShell title={title} onClose={onClose}>
-      <div className="mt-4 flex gap-3 text-sm text-slate-600"><Info className="h-5 w-5 shrink-0 text-indigo-600" /><p>{message}</p></div>
-      <div className="mt-6 flex justify-end"><button type="button" onClick={onClose} className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700">Close</button></div>
+      <div className="mt-4 flex gap-3 text-sm text-slate-600">
+        <Info className="h-5 w-5 shrink-0 text-indigo-600" />
+        <p>{message}</p>
+      </div>
+      <div className="mt-6 flex justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+        >
+          Close
+        </button>
+      </div>
     </ModalShell>
   );
 };

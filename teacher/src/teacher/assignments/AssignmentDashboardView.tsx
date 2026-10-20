@@ -420,7 +420,11 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                   {asg.status === "Draft" && (
                     <button
                       type="button"
-                      onClick={() => setEditingAssignment(backendAssignments.find((entry) => entry.id === asg.id) ?? null)}
+                      onClick={() =>
+                        setEditingAssignment(
+                          backendAssignments.find((entry) => entry.id === asg.id) ?? null,
+                        )
+                      }
                       className="px-2 py-1 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
                     >
                       Edit

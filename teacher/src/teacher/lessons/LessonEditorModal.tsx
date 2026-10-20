@@ -303,7 +303,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                           </button>
                           <button
                             type="button"
-                  onClick={() => setMaterialToRemove(material.id)}
+                            onClick={() => setMaterialToRemove(material.id)}
                             className="text-xs text-rose-600 hover:text-rose-800"
                           >
                             Remove

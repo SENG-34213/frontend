@@ -345,7 +345,11 @@ export default function App() {
                 course={selectedCourseForDetail}
                 onBack={() => setSelectedCourseForDetail(null)}
                 onNavigate={handleNavigate}
-                onEditCourse={(c) => setCourseEditNotice(`Course metadata editing for ${c.code} is not available in the current backend contract.`)}
+                onEditCourse={(c) =>
+                  setCourseEditNotice(
+                    `Course metadata editing for ${c.code} is not available in the current backend contract.`,
+                  )
+                }
               />
             ) : (
               <CourseListView
@@ -491,7 +495,12 @@ export default function App() {
         teacherId={session?.user.id}
         onCreateQuiz={createQuiz}
       />
-      <NoticeModal isOpen={Boolean(courseEditNotice)} title="Course editing unavailable" message={courseEditNotice ?? ""} onClose={() => setCourseEditNotice(null)} />
+      <NoticeModal
+        isOpen={Boolean(courseEditNotice)}
+        title="Course editing unavailable"
+        message={courseEditNotice ?? ""}
+        onClose={() => setCourseEditNotice(null)}
+      />
     </div>
   );
 }

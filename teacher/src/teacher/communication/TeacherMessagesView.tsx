@@ -664,8 +664,22 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
           </form>
         </div>
       )}
-      <TextInputModal isOpen={Boolean(editingMessage)} title="Edit message" label="Message" initialValue={editingMessage?.content ?? ""} multiline onClose={() => setEditingMessage(null)} onSave={handleEditMessage} />
-      <ConfirmModal isOpen={Boolean(deletingMessage)} title="Delete message?" description="This deletes the message for everyone in the communication group." onClose={() => setDeletingMessage(null)} onConfirm={handleDeleteMessage} />
+      <TextInputModal
+        isOpen={Boolean(editingMessage)}
+        title="Edit message"
+        label="Message"
+        initialValue={editingMessage?.content ?? ""}
+        multiline
+        onClose={() => setEditingMessage(null)}
+        onSave={handleEditMessage}
+      />
+      <ConfirmModal
+        isOpen={Boolean(deletingMessage)}
+        title="Delete message?"
+        description="This deletes the message for everyone in the communication group."
+        onClose={() => setDeletingMessage(null)}
+        onConfirm={handleDeleteMessage}
+      />
     </div>
   );
 };
