@@ -18,13 +18,15 @@ interface BackendAddress {
 
 interface BackendUser {
   id: string;
-  keycloakUserId?: string;
+  authUserId?: string;
   email: string;
   firstName: string;
   lastName: string;
   phoneNumber?: string;
   role: UserRole;
   accountStatus: string;
+  createdAt?: string;
+  lastLogin?: string | null;
   studentProfile?: {
     studentId?: string;
     grade?: string;
@@ -108,16 +110,15 @@ function accountStatus(value: string): AccountStatus {
 function commonUser(user: BackendUser) {
   return {
     id: user.id,
-    keycloakUserId: user.keycloakUserId,
+    keycloakUserId: user.authUserId,
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
     phone: user.phoneNumber,
     role: user.role,
     status: accountStatus(user.accountStatus),
-    // The current backend response does not expose creation or last-login timestamps.
-    createdAt: "",
-    lastLogin: undefined,
+    createdAt: user.createdAt || "",
+    lastLogin: user.lastLogin || undefined,
     addressLine1: user.address?.addressLine1 || "",
     addressLine2: user.address?.addressLine2 || "",
     city: user.address?.city || "",
@@ -292,5 +293,11 @@ export async function updateUserStatus(userId: string, active: boolean) {
   return apiRequest(`/api/v1/admin/users/${userId}/status`, {
     method: "PATCH",
     body: { active },
+  });
+}
+
+export async function deleteUser(userId: string) {
+  return apiRequest(`/api/v1/admin/users/${userId}`, {
+    method: "DELETE",
   });
 }

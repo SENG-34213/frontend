@@ -14,14 +14,16 @@ export async function loginTeacher(identifier: string, password: string): Promis
     body: { identifier, password },
   });
   const data = response.data;
-  if (!data?.accessToken || !data.user || data.user.role !== "TEACHER") {
+  const user = data?.profile ?? data?.user;
+  const role = typeof user?.role === "string" ? user.role.trim().toUpperCase() : "";
+  if (!data?.accessToken || !user || role !== "TEACHER") {
     throw new Error("This account does not have access to the teacher workspace.");
   }
 
   const session: AuthSession = {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
-    user: data.user,
+    user,
     expiresAt: Date.now() + data.expiresIn * 1000,
   };
   saveSession(session);
@@ -31,7 +33,8 @@ export async function loginTeacher(identifier: string, password: string): Promis
 export async function getCurrentTeacher() {
   try {
     const response = await apiRequest<ApiResponse<TeacherUserSummary>>("/api/v1/users/me");
-    if (response.data?.role !== "TEACHER") {
+    const role = typeof response.data?.role === "string" ? response.data.role.trim().toUpperCase() : "";
+    if (role !== "TEACHER") {
       clearSession();
       throw new Error("This account does not have access to the teacher workspace.");
     }

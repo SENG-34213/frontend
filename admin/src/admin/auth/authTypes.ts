@@ -26,7 +26,9 @@ export interface LoginResponse {
   refreshExpiresIn: number;
   scope?: string;
   issuedAt?: string;
-  user: AdminUserSummary;
+  profile: AdminUserSummary;
+  /** Backward-compatible response shape for older auth-service builds. */
+  user?: AdminUserSummary;
 }
 
 export interface TokenRefreshResponse {

@@ -41,6 +41,9 @@ export interface LoginResponse {
   refreshExpiresIn?: number;
   scope?: string;
   issuedAt?: string;
+  /** Current auth-service contract. */
+  profile?: TeacherUserSummary;
+  /** Legacy response shape kept for backwards compatibility. */
   user?: TeacherUserSummary;
 }
 

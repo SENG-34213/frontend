@@ -11,14 +11,15 @@ export async function loginAdmin(identifier: string, password: string): Promise<
     body: { identifier, password },
   });
 
-  if (!response.data?.user || !ADMIN_ROLES.has(response.data.user.role)) {
+  const user = response.data?.profile ?? response.data?.user;
+  if (!user || !ADMIN_ROLES.has(user.role)) {
     throw new Error("This account does not have access to the admin workspace.");
   }
 
   const session: AuthSession = {
     accessToken: response.data.accessToken,
     refreshToken: response.data.refreshToken,
-    user: response.data.user,
+    user,
     expiresAt: Date.now() + response.data.expiresIn * 1000,
   };
 

@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Ban,
   UserCheck,
+  Trash2,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { RoleBadge } from "../components/RoleBadge";
@@ -35,6 +36,7 @@ interface UsersManagementProps {
   administrators: AdministratorProfile[];
   currentAdminRole: AdminRole;
   onUpdateUserStatus: (userId: string, newStatus: AccountStatus) => void;
+  onDeleteUser: (userId: string) => Promise<void>;
   onResendInvitation: (email: string, role: string) => void;
   onRegisterStudent: () => void;
   onRegisterTeacher: () => void;
@@ -49,6 +51,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
   administrators,
   currentAdminRole,
   onUpdateUserStatus,
+  onDeleteUser,
   onResendInvitation,
   onRegisterStudent,
   onRegisterTeacher,
@@ -63,8 +66,9 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     user: any | null;
-    action: "ACTIVATE" | "DEACTIVATE";
+    action: "ACTIVATE" | "DEACTIVATE" | "DELETE";
   }>({ isOpen: false, user: null, action: "DEACTIVATE" });
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   // Merge users for unified directory
   const allUsers = useMemo(() => {
@@ -124,6 +128,26 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
       const newStatus: AccountStatus = confirmDialog.action === "ACTIVATE" ? "ACTIVE" : "SUSPENDED";
       onUpdateUserStatus(confirmDialog.user.id, newStatus);
       setConfirmDialog({ isOpen: false, user: null, action: "DEACTIVATE" });
+    }
+  };
+
+  const handleDeleteClick = (user: any) => {
+    setConfirmDialog({ isOpen: true, user, action: "DELETE" });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDialog.user) return;
+
+    const user = confirmDialog.user;
+    setDeletingUserId(user.id);
+    try {
+      await onDeleteUser(user.id);
+      setSelectedUser(null);
+      setConfirmDialog({ isOpen: false, user: null, action: "DEACTIVATE" });
+    } catch {
+      // The parent displays the API error toast; keep the confirmation open so the user can retry.
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -224,14 +248,13 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                 <th className="py-3 px-4 font-semibold">Role</th>
                 <th className="py-3 px-4 font-semibold">Institutional Code</th>
                 <th className="py-3 px-4 font-semibold">Account Status</th>
-                <th className="py-3 px-4 font-semibold">Created Date</th>
                 <th className="py-3 px-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={5} className="py-12 text-center text-slate-400">
                     No users match your search and filter criteria.
                   </td>
                 </tr>
@@ -263,16 +286,6 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
 
                     <td className="py-3 px-4">
                       <StatusBadge status={user.status} />
-                    </td>
-
-                    <td className="py-3 px-4 text-slate-500 tabular-nums">
-                      {user.createdAt
-                        ? new Date(user.createdAt).toLocaleDateString([], {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "Not available"}
                     </td>
 
                     <td className="py-3 px-4 text-right">
@@ -316,6 +329,18 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                             Activate
                           </button>
                         )}
+
+                        {user.role !== "SUPER_ADMIN" && (
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            disabled={deletingUserId === user.id}
+                            className="px-2 py-1 rounded text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-medium disabled:opacity-50"
+                            title="Delete user account"
+                          >
+                            <Trash2 className="w-3 h-3 inline mr-1" />
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -330,32 +355,56 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
       <ConfirmationDialog
         isOpen={confirmDialog.isOpen}
         title={
-          confirmDialog.action === "DEACTIVATE"
-            ? `Suspend Account for ${confirmDialog.user?.firstName} ${confirmDialog.user?.lastName}?`
-            : `Re-activate Account for ${confirmDialog.user?.firstName} ${confirmDialog.user?.lastName}?`
+          confirmDialog.action === "DELETE"
+            ? `Delete ${confirmDialog.user?.firstName} ${confirmDialog.user?.lastName}?`
+            : confirmDialog.action === "DEACTIVATE"
+              ? `Suspend Account for ${confirmDialog.user?.firstName} ${confirmDialog.user?.lastName}?`
+              : `Re-activate Account for ${confirmDialog.user?.firstName} ${confirmDialog.user?.lastName}?`
         }
         description={
-          confirmDialog.action === "DEACTIVATE"
-            ? "Suspending this user account will revoke active Keycloak session tokens and temporarily disable access to Mentify portals and LMS coursework."
-            : "Re-activating this user account will restore Keycloak authentication privileges and grant immediate access back to their assigned courses and records."
+          confirmDialog.action === "DELETE"
+            ? "This permanently removes the user account, profile, address, and linked sign-in account. This action cannot be undone."
+            : confirmDialog.action === "DEACTIVATE"
+              ? "Suspending this user account will revoke active Keycloak session tokens and temporarily disable access to Mentify portals and LMS coursework."
+              : "Re-activating this user account will restore Keycloak authentication privileges and grant immediate access back to their assigned courses and records."
         }
         consequences={
-          confirmDialog.action === "DEACTIVATE"
+          confirmDialog.action === "DELETE"
             ? [
-                "Immediate termination of active JWT tokens across all microservices",
-                "User will not be able to log in to Student or Teacher portals",
-                "Course enrollments and historical assignment data remain intact in PostgreSQL",
+                "The user will no longer be able to sign in",
+                "Student, teacher, or administrator profile data will be deleted",
+                "Existing records in other services may still retain this user’s history",
               ]
-            : [
-                "Keycloak user status updated to enabled",
-                "User can immediately sign in with existing credentials",
-              ]
+            : confirmDialog.action === "DEACTIVATE"
+              ? [
+                  "Immediate termination of active JWT tokens across all microservices",
+                  "User will not be able to log in to Student or Teacher portals",
+                  "Course enrollments and historical assignment data remain intact in PostgreSQL",
+                ]
+              : [
+                  "Keycloak user status updated to enabled",
+                  "User can immediately sign in with existing credentials",
+                ]
         }
         confirmText={
-          confirmDialog.action === "DEACTIVATE" ? "Suspend Account" : "Re-activate Account"
+          confirmDialog.action === "DELETE"
+            ? deletingUserId
+              ? "Deleting..."
+              : "Delete User"
+            : confirmDialog.action === "DEACTIVATE"
+              ? "Suspend Account"
+              : "Re-activate Account"
         }
-        variant={confirmDialog.action === "DEACTIVATE" ? "danger" : "primary"}
-        onConfirm={handleConfirmStatusChange}
+        variant={
+          confirmDialog.action === "DELETE" || confirmDialog.action === "DEACTIVATE"
+            ? "danger"
+            : "primary"
+        }
+        onConfirm={
+          confirmDialog.action === "DELETE"
+            ? () => void handleConfirmDelete()
+            : handleConfirmStatusChange
+        }
         onCancel={() => setConfirmDialog({ isOpen: false, user: null, action: "DEACTIVATE" })}
       />
 

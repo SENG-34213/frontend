@@ -73,12 +73,14 @@ import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
 import { logoutAdmin, refreshAdminSession } from "./admin/api/authApi";
 import { clearSession, getSession } from "./admin/auth/authStorage";
+import { ApiError } from "./admin/api/client";
 import {
   fetchAdminUsers,
   registerAdministrator,
   registerStudent,
   registerTeacher,
   resendUserInvitation,
+  deleteUser,
   updateUserStatus,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
@@ -435,6 +437,29 @@ export default function App() {
       });
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteUser(userId);
+      setStudents((prev) => prev.filter((student) => student.id !== userId));
+      setTeachers((prev) => prev.filter((teacher) => teacher.id !== userId));
+      setAdministrators((prev) => prev.filter((administrator) => administrator.id !== userId));
+      addToast("success", "User Deleted", "The user account and profile data were deleted.");
+    } catch (error) {
+      const message =
+        error instanceof ApiError && error.status >= 500
+          ? "We could not delete this account right now. Please try again after the user service is restarted."
+          : error instanceof ApiError && error.status === 404
+            ? "This account no longer exists. Refresh the user list to update the page."
+            : error instanceof ApiError && error.status === 403
+              ? "You do not have permission to delete this account."
+              : error instanceof Error
+                ? error.message
+                : "The account could not be deleted. Please try again.";
+      addToast("error", "Account Not Deleted", message);
+      throw error;
+    }
+  };
+
   const handleAddStudent = (newStudent: StudentProfile) => {
     setStudents((prev) => [newStudent, ...prev]);
     setKpis((prev) => ({
@@ -713,6 +738,7 @@ export default function App() {
           administrators={administrators}
           currentAdminRole={role}
           onUpdateUserStatus={handleUpdateUserStatus}
+          onDeleteUser={handleDeleteUser}
           onResendInvitation={handleResendInvitation}
           onRegisterStudent={() => handleQuickAction("register-student")}
           onRegisterTeacher={() => handleQuickAction("register-teacher")}
