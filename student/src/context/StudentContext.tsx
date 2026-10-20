@@ -26,6 +26,7 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_AI_CHATS,
 } from "../data/mockData";
+import type { StudentUserSummary } from "../auth/authTypes";
 
 interface StudentContextType {
   currentView: StudentView;
@@ -86,9 +87,23 @@ interface StudentContextType {
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
-export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const StudentProvider: React.FC<{
+  children: React.ReactNode;
+  authUser?: StudentUserSummary;
+}> = ({ children, authUser }) => {
   const [currentView, setCurrentView] = useState<StudentView>("dashboard");
-  const [profile, setProfile] = useState<StudentProfile>(INITIAL_STUDENT_PROFILE);
+  const [profile, setProfile] = useState<StudentProfile>(() => {
+    if (!authUser) return INITIAL_STUDENT_PROFILE;
+
+    const name = [authUser.firstName, authUser.lastName].filter(Boolean).join(" ");
+    return {
+      ...INITIAL_STUDENT_PROFILE,
+      id: authUser.id || authUser.keycloakUserId || INITIAL_STUDENT_PROFILE.id,
+      name: name || INITIAL_STUDENT_PROFILE.name,
+      email: authUser.email,
+      role: "STUDENT",
+    };
+  });
   const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("course-cs301");
   const [selectedLessonId, setSelectedLessonId] = useState<string>("les-cs301-3-2");

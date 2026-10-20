@@ -20,6 +20,7 @@ import { StudentView } from "../../types";
 
 interface TopNavbarProps {
   onMobileMenuOpen: () => void;
+  onLogout: () => void;
 }
 
 const VIEW_TITLES: Record<StudentView, { title: string; category: string }> = {
@@ -45,7 +46,7 @@ const VIEW_TITLES: Record<StudentView, { title: string; category: string }> = {
   settings: { title: "Settings", category: "Preferences" },
 };
 
-export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen }) => {
+export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout }) => {
   const {
     currentView,
     setCurrentView,
@@ -308,13 +309,13 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen }) => {
                 </button>
                 <button
                   onClick={() => {
-                    showToast("Keycloak session is secure and active.");
+                    onLogout();
                     setIsProfileOpen(false);
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <LogOut className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Keycloak Session Info</span>
+                  <span>Sign out</span>
                 </button>
               </div>
             </div>
