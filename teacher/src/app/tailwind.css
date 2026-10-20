@@ -1,60 +1,150 @@
 @import "tailwindcss";
+@source "../../../admin/src";
 
-/*
- * Tailwind is the single style entry point for the teacher application.
- * The existing component skins are imported into Tailwind's component layer
- * so their dimensions, palette, responsive breakpoints, and interaction
- * states remain unchanged during the utility migration.
- */
-@import "./globals.css" layer(components);
-@import "./mentify-theme.css" layer(components);
-@import "./teacher-dashboard-theme.css" layer(components);
-@import "./teacher-assets.css" layer(components);
-@import "./teacher-pages.css" layer(components);
-@import "./teacher-assignment-submissions.css" layer(components);
-@import "./teacher-attendance-management.css" layer(components);
-@import "./teacher-course-details.css" layer(components);
-@import "./teacher-dashboard-home.css" layer(components);
-@import "./teacher-materials-library.css" layer(components);
-@import "./teacher-my-courses.css" layer(components);
-@import "./teacher-my-students.css" layer(components);
-@import "./teacher-quizzes.css" layer(components);
-@import "./teacher-studio.css" layer(components);
-@import "../../../shared/materials/materials.css" layer(components);
-@import "./teacher-materials.css" layer(components);
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #171717;
+    font-family:
+      "Plus Jakarta Sans",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      Oxygen,
+      Ubuntu,
+      Cantarell,
+      sans-serif;
   }
 
   body {
-    min-height: 100%;
-    background: var(--canvas, #f6f8fc);
-    color: var(--ink, #20283b);
-    font-family: var(--font-geist-sans), Arial, sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  button,
-  input,
-  textarea,
-  select {
-    font-family: inherit;
+  .dark body {
+    background-color: #020617;
+    color: #e2e8f0;
   }
+}
 
-  button:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible,
-  select:focus-visible {
-    outline: 3px solid #8b78df44;
-    outline-offset: 2px;
+/* Keep teacher screens on the same slate palette as the admin workspace. */
+@layer utilities {
+  .dark .bg-white {
+    background-color: #0f172a;
   }
+  .dark .bg-slate-50 {
+    background-color: #020617;
+  }
+  .dark .bg-slate-50\/40 {
+    background-color: rgb(15 23 42 / 0.4);
+  }
+  .dark .bg-slate-100 {
+    background-color: #1e293b;
+  }
+  .dark .bg-slate-200 {
+    background-color: #334155;
+  }
+  .dark .bg-indigo-50 {
+    background-color: rgb(49 46 129 / 0.35);
+  }
+  .dark .bg-indigo-50\/70 {
+    background-color: rgb(49 46 129 / 0.25);
+  }
+  .dark .bg-violet-50 {
+    background-color: rgb(76 29 149 / 0.3);
+  }
+  .dark .bg-violet-100 {
+    background-color: rgb(76 29 149 / 0.4);
+  }
+  .dark .bg-rose-50 {
+    background-color: rgb(127 29 29 / 0.35);
+  }
+  .dark .bg-amber-50 {
+    background-color: rgb(120 53 15 / 0.35);
+  }
+  .dark .bg-emerald-50 {
+    background-color: rgb(6 78 59 / 0.35);
+  }
+  .dark .text-slate-900 {
+    color: #f8fafc;
+  }
+  .dark .text-slate-800 {
+    color: #e2e8f0;
+  }
+  .dark .text-slate-700 {
+    color: #cbd5e1;
+  }
+  .dark .text-slate-600 {
+    color: #94a3b8;
+  }
+  .dark .text-slate-500 {
+    color: #94a3b8;
+  }
+  .dark .text-slate-400 {
+    color: #64748b;
+  }
+  .dark .text-indigo-700 {
+    color: #a5b4fc;
+  }
+  .dark .text-indigo-600 {
+    color: #818cf8;
+  }
+  .dark .text-violet-700 {
+    color: #c4b5fd;
+  }
+  .dark .text-violet-600 {
+    color: #a78bfa;
+  }
+  .dark .border-slate-200 {
+    border-color: #334155;
+  }
+  .dark .border-slate-200\/80 {
+    border-color: rgb(51 65 85 / 0.8);
+  }
+  .dark .border-slate-100 {
+    border-color: #1e293b;
+  }
+  .dark .border-indigo-100 {
+    border-color: #3730a3;
+  }
+  .dark .border-violet-200 {
+    border-color: #5b21b6;
+  }
+  .dark .divide-slate-100 > :not(:last-child) {
+    border-color: #1e293b;
+  }
+  .dark .hover\:bg-slate-50:hover {
+    background-color: #1e293b;
+  }
+  .dark .hover\:bg-slate-100:hover {
+    background-color: #1e293b;
+  }
+  .dark .hover\:bg-slate-200:hover {
+    background-color: #334155;
+  }
+  .dark .hover\:text-slate-800:hover {
+    color: #e2e8f0;
+  }
+  .dark .hover\:text-slate-900:hover {
+    color: #f8fafc;
+  }
+}
+
+/* Custom scrollbar for dense data panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

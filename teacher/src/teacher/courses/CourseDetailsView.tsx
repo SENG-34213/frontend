@@ -1,0 +1,825 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Users, Layers, Award, Plus, Clock } from "lucide-react";
+import { Assignment, Course, LearningMaterial, Module, NavigationTab } from "../types";
+import { StatusBadge } from "../components/StatusBadge";
+import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
+import { getCourseById, mapBackendCourse } from "../api/courseApi";
+import { getCourseModules, getModuleLessons } from "../api/courseContentApi";
+import { getCourseAssignments, type BackendAssignment } from "../api/assignmentApi";
+import { getTeacherQuizzes, type BackendQuiz } from "../api/quizApi";
+import { getCourseExams, type BackendExam } from "../api/examApi";
+import { getModuleMaterials } from "../api/courseContentApi";
+import { useTeacherStudents } from "../hooks/useTeacherStudents";
+
+interface CourseDetailsViewProps {
+  course: Course;
+  onBack: () => void;
+  onNavigate: (tab: NavigationTab, param?: string) => void;
+}
+
+type CourseTab =
+  | "overview"
+  | "curriculum"
+  | "students"
+  | "materials"
+  | "assignments"
+  | "quizzes"
+  | "exams"
+  | "grades";
+
+const mapCourseAssignment = (item: BackendAssignment): Assignment => {
+  const due = new Date(item.dueDate);
+  return {
+    id: item.id,
+    courseId: item.courseId,
+    courseCode: item.courseId,
+    title: item.title,
+    description: item.description || item.instructions || "",
+    dueDate: Number.isNaN(due.getTime()) ? item.dueDate : due.toLocaleDateString(),
+    dueTime: Number.isNaN(due.getTime())
+      ? ""
+      : due.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+    maxMarks: item.maxMarks,
+    weightagePercent: 0,
+    status: item.status === "PUBLISHED" ? "Active" : item.status === "CLOSED" ? "Closed" : "Draft",
+    totalSubmissions: item.totalSubmissions ?? 0,
+    gradedCount: item.gradedCount ?? 0,
+    totalStudents: 0,
+    rubricItems: (item.rubricItems || []).map((rubric) => ({
+      criterion: rubric.criterion,
+      marks: rubric.marks,
+    })),
+  };
+};
+
+export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
+  course,
+  onBack,
+  onNavigate,
+}) => {
+  const [activeTab, setActiveTab] = useState<CourseTab>("overview");
+  const [courseEvents, setCourseEvents] = useState<BackendCalendarEvent[]>([]);
+  const [courseEventsLoading, setCourseEventsLoading] = useState(true);
+  const [courseEventsError, setCourseEventsError] = useState<string | null>(null);
+  const [courseModules, setCourseModules] = useState<Module[]>([]);
+  const [courseModulesLoading, setCourseModulesLoading] = useState(true);
+  const [courseModulesError, setCourseModulesError] = useState<string | null>(null);
+  const [courseAssignments, setCourseAssignments] = useState<Assignment[]>([]);
+  const [courseQuizzes, setCourseQuizzes] = useState<BackendQuiz[]>([]);
+  const [courseExams, setCourseExams] = useState<BackendExam[]>([]);
+  const [courseMaterials, setCourseMaterials] = useState<LearningMaterial[]>([]);
+  const [courseQuizzesLoading, setCourseQuizzesLoading] = useState(true);
+  const [courseExamsLoading, setCourseExamsLoading] = useState(true);
+  const [courseMaterialsLoading, setCourseMaterialsLoading] = useState(true);
+  const [courseQuizzesError, setCourseQuizzesError] = useState<string | null>(null);
+  const [courseExamsError, setCourseExamsError] = useState<string | null>(null);
+  const [courseMaterialsError, setCourseMaterialsError] = useState<string | null>(null);
+  const [displayCourse, setDisplayCourse] = useState(course);
+  const backendCourseForRoster = useMemo(
+    () => [{ id: course.id, courseName: course.title }],
+    [course.id, course.title],
+  );
+  const studentState = useTeacherStudents(true, backendCourseForRoster);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getCourseById(course.id, controller.signal)
+      .then((backendCourse) => {
+        if (!controller.signal.aborted) setDisplayCourse(mapBackendCourse(backendCourse));
+      })
+      .catch(() => {
+        // Keep the backend list result visible if the detail request is unavailable.
+      });
+    return () => controller.abort();
+  }, [course]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const start = new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + 30);
+    setCourseEventsLoading(true);
+    setCourseEventsError(null);
+    getCalendarEvents(start, end, course.id, controller.signal)
+      .then(setCourseEvents)
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseEventsError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Course schedule failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseEventsLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseModulesLoading(true);
+    setCourseModulesError(null);
+    getCourseModules(course.id, controller.signal)
+      .then(async (modules) => {
+        const withLessons = await Promise.all(
+          modules.map(async (module) => {
+            const lessons = await getModuleLessons(course.id, module.id, controller.signal);
+            return {
+              id: module.id,
+              courseId: module.courseId,
+              title: module.title,
+              description: module.description || "",
+              order: module.sequenceOrder,
+              status: module.visible === false ? "Draft" : "Published",
+              lessons: lessons.map((lesson, index) => ({
+                id: lesson.id,
+                moduleId: lesson.moduleId,
+                title: lesson.title,
+                description: lesson.description || "",
+                durationMinutes: lesson.durationMinutes ?? 1,
+                order: index + 1,
+                status: lesson.visible === false ? "Draft" : "Published",
+                contentType: "Lecture",
+                resourcesCount: 0,
+              })),
+            } as Module;
+          }),
+        );
+        if (!controller.signal.aborted) setCourseModules(withLessons);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseModules([]);
+          setCourseModulesError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Course modules and lessons failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseModulesLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getCourseAssignments(course.id, controller.signal)
+      .then((assignments) => {
+        if (!controller.signal.aborted) setCourseAssignments(assignments.map(mapCourseAssignment));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setCourseAssignments([]);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseQuizzesLoading(true);
+    setCourseQuizzesError(null);
+    getTeacherQuizzes(controller.signal)
+      .then((quizzes) => {
+        if (!controller.signal.aborted)
+          setCourseQuizzes(quizzes.filter((quiz) => quiz.courseId === course.id));
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseQuizzes([]);
+          setCourseQuizzesError(
+            requestError instanceof Error ? requestError.message : "Course quizzes failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseQuizzesLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseExamsLoading(true);
+    setCourseExamsError(null);
+    getCourseExams(course.id, controller.signal)
+      .then((exams) => {
+        if (!controller.signal.aborted) setCourseExams(exams);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseExams([]);
+          setCourseExamsError(
+            requestError instanceof Error ? requestError.message : "Course exams failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseExamsLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCourseMaterialsLoading(true);
+    setCourseMaterialsError(null);
+    Promise.all(
+      courseModules.map((module) => getModuleMaterials(course.id, module.id, controller.signal)),
+    )
+      .then((materialsByModule) => {
+        if (controller.signal.aborted) return;
+        setCourseMaterials(
+          materialsByModule.flatMap((materials, index) =>
+            materials.map((material) => ({
+              id: material.id,
+              courseId: course.id,
+              courseCode: course.code,
+              title: material.title,
+              description: "",
+              fileType:
+                material.type === "DOC"
+                  ? "DOCX"
+                  : material.type === "PPT" || material.type === "VIDEO"
+                    ? material.type === "PPT"
+                      ? "SLIDES"
+                      : "VIDEO"
+                    : "PDF",
+              fileSize: "Unavailable",
+              uploadDate: "Unavailable",
+              s3Key: material.fileUrl || material.materialId || "",
+              downloadsCount: 0,
+              visibility: "Published",
+              moduleAssociation: courseModules[index]?.title,
+            })),
+          ),
+        );
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setCourseMaterials([]);
+          setCourseMaterialsError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Course materials failed to load.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCourseMaterialsLoading(false);
+      });
+    return () => controller.abort();
+  }, [course.id, course.code, courseModules]);
+
+  const enrolledStudents = studentState.students;
+
+  const tabs: { id: CourseTab; label: string; count?: number }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "curriculum", label: "Curriculum", count: courseModules.length },
+    { id: "students", label: "Students", count: enrolledStudents.length },
+    { id: "materials", label: "Materials", count: courseMaterials.length },
+    { id: "assignments", label: "Assignments", count: courseAssignments.length },
+    { id: "quizzes", label: "Quizzes", count: courseQuizzes.length },
+    { id: "exams", label: "Exams", count: courseExams.length },
+    { id: "grades", label: "Grades" },
+  ];
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Top Back Nav & Lifecycle Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors w-fit"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to All Courses</span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onNavigate("curriculum")}
+            className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Curriculum Builder</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Course Banner */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className="text-xs font-mono font-bold bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded border border-indigo-400/30">
+                  {displayCourse.code}
+                </span>
+                <span className="text-xs text-slate-300 font-medium">
+                  {course.semester} · {course.academicYear}
+                </span>
+                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs text-slate-300">{displayCourse.level} Level</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                {displayCourse.title}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-3xl mt-1.5 leading-relaxed">
+                {displayCourse.description}
+              </p>
+            </div>
+
+            <div className="flex md:flex-col items-end justify-between md:justify-center gap-2 shrink-0 border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-6">
+              <div className="text-right">
+                <span className="text-xs text-slate-400 block">Class Enrollment</span>
+                <span className="text-lg font-bold text-white font-mono tabular-nums">
+                  {displayCourse.enrolledCount} / {displayCourse.maxCapacity}
+                </span>
+              </div>
+              <StatusBadge status={displayCourse.status} />
+            </div>
+          </div>
+        </div>
+
+        {(courseModulesLoading || courseModulesError) && (
+          <div
+            className={`px-6 py-3 text-xs ${
+              courseModulesError
+                ? "border-b border-rose-200 bg-rose-50 text-rose-700"
+                : "border-b border-slate-200 bg-slate-50 text-slate-500"
+            }`}
+          >
+            {courseModulesError || "Loading course modules and lessons..."}
+          </div>
+        )}
+
+        {/* Tab Navigation */}
+        <div className="flex overflow-x-auto px-6 border-b border-slate-200 gap-6 scrollbar-none bg-slate-50/50">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition-all flex items-center gap-2 ${
+                  isActive
+                    ? "border-indigo-600 text-indigo-600"
+                    : "border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300"
+                }`}
+              >
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                      isActive ? "bg-indigo-100 text-indigo-700" : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Content Area */}
+        <div className="p-6">
+          {/* 1. OVERVIEW TAB */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                  <div className="flex items-center gap-2 text-slate-500 mb-1">
+                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <span className="text-xs font-semibold">Weekly Lecture Schedule</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-900">Tuesdays & Thursdays</p>
+                  <p className="text-xs text-slate-500">10:00 AM - 11:30 AM (Turing 401)</p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                  <div className="flex items-center gap-2 text-slate-500 mb-1">
+                    <Award className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-semibold">Grading Weight Distribution</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-900">Weighted Scale</p>
+                  <p className="text-xs text-slate-500">
+                    30% Midterm · 40% Assignments · 30% Final
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                  <div className="flex items-center gap-2 text-slate-500 mb-1">
+                    <Users className="w-4 h-4 text-violet-600" />
+                    <span className="text-xs font-semibold">Active Teaching Assistant</span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-900">Sarah Jenkins</p>
+                  <p className="text-xs text-slate-500">Lead TA · s.jenkins@mentify.edu</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900">Course Schedule</h3>
+                  <button
+                    onClick={() => onNavigate("calendar")}
+                    className="text-xs text-indigo-600 font-semibold hover:underline"
+                  >
+                    Open Calendar
+                  </button>
+                </div>
+                {courseEventsLoading ? (
+                  <div className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-500">
+                    Loading course events...
+                  </div>
+                ) : courseEventsError ? (
+                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                    {courseEventsError}
+                  </div>
+                ) : courseEvents.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+                    No scheduled events in the next 30 days.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {courseEvents.slice(0, 5).map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-slate-900">
+                            {event.title}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            {new Date(event.startDateTime).toLocaleString()} ·{" "}
+                            {event.location || "No location"}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">
+                          {event.eventType}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Module Summary */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900">Syllabus Modules</h3>
+                  <button
+                    onClick={() => setActiveTab("curriculum")}
+                    className="text-xs text-indigo-600 font-semibold hover:underline"
+                  >
+                    View All Modules
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {courseModules.length === 0 ? (
+                    <p className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+                      No modules have been added to this course yet.
+                    </p>
+                  ) : (
+                    courseModules.map((mod) => (
+                      <div
+                        key={mod.id}
+                        className="p-3.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs font-mono">
+                            {mod.order}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900">{mod.title}</p>
+                            <p className="text-[11px] text-slate-500">{mod.description}</p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-medium text-slate-600 tabular-nums">
+                          {mod.lessons.length} lessons
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 2. CURRICULUM TAB */}
+          {activeTab === "curriculum" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  Showing structured hierarchy of modules, lecture units, and lab sessions.
+                </p>
+                <button
+                  onClick={() => onNavigate("curriculum")}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add New Module</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {courseModules.length === 0 ? (
+                  <p className="rounded-lg border border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+                    No modules have been added to this course yet.
+                  </p>
+                ) : (
+                  courseModules.map((mod) => (
+                    <div
+                      key={mod.id}
+                      className="border border-slate-200 rounded-xl overflow-hidden"
+                    >
+                      <div className="bg-slate-50 p-3.5 border-b border-slate-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xs font-mono font-bold text-indigo-700">
+                            Module {mod.order}
+                          </span>
+                          <h4 className="text-xs font-bold text-slate-900">{mod.title}</h4>
+                        </div>
+                        <StatusBadge status={mod.status} />
+                      </div>
+
+                      <div className="divide-y divide-slate-100">
+                        {mod.lessons.map((lesson) => (
+                          <div
+                            key={lesson.id}
+                            className="p-3.5 hover:bg-slate-50/60 transition-colors flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-mono text-slate-400">
+                                {mod.order}.{lesson.order}
+                              </span>
+                              <div>
+                                <p className="text-xs font-semibold text-slate-900">
+                                  {lesson.title}
+                                </p>
+                                <p className="text-[11px] text-slate-500">{lesson.description}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                              <span className="font-mono tabular-nums">
+                                {lesson.durationMinutes} min
+                              </span>
+                              <StatusBadge status={lesson.contentType} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3. STUDENTS TAB */}
+          {activeTab === "students" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">
+                  {enrolledStudents.length} students officially enrolled for Fall 2026.
+                </span>
+                <button
+                  onClick={() => onNavigate("students")}
+                  className="text-xs font-medium text-indigo-600 hover:underline"
+                >
+                  Open Full Directory →
+                </button>
+              </div>
+
+              {studentState.error && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {studentState.error.message}
+                </div>
+              )}
+              {studentState.isLoading ? (
+                <div className="rounded-lg border border-slate-200 px-4 py-8 text-center text-xs text-slate-500">
+                  Loading enrolled students...
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="px-4 py-3">Student</th>
+                        <th className="px-4 py-3">Student Number</th>
+                        <th className="px-4 py-3">Attendance</th>
+                        <th className="px-4 py-3">GPA</th>
+                        <th className="px-4 py-3">Academic Status</th>
+                        <th className="px-4 py-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {enrolledStudents.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-xs text-slate-400">
+                            No enrolled students found.
+                          </td>
+                        </tr>
+                      ) : (
+                        enrolledStudents.map((st) => (
+                          <tr key={st.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className={`w-7 h-7 rounded-full text-white text-xs font-semibold flex items-center justify-center ${st.avatarBg}`}
+                                >
+                                  {st.initials}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-slate-900">{st.name}</p>
+                                  <p className="text-[11px] text-slate-400">{st.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 font-mono text-slate-600">{st.studentId}</td>
+                            <td className="px-4 py-3 font-mono tabular-nums text-slate-700">
+                              {st.attendanceRate === null ? "Unavailable" : `${st.attendanceRate}%`}
+                            </td>
+                            <td className="px-4 py-3 font-mono tabular-nums font-semibold text-slate-900">
+                              {st.gpa === null ? "Unavailable" : st.gpa.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <StatusBadge status={st.status} />
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                onClick={() => onNavigate("students")}
+                                className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                              >
+                                View Record
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 4. MATERIALS TAB */}
+          {activeTab === "materials" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  Course syllabus files, starter code archives, and slides are available here.
+                </p>
+                <button
+                  onClick={() => onNavigate("materials")}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Upload Resource</span>
+                </button>
+              </div>
+
+              {courseMaterialsError && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
+                  {courseMaterialsError}
+                </div>
+              )}
+              {courseMaterialsLoading ? (
+                <div className="rounded-lg border border-slate-200 px-4 py-8 text-center text-xs text-slate-500">
+                  Loading course materials...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {courseMaterials.length === 0 ? (
+                    <p className="col-span-full rounded-lg border border-slate-200 px-4 py-8 text-center text-xs text-slate-400">
+                      No learning materials found.
+                    </p>
+                  ) : (
+                    courseMaterials.map((mat) => (
+                      <div
+                        key={mat.id}
+                        className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors flex items-start justify-between gap-3"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs font-mono border border-indigo-100">
+                            {mat.fileType}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                              {mat.title}
+                            </h4>
+                            <p className="text-[11px] text-slate-500 line-clamp-1">
+                              {mat.description}
+                            </p>
+                            <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                              <span className="font-mono">{mat.fileSize}</span>
+                              <span>·</span>
+                              <span>{mat.downloadsCount} downloads</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <StatusBadge status={mat.visibility} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 5. ASSIGNMENTS TAB */}
+          {activeTab === "assignments" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500">
+                  Manage homework milestones, rubric scoring, and submissions.
+                </p>
+                <button
+                  onClick={() => onNavigate("assignments")}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create Assignment</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {courseAssignments.map((asg) => (
+                  <div
+                    key={asg.id}
+                    className="p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900">{asg.title}</h4>
+                        <StatusBadge status={asg.status} />
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                        {asg.description}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                        <span>Due {asg.dueDate}</span>
+                        <span>·</span>
+                        <span className="text-slate-700 font-medium font-mono tabular-nums">
+                          {asg.gradedCount}/{asg.totalSubmissions} graded
+                        </span>
+                        <span>·</span>
+                        <span className="font-mono">{asg.maxMarks} marks</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => onNavigate("grading-workspace")}
+                      className="px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors w-fit"
+                    >
+                      Grade Submissions
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 6. QUIZZES & EXAMS & GRADES TABS */}
+          {(activeTab === "quizzes" || activeTab === "exams" || activeTab === "grades") && (
+            <div className="text-center py-8">
+              {activeTab === "quizzes" || activeTab === "exams" ? (
+                <>
+                  <p className="text-xs text-slate-500 mb-3">
+                    {activeTab === "quizzes"
+                      ? courseQuizzesLoading
+                        ? "Loading course quizzes..."
+                        : courseQuizzesError ||
+                          `${courseQuizzes.length} quizzes found for ${displayCourse.code}.`
+                      : courseExamsLoading
+                        ? "Loading course exams..."
+                        : courseExamsError ||
+                          `${courseExams.length} exams found for ${displayCourse.code}.`}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-slate-500 mb-3">
+                  Gradebook data is available in the dedicated grades module.
+                </p>
+              )}
+              <button
+                onClick={() => onNavigate(activeTab as NavigationTab)}
+                className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs"
+              >
+                Open Full {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Dashboard
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
