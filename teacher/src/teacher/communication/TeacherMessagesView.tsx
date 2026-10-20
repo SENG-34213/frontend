@@ -1,7 +1,17 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { BellRing, CheckCheck, Plus, Search, Send, UserPlus, Users } from "lucide-react";
+import {
+  BellRing,
+  CheckCheck,
+  Download,
+  FileText,
+  Plus,
+  Search,
+  Send,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import type { Student } from "../types";
 import { useCommunicationRealtime } from "../api/communicationRealtime";
@@ -13,13 +23,16 @@ import {
   getCommunicationGroupMembers,
   getCommunicationGroups,
   getCommunicationMessages,
+  getCommunicationAttachmentDownload,
   sendCommunicationMessage,
+  uploadCommunicationAttachment,
   unarchiveCommunicationGroup,
   updateCommunicationMessage,
   type CommunicationGroup,
   type CommunicationGroupMember,
   type CommunicationMessage,
 } from "../api/communicationApi";
+import { CommunicationAttachmentPicker } from "../components/CommunicationAttachmentPicker";
 import { ConfirmModal, TextInputModal } from "../components/ActionModal";
 
 interface TeacherMessagesViewProps {
@@ -60,9 +73,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     {},
   );
   const [inputText, setInputText] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
   const [activeTab, setActiveTab] = useState<"direct" | "announcements">("direct");
   const [search, setSearch] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
+  const [announcementAttachments, setAnnouncementAttachments] = useState<File[]>([]);
   const [announcementTarget, setAnnouncementTarget] = useState("");
   const [announcementSuccess, setAnnouncementSuccess] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
@@ -74,6 +89,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingMessage, setEditingMessage] = useState<CommunicationMessage | null>(null);
@@ -173,13 +189,24 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
 
   async function handleSendMessage(event: React.FormEvent) {
     event.preventDefault();
-    if (!activeGroup || !inputText.trim()) return;
+    if (!activeGroup || (!inputText.trim() && pendingAttachments.length === 0)) return;
     setIsSending(true);
     setActionError(null);
     try {
       const content = inputText.trim();
-      if (!realtime.sendMessage(activeGroup.id, content)) {
-        const message = await sendCommunicationMessage(activeGroup.id, content);
+      const attachmentIds: string[] = [];
+      for (let index = 0; index < pendingAttachments.length; index += 1) {
+        setUploadStatus(`Uploading attachment ${index + 1} of ${pendingAttachments.length}...`);
+        const attachment = await uploadCommunicationAttachment(
+          activeGroup.id,
+          pendingAttachments[index],
+        );
+        if (!attachment) throw new Error("An attachment could not be uploaded.");
+        attachmentIds.push(attachment.id);
+      }
+
+      if (attachmentIds.length > 0 || !realtime.sendMessage(activeGroup.id, content)) {
+        const message = await sendCommunicationMessage(activeGroup.id, content, attachmentIds);
         if (!message) throw new Error("Your message could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
@@ -187,12 +214,32 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         }));
       }
       setInputText("");
+      setPendingAttachments([]);
+      setUploadStatus(null);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Message could not be sent.",
       );
+      setUploadStatus(null);
     } finally {
       setIsSending(false);
+    }
+  }
+
+  async function openAttachment(message: CommunicationMessage, attachmentId: string) {
+    if (!activeGroup) return;
+    try {
+      const download = await getCommunicationAttachmentDownload(
+        activeGroup.id,
+        message.id,
+        attachmentId,
+      );
+      if (!download?.downloadUrl) throw new Error("The attachment could not be opened.");
+      window.open(download.downloadUrl, "_blank", "noopener,noreferrer");
+    } catch (requestError) {
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Attachment could not be opened.",
+      );
     }
   }
 
@@ -306,14 +353,21 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   async function handlePublishAnnouncement(event: React.FormEvent) {
     event.preventDefault();
     const group = groups.find((item) => item.courseId === announcementTarget);
-    if (!group || !announcementText.trim()) {
+    if (!group || (!announcementText.trim() && announcementAttachments.length === 0)) {
       setActionError("Select a course with an available communication group.");
       return;
     }
+    setIsSending(true);
     try {
       const content = announcementText.trim();
-      if (!realtime.sendMessage(group.id, content)) {
-        const message = await sendCommunicationMessage(group.id, content);
+      const attachmentIds: string[] = [];
+      for (const file of announcementAttachments) {
+        const attachment = await uploadCommunicationAttachment(group.id, file);
+        if (!attachment) throw new Error("An announcement attachment could not be uploaded.");
+        attachmentIds.push(attachment.id);
+      }
+      if (attachmentIds.length > 0 || !realtime.sendMessage(group.id, content)) {
+        const message = await sendCommunicationMessage(group.id, content, attachmentIds);
         if (!message) throw new Error("The announcement could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
@@ -322,11 +376,14 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       }
       setAnnouncementSuccess(true);
       setAnnouncementText("");
+      setAnnouncementAttachments([]);
       setTimeout(() => setAnnouncementSuccess(false), 2200);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Announcement could not be sent.",
       );
+    } finally {
+      setIsSending(false);
     }
   }
 
@@ -523,6 +580,27 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                             className={`max-w-lg p-3 rounded-xl text-xs leading-relaxed ${isMe ? "bg-indigo-600 text-white rounded-br-none shadow-xs" : "bg-slate-100 text-slate-900 rounded-bl-none"}`}
                           >
                             {message.deletedForEveryone ? "Message deleted" : message.content}
+                            {!message.deletedForEveryone && message.attachments?.length > 0 && (
+                              <div className="mt-2 space-y-1.5 border-t border-white/20 pt-2">
+                                {message.attachments.map((attachment) => (
+                                  <button
+                                    key={attachment.id}
+                                    type="button"
+                                    onClick={() => void openAttachment(message, attachment.id)}
+                                    className="flex w-full items-center gap-2 rounded-md bg-black/10 px-2 py-1.5 text-left hover:bg-black/20"
+                                  >
+                                    <FileText className="h-4 w-4 shrink-0" />
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {attachment.originalFilename}
+                                    </span>
+                                    <span className="shrink-0 text-[10px] opacity-75">
+                                      {Math.ceil(attachment.fileSize / 1024)} KB
+                                    </span>
+                                    <Download className="h-3.5 w-3.5 shrink-0" />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           {isMe && !message.deletedForEveryone && (
                             <div className="mt-1 flex gap-2">
@@ -581,6 +659,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                   onSubmit={handleSendMessage}
                   className="p-3 border-t border-slate-200 bg-white flex items-center gap-2"
                 >
+                  <CommunicationAttachmentPicker
+                    files={pendingAttachments}
+                    onChange={setPendingAttachments}
+                    disabled={activeGroup.status === "ARCHIVED" || isSending}
+                  />
                   <input
                     disabled={activeGroup.status === "ARCHIVED" || isSending}
                     type="text"
@@ -590,7 +673,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     className="flex-1 px-4 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
                   />
                   <button
-                    disabled={activeGroup.status === "ARCHIVED" || isSending}
+                    disabled={
+                      activeGroup.status === "ARCHIVED" ||
+                      isSending ||
+                      (!inputText.trim() && pendingAttachments.length === 0)
+                    }
                     type="submit"
                     className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1.5 shrink-0"
                   >
@@ -598,6 +685,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     <span>Send</span>
                   </button>
                 </form>
+                {uploadStatus && (
+                  <div className="border-t border-slate-100 px-3 py-1 text-[10px] text-indigo-600">
+                    {uploadStatus}
+                  </div>
+                )}
               </>
             ) : (
               <p className="m-auto text-xs text-slate-400">
@@ -654,6 +746,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
               />
             </div>
+            <CommunicationAttachmentPicker
+              files={announcementAttachments}
+              onChange={setAnnouncementAttachments}
+              disabled={isSending}
+            />
             <button
               type="submit"
               className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1.5"
