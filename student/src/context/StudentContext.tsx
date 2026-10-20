@@ -26,6 +26,7 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_AI_CHATS,
 } from "../data/mockData";
+import type { StudentUserSummary } from "../auth/authTypes";
 
 interface StudentContextType {
   currentView: StudentView;
@@ -86,7 +87,7 @@ interface StudentContextType {
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
-export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const StudentProvider: React.FC<{ children: React.ReactNode; authUser?: StudentUserSummary }> = ({ children, authUser }) => {
   const [currentView, setCurrentView] = useState<StudentView>("dashboard");
   const [profile, setProfile] = useState<StudentProfile>(INITIAL_STUDENT_PROFILE);
   const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
@@ -111,6 +112,18 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedMaterialForPreview, setSelectedMaterialForPreview] =
     useState<LearningMaterial | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authUser) return;
+    const name = [authUser.firstName, authUser.lastName].filter(Boolean).join(" ");
+    setProfile((current) => ({
+      ...current,
+      id: authUser.id || authUser.keycloakUserId || current.id,
+      name: name || current.name,
+      email: authUser.email,
+      role: "STUDENT",
+    }));
+  }, [authUser]);
 
   useEffect(() => {
     if (theme === "dark") {

@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { StudentLoginView } from "./components/auth/StudentLoginView";
+import { logoutStudent, restoreStudentAuth } from "./api/auth";
+import type { AuthSession } from "./auth/authTypes";
 import { StudentProvider, useStudent } from "./context/StudentContext";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TopNavbar } from "./components/layout/TopNavbar";
@@ -25,7 +28,7 @@ import { ProfileView } from "./components/profile/ProfileView";
 import { SettingsView } from "./components/profile/SettingsView";
 import { X, CheckCircle2 } from "lucide-react";
 
-const MainLayout: React.FC = () => {
+const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const { currentView, isSidebarCollapsed, toastMessage } = useStudent();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -109,7 +112,7 @@ const MainLayout: React.FC = () => {
           isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
         }`}
       >
-        <TopNavbar onMobileMenuOpen={() => setMobileMenuOpen(true)} />
+        <TopNavbar onMobileMenuOpen={() => setMobileMenuOpen(true)} onLogout={onLogout} />
 
         <main className="flex-1 px-4 py-6 sm:px-8 max-w-7xl w-full mx-auto">
           {renderCurrentView()}
@@ -131,9 +134,21 @@ const MainLayout: React.FC = () => {
 };
 
 export default function App() {
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
+
+  useEffect(() => {
+    restoreStudentAuth().then(setSession).finally(() => setIsRestoring(false));
+  }, []);
+
+  if (isRestoring) {
+    return <main className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-500">Loading your secure workspace…</main>;
+  }
+  if (!session) return <StudentLoginView onLogin={setSession} />;
+
   return (
-    <StudentProvider>
-      <MainLayout />
+    <StudentProvider authUser={session.user}>
+      <MainLayout onLogout={async () => { await logoutStudent(); setSession(null); }} />
     </StudentProvider>
   );
 }
