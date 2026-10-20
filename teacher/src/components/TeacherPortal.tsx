@@ -44,6 +44,7 @@ import { createQuiz } from "../teacher/api/quizApi";
 import { mapBackendCourse } from "../teacher/api/courseApi";
 import { useTeacherStudents } from "../teacher/hooks/useTeacherStudents";
 import { getCourseAssignments, type BackendAssignment } from "../teacher/api/assignmentApi";
+import { NoticeModal } from "../teacher/components/ActionModal";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -56,6 +57,7 @@ export default function App() {
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [assignmentRefreshToken, setAssignmentRefreshToken] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [courseEditNotice, setCourseEditNotice] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -343,7 +345,7 @@ export default function App() {
                 course={selectedCourseForDetail}
                 onBack={() => setSelectedCourseForDetail(null)}
                 onNavigate={handleNavigate}
-                onEditCourse={(c) => alert(`Editing metadata for ${c.code}...`)}
+                onEditCourse={(c) => setCourseEditNotice(`Course metadata editing for ${c.code} is not available in the current backend contract.`)}
               />
             ) : (
               <CourseListView
@@ -489,6 +491,7 @@ export default function App() {
         teacherId={session?.user.id}
         onCreateQuiz={createQuiz}
       />
+      <NoticeModal isOpen={Boolean(courseEditNotice)} title="Course editing unavailable" message={courseEditNotice ?? ""} onClose={() => setCourseEditNotice(null)} />
     </div>
   );
 }

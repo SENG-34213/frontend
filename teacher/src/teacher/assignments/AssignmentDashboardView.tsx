@@ -23,6 +23,7 @@ import {
 } from "../api/assignmentApi";
 import { StatusBadge } from "../components/StatusBadge";
 import { ApiError } from "../api/client";
+import { ConfirmModal, TextInputModal } from "../components/ActionModal";
 
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
@@ -72,6 +73,8 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [editingAssignment, setEditingAssignment] = useState<BackendAssignment | null>(null);
+  const [deletingAssignment, setDeletingAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     if (backendCourses.length === 0) {
@@ -142,11 +145,12 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
-  const handleEdit = async (assignment: Assignment) => {
-    const record = backendAssignments.find((entry) => entry.id === assignment.id);
-    if (!record) return;
-    const title = window.prompt("Assignment title", record.title);
-    if (!title || title.trim() === record.title) return;
+  const handleEdit = async (title: string) => {
+    const record = editingAssignment;
+    if (!record || title.trim() === record.title) {
+      setEditingAssignment(null);
+      return;
+    }
     try {
       const updated = await updateAssignment(record.id, {
         title: title.trim(),
@@ -167,6 +171,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           entry.id === updated.id ? toAssignment(updated, backendCourses) : entry,
         ),
       );
+      setEditingAssignment(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Assignment could not be updated.",
@@ -174,12 +179,14 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
-  const handleDelete = async (assignment: Assignment) => {
-    if (!window.confirm(`Delete ${assignment.title}?`)) return;
+  const handleDelete = async () => {
+    const assignment = deletingAssignment;
+    if (!assignment) return;
     try {
       await deleteAssignment(assignment.id);
       setBackendAssignments((current) => current.filter((entry) => entry.id !== assignment.id));
       setAssignments((current) => current.filter((entry) => entry.id !== assignment.id));
+      setDeletingAssignment(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Assignment could not be deleted.",
@@ -413,7 +420,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                   {asg.status === "Draft" && (
                     <button
                       type="button"
-                      onClick={() => void handleEdit(asg)}
+                      onClick={() => setEditingAssignment(backendAssignments.find((entry) => entry.id === asg.id) ?? null)}
                       className="px-2 py-1 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
                     >
                       Edit
@@ -421,7 +428,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                   )}
                   <button
                     type="button"
-                    onClick={() => void handleDelete(asg)}
+                    onClick={() => setDeletingAssignment(asg)}
                     className="px-2 py-1 text-[10px] font-medium text-rose-700 border border-rose-200 rounded-md"
                   >
                     Delete
@@ -432,6 +439,21 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           );
         })}
       </div>
+      <TextInputModal
+        isOpen={Boolean(editingAssignment)}
+        title="Edit assignment"
+        label="Assignment title"
+        initialValue={editingAssignment?.title ?? ""}
+        onClose={() => setEditingAssignment(null)}
+        onSave={handleEdit}
+      />
+      <ConfirmModal
+        isOpen={Boolean(deletingAssignment)}
+        title="Delete assignment?"
+        description={`Deleting “${deletingAssignment?.title ?? "this assignment"}” permanently removes it from the course.`}
+        onClose={() => setDeletingAssignment(null)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };

@@ -32,6 +32,7 @@ import {
 } from "../api/courseContentApi";
 import { StatusBadge } from "../components/StatusBadge";
 import { LessonEditorModal } from "../lessons/LessonEditorModal";
+import { ConfirmModal } from "../components/ActionModal";
 
 interface CurriculumBuilderViewProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -91,6 +92,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [newModuleDesc, setNewModuleDesc] = useState("");
   const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "module" | "lesson"; module: Module; lesson?: Lesson } | null>(null);
 
   const currentBackendCourse = backendCourses.find((course) => course.id === selectedCourseId);
   const currentCourse: Course = {
@@ -293,10 +295,11 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   };
 
   const handleDeleteModule = async (module: Module) => {
-    if (!selectedCourseId || !window.confirm(`Delete ${module.title}?`)) return;
+    if (!selectedCourseId) return;
     try {
       await deleteCourseModule(selectedCourseId, module.id);
       setModules((prev) => prev.filter((item) => item.id !== module.id));
+      setDeleteTarget(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Module could not be deleted.",
@@ -305,7 +308,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   };
 
   const handleDeleteLesson = async (module: Module, lesson: Lesson) => {
-    if (!selectedCourseId || !window.confirm(`Delete ${lesson.title}?`)) return;
+    if (!selectedCourseId) return;
     try {
       await deleteModuleLesson(selectedCourseId, module.id, lesson.id);
       setModules((prev) =>
@@ -315,6 +318,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             : item,
         ),
       );
+      setDeleteTarget(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Lesson could not be deleted.",
@@ -547,7 +551,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      void handleDeleteModule(mod);
+                      setDeleteTarget({ type: "module", module: mod });
                     }}
                     className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
                     aria-label={`Delete ${mod.title}`}
@@ -603,7 +607,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => void handleDeleteLesson(mod, lesson)}
+                            onClick={() => setDeleteTarget({ type: "lesson", module: mod, lesson })}
                             className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
                             aria-label={`Delete ${lesson.title}`}
                           >
@@ -627,6 +631,19 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         module={editingParentModule}
         onClose={() => setIsEditorOpen(false)}
         onSave={handleSaveLesson}
+      />
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title={`Delete ${deleteTarget?.type ?? "item"}?`}
+        description={`Deleting “${deleteTarget?.type === "lesson" ? deleteTarget.lesson?.title : deleteTarget?.module.title}” cannot be undone.`}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() =>
+          deleteTarget?.type === "lesson" && deleteTarget.lesson
+            ? handleDeleteLesson(deleteTarget.module, deleteTarget.lesson)
+            : deleteTarget
+              ? handleDeleteModule(deleteTarget.module)
+              : undefined
+        }
       />
     </div>
   );

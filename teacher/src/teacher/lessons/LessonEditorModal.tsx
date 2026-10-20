@@ -3,6 +3,7 @@ import { X, Save, Eye, Edit3, Check, FileText, Upload, Download } from "lucide-r
 import { Lesson, Module } from "../types";
 import { deleteModuleMaterial } from "../api/courseContentApi";
 import { getMaterialDownload } from "../api/materialApi";
+import { ConfirmModal } from "../components/ActionModal";
 
 interface LessonEditorModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [downloadingMaterialId, setDownloadingMaterialId] = useState<string | null>(null);
   const [materialError, setMaterialError] = useState<string | null>(null);
+  const [materialToRemove, setMaterialToRemove] = useState<string | null>(null);
 
   useEffect(() => {
     if (!lesson) return;
@@ -100,14 +102,16 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
     }
   };
 
-  const removeMaterial = async (materialId: string) => {
-    if (!module?.courseId || !window.confirm("Remove this material from the lesson?")) {
+  const removeMaterial = async () => {
+    const materialId = materialToRemove;
+    if (!module?.courseId || !materialId) {
       return;
     }
     setMaterialError(null);
     try {
       await deleteModuleMaterial(module.courseId, module.id, materialId);
       setAttachedMaterials((current) => current.filter((material) => material.id !== materialId));
+      setMaterialToRemove(null);
     } catch (error) {
       setMaterialError(error instanceof Error ? error.message : "Material could not be removed.");
     }
@@ -299,7 +303,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => void removeMaterial(material.id)}
+                  onClick={() => setMaterialToRemove(material.id)}
                             className="text-xs text-rose-600 hover:text-rose-800"
                           >
                             Remove
@@ -422,6 +426,13 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
           </div>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={Boolean(materialToRemove)}
+        title="Remove learning material?"
+        description="This removes the material from this lesson and cannot be undone."
+        onClose={() => setMaterialToRemove(null)}
+        onConfirm={removeMaterial}
+      />
     </div>
   );
 };

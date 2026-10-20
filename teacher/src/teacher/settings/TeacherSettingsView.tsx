@@ -8,6 +8,7 @@ import {
   updateCommunicationSettings,
   type CommunicationSettings,
 } from "../api/settingsApi";
+import { NoticeModal } from "../components/ActionModal";
 
 interface TeacherSettingsViewProps {
   teacher: TeacherProfile;
@@ -30,6 +31,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [isCommunicationSaving, setIsCommunicationSaving] = useState(false);
   const [communicationSaved, setCommunicationSaved] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [securityNoticeOpen, setSecurityNoticeOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -193,7 +195,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
 
         <div className="pt-2 flex items-center justify-between">
           <button
-            onClick={() => alert("Opening account security settings...")}
+            onClick={() => setSecurityNoticeOpen(true)}
             className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
           >
             <KeyRound className="w-3.5 h-3.5" />
@@ -350,6 +352,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
           <span>{isLoggingOut ? "Signing Out..." : "Sign Out of Faculty Workspace"}</span>
         </button>
       </div>
+      <NoticeModal isOpen={securityNoticeOpen} title="Account security" message="Password and security management is handled by the account service and is not available in this workspace yet." onClose={() => setSecurityNoticeOpen(false)} />
     </div>
   );
 };

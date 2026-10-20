@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { StudentSubmission, Assignment, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
+import { NoticeModal } from "../components/ActionModal";
 import {
   getAssignment,
   getAssignmentSubmissions,
@@ -107,6 +108,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   );
   const [feedback, setFeedback] = useState<string>(currentSubmission?.feedback || "");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -168,7 +170,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     const numericScore = Number(inputScore);
     const maximumAllowedScore = currentAssignment.maxMarks;
     if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > maximumAllowedScore) {
-      alert(`Please enter a valid mark between 0 and ${maximumAllowedScore}.`);
+      setNotice({ title: "Invalid mark", message: `Enter a mark between 0 and ${maximumAllowedScore}.` });
       return;
     }
 
@@ -373,7 +375,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   {currentSubmission.submittedFileName}
                 </span>
                 <button
-                  onClick={() => alert(`Downloading ${currentSubmission.submittedFileName}...`)}
+                  onClick={() => setNotice({ title: "Download unavailable", message: "This submission does not include a downloadable file URL yet." })}
                   className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors flex items-center gap-1"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -554,6 +556,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           </div>
         </aside>
       </div>
+      <NoticeModal isOpen={Boolean(notice)} title={notice?.title ?? "Notice"} message={notice?.message ?? ""} onClose={() => setNotice(null)} />
     </div>
   );
 };

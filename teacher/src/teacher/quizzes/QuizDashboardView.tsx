@@ -35,6 +35,7 @@ import { QuestionBuilderModal } from "./QuestionBuilderModal";
 import { CreateQuizModal } from "./CreateQuizModal";
 import { AiQuizGeneratorCard } from "./AiQuizGeneratorCard";
 import { AiQuizCardSliderModal } from "./AiQuizCardSliderModal";
+import { ConfirmModal, TextInputModal } from "../components/ActionModal";
 
 interface QuizDashboardViewProps {
   teacherCourses: Course[];
@@ -60,6 +61,10 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   const [todayAnalytics, setTodayAnalytics] = useState<QuizAnalytics | null>(null);
   const [analyticsUnavailable, setAnalyticsUnavailable] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
+  const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
+  const [isDeleteQuizOpen, setIsDeleteQuizOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -171,15 +176,17 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
     }
   };
 
-  const handleEditQuiz = async () => {
-    if (!selectedQuiz || selectedQuiz.status !== "Draft") return;
-    const title = window.prompt("Quiz title", selectedQuiz.title)?.trim();
-    if (!title || title === selectedQuiz.title) return;
+  const handleEditQuiz = async (title: string) => {
+    if (!editingQuiz || editingQuiz.status !== "Draft") return;
+    if (title === editingQuiz.title) {
+      setEditingQuiz(null);
+      return;
+    }
     try {
-      const updated = await updateQuiz(selectedQuiz.id, {
+      const updated = await updateQuiz(editingQuiz.id, {
         title,
-        description: selectedQuiz.description,
-        durationMinutes: selectedQuiz.durationMinutes,
+        description: editingQuiz.description,
+        durationMinutes: editingQuiz.durationMinutes,
         passMark: 0,
         maxAttempts: 1,
         showResultImmediately: true,
@@ -187,6 +194,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       const mapped = mapBackendQuiz(updated, teacherCourses);
       setQuizzes((current) => current.map((quiz) => (quiz.id === mapped.id ? mapped : quiz)));
       setSelectedQuiz(mapped);
+      setEditingQuiz(null);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Quiz could not be updated.",
@@ -195,12 +203,13 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   };
 
   const handleDeleteQuiz = async () => {
-    if (!selectedQuiz || !window.confirm(`Delete ${selectedQuiz.title}?`)) return;
+    if (!selectedQuiz) return;
     try {
       await deleteQuiz(selectedQuiz.id);
       const remaining = quizzes.filter((quiz) => quiz.id !== selectedQuiz.id);
       setQuizzes(remaining);
       setSelectedQuiz(remaining[0] ?? null);
+      setIsDeleteQuizOpen(false);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Quiz could not be deleted.",
@@ -208,8 +217,9 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
     }
   };
 
-  const handleDeleteQuestion = async (questionId: string) => {
-    if (!selectedQuiz || !window.confirm("Delete this question?")) return;
+  const handleDeleteQuestion = async () => {
+    const questionId = deletingQuestionId;
+    if (!selectedQuiz || !questionId) return;
     try {
       await deleteQuizQuestion(selectedQuiz.id, questionId);
       const updated = {
@@ -218,6 +228,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       };
       setSelectedQuiz(updated);
       setQuizzes((current) => current.map((quiz) => (quiz.id === updated.id ? updated : quiz)));
+      setDeletingQuestionId(null);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Question could not be deleted.",
@@ -225,10 +236,13 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
     }
   };
 
-  const handleEditQuestion = async (question: QuizQuestion) => {
-    if (!selectedQuiz || selectedQuiz.status !== "Draft") return;
-    const questionText = window.prompt("Question text", question.question)?.trim();
-    if (!questionText || questionText === question.question || !question.options?.length) return;
+  const handleEditQuestion = async (questionText: string) => {
+    const question = editingQuestion;
+    if (!selectedQuiz || !question || selectedQuiz.status !== "Draft") return;
+    if (questionText === question.question || !question.options?.length) {
+      setEditingQuestion(null);
+      return;
+    }
     try {
       const updated = await updateQuizQuestion(selectedQuiz.id, question.id, {
         questionText,
@@ -248,6 +262,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       };
       setSelectedQuiz(next);
       setQuizzes((current) => current.map((quiz) => (quiz.id === next.id ? next : quiz)));
+      setEditingQuestion(null);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Question could not be updated.",
@@ -489,6 +504,14 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   )}
                   {selectedQuiz.status === "Draft" && (
                     <button
+                      onClick={() => setEditingQuiz(selectedQuiz)}
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  {selectedQuiz.status === "Draft" && (
+                    <button
                       onClick={() => void handlePublishQuiz()}
                       className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
                     >
@@ -506,7 +529,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   </button>
                   {selectedQuiz.status === "Draft" && (
                     <button
-                      onClick={() => void handleDeleteQuiz()}
+                      onClick={() => setIsDeleteQuizOpen(true)}
                       className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 transition-colors"
                       title="Delete quiz"
                     >
@@ -573,7 +596,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                           <div className="flex gap-2 shrink-0">
                             {selectedQuiz.status === "Draft" && (
                               <button
-                                onClick={() => void handleEditQuestion(q)}
+                                onClick={() => setEditingQuestion(q)}
                                 className="text-[10px] text-slate-600 hover:text-indigo-600"
                               >
                                 Edit
@@ -581,7 +604,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                             )}
                             {selectedQuiz.status === "Draft" && (
                               <button
-                                onClick={() => void handleDeleteQuestion(q.id)}
+                                onClick={() => setDeletingQuestionId(q.id)}
                                 className="text-[10px] text-rose-700 hover:text-rose-900"
                               >
                                 Delete
@@ -676,6 +699,37 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           setQuizzes((current) => [mapped, ...current.filter((quiz) => quiz.id !== mapped.id)]);
           setSelectedQuiz(mapped);
         }}
+      />
+      <TextInputModal
+        isOpen={Boolean(editingQuiz)}
+        title="Edit quiz"
+        label="Quiz title"
+        initialValue={editingQuiz?.title ?? ""}
+        onClose={() => setEditingQuiz(null)}
+        onSave={handleEditQuiz}
+      />
+      <TextInputModal
+        isOpen={Boolean(editingQuestion)}
+        title="Edit question"
+        label="Question text"
+        initialValue={editingQuestion?.question ?? ""}
+        multiline
+        onClose={() => setEditingQuestion(null)}
+        onSave={handleEditQuestion}
+      />
+      <ConfirmModal
+        isOpen={isDeleteQuizOpen}
+        title="Delete quiz?"
+        description={`Deleting “${selectedQuiz?.title ?? "this quiz"}” removes the quiz and its questions.`}
+        onClose={() => setIsDeleteQuizOpen(false)}
+        onConfirm={handleDeleteQuiz}
+      />
+      <ConfirmModal
+        isOpen={Boolean(deletingQuestionId)}
+        title="Delete question?"
+        description="This permanently removes the question from the draft quiz."
+        onClose={() => setDeletingQuestionId(null)}
+        onConfirm={handleDeleteQuestion}
       />
     </div>
   );
