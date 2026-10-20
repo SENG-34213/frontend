@@ -17,6 +17,7 @@ export interface AiMessage {
   createdAt?: string;
   timestamp?: string;
   toolsUsed?: string[];
+  attachmentName?: string;
 }
 
 export interface AiChatResponse {
@@ -71,10 +72,21 @@ export async function sendAiMessage(
   conversationId: string,
   message: string,
   clientMessageId: string,
+  file?: File,
 ): Promise<AiChatResponse> {
+  const body = file
+    ? (() => {
+        const formData = new FormData();
+        formData.append("conversationId", conversationId);
+        formData.append("message", message);
+        formData.append("clientMessageId", clientMessageId);
+        formData.append("file", file);
+        return formData;
+      })()
+    : { conversationId, message, clientMessageId };
   const response = await apiRequest<ApiResponse<AiChatResponse>>("/api/ai/chat", {
     method: "POST",
-    body: { conversationId, message, clientMessageId },
+    body,
   });
   return requireData(response, "AI service returned no response.");
 }

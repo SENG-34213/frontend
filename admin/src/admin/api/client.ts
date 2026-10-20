@@ -46,9 +46,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   const requestHeaders = new Headers(headers);
+  const isFormDataBody = typeof FormData !== "undefined" && body instanceof FormData;
 
   requestHeaders.set("Accept", "application/json");
-  if (body !== undefined) {
+  if (body !== undefined && !isFormDataBody) {
     requestHeaders.set("Content-Type", "application/json");
   }
 
@@ -62,7 +63,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...requestInit,
     headers: requestHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isFormDataBody ? body : JSON.stringify(body),
   });
 
   const responseBody = await response.json().catch(() => null);

@@ -82,7 +82,7 @@ import {
   updateUserStatus,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
-import { fetchCourses, updateCourse } from "./admin/api/coursesApi";
+import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi";
 import {
   createEnrollment,
   fetchEnrollments,
@@ -527,6 +527,24 @@ export default function App() {
     return enrichedUpdated;
   };
 
+  const handleDeleteCourse = async (courseId: string) => {
+    try {
+      await deleteCourse(courseId);
+      setCourses((previous) => previous.filter((course) => course.id !== courseId));
+      setKpis((previous) => ({
+        ...previous,
+        totalCourses: Math.max(0, previous.totalCourses - 1),
+      }));
+      addToast("info", "Course Deleted", "The course was removed successfully.");
+      return { success: true as const };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : "Unable to delete the course.",
+      };
+    }
+  };
+
   const handleCreateGrade = async (request: CreateGradeRequest) => {
     const created = await createGrade(request);
     setGradesList((previous) => [created, ...previous]);
@@ -757,6 +775,7 @@ export default function App() {
           materials={materials}
           onAddCourse={handleAddCourse}
           onUpdateCourse={handleUpdateCourse}
+          onDeleteCourse={handleDeleteCourse}
           showCreateModalDirectly={openCourseModal}
           preselectedGradeId={preselectedGradeId}
           onNavigateToGrades={() => setCurrentRoute("grades")}

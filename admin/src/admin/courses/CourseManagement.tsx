@@ -42,7 +42,7 @@ import {
   CurriculumModule,
   LearningMaterial,
 } from "../types";
-import { createCourse, updateCourse } from "../api/coursesApi";
+import { createCourse, deleteCourse, updateCourse } from "../api/coursesApi";
 import { createMaterialApi } from "../../../../shared/materials/materialApi";
 
 const THUMBNAIL_PRESETS = [
@@ -97,6 +97,50 @@ function courseTeacherId(course: Course) {
 function displayGradeName(name?: string) {
   const value = name?.trim();
   return value && /^\d+$/.test(value) ? `Grade ${value}` : value || "Unassigned";
+}
+
+function materialIdFromThumbnail(source?: string) {
+  return source?.startsWith("material:") ? source.slice("material:".length) : "";
+}
+
+function CourseThumbnailImage({
+  source,
+  alt,
+  className,
+}: {
+  source?: string;
+  alt: string;
+  className: string;
+}) {
+  const materialId = materialIdFromThumbnail(source);
+  const [resolvedSource, setResolvedSource] = useState(materialId ? "" : source || "");
+
+  useEffect(() => {
+    let active = true;
+    if (!materialId) {
+      setResolvedSource(source || "");
+      return () => {
+        active = false;
+      };
+    }
+
+    setResolvedSource("");
+    void createMaterialApi()
+      .download(materialId)
+      .then((response) => {
+        if (active) setResolvedSource(response.downloadUrl || response.url || "");
+      })
+      .catch(() => {
+        if (active) setResolvedSource("");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [materialId, source]);
+
+  if (!resolvedSource) return null;
+  return <img src={resolvedSource} alt={alt} className={className} />;
 }
 
 interface CourseManagementProps {
@@ -351,6 +395,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     setIsSubmitting(true);
     setFormErrors({});
 
+    let newlyCreatedCourseId: string | null = null;
+    let uploadedThumbnailId: string | null = null;
+    const materialApi = createMaterialApi();
+
     try {
       const selectedGrade = grades.find((grade) => grade.id === formData.gradeId);
       if (!selectedGrade) {
@@ -374,15 +422,15 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
         courseEnrollmentId: formData.courseEnrollmentId || null,
       };
 
-      let saved = editingCourse
-        ? onUpdateCourse
-          ? await onUpdateCourse(editingCourse.id, payload)
-          : await updateCourse(editingCourse.id, payload)
-        : await createCourse(payload);
-
+      let saved: Course;
       if (thumbnailFile) {
+        // A new thumbnail must upload successfully before an existing course
+        // is changed. This keeps failed oversized uploads from partially
+        // updating the course.
+        saved = editingCourse ? editingCourse : await createCourse(payload);
+        if (!editingCourse) newlyCreatedCourseId = saved.id;
+
         setThumbnailUploadProgress(0);
-        const materialApi = createMaterialApi();
         const uploadedMaterial = await materialApi.upload(
           thumbnailFile,
           {
@@ -394,16 +442,25 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           },
           setThumbnailUploadProgress,
         );
-        const download = await materialApi.download(uploadedMaterial.id);
-        const thumbnailUrl = download.downloadUrl || download.url;
-        if (!thumbnailUrl) throw new Error("The image uploaded, but no secure preview URL was returned.");
-
-        const thumbnailPayload = { ...payload, courseThumbnail: thumbnailUrl };
+        uploadedThumbnailId = uploadedMaterial.id;
+        // Persist the stable material ID instead of a five-minute presigned
+        // URL. The UI requests a fresh S3 URL whenever it renders the image.
+        const thumbnailPayload = {
+          ...payload,
+          courseThumbnail: `material:${uploadedMaterial.id}`,
+        };
         saved = editingCourse
           ? onUpdateCourse
             ? await onUpdateCourse(editingCourse.id, thumbnailPayload)
             : await updateCourse(editingCourse.id, thumbnailPayload)
           : await updateCourse(saved.id, thumbnailPayload);
+      } else {
+        saved = editingCourse
+          ? onUpdateCourse
+            ? await onUpdateCourse(editingCourse.id, payload)
+            : await updateCourse(editingCourse.id, payload)
+          : await createCourse(payload);
+        if (!editingCourse) newlyCreatedCourseId = saved.id;
       }
 
       if (!editingCourse) {
@@ -426,8 +483,19 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       setEditingCourse(null);
       resetForm();
     } catch (error) {
+      // Do not leave an empty course behind when its required thumbnail upload
+      // fails during creation. Best-effort cleanup keeps the form retryable.
+      if (uploadedThumbnailId) {
+        await materialApi.remove(uploadedThumbnailId).catch(() => undefined);
+      }
+      if (newlyCreatedCourseId) {
+        await deleteCourse(newlyCreatedCourseId).catch(() => undefined);
+      }
       setFormErrors({
-        api: error instanceof Error ? error.message : "Unable to create the course.",
+        api:
+          error instanceof Error
+            ? error.message
+            : "Unable to save the course. Please try again.",
       });
     } finally {
       setThumbnailUploadProgress(null);
@@ -679,8 +747,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       <td className="py-3.5 px-4 max-w-xs">
                         <div className="flex items-center gap-3">
                           {course.courseThumbnail ? (
-                            <img
-                              src={course.courseThumbnail}
+                            <CourseThumbnailImage
+                              source={course.courseThumbnail}
                               alt={course.courseName || course.title}
                               className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                             />
@@ -974,8 +1042,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="font-semibold text-slate-800 dark:text-slate-200">
-                          Course Cover Thumbnail{" "}
-                          <span className="text-slate-400 font-normal">(Optional URL)</span>
+                          Course Cover Thumbnail
                         </label>
                         {thumbnailImage && (
                           <button
@@ -1031,7 +1098,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                             onChange={(e) =>
                               setFormData({ ...formData, courseThumbnail: e.target.value })
                             }
-                            placeholder="https://images.unsplash.com/photo-..."
+                            placeholder="Paste an image link (optional)"
                             className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                         </div>
@@ -1488,9 +1555,18 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
               {/* STICKY MODAL FOOTER */}
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>Course details are ready to save.</span>
+                <div className="min-w-0">
+                  {formErrors.api ? (
+                    <div className="flex items-start gap-2 text-rose-600 dark:text-rose-400">
+                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{formErrors.api}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>Course details are ready to save.</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-end gap-3 shrink-0">
@@ -1609,8 +1685,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                 {/* Thumbnail Header */}
                 {selectedCourse.courseThumbnail && (
                   <div className="relative h-44 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-                    <img
-                      src={selectedCourse.courseThumbnail}
+                    <CourseThumbnailImage
+                      source={selectedCourse.courseThumbnail}
                       alt="Thumbnail"
                       className="w-full h-full object-cover"
                     />

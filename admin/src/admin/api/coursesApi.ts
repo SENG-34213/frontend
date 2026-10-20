@@ -126,3 +126,9 @@ export async function updateCourse(
   }
   return mapCourseResponse(response.data);
 }
+
+export async function deleteCourse(courseId: string): Promise<void> {
+  await apiRequest<ApiResponse<unknown>>(`/api/v1/course/${encodeURIComponent(courseId)}`, {
+    method: "DELETE",
+  });
+}
