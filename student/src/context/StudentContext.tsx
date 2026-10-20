@@ -92,7 +92,18 @@ export const StudentProvider: React.FC<{
   authUser?: StudentUserSummary;
 }> = ({ children, authUser }) => {
   const [currentView, setCurrentView] = useState<StudentView>("dashboard");
-  const [profile, setProfile] = useState<StudentProfile>(INITIAL_STUDENT_PROFILE);
+  const [profile, setProfile] = useState<StudentProfile>(() => {
+    if (!authUser) return INITIAL_STUDENT_PROFILE;
+
+    const name = [authUser.firstName, authUser.lastName].filter(Boolean).join(" ");
+    return {
+      ...INITIAL_STUDENT_PROFILE,
+      id: authUser.id || authUser.keycloakUserId || INITIAL_STUDENT_PROFILE.id,
+      name: name || INITIAL_STUDENT_PROFILE.name,
+      email: authUser.email,
+      role: "STUDENT",
+    };
+  });
   const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("course-cs301");
   const [selectedLessonId, setSelectedLessonId] = useState<string>("les-cs301-3-2");
@@ -115,18 +126,6 @@ export const StudentProvider: React.FC<{
   const [selectedMaterialForPreview, setSelectedMaterialForPreview] =
     useState<LearningMaterial | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authUser) return;
-    const name = [authUser.firstName, authUser.lastName].filter(Boolean).join(" ");
-    setProfile((current) => ({
-      ...current,
-      id: authUser.id || authUser.keycloakUserId || current.id,
-      name: name || current.name,
-      email: authUser.email,
-      role: "STUDENT",
-    }));
-  }, [authUser]);
 
   useEffect(() => {
     if (theme === "dark") {
