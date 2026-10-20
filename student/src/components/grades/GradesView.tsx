@@ -1,12 +1,23 @@
-"use client";
-import React from "react";
-import { Download, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
+import {
+  TrendingUp,
+  Award,
+  Download,
+  BookOpen,
+  CheckCircle2,
+  Filter,
+  BarChart2,
+  FileSpreadsheet,
+} from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
 export const GradesView: React.FC = () => {
-  const { courses, profile, showToast } = useStudent();
+  const { courses, profile, assignments, showToast } = useStudent();
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>("All");
 
   const enrolledCourses = courses.filter((c) => c.enrolled);
+
+  const gradedAssignments = assignments.filter((a) => a.status === "GRADED");
 
   const handleExportTranscript = () => {
     showToast("Official Grade Transcript PDF generated and downloaded.");
@@ -45,7 +56,7 @@ export const GradesView: React.FC = () => {
             <span className="text-xs font-bold text-slate-400">/ 4.00 Scale</span>
           </div>
           <span className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 block">
-            Dean&apos;s First Class Honors
+            Dean's First Class Honors
           </span>
         </div>
 
@@ -61,108 +72,99 @@ export const GradesView: React.FC = () => {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-          <span className="text-xs font-medium text-slate-500">Completed Credits</span>
+          <span className="text-xs font-medium text-slate-500">Credits Completed</span>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-display text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">
               {profile.creditsCompleted}
             </span>
-            <span className="text-xs text-slate-400">/ {profile.totalCreditsRequired} required</span>
+            <span className="text-xs text-slate-400">/ {profile.totalCreditsRequired} Units</span>
           </div>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-            <div
-              className="h-full bg-indigo-600 rounded-full"
-              style={{
-                width: `${Math.round((profile.creditsCompleted / profile.totalCreditsRequired) * 100)}%`,
-              }}
-            />
-          </div>
+          <span className="mt-1 text-xs text-slate-500 block">Senior Standing (Year 4)</span>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
           <span className="text-xs font-medium text-slate-500">Academic Standing</span>
-          <div className="mt-2 flex items-center gap-2">
-            <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-            <span className="font-display text-xl font-bold text-slate-900 dark:text-white">
-              Good Standing
-            </span>
+          <div className="mt-2 flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-display text-lg font-bold">Good Standing</span>
           </div>
-          <span className="mt-1 text-xs text-slate-500 block">Eligible for Capstone Thesis</span>
+          <span className="mt-1 text-xs text-slate-500 block">Zero Academic Deficiencies</span>
         </div>
       </div>
 
-      {/* Course Breakdown Table */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-4">
+      {/* Course Breakdown Cards */}
+      <div className="space-y-4">
         <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-          Active Enrolled Course Performance
+          Active Course Grades (Fall 2026)
         </h2>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <th className="py-3 px-4">Course Code</th>
-                <th className="py-3 px-4">Title</th>
-                <th className="py-3 px-4 text-center">Credits</th>
-                <th className="py-3 px-4">Instructor</th>
-                <th className="py-3 px-4 text-right">Raw Score</th>
-                <th className="py-3 px-4 text-center">Letter Grade</th>
-                <th className="py-3 px-4 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {enrolledCourses.map((c) => (
-                <tr key={c.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                  <td className="py-3.5 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                    {c.code}
-                  </td>
-                  <td className="py-3.5 px-4 font-medium text-slate-900 dark:text-white">
-                    {c.title}
-                  </td>
-                  <td className="py-3.5 px-4 text-center tabular-nums text-slate-600 dark:text-slate-300">
-                    {c.credits}
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-500">{c.instructor.name}</td>
-                  <td className="py-3.5 px-4 text-right font-mono font-bold tabular-nums text-slate-900 dark:text-white">
-                    {c.currentScorePercentage || 92}%
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="inline-block rounded-md bg-indigo-50 px-2.5 py-0.5 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                      {c.currentGrade || "A"}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      In Progress
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {enrolledCourses.map((course) => (
+            <div
+              key={course.id}
+              className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-3"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                    {course.code}
+                  </span>
+                  <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
+                    {course.title}
+                  </h3>
+                  <p className="text-xs text-slate-500">{course.credits} Academic Credits</p>
+                </div>
+                <div className="text-right">
+                  <span className="font-display text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                    {course.currentGrade || "A"}
+                  </span>
+                  <span className="text-xs text-slate-400 block tabular-nums">
+                    {course.currentScorePercentage || 94.2}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-indigo-600"
+                  style={{ width: `${course.currentScorePercentage || 94.2}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <span>Faculty: {course.instructor.name.split(" ")[1]}</span>
+                <span className="font-medium text-emerald-600">On Track for Distinction</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Graded Assessment History */}
+      {/* Graded Deliverables Ledger */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-4">
-        <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-          Recent Graded Assessments
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
+            Official Evaluation Ledger
+          </h2>
+          <span className="text-xs text-slate-500">
+            Showing all published problem sets, laboratory benchmarks, and exams
+          </span>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <th className="py-3 px-4">Course</th>
-                <th className="py-3 px-4">Assessment Title</th>
-                <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4 text-right">Score</th>
+            <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60">
+              <tr>
+                <th className="py-3 px-4">Subject</th>
+                <th className="py-3 px-4">Deliverable Title</th>
+                <th className="py-3 px-4">Category</th>
+                <th className="py-3 px-4 text-right">Points Earned</th>
                 <th className="py-3 px-4 text-right">Weight</th>
                 <th className="py-3 px-4 text-center">Grade</th>
                 <th className="py-3 px-4">Instructor Feedback</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-sans">
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-3.5 px-4 font-mono font-bold text-indigo-600">DES 210</td>
                 <td className="py-3.5 px-4 font-medium text-slate-900 dark:text-white">
@@ -179,7 +181,7 @@ export const GradesView: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
-                  &ldquo;Exemplary separation of primitive and semantic tokens.&rdquo;
+                  "Exemplary separation of primitive and semantic tokens."
                 </td>
               </tr>
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
@@ -196,7 +198,7 @@ export const GradesView: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
-                  &ldquo;Solid understanding of the 1/sqrt(d_k) scaling rationale.&rdquo;
+                  "Solid understanding of the 1/sqrt(d_k) scaling rationale."
                 </td>
               </tr>
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
@@ -215,7 +217,7 @@ export const GradesView: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
-                  &ldquo;Clean left-leaning rotation logic. Check leaf invariants.&rdquo;
+                  "Clean left-leaning rotation logic. Check leaf invariants."
                 </td>
               </tr>
             </tbody>

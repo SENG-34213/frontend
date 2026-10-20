@@ -1,5 +1,4 @@
-"use client";
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import {
   StudentView,
   StudentProfile,
@@ -27,7 +26,6 @@ import {
   INITIAL_NOTIFICATIONS,
   INITIAL_AI_CHATS,
 } from "../data/mockData";
-import { studentApi, getToken, clearToken } from "../lib/studentApi";
 
 interface StudentContextType {
   currentView: StudentView;
@@ -45,29 +43,29 @@ interface StudentContextType {
   setSelectedQuizId: (id: string) => void;
   selectedExamId: string;
   setSelectedExamId: (id: string) => void;
-  enrollInCourse: (courseId: string) => Promise<void>;
+  enrollInCourse: (courseId: string) => void;
   markLessonComplete: (courseId: string, lessonId: string, complete?: boolean) => void;
   assignments: Assignment[];
   submitAssignment: (
     assignmentId: string,
     submissionText: string,
     files: { name: string; size: string; uploadedAt: string }[],
-  ) => Promise<void>;
+  ) => void;
   quizzes: Quiz[];
   submitQuizAnswers: (
     quizId: string,
     answers: Record<string, string[]>,
-  ) => Promise<{ score: number; maxScore: number; percentage: number }>;
+  ) => { score: number; maxScore: number; percentage: number };
   examinations: Examination[];
   submitExam: (examId: string, answers: Record<string, string[]>) => void;
   materials: LearningMaterial[];
   calendarEvents: CalendarEvent[];
   conversations: Conversation[];
-  sendMessage: (conversationId: string, text: string) => Promise<void>;
+  sendMessage: (conversationId: string, text: string) => void;
   announcements: Announcement[];
   notifications: NotificationItem[];
-  markNotificationAsRead: (id: string) => Promise<void>;
-  markAllNotificationsAsRead: () => Promise<void>;
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
   aiChats: ChatMessage[];
   isAiLoading: boolean;
   sendAiQuery: (query: string) => Promise<void>;
@@ -84,15 +82,6 @@ interface StudentContextType {
   showToast: (msg: string) => void;
   navigateToCourseWorkspace: (courseId: string, lessonId?: string) => void;
   navigateToCourseDetails: (courseId: string) => void;
-
-  // Live Backend Integration State & Auth
-  isAuthenticated: boolean;
-  isLiveConnected: boolean;
-  isAuthModalOpen: boolean;
-  openAuthModal: () => void;
-  closeAuthModal: () => void;
-  refreshData: () => Promise<void>;
-  signOut: () => Promise<void>;
 }
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
@@ -109,8 +98,8 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS);
   const [quizzes, setQuizzes] = useState<Quiz[]>(INITIAL_QUIZZES);
   const [examinations, setExaminations] = useState<Examination[]>(INITIAL_EXAMINATIONS);
-  const [materials, setMaterials] = useState<LearningMaterial[]>(INITIAL_MATERIALS);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(INITIAL_CALENDAR_EVENTS);
+  const [materials] = useState<LearningMaterial[]>(INITIAL_MATERIALS);
+  const [calendarEvents] = useState<CalendarEvent[]>(INITIAL_CALENDAR_EVENTS);
   const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
   const [announcements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
@@ -123,12 +112,6 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     useState<LearningMaterial | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Authentication & Connection State
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(getToken()));
-  const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-
-  // Theme synchronization with DOM
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -152,236 +135,12 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, 4000);
   };
 
-  const openAuthModal = () => setIsAuthModalOpen(true);
-  const closeAuthModal = () => setIsAuthModalOpen(false);
-
-  // Synchronize Live Backend Data
-  const refreshData = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-
-    try {
-      setIsAuthenticated(true);
-      // 1. Fetch current student profile
-      const userRes = await studentApi.me();
-      if (userRes && userRes.id) {
-        setIsLiveConnected(true);
-        const fullName =
-          `${userRes.firstName || ""} ${userRes.lastName || ""}`.trim() || "Alex Rivera";
-        setProfile((prev) => ({
-          ...prev,
-          id: userRes.id,
-          studentId: userRes.studentProfile?.studentId || prev.studentId,
-          name: fullName,
-          email: userRes.email || prev.email,
-          semester: userRes.studentProfile?.grade
-            ? `Grade ${userRes.studentProfile.grade}`
-            : prev.semester,
-        }));
-
-        // 2. Fetch enrolled course IDs
-        try {
-          const courseIds = await studentApi.courseIds(userRes.id);
-          if (courseIds && courseIds.length > 0) {
-            const fetchedCourses: Course[] = [];
-            for (const cId of courseIds) {
-              try {
-                const bCourse = await studentApi.course(cId);
-                if (bCourse) {
-                  fetchedCourses.push({
-                    id: bCourse.id,
-                    code: bCourse.subject || "CS 301",
-                    title: bCourse.courseName,
-                    category: "Computer Science",
-                    description: bCourse.courseDescription || "",
-                    instructor: {
-                      id: bCourse.assignedTeacherId || "inst-1",
-                      name: "Course Professor",
-                      title: "Professor",
-                      avatar: "",
-                      department: "Computer Science",
-                      officeHours: "Tues & Thurs 2:00 PM – 4:00 PM",
-                      email: "instructor@mentify.edu",
-                    },
-                    bannerColor: "from-indigo-600 to-indigo-900",
-                    enrolled: true,
-                    enrollmentStatus: "ACTIVE",
-                    progressPercentage: 45,
-                    credits: 3,
-                    level: "Intermediate",
-                    modules: [],
-                    schedule: "Mon, Wed, Fri · 10:00 AM",
-                    room: "Mentify Online Room",
-                    enrolledStudentsCount: bCourse.numberOfStudents || 30,
-                    rating: 4.8,
-                    courseFeeMonthly: bCourse.courseFeeMonthly,
-                  });
-                }
-              } catch {
-                // Keep initial course data if individual lookup fails
-              }
-            }
-            if (fetchedCourses.length > 0) {
-              setCourses((prev) => {
-                const map = new Map(prev.map((c) => [c.id, c]));
-                fetchedCourses.forEach((fc) => map.set(fc.id, { ...map.get(fc.id), ...fc }));
-                return Array.from(map.values());
-              });
-            }
-          }
-        } catch {
-          // Fallback retained
-        }
-
-        // 3. Fetch submissions
-        try {
-          const subs = await studentApi.submissions();
-          if (subs && subs.length > 0) {
-            setAssignments((prev) =>
-              prev.map((asg) => {
-                const matchedSub = subs.find((s) => s.assignmentId === asg.id);
-                if (matchedSub) {
-                  return {
-                    ...asg,
-                    submissionId: matchedSub.id,
-                    status: (matchedSub.status === "GRADED"
-                      ? "GRADED"
-                      : matchedSub.status === "SUBMITTED"
-                        ? "SUBMITTED"
-                        : "PENDING") as Assignment["status"],
-                    grade: matchedSub.marks,
-                    submissionText: matchedSub.content,
-                    submittedDate: matchedSub.submittedAt,
-                    feedback: matchedSub.feedback,
-                  };
-                }
-                return asg;
-              }),
-            );
-          }
-        } catch {
-          // Fallback retained
-        }
-
-        // 4. Fetch learning materials
-        try {
-          const mats = await studentApi.materials();
-          if (mats && mats.length > 0) {
-            const mappedMats: LearningMaterial[] = mats.map((m) => ({
-              id: m.id,
-              courseId: m.courseId || "course-cs301",
-              courseCode: "CS 301",
-              courseTitle: "Data Structures & Algorithmic Analysis",
-              title: m.title,
-              description: m.description || "",
-              type: (m.type === "VIDEO"
-                ? "VIDEO"
-                : m.type === "SLIDES"
-                  ? "SLIDES"
-                  : "PDF") as LearningMaterial["type"],
-              fileSize: m.fileSize ? `${Math.round(m.fileSize / 1024)} KB` : "2.4 MB",
-              uploadedDate: m.createdAt || "Recent",
-              downloadsCount: 12,
-            }));
-            setMaterials((prev) => {
-              const ids = new Set(prev.map((x) => x.id));
-              const fresh = mappedMats.filter((x) => !ids.has(x.id));
-              return [...fresh, ...prev];
-            });
-          }
-        } catch {
-          // Fallback retained
-        }
-
-        // 5. Fetch upcoming calendar events
-        try {
-          const events = await studentApi.upcomingEvents(20);
-          if (events && events.length > 0) {
-            const mappedEvents: CalendarEvent[] = events.map((ev) => ({
-              id: ev.id,
-              title: ev.title,
-              description: ev.description || "",
-              type: (ev.eventType === "EXAM"
-                ? "EXAM"
-                : ev.eventType === "QUIZ"
-                  ? "QUIZ"
-                  : ev.eventType === "ASSIGNMENT"
-                    ? "ASSIGNMENT_DUE"
-                    : "CLASS") as CalendarEvent["type"],
-              date: ev.startDateTime ? ev.startDateTime.split("T")[0] : "2026-10-20",
-              startTime: ev.startDateTime
-                ? ev.startDateTime.split("T")[1]?.slice(0, 5) || "10:00"
-                : "10:00",
-              endTime: ev.endDateTime
-                ? ev.endDateTime.split("T")[1]?.slice(0, 5) || "11:30"
-                : "11:30",
-              location: ev.location || "Lecture Hall A",
-            }));
-            setCalendarEvents(mappedEvents);
-          }
-        } catch {
-          // Fallback retained
-        }
-
-        // 6. Fetch Notifications
-        try {
-          const notifs = await studentApi.notifications(false);
-          if (notifs && notifs.length > 0) {
-            const mappedNotifs: NotificationItem[] = notifs.map((n) => ({
-              id: n.id,
-              title: n.title,
-              description: n.message || n.description || "",
-              timestamp: n.createdAt || "Recently",
-              type: "ANNOUNCEMENT",
-              read: n.read,
-            }));
-            setNotifications(mappedNotifs);
-          }
-        } catch {
-          // Fallback retained
-        }
-      }
-    } catch {
-      setIsLiveConnected(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      void refreshData();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [refreshData]);
-
-  const signOut = async () => {
-    try {
-      await studentApi.logout();
-    } catch {
-      clearToken();
-    }
-    setIsAuthenticated(false);
-    setIsLiveConnected(false);
-    showToast("Signed out of student account. Switched to demo mode.");
-  };
-
   const updateProfile = (updates: Partial<StudentProfile>) => {
     setProfile((prev) => ({ ...prev, ...updates }));
     showToast("Student profile updated successfully.");
   };
 
-  const enrollInCourse = async (courseId: string) => {
-    if (isAuthenticated) {
-      try {
-        await studentApi.enroll(courseId);
-        showToast("Enrolled in course successfully via Mentify Enrollment Service!");
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Enrollment failed";
-        showToast(`Enrollment synced locally: ${msg}`);
-      }
-    } else {
-      showToast("Successfully enrolled in course!");
-    }
-
+  const enrollInCourse = (courseId: string) => {
     setCourses((prev) =>
       prev.map((c) => {
         if (c.id === courseId) {
@@ -396,6 +155,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return c;
       }),
     );
+    showToast("Successfully enrolled in course!");
   };
 
   const markLessonComplete = (courseId: string, lessonId: string, complete = true) => {
@@ -433,28 +193,11 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     showToast(complete ? "Lesson marked as complete!" : "Lesson status updated");
   };
 
-  const submitAssignment = async (
+  const submitAssignment = (
     assignmentId: string,
     submissionText: string,
     files: { name: string; size: string; uploadedAt: string }[],
   ) => {
-    if (isAuthenticated) {
-      try {
-        const draft = await studentApi.createSubmission(assignmentId, submissionText);
-        if (draft && draft.id) {
-          await studentApi.submitAssignment(draft.id);
-        }
-        showToast("Assignment submitted successfully to Mentify Assignment Service!");
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Backend submission failed";
-        showToast(`Assignment submitted locally (${msg})`);
-      }
-    } else {
-      showToast(
-        "Assignment submitted successfully! Feedback will be published by your instructor.",
-      );
-    }
-
     setAssignments((prev) =>
       prev.map((asg) => {
         if (asg.id === assignmentId) {
@@ -469,9 +212,10 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return asg;
       }),
     );
+    showToast("Assignment submitted successfully! Feedback will be published by your instructor.");
   };
 
-  const submitQuizAnswers = async (quizId: string, answers: Record<string, string[]>) => {
+  const submitQuizAnswers = (quizId: string, answers: Record<string, string[]>) => {
     const quiz = quizzes.find((q) => q.id === quizId);
     if (!quiz) return { score: 0, maxScore: 0, percentage: 0 };
 
@@ -487,22 +231,6 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
 
     const percentage = Math.round((earnedPoints / quiz.totalPoints) * 100);
-
-    if (isAuthenticated) {
-      try {
-        const attempt = await studentApi.startQuiz(quizId);
-        if (attempt && attempt.attemptId) {
-          for (const [qId, opts] of Object.entries(answers)) {
-            if (opts.length > 0) {
-              await studentApi.saveQuizAnswer(attempt.attemptId, qId, opts[0]).catch(() => {});
-            }
-          }
-          await studentApi.submitQuiz(attempt.attemptId).catch(() => {});
-        }
-      } catch {
-        // Handled locally
-      }
-    }
 
     setQuizzes((prev) =>
       prev.map((q) => {
@@ -524,7 +252,6 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const submitExam = (examId: string, _answers: Record<string, string[]>) => {
-    void _answers;
     const simulatedScore = 92;
     setExaminations((prev) =>
       prev.map((ex) => {
@@ -543,16 +270,8 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     showToast("Examination submitted successfully to proctor service.");
   };
 
-  const sendMessage = async (conversationId: string, text: string) => {
+  const sendMessage = (conversationId: string, text: string) => {
     if (!text.trim()) return;
-
-    if (isAuthenticated) {
-      try {
-        await studentApi.sendMessage(conversationId, text);
-      } catch {
-        // Fall back to local message addition
-      }
-    }
 
     const newMsg = {
       id: `msg-${Date.now()}`,
@@ -578,7 +297,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }),
     );
 
-    // Instructor simulation
+    // Simulate realistic instructor reply after 2.5 seconds
     setTimeout(() => {
       const replies = [
         "Thank you for following up, Alex. I have made a note in your records.",
@@ -611,25 +330,11 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, 2500);
   };
 
-  const markNotificationAsRead = async (id: string) => {
-    if (isAuthenticated) {
-      try {
-        await studentApi.markNotificationRead(id);
-      } catch {
-        // Keep local state update
-      }
-    }
+  const markNotificationAsRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
-  const markAllNotificationsAsRead = async () => {
-    if (isAuthenticated) {
-      try {
-        await studentApi.markAllNotificationsRead();
-      } catch {
-        // Keep local state update
-      }
-    }
+  const markAllNotificationsAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     showToast("All notifications marked as read.");
   };
@@ -647,25 +352,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setAiChats((prev) => [...prev, userMessage]);
     setIsAiLoading(true);
 
-    if (isAuthenticated) {
-      try {
-        const aiRes = await studentApi.aiChat(query);
-        if (aiRes && aiRes.response) {
-          const assistantMessage: ChatMessage = {
-            id: `ai-msg-${Date.now() + 1}`,
-            sender: "assistant",
-            text: aiRes.response,
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          };
-          setAiChats((prev) => [...prev, assistantMessage]);
-          setIsAiLoading(false);
-          return;
-        }
-      } catch {
-        // Continue to generative educational fallback
-      }
-    }
-
+    // Generate high quality educational responses tailored to Mentify courses
     setTimeout(() => {
       let responseText = "";
       let codeSnippet: { language: string; code: string } | undefined = undefined;
@@ -726,7 +413,7 @@ When two candidates simultaneously broadcast \`RequestVote\` RPCs and split the 
 2. **First to Timeout**: The node with the shorter timeout will trigger a new election term before competitors, request votes, and collect the necessary majority while other nodes are still in their waiting window.
 3. This guarantees rapid convergence with negligible split-vote overhead.`;
       } else {
-        responseText = `Great question on your coursework, ${profile.name}! 
+        responseText = `Great question on your coursework, Alex!
 
 To approach this systematically:
 1. **Define Core Invariants**: Break the problem into its foundational components and state dependencies.
@@ -824,13 +511,6 @@ Would you like me to generate a practice quiz or step-by-step code proof for thi
         showToast,
         navigateToCourseWorkspace,
         navigateToCourseDetails,
-        isAuthenticated,
-        isLiveConnected,
-        isAuthModalOpen,
-        openAuthModal,
-        closeAuthModal,
-        refreshData,
-        signOut,
       }}
     >
       {children}

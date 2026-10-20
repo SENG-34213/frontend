@@ -104,7 +104,6 @@ export interface Course {
   rating: number;
   currentGrade?: string;
   currentScorePercentage?: number;
-  courseFeeMonthly?: number;
 }
 
 export interface Assignment {
@@ -123,7 +122,6 @@ export interface Assignment {
   grade?: number;
   letterGrade?: string;
   feedback?: string;
-  submissionId?: string;
   rubricCriteria: {
     criteria: string;
     points: number;
@@ -209,7 +207,6 @@ export interface LearningMaterial {
   downloadsCount: number;
   previewUrl?: string;
   contentSnippet?: string;
-  downloadUrl?: string;
 }
 
 export interface CalendarEvent {
@@ -285,25 +282,4 @@ export interface ChatMessage {
     language: string;
     code: string;
   };
-}
-
-export interface AttendanceSummaryData {
-  courseId: string;
-  completedSessions: number;
-  presentCount: number;
-  lateCount: number;
-  absentCount: number;
-  attendedCount: number;
-  attendancePercentage: number;
-}
-
-export interface PaymentRecord {
-  paymentId: string;
-  courseId?: string;
-  courseName?: string;
-  amount: number;
-  currency: string;
-  status: "PENDING" | "COMPLETED" | "REFUNDED" | "FAILED";
-  paidAt?: string;
-  createdAt: string;
 }

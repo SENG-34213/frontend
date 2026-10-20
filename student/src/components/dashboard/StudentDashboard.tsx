@@ -1,9 +1,9 @@
-"use client";
 import React from "react";
 import {
   BookOpen,
   Clock,
   CheckCircle2,
+  AlertCircle,
   Award,
   Sparkles,
   ArrowRight,
@@ -13,6 +13,7 @@ import {
   PlayCircle,
   FileCheck2,
   GraduationCap,
+  MessageSquare,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
@@ -243,7 +244,7 @@ export const StudentDashboard: React.FC = () => {
               92.4%
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Dean&apos;s Honor Roll</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Dean's Honor Roll</p>
         </div>
       </div>
 

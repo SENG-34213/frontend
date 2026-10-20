@@ -1,11 +1,12 @@
-"use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Clock,
+  AlertTriangle,
   Flag,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  HelpCircle,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { QuizResultModal } from "./QuizResultModal";
@@ -25,12 +26,6 @@ export const QuizTakingView: React.FC = () => {
     percentage: number;
   } | null>(null);
 
-  const handleAutoSubmit = useCallback(async () => {
-    showToast("Time expired! Auto-submitting answers.");
-    const res = await submitQuizAnswers(quiz.id, answers);
-    setResultsData(res);
-  }, [quiz.id, answers, submitQuizAnswers, showToast]);
-
   // Timer countdown
   useEffect(() => {
     if (resultsData) return;
@@ -45,7 +40,7 @@ export const QuizTakingView: React.FC = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [resultsData, handleAutoSubmit]);
+  }, [resultsData]);
 
   const currentQ = quiz.questions[currentQuestionIdx];
 
@@ -67,9 +62,15 @@ export const QuizTakingView: React.FC = () => {
     setFlaggedQuestions((prev) => ({ ...prev, [currentQ.id]: !prev[currentQ.id] }));
   };
 
-  const handleConfirmSubmit = async () => {
+  const handleAutoSubmit = () => {
+    showToast("Time expired! Auto-submitting answers.");
+    const res = submitQuizAnswers(quiz.id, answers);
+    setResultsData(res);
+  };
+
+  const handleConfirmSubmit = () => {
     setIsSubmitConfirmOpen(false);
-    const res = await submitQuizAnswers(quiz.id, answers);
+    const res = submitQuizAnswers(quiz.id, answers);
     setResultsData(res);
   };
 

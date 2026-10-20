@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
@@ -47,12 +46,9 @@ export const CommandPalette: React.FC = () => {
 
   useEffect(() => {
     if (isCommandPaletteOpen) {
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-        setQuery("");
-        setSelectedIndex(0);
-      }, 0);
-      return () => clearTimeout(timer);
+      setTimeout(() => inputRef.current?.focus(), 50);
+      setQuery("");
+      setSelectedIndex(0);
     }
   }, [isCommandPaletteOpen]);
 
@@ -210,7 +206,7 @@ export const CommandPalette: React.FC = () => {
         <div className="max-h-96 overflow-y-auto p-2">
           {results.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-              No matching courses, assessments, or materials found for &ldquo;{query}&rdquo;.
+              No matching courses, assessments, or materials found for "{query}".
             </div>
           ) : (
             <div className="space-y-1">

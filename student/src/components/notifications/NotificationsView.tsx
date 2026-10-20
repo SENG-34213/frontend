@@ -1,7 +1,7 @@
-"use client";
 import React, { useState } from "react";
 import {
   Bell,
+  CheckCircle2,
   AlertCircle,
   BookOpen,
   Award,
@@ -103,7 +103,7 @@ export const NotificationsView: React.FC = () => {
               No notifications
             </h3>
             <p className="mt-1 text-xs text-slate-500">
-              You&apos;re completely up to date with your academic alerts.
+              You're completely up to date with your academic alerts.
             </p>
           </div>
         ) : (

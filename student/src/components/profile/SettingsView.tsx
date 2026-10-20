@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 import { Moon, Sun, Bell, Lock, ShieldCheck, Smartphone, Save, RotateCcw } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
