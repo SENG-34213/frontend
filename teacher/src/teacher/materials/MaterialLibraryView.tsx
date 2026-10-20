@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Copy,
   Download,
   Edit2,
   Eye,
@@ -95,7 +94,7 @@ function statusClass(status: MaterialStatus) {
   return "bg-slate-50 text-slate-600 border-slate-200";
 }
 function materialError(error: unknown) {
-  return error instanceof Error ? error.message : "Material request failed.";
+  return error instanceof Error ? error.message : "Unable to load this resource.";
 }
 
 export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) => {
@@ -180,7 +179,7 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
               Course Learning Materials
             </h1>
             <span className="rounded border border-indigo-200 bg-indigo-50 px-2 py-0.5 font-mono text-[11px] font-bold text-indigo-700">
-              Material Service Connected
+              Learning Resources Ready
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500 sm:text-sm">
@@ -334,9 +333,7 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
         <div className="rounded-2xl border border-slate-200 bg-white p-14 text-center">
           <FolderOpen className="mx-auto h-8 w-8 text-slate-400" />
           <h3 className="mt-3 text-sm font-bold text-slate-800">No learning materials found</h3>
-          <p className="mt-1 text-xs text-slate-500">
-            No records match the active filters on the Material Service.
-          </p>
+          <p className="mt-1 text-xs text-slate-500">No resources match the active filters.</p>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -487,7 +484,7 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
       {modal === "delete" && active && (
         <ConfirmModal
           title="Delete material?"
-          message={`This permanently deletes “${active.title}” from the Material Service.`}
+          message={`This permanently deletes “${active.title}” from your resources.`}
           actionLabel="Delete"
           danger
           onClose={() => setModal(null)}
@@ -846,7 +843,11 @@ function UploadModal({
     }
   };
   return (
-    <Modal title="Upload Learning Material" subtitle="POST /api/v1/materials" onClose={onClose}>
+    <Modal
+      title="Upload Learning Material"
+      subtitle="Add a new resource to your course"
+      onClose={onClose}
+    >
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <p className="rounded-lg bg-rose-50 p-2 text-xs text-rose-700">{error}</p>}
         <div>
@@ -982,7 +983,7 @@ function UploadModal({
           >
             {saving ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Submitting to Service...
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading...
               </>
             ) : (
               <>
@@ -1047,9 +1048,7 @@ function EditModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Edit Material Metadata</h3>
-              <p className="font-mono text-xs text-slate-500">
-                PUT /api/v1/materials/{material.id}
-              </p>
+              <p className="font-mono text-xs text-slate-500">Update the resource details</p>
             </div>
           </div>
           <button
@@ -1109,9 +1108,7 @@ function EditModal({
             />
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-500">
-            Note: By backend contract, only <strong className="text-slate-700">title</strong> and{" "}
-            <strong className="text-slate-700">description</strong> can be modified. File content,
-            uploader ID, course binding, and checksum remain strictly immutable.
+            Note: The file itself cannot be changed here. Update the title or description as needed.
           </div>
           <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
             <button
@@ -1163,27 +1160,19 @@ function DetailsModal({
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
-  const [copiedChecksum, setCopiedChecksum] = useState(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
     setDownloadError("");
     try {
       const response = await getMaterialDownload(material.id);
-      if (!response.downloadUrl) throw new Error("No download URL returned from Material Service.");
+      if (!response.downloadUrl) throw new Error("This resource is not available for download.");
       window.open(response.downloadUrl, "_blank", "noopener,noreferrer");
     } catch (err) {
       setDownloadError(materialError(err));
     } finally {
       setIsDownloading(false);
     }
-  };
-
-  const handleCopyChecksum = async () => {
-    if (!material.checksum) return;
-    await navigator.clipboard.writeText(material.checksum);
-    setCopiedChecksum(true);
-    window.setTimeout(() => setCopiedChecksum(false), 2000);
   };
 
   return (
@@ -1196,7 +1185,7 @@ function DetailsModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Material Resource Details</h3>
-              <p className="font-mono text-[11px] text-slate-400">ID: {material.id}</p>
+              <p className="text-[11px] text-slate-400">Resource details</p>
             </div>
           </div>
           <button
@@ -1233,41 +1222,19 @@ function DetailsModal({
           </div>
           <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-[11px]">
             <span className="block font-sans text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Verified Backend Metadata
+              Resource Details
             </span>
             <div className="grid grid-cols-2 gap-3">
               <Meta label="Original Filename" value={material.originalFilename} />
-              <Meta label="Content MIME Type" value={material.contentType} />
+              <Meta label="File Type" value={material.contentType} />
               <Meta
-                label="Exact File Size"
+                label="File Size"
                 value={`${bytes(material.fileSize)} (${material.fileSize.toLocaleString()} bytes)`}
               />
-              <Meta label="Purpose Classification" value={material.purpose.replaceAll("_", " ")} />
-              <Meta label="Associated Course ID" value={material.courseId || "None"} />
+              <Meta label="Purpose" value={material.purpose.replaceAll("_", " ")} />
+              <Meta label="Course" value={material.courseId || "None"} />
               <Meta label="Uploaded By" value={material.uploadedBy} />
             </div>
-            {material.checksum && (
-              <div className="border-t border-slate-200 pt-2">
-                <div className="mb-1 flex items-center justify-between font-sans text-[10px] text-slate-400">
-                  <span>SHA-256 Content Integrity Checksum</span>
-                  <button
-                    type="button"
-                    onClick={() => void handleCopyChecksum()}
-                    className="flex items-center gap-1 font-semibold text-indigo-600 hover:text-indigo-800"
-                  >
-                    {copiedChecksum ? (
-                      <Check className="h-3 w-3 text-emerald-600" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                    {copiedChecksum ? "Copied" : "Copy Hash"}
-                  </button>
-                </div>
-                <div className="select-all break-all rounded border border-slate-200 bg-white p-2 text-[10px] text-slate-600">
-                  {material.checksum}
-                </div>
-              </div>
-            )}
             <div className="grid grid-cols-2 gap-3 border-t border-slate-200 pt-2 font-sans text-[10px] text-slate-500">
               <div>
                 <span className="block text-slate-400">Created At:</span>
@@ -1303,7 +1270,7 @@ function DetailsModal({
                 ) : (
                   <Download className="h-3.5 w-3.5" />
                 )}
-                {isDownloading ? "Requesting Fresh URL..." : "Download"}
+                {isDownloading ? "Preparing download..." : "Download"}
               </button>
             </div>
             <div className="flex items-center gap-1.5">
@@ -1446,7 +1413,7 @@ function PreviewModal({
                 <Download className="h-3.5 w-3.5" />
               )}
               <span className="hidden sm:inline">
-                {isExpired ? "Refresh Token" : "Authorized Download"}
+                {isExpired ? "Refresh Download" : "Ready to Download"}
               </span>
             </button>
             <button
@@ -1474,7 +1441,7 @@ function PreviewModal({
           {downloadData && (
             <div className="hidden items-center gap-2 font-mono text-[11px] text-slate-400 sm:flex">
               <Clock className="h-3 w-3 text-emerald-400" />
-              Token valid until:{" "}
+              Download available until:{" "}
               {new Date(downloadData.expiresAt).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -1536,7 +1503,7 @@ function PreviewModal({
                 onClick={() => void fetchDownloadUrl()}
                 className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
               >
-                Retry Token Request
+                Try Again
               </button>
             </div>
           ) : material.type === "PDF" ? (
@@ -1559,12 +1526,9 @@ function PreviewModal({
                 <p>{material.description || "Verified course curriculum document stream."}</p>
                 <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-800">
                   <div className="border-b border-slate-200 pb-1 text-[11px] text-slate-400">
-                    Section {currentPage}.0 — Document Content Stream
+                    Section {currentPage}.0 — Document Preview
                   </div>
-                  <p>
-                    Binary stream authenticated via Keycloak federated session. Content-Type:{" "}
-                    {material.contentType}.
-                  </p>
+                  <p>This file is ready to preview. File type: {material.contentType}.</p>
                 </div>
               </div>
             </div>
@@ -1590,18 +1554,17 @@ function PreviewModal({
                 </p>
               </div>
               <div className="rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-600">
-                Duration & stream ready via Material Service download endpoint
+                Audio preview ready
               </div>
             </div>
           ) : material.type === "ARCHIVE" ? (
             <div className="w-full max-w-2xl space-y-4 rounded-xl border border-slate-800 bg-slate-950 p-6 font-mono text-xs text-slate-100 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <span className="font-bold text-indigo-400">Archive Package Inspector</span>
+                <span className="font-bold text-indigo-400">Archive Preview</span>
                 <span className="text-slate-500">{bytes(material.fileSize)}</span>
               </div>
               <div className="space-y-1 text-slate-300">
                 <p className="font-bold text-emerald-400">{material.originalFilename}</p>
-                <p className="text-[11px] text-slate-500">Checksum: {material.checksum || "N/A"}</p>
                 <p className="pt-2 text-[11px] leading-relaxed text-slate-400">
                   {material.description ||
                     "Source code archive. Ready for authorized download and extraction."}

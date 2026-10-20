@@ -23,6 +23,8 @@ import {
   deleteModuleLesson,
   getCourseModules,
   getModuleLessons,
+  getLessonMaterials,
+  uploadLessonMaterial,
   updateCourseModule,
   updateModuleLesson,
   type CourseContentLesson,
@@ -30,6 +32,7 @@ import {
 } from "../api/courseContentApi";
 import { StatusBadge } from "../components/StatusBadge";
 import { LessonEditorModal } from "../lessons/LessonEditorModal";
+import { ConfirmModal } from "../components/ActionModal";
 
 interface CurriculumBuilderViewProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -41,21 +44,27 @@ const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   moduleId: lesson.moduleId,
   title: lesson.title,
   description: lesson.description || "",
-  durationMinutes: 0,
+  contentMarkdown: lesson.contentMarkdown || "",
+  durationMinutes: lesson.durationMinutes ?? 1,
   order,
   status: lesson.visible === false ? "Draft" : "Published",
   contentType: "Lecture",
-  resourcesCount: 0,
+  resourcesCount: lesson.materials?.length || 0,
+  materials: lesson.materials,
 });
 
-const toModule = (module: CourseContentModule, lessons: CourseContentLesson[]): Module => ({
+const toModule = (
+  module: CourseContentModule,
+  lessons: Array<CourseContentLesson | Lesson>,
+): Module => ({
   id: module.id,
   courseId: module.courseId,
   title: module.title,
   description: module.description || "",
   order: module.sequenceOrder,
+  dateDuration: module.dateDuration ?? 1,
   status: module.visible === false ? "Draft" : "Published",
-  lessons: lessons.map((lesson, index) => toLesson(lesson, index + 1)),
+  lessons: lessons.map((lesson, index) => toLesson(lesson as CourseContentLesson, index + 1)),
 });
 
 export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
@@ -83,7 +92,13 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [newModuleDesc, setNewModuleDesc] = useState("");
+  const [newModuleDuration, setNewModuleDuration] = useState("1");
   const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "module" | "lesson";
+    module: Module;
+    lesson?: Lesson;
+  } | null>(null);
 
   const currentBackendCourse = backendCourses.find((course) => course.id === selectedCourseId);
   const currentCourse: Course = {
@@ -126,7 +141,22 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         const loaded = await Promise.all(
           items.map(async (item) => {
             const lessons = await getModuleLessons(selectedCourseId, item.id, controller.signal);
-            return toModule(item, lessons);
+            const lessonsWithMaterials = await Promise.all(
+              lessons.map(async (lesson) => {
+                try {
+                  const materials = await getLessonMaterials(
+                    selectedCourseId,
+                    item.id,
+                    lesson.id,
+                    controller.signal,
+                  );
+                  return { ...lesson, materials };
+                } catch {
+                  return lesson;
+                }
+              }),
+            );
+            return toModule(item, lessonsWithMaterials);
           }),
         );
         setModules(loaded.sort((a, b) => a.order - b.order));
@@ -158,14 +188,22 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     setIsEditorOpen(true);
   };
 
-  const handleSaveLesson = async (updatedLesson: Lesson) => {
+  const handleSaveLesson = async (updatedLesson: Lesson, pendingFiles: File[] = []) => {
     if (!selectedCourseId || !editingParentModule) return;
     setIsSaving(true);
     setError(null);
     try {
+      const durationMinutes = Number(updatedLesson.durationMinutes);
+      if (!Number.isInteger(durationMinutes) || durationMinutes < 1) {
+        setError("Lesson duration must be a positive whole number of minutes.");
+        setIsSaving(false);
+        return;
+      }
       const payload = {
         title: updatedLesson.title.trim(),
         description: updatedLesson.description.trim(),
+        durationMinutes,
+        contentMarkdown: updatedLesson.contentMarkdown || "",
         isVisible: updatedLesson.status === "Published",
       };
       const saved = updatedLesson.id.startsWith("new-")
@@ -176,7 +214,17 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             updatedLesson.id,
             payload,
           );
-      const nextLesson = toLesson(saved, updatedLesson.order);
+      const savedMaterials = [...(saved.materials || updatedLesson.materials || [])];
+      for (const file of pendingFiles) {
+        const uploaded = await uploadLessonMaterial(
+          selectedCourseId,
+          editingParentModule.id,
+          saved.id,
+          { title: file.name.replace(/\.[^.]+$/, "") || file.name, file },
+        );
+        savedMaterials.push(uploaded);
+      }
+      const nextLesson = toLesson({ ...saved, materials: savedMaterials }, updatedLesson.order);
       setModules((prev) =>
         prev.map((mod) =>
           mod.id === editingParentModule.id
@@ -227,6 +275,10 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     if (!newModuleTitle.trim()) return;
 
     if (!selectedCourseId) return;
+    if (!/^[1-9]\d*$/.test(newModuleDuration)) {
+      setError("Duration must be a positive whole number of days.");
+      return;
+    }
     setIsSaving(true);
     setError(null);
     try {
@@ -234,6 +286,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         title: newModuleTitle.trim(),
         description: newModuleDesc.trim(),
         sequenceOrder: editingModule?.order || courseModules.length + 1,
+        dateDuration: Number(newModuleDuration),
         isVisible: editingModule?.status !== "Draft",
       };
       const saved = editingModule
@@ -248,6 +301,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
       setExpandedModuleIds((prev) => ({ ...prev, [nextModule.id]: true }));
       setNewModuleTitle("");
       setNewModuleDesc("");
+      setNewModuleDuration("1");
       setEditingModule(null);
       setIsCreatingModule(false);
     } catch (requestError: unknown) {
@@ -260,10 +314,11 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   };
 
   const handleDeleteModule = async (module: Module) => {
-    if (!selectedCourseId || !window.confirm(`Delete ${module.title}?`)) return;
+    if (!selectedCourseId) return;
     try {
       await deleteCourseModule(selectedCourseId, module.id);
       setModules((prev) => prev.filter((item) => item.id !== module.id));
+      setDeleteTarget(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Module could not be deleted.",
@@ -272,7 +327,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   };
 
   const handleDeleteLesson = async (module: Module, lesson: Lesson) => {
-    if (!selectedCourseId || !window.confirm(`Delete ${lesson.title}?`)) return;
+    if (!selectedCourseId) return;
     try {
       await deleteModuleLesson(selectedCourseId, module.id, lesson.id);
       setModules((prev) =>
@@ -282,6 +337,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             : item,
         ),
       );
+      setDeleteTarget(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Lesson could not be deleted.",
@@ -322,6 +378,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
               setEditingModule(null);
               setNewModuleTitle("");
               setNewModuleDesc("");
+              setNewModuleDuration("1");
               setIsCreatingModule(true);
             }}
             className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
@@ -375,6 +432,23 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                 onChange={(e) => setNewModuleDesc(e.target.value)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Duration in days
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                required
+                value={newModuleDuration}
+                onChange={(e) => setNewModuleDuration(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+              />
+              <p className="mt-1 text-[10px] text-slate-400">
+                Use the arrows or type a whole number.
+              </p>
             </div>
           </div>
 
@@ -486,6 +560,9 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                   <span className="text-xs font-mono tabular-nums text-slate-500 hidden sm:inline">
                     {mod.lessons.length} lessons
                   </span>
+                  <span className="text-xs font-mono tabular-nums text-slate-500 hidden md:inline">
+                    Duration: {mod.dateDuration} days
+                  </span>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -493,6 +570,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                       setEditingModule(mod);
                       setNewModuleTitle(mod.title);
                       setNewModuleDesc(mod.description);
+                      setNewModuleDuration(String(mod.dateDuration));
                       setIsCreatingModule(true);
                     }}
                     className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
@@ -514,7 +592,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      void handleDeleteModule(mod);
+                      setDeleteTarget({ type: "module", module: mod });
                     }}
                     className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
                     aria-label={`Delete ${mod.title}`}
@@ -570,7 +648,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => void handleDeleteLesson(mod, lesson)}
+                            onClick={() => setDeleteTarget({ type: "lesson", module: mod, lesson })}
                             className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
                             aria-label={`Delete ${lesson.title}`}
                           >
@@ -594,6 +672,19 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         module={editingParentModule}
         onClose={() => setIsEditorOpen(false)}
         onSave={handleSaveLesson}
+      />
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title={`Delete ${deleteTarget?.type ?? "item"}?`}
+        description={`Deleting “${deleteTarget?.type === "lesson" ? deleteTarget.lesson?.title : deleteTarget?.module.title}” cannot be undone.`}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() =>
+          deleteTarget?.type === "lesson" && deleteTarget.lesson
+            ? handleDeleteLesson(deleteTarget.module, deleteTarget.lesson)
+            : deleteTarget
+              ? handleDeleteModule(deleteTarget.module)
+              : undefined
+        }
       />
     </div>
   );

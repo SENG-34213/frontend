@@ -5,7 +5,6 @@ export type NavigationTab =
   | "courses"
   | "curriculum"
   | "students"
-  | "enrollments"
   | "attendance"
   | "materials"
   | "assignments"
@@ -69,6 +68,16 @@ export interface Lesson {
   contentMarkdown?: string;
   resourcesCount: number;
   attachedMaterials?: string[];
+  materials?: Array<{
+    id: string;
+    materialId?: string;
+    title: string;
+    type?: string;
+    originalFilename?: string;
+    contentType?: string;
+    fileSize?: number;
+    status?: string;
+  }>;
 }
 
 export interface Module {
@@ -77,6 +86,7 @@ export interface Module {
   title: string;
   description: string;
   order: number;
+  dateDuration: number;
   status: "Published" | "Draft";
   lessons: Lesson[];
 }
@@ -97,19 +107,6 @@ export interface Student {
   lastActive: string;
   submissionsPending: number;
   recentGradeAvg: number | null;
-}
-
-export interface EnrollmentRequest {
-  id: string;
-  studentId: string;
-  studentName: string;
-  studentEmail: string;
-  courseId: string;
-  courseCode: string;
-  courseTitle: string;
-  appliedDate: string;
-  status: "Pending" | "Approved" | "Rejected";
-  academicTerm: string;
 }
 
 export interface Assignment {

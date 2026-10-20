@@ -35,7 +35,7 @@ function toNotificationItem(notification: BackendNotification): NotificationItem
     category === "submission"
       ? "assignments"
       : category === "enrollment"
-        ? "enrollments"
+        ? undefined
         : category === "exam"
           ? "exams"
           : category === "message"

@@ -1,25 +1,26 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Users,
-  GraduationCap,
-  Briefcase,
-  BookOpen,
-  CalendarCheck2,
-  MailCheck,
-  Award,
-  Sparkles,
-  ArrowUpRight,
-  Send,
-  Calendar,
-  AlertCircle,
-  Clock,
+  Activity,
+  ArrowDownRight,
   ArrowRight,
-  Shield,
+  ArrowUpRight,
+  Bell,
+  BookOpen,
+  CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  GraduationCap,
+  Mail,
+  MoreHorizontal,
+  Plus,
+  Sparkles,
+  Users,
+  UserRoundCheck,
 } from "lucide-react";
-import { StatCard } from "../components/StatCard";
 import { RoleBadge } from "../components/RoleBadge";
-import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import {
   PlatformKPIs,
@@ -47,623 +48,834 @@ interface AdminDashboardProps {
   registrationOverviewError?: string;
 }
 
+type RangeKey = "7d" | "30d" | "90d";
+
+const growthData: Record<RangeKey, { label: string; students: number; teachers: number }[]> = {
+  "7d": [
+    { label: "Oct 13", students: 1404, teachers: 83 },
+    { label: "Oct 14", students: 1410, teachers: 83 },
+    { label: "Oct 15", students: 1414, teachers: 84 },
+    { label: "Oct 16", students: 1418, teachers: 84 },
+    { label: "Oct 17", students: 1420, teachers: 84 },
+    { label: "Oct 18", students: 1425, teachers: 85 },
+    { label: "Oct 19", students: 1432, teachers: 85 },
+  ],
+  "30d": [
+    { label: "Sep 22", students: 1280, teachers: 78 },
+    { label: "Sep 29", students: 1325, teachers: 80 },
+    { label: "Oct 06", students: 1362, teachers: 81 },
+    { label: "Oct 13", students: 1404, teachers: 83 },
+    { label: "Oct 19", students: 1432, teachers: 85 },
+  ],
+  "90d": [
+    { label: "Jul 22", students: 980, teachers: 65 },
+    { label: "Aug 12", students: 1118, teachers: 72 },
+    { label: "Sep 02", students: 1240, teachers: 78 },
+    { label: "Sep 23", students: 1338, teachers: 81 },
+    { label: "Oct 19", students: 1432, teachers: 85 },
+  ],
+};
+
+const rangeLabels: Record<RangeKey, string> = {
+  "7d": "7 days",
+  "30d": "30 days",
+  "90d": "90 days",
+};
+
+function MiniSparkline({ color, points }: { color: string; points: number[] }) {
+  const max = Math.max(...points);
+  const min = Math.min(...points);
+  const line = points
+    .map(
+      (point, index) =>
+        `${(index / (points.length - 1)) * 96 + 2},${30 - ((point - min) / (max - min || 1)) * 24}`,
+    )
+    .join(" ");
+  return (
+    <svg viewBox="0 0 100 34" className="h-9 w-24" preserveAspectRatio="none" aria-hidden="true">
+      <polyline points={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TrendBadge({ value, positive = true }: { value: string; positive?: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${positive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"}`}
+    >
+      {positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+      {value}
+    </span>
+  );
+}
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   kpis,
-  students,
-  teachers,
   events,
   recentLogs,
   role,
   onNavigate,
   onQuickAction,
-  onResendInvitation,
   registrationOverview,
   registrationOverviewLoading = false,
   registrationOverviewError,
 }) => {
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
-
-  // SVG Chart data for user growth
-  const chartData = {
-    "7d": [
-      { label: "Oct 11", students: 1390, teachers: 82 },
-      { label: "Oct 12", students: 1398, teachers: 82 },
-      { label: "Oct 13", students: 1404, teachers: 83 },
-      { label: "Oct 14", students: 1410, teachers: 83 },
-      { label: "Oct 15", students: 1414, teachers: 84 },
-      { label: "Oct 16", students: 1418, teachers: 84 },
-      { label: "Oct 17", students: 1420, teachers: 84 },
-    ],
-    "30d": [
-      { label: "Sep 18", students: 1250, teachers: 76 },
-      { label: "Sep 25", students: 1295, teachers: 78 },
-      { label: "Oct 02", students: 1340, teachers: 80 },
-      { label: "Oct 09", students: 1385, teachers: 82 },
-      { label: "Oct 17", students: 1420, teachers: 84 },
-    ],
-    "90d": [
-      { label: "Jul 20", students: 980, teachers: 65 },
-      { label: "Aug 15", students: 1120, teachers: 72 },
-      { label: "Sep 01", students: 1240, teachers: 78 },
-      { label: "Oct 17", students: 1420, teachers: 84 },
-    ],
+  const [timeRange, setTimeRange] = useState<RangeKey>("30d");
+  const [showActions, setShowActions] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date(2026, 9, 1));
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState("2026-10-19");
+  const metricColorClasses: Record<string, string> = {
+    indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300",
+    violet: "bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300",
+    sky: "bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-300",
+    amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
   };
-
-  const currentPoints = chartData[timeRange];
-  const maxStudents = Math.max(...currentPoints.map((d) => d.students)) * 1.05;
-  const minStudents = Math.min(...currentPoints.map((d) => d.students)) * 0.95;
-
-  // SVG Coordinates calculation
-  const svgWidth = 600;
-  const svgHeight = 160;
-  const pointsString = currentPoints
-    .map((p, idx) => {
-      const x = (idx / (currentPoints.length - 1)) * (svgWidth - 40) + 20;
-      const y =
-        svgHeight -
-        20 -
-        ((p.students - minStudents) / (maxStudents - minStudents || 1)) * (svgHeight - 40);
-      return `${x},${y}`;
-    })
-    .join(" ");
-
-  const pendingInvites = [
-    {
-      name: "Amara Okonkwo",
-      role: "STUDENT",
-      email: "amara.okonkwo@mentify.edu",
-      date: "Oct 14, 2026",
-      status: "INVITED" as const,
-    },
-    {
-      name: "Priya Nambiar",
-      role: "TEACHER",
-      email: "priya.nambiar@mentify.edu",
-      date: "Oct 15, 2026",
-      status: "INVITED" as const,
-    },
-    ...(role === "SUPER_ADMIN"
-      ? [
-          {
-            name: "Benjamin Hayes",
-            role: "ADMIN",
-            email: "benjamin.hayes@mentify.edu",
-            date: "Oct 16, 2026",
-            status: "INVITED" as const,
-          },
-        ]
-      : []),
-  ];
-
-  const mockRecentRegistrations = [
+  const points = growthData[timeRange];
+  const latestRegistrations = useMemo(() => {
+    if (!registrationOverview) return [];
+    return [...registrationOverview.recentStudents, ...registrationOverview.recentTeachers]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 5);
+  }, [registrationOverview]);
+  const fallbackRegistrations = [
     {
       id: "r1",
       name: "Elena Rostova",
       role: "STUDENT" as const,
       email: "elena.rostova@mentify.edu",
-      date: "Sep 02, 2026",
-      status: "ACTIVE" as const,
-      idCode: "STU-2026-0842",
+      date: "Today",
     },
     {
       id: "r2",
       name: "Tariq Mansoor",
       role: "STUDENT" as const,
       email: "tariq.mansoor@mentify.edu",
-      date: "Sep 03, 2026",
-      status: "ACTIVE" as const,
-      idCode: "STU-2026-0843",
+      date: "Yesterday",
     },
     {
       id: "r3",
       name: "Sarah Jenkins",
       role: "TEACHER" as const,
       email: "sarah.jenkins@mentify.edu",
-      date: "Aug 15, 2025",
-      status: "ACTIVE" as const,
-      idCode: "TCH-9104",
+      date: "Oct 16",
     },
     {
       id: "r4",
       name: "Chloe Lin",
       role: "STUDENT" as const,
       email: "chloe.lin@mentify.edu",
-      date: "Sep 08, 2026",
-      status: "ACTIVE" as const,
-      idCode: "STU-2026-0846",
+      date: "Oct 15",
     },
   ];
-
-  const recentRegistrations = registrationOverview
-    ? [...registrationOverview.recentStudents, ...registrationOverview.recentTeachers]
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, 4)
-        .map((user) => ({
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          role: user.role,
-          email: user.email,
-          date: new Date(user.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-          }),
-          status: user.accountStatus,
-          idCode: user.studentId || user.teacherCode || user.id,
-        }))
-    : mockRecentRegistrations;
+  const chart = useMemo(() => {
+    const min = Math.min(...points.map((point) => point.students)) - 30;
+    const max = Math.max(...points.map((point) => point.students)) + 30;
+    const coords = points.map((point, index) => ({
+      x: (index / (points.length - 1)) * 720 + 24,
+      y: 190 - ((point.students - min) / (max - min)) * 150,
+    }));
+    const line = coords.map((point) => `${point.x},${point.y}`).join(" ");
+    return { coords, line, area: `24,190 ${line} 744,190` };
+  }, [points]);
+  const calendarCells = useMemo(() => {
+    const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+    const start = new Date(firstDay);
+    start.setDate(1 - firstDay.getDay());
+    return Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      return { date, key, isCurrentMonth: date.getMonth() === calendarMonth.getMonth() };
+    });
+  }, [calendarMonth]);
+  const selectedDayEvents = events
+    .filter((event) => event.date === selectedCalendarDate)
+    .slice(0, 3);
+  const monthLabel = calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const openQuickActions = (action: string) => {
+    setShowActions(false);
+    onQuickAction(action);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Banner */}
-      <div className="rounded-2xl p-6 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                Saturday, October 17, 2026
-              </span>
-              <span className="text-slate-300 dark:text-slate-600">·</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Keycloak SSO Realm: mentify-prod
-              </span>
+    <div className="flex flex-col space-y-6 pb-8">
+      <section className="relative overflow-hidden rounded-[28px] bg-slate-950 px-6 py-7 text-white shadow-xl shadow-indigo-950/10 sm:px-8">
+        <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute -bottom-32 right-48 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
+        <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+          <div className="max-w-2xl">
+            <div className="mb-4 flex items-center gap-2 text-xs font-medium text-indigo-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.12)]" />
+              Platform overview <span className="text-slate-500">/</span> Monday, October 19, 2026
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Good morning, Alex!
-            </h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 max-w-xl">
-              Platform status is nominal across all 6 microservices. 12 account invitations await
-              activation, and 9 institutional examinations are scheduled for next week.
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+              Good morning, Alex.
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+              Here’s the latest pulse of your institution. Engagement is up, registrations are
+              moving steadily, and there are a few actions ready for your attention.
             </p>
-
-            {/* Quick action shortcuts */}
-            <div className="mt-5 flex flex-wrap items-center gap-2.5">
+            <div className="mt-6 flex flex-wrap gap-2.5">
               <button
-                onClick={() => onQuickAction("register-student")}
-                className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-semibold border border-indigo-200/80 dark:border-indigo-800 transition-colors"
+                onClick={() => setShowActions((open) => !open)}
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-3.5 py-2.5 text-xs font-bold text-slate-950 transition hover:bg-indigo-50"
               >
-                + Register Student
+                <Plus className="h-4 w-4" />
+                Quick action
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform ${showActions ? "rotate-180" : ""}`}
+                />
               </button>
               <button
-                onClick={() => onQuickAction("register-teacher")}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-colors"
+                onClick={() => onNavigate("analytics")}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-white/15"
               >
-                + Register Teacher
+                View analytics
+                <ArrowRight className="h-3.5 w-3.5" />
               </button>
-              {role === "SUPER_ADMIN" && (
+            </div>
+            {showActions && (
+              <div className="mt-3 flex w-fit flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/10 p-2 backdrop-blur-md">
                 <button
-                  onClick={() => onQuickAction("register-admin")}
-                  className="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-semibold border border-purple-200 dark:border-purple-800 transition-colors"
+                  onClick={() => openQuickActions("register-student")}
+                  className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20"
                 >
-                  + Register Admin
+                  Register student
                 </button>
-              )}
-              <button
-                onClick={() => onNavigate("registrations")}
-                className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-200 dark:border-slate-700 transition-colors"
-              >
-                View Invitations ({kpis.pendingInvitations})
-              </button>
+                <button
+                  onClick={() => openQuickActions("register-teacher")}
+                  className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20"
+                >
+                  Register teacher
+                </button>
+                {role === "SUPER_ADMIN" && (
+                  <button
+                    onClick={() => openQuickActions("register-admin")}
+                    className="rounded-xl bg-white/10 px-3 py-2 text-xs font-medium hover:bg-white/20"
+                  >
+                    Register admin
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:w-[390px]">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm">
+              <Activity className="mb-5 h-4 w-4 text-indigo-300" />
+              <p className="text-2xl font-semibold tabular-nums">
+                {kpis.activeUsers.toLocaleString()}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-400">Active this week</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm">
+              <UserRoundCheck className="mb-5 h-4 w-4 text-emerald-300" />
+              <p className="text-2xl font-semibold tabular-nums">94.2%</p>
+              <p className="mt-1 text-[11px] text-slate-400">Engagement rate</p>
+            </div>
+            <div className="col-span-2 rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm sm:col-span-1">
+              <Bell className="mb-5 h-4 w-4 text-amber-300" />
+              <p className="text-2xl font-semibold tabular-nums">{kpis.pendingAdminActions}</p>
+              <p className="mt-1 text-[11px] text-slate-400">Needs attention</p>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Mentify AI Assistant Mini Teaser */}
-          <div className="md:w-80 p-4 rounded-xl bg-indigo-50/70 dark:bg-slate-800/60 border border-indigo-100 dark:border-slate-700/80 shrink-0">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="text-xs font-bold text-slate-900 dark:text-white">
-                Mentify AI Quick Assist
-              </span>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
-              "Summarize platform activity and quiz failure trends for this week."
-            </p>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            title: "Total students",
+            value: kpis.totalStudents,
+            note: "8.4% vs last term",
+            icon: GraduationCap,
+            color: "indigo",
+            points: [8, 12, 11, 16, 18, 22, 25],
+            route: "students" as AdminRoute,
+            stroke: "#6366f1",
+          },
+          {
+            title: "Total teachers",
+            value: kpis.totalTeachers,
+            note: "4 joined this month",
+            icon: Users,
+            color: "violet",
+            points: [6, 8, 7, 10, 11, 12, 14],
+            route: "teachers" as AdminRoute,
+            stroke: "#8b5cf6",
+          },
+          {
+            title: "Active courses",
+            value: kpis.totalCourses,
+            note: "3,290 active enrollments",
+            icon: BookOpen,
+            color: "sky",
+            points: [9, 12, 10, 14, 16, 15, 19],
+            route: "courses" as AdminRoute,
+            stroke: "#0ea5e9",
+          },
+          {
+            title: "Pending invitations",
+            value: kpis.pendingInvitations,
+            note: "Follow-up recommended",
+            icon: Mail,
+            color: "amber",
+            points: [18, 15, 16, 13, 11, 9, 8],
+            route: "registrations" as AdminRoute,
+            stroke: "#f59e0b",
+          },
+        ].map((metric) => {
+          const Icon = metric.icon;
+          return (
             <button
-              onClick={() => onNavigate("ai-assistant")}
-              className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+              key={metric.title}
+              onClick={() => onNavigate(metric.route)}
+              className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100/40 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700/60 dark:hover:shadow-none"
             >
-              <span>Launch Assistant</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <div className="flex items-start justify-between">
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${metricColorClasses[metric.color]}`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <MiniSparkline color={metric.stroke} points={metric.points} />
+              </div>
+              <p className="mt-5 text-xs font-medium text-slate-500">{metric.title}</p>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <p className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
+                  {metric.value.toLocaleString()}
+                </p>
+                <ArrowUpRight className="mb-1 h-4 w-4 text-slate-300 transition group-hover:text-indigo-500" />
+              </div>
+              <p
+                className={`mt-2 text-[11px] ${metric.color === "amber" ? "text-amber-600" : "text-emerald-600"}`}
+              >
+                {metric.note}
+              </p>
             </button>
-          </div>
-        </div>
-      </div>
+          );
+        })}
+      </section>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Students"
-          value={kpis.totalStudents}
-          subtitle="Enrolled in school"
-          change="+8.4% term-over-term"
-          icon={GraduationCap}
-          onClick={() => onNavigate("students")}
-        />
-        <StatCard
-          title="Total Teachers"
-          value={kpis.totalTeachers}
-          subtitle="4 departments"
-          change="+4 hired this month"
-          icon={Briefcase}
-          onClick={() => onNavigate("teachers")}
-        />
-        <StatCard
-          title="Active Courses"
-          value={kpis.totalCourses}
-          subtitle="Across Grades 10-12"
-          change="3,290 enrollments"
-          icon={BookOpen}
-          onClick={() => onNavigate("courses")}
-        />
-        <StatCard
-          title="Pending Invitations"
-          value={kpis.pendingInvitations}
-          subtitle="Awaiting Keycloak activation"
-          change="Requires follow-up"
-          isPositive={false}
-          icon={MailCheck}
-          onClick={() => onNavigate("registrations")}
-        />
-      </div>
-
-      {/* Secondary KPI Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-        <div>
-          <span className="text-[11px] text-slate-500 block">Active Users (7d)</span>
-          <span className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-            {kpis.activeUsers.toLocaleString()}
-          </span>
-          <span className="text-[10px] text-emerald-600 block">94.2% engagement</span>
-        </div>
-        <div>
-          <span className="text-[11px] text-slate-500 block">Active Enrollments</span>
-          <span className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-            {kpis.activeEnrollments.toLocaleString()}
-          </span>
-          <span className="text-[10px] text-slate-500 block">2.3 courses / student</span>
-        </div>
-        <div>
-          <span className="text-[11px] text-slate-500 block">Upcoming Examinations</span>
-          <span className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-            {kpis.upcomingExams}
-          </span>
-          <span className="text-[10px] text-indigo-600 block">Oct 25 – Nov 04</span>
-        </div>
-        <div>
-          <span className="text-[11px] text-slate-500 block">Pending Admin Actions</span>
-          <span className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-            {kpis.pendingAdminActions}
-          </span>
-          <span className="text-[10px] text-amber-600 block">Review capacity & approvals</span>
-        </div>
-      </div>
-
-      {/* Analytics & Academic Overview 2-Column Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* User Growth Chart (2 cols) */}
-        <div className="lg:col-span-2 p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.85fr)]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                User Growth & Registration Velocity
-              </h3>
-              <p className="text-xs text-slate-500">
-                Verified student registrations and faculty onboardings
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                  Community growth
+                </h2>
+                <TrendBadge value="+12.8%" />
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                New members joining the platform over time
               </p>
             </div>
-
-            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              {(["7d", "30d", "90d"] as const).map((range) => (
+            <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              {(["7d", "30d", "90d"] as RangeKey[]).map((range) => (
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
-                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                    timeRange === range
-                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                  }`}
+                  className={`rounded-lg px-3 py-1.5 text-[11px] font-semibold transition ${timeRange === range ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-slate-500 hover:text-slate-900 dark:hover:text-white"}`}
                 >
-                  {range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : "90 Days"}
+                  {rangeLabels[range]}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* SVG Trend Visualization */}
-          <div className="h-44 w-full relative flex items-end pt-4">
+          <div className="mt-6 h-[250px] w-full">
             <svg
-              className="w-full h-full overflow-visible"
-              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+              viewBox="0 0 768 220"
+              className="h-full w-full overflow-visible"
               preserveAspectRatio="none"
+              role="img"
+              aria-label="Community growth chart"
             >
               <defs>
-                <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
+                <linearGradient id="dashboardGrowth" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#6366f1" stopOpacity="0.28" />
+                  <stop offset="1" stopColor="#6366f1" stopOpacity="0" />
                 </linearGradient>
               </defs>
-
-              {/* Area */}
-              <polygon
-                points={`20,${svgHeight - 20} ${pointsString} ${svgWidth - 20},${svgHeight - 20}`}
-                fill="url(#growthGradient)"
-              />
-
-              {/* Line */}
+              {[40, 90, 140, 190].map((y) => (
+                <line
+                  key={y}
+                  x1="24"
+                  x2="744"
+                  y1={y}
+                  y2={y}
+                  stroke="currentColor"
+                  className="text-slate-100 dark:text-slate-800"
+                  strokeDasharray="3 5"
+                />
+              ))}
+              <polygon points={chart.area} fill="url(#dashboardGrowth)" />
               <polyline
+                points={chart.line}
                 fill="none"
-                stroke="#4f46e5"
-                strokeWidth="2.5"
+                stroke="#6366f1"
+                strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                points={pointsString}
               />
+              {chart.coords.map((point, index) => (
+                <circle
+                  key={index}
+                  cx={point.x}
+                  cy={point.y}
+                  r="4"
+                  fill="white"
+                  stroke="#6366f1"
+                  strokeWidth="2.5"
+                  className="dark:fill-slate-900"
+                />
+              ))}
             </svg>
           </div>
-
-          {registrationOverviewLoading && (
-            <p className="text-[11px] text-indigo-600 dark:text-indigo-400">
-              Loading registration overview…
-            </p>
-          )}
-          {registrationOverviewError && (
-            <p className="text-[11px] text-rose-600 dark:text-rose-400">
-              Registration overview unavailable: {registrationOverviewError}
-            </p>
-          )}
-
-          <div className="flex items-center justify-between text-xs text-slate-400 mt-2 px-4 border-t border-slate-100 dark:border-slate-800 pt-2">
-            {currentPoints.map((p, idx) => (
-              <span key={idx} className="tabular-nums">
-                {p.label}
-              </span>
+          <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
+            {points.map((point) => (
+              <span key={point.label}>{point.label}</span>
+            ))}
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-5 border-t border-slate-100 pt-4 text-[11px] text-slate-500 dark:border-slate-800">
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-indigo-500" />
+              Students{" "}
+              <strong className="text-slate-900 dark:text-white">
+                {kpis.totalStudents.toLocaleString()}
+              </strong>
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-400" />
+              Teachers{" "}
+              <strong className="text-slate-900 dark:text-white">
+                {kpis.totalTeachers.toLocaleString()}
+              </strong>
+            </span>
+            {registrationOverviewLoading && (
+              <span className="text-indigo-500">Refreshing data…</span>
+            )}
+            {registrationOverviewError && (
+              <span className="text-rose-500">Live data unavailable</span>
+            )}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                Enrollment mix
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">Active learners by program</p>
+            </div>
+            <button
+              onClick={() => onNavigate("enrollments")}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-8 flex items-center justify-center">
+            <div
+              className="relative h-44 w-44 rounded-full"
+              style={{
+                background:
+                  "conic-gradient(#6366f1 0 42%, #8b5cf6 42% 70%, #38bdf8 70% 88%, #cbd5e1 88% 100%)",
+              }}
+            >
+              <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-900">
+                <span className="text-3xl font-semibold text-slate-950 dark:text-white">
+                  {kpis.activeEnrollments.toLocaleString()}
+                </span>
+                <span className="mt-1 text-[11px] text-slate-500">active enrollments</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-3">
+            {[
+              ["Grade 10", "42%", "bg-indigo-500"],
+              ["Grade 11", "28%", "bg-violet-500"],
+              ["Grade 12", "18%", "bg-sky-400"],
+              ["Other", "12%", "bg-slate-300"],
+            ].map(([label, value, color]) => (
+              <div key={label} className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-2 text-slate-500">
+                  <span className={`h-2 w-2 rounded-full ${color}`} />
+                  {label}
+                </span>
+                <span className="font-semibold text-slate-900 dark:text-white">{value}</span>
+              </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Operational Pending Invitations Card (1 col) */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Pending Invitations
-              </h3>
-              <span className="text-xs text-amber-600 font-medium tabular-nums">
-                {pendingInvites.length} eligible
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mb-4">
-              Registered users who haven't completed their initial Keycloak activation.
-            </p>
-
-            <div className="space-y-3">
-              {pendingInvites.map((user, idx) => (
-                <div
-                  key={idx}
-                  className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between gap-2"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                        {user.name}
-                      </span>
-                      <RoleBadge role={user.role as any} />
-                    </div>
-                    <span className="text-[11px] text-slate-400 truncate block mt-0.5">
-                      {user.email}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => onResendInvitation(user.email, user.role)}
-                    className="px-2.5 py-1 text-[11px] font-medium rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors shrink-0 flex items-center gap-1"
-                  >
-                    <Send className="w-3 h-3" />
-                    <span>Resend</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <button
-              onClick={() => onNavigate("registrations")}
-              className="w-full text-center text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
-              Open Full Registration Operations →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Registrations & Upcoming Academic Events */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Registrations Table (2 cols) */}
-        <div className="lg:col-span-2 p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-4">
+      <section className="order-4 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-6">
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Recent User Registrations
-              </h3>
-              <p className="text-xs text-slate-500">
-                Latest accounts provisioned across Spring Boot User Services
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                Recent registrations
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                The newest members across your institution
               </p>
             </div>
             <button
               onClick={() => onNavigate("users")}
-              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
             >
-              View directory ({students.length + teachers.length})
+              View directory <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
             </button>
           </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400">
-                  <th className="pb-2.5 font-medium">User</th>
-                  <th className="pb-2.5 font-medium">Role</th>
-                  <th className="pb-2.5 font-medium">ID / Code</th>
-                  <th className="pb-2.5 font-medium">Status</th>
-                  <th className="pb-2.5 font-medium">Registered</th>
-                  <th className="pb-2.5 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {recentRegistrations.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <UserAvatar name={user.name} size="sm" />
-                        <div>
-                          <span className="font-semibold text-slate-900 dark:text-white block">
-                            {user.name}
-                          </span>
-                          <span className="text-[11px] text-slate-400">{user.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-2.5">
-                      <RoleBadge role={user.role} />
-                    </td>
-                    <td className="py-2.5 font-mono text-[11px] text-slate-600 dark:text-slate-300 tabular-nums">
-                      {user.idCode}
-                    </td>
-                    <td className="py-2.5">
-                      <StatusBadge status={user.status} />
-                    </td>
-                    <td className="py-2.5 text-slate-500 tabular-nums">{user.date}</td>
-                    <td className="py-2.5 text-right">
-                      <button
-                        onClick={() =>
-                          onNavigate(user.role === "STUDENT" ? "students" : "teachers")
-                        }
-                        className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-                      >
-                        Inspect
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {(latestRegistrations.length ? latestRegistrations : fallbackRegistrations).map(
+              (user: any) => {
+                const name = user.name || `${user.firstName} ${user.lastName}`;
+                const userRole = user.role;
+                return (
+                  <div
+                    key={user.id}
+                    className="flex items-center gap-3 px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/40 sm:px-6"
+                  >
+                    <UserAvatar name={name} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-slate-950 dark:text-white">
+                        {name}
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] text-slate-400">{user.email}</p>
+                    </div>
+                    <RoleBadge role={userRole} />
+                    <span className="hidden text-[11px] text-slate-400 md:block">
+                      {user.date ||
+                        new Date(user.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                    </span>
+                    <button
+                      onClick={() => onNavigate(userRole === "STUDENT" ? "students" : "teachers")}
+                      className="rounded-lg p-2 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40"
+                    >
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              },
+            )}
           </div>
         </div>
-
-        {/* Upcoming Academic Events (1 col) */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Upcoming Academic Events
-              </h3>
-              <button
-                onClick={() => onNavigate("calendar")}
-                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                Calendar
-              </button>
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-6">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                Needs attention
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">A few items need your review</p>
             </div>
-            <p className="text-xs text-slate-500 mb-4">
-              Classes, deadlines and examination sessions scheduled.
-            </p>
-
-            <div className="space-y-3">
-              {events.slice(0, 4).map((evt) => (
-                <div
-                  key={evt.id}
-                  className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span
-                      className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${
-                        evt.type === "EXAM"
-                          ? "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
-                          : evt.type === "DEADLINE"
-                            ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
-                            : "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
-                      }`}
-                    >
-                      {evt.type}
-                    </span>
-                    <span className="text-[11px] text-slate-400 tabular-nums">{evt.date}</span>
-                  </div>
-                  <h4 className="text-xs font-semibold text-slate-900 dark:text-white line-clamp-1">
-                    {evt.title}
-                  </h4>
-                  <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-400">
-                    <Clock className="w-3 h-3" />
-                    <span>{evt.time}</span>
-                    <span>·</span>
-                    <span className="truncate">{evt.location}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              {kpis.pendingAdminActions} open
+            </span>
           </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="space-y-3 p-5 sm:p-6">
+            <button
+              onClick={() => onNavigate("registrations")}
+              className="flex w-full items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-3.5 text-left transition hover:border-amber-200 dark:border-amber-900/50 dark:bg-amber-950/20"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                <Mail className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold text-slate-900 dark:text-white">
+                  Pending invitations
+                </span>
+                <span className="mt-1 block text-[11px] leading-4 text-slate-500">
+                  {kpis.pendingInvitations} people are waiting to activate their accounts.
+                </span>
+              </span>
+              <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-600" />
+            </button>
             <button
               onClick={() => onNavigate("calendar")}
-              className="w-full text-center text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="flex w-full items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-3.5 text-left transition hover:border-indigo-200 dark:border-indigo-900/50 dark:bg-indigo-950/20"
             >
-              Open Academic Calendar →
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                <CalendarDays className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold text-slate-900 dark:text-white">
+                  Upcoming schedule
+                </span>
+                <span className="mt-1 block text-[11px] leading-4 text-slate-500">
+                  {kpis.upcomingExams} examinations and academic events are coming up.
+                </span>
+              </span>
+              <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-indigo-600" />
+            </button>
+            <button
+              onClick={() => onNavigate("courses")}
+              className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 text-left transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-800/40"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <BookOpen className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold text-slate-900 dark:text-white">
+                  Course capacity
+                </span>
+                <span className="mt-1 block text-[11px] leading-4 text-slate-500">
+                  Review course sections and enrollment distribution.
+                </span>
+              </span>
+              <ArrowRight className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-400" />
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Platform Activity Timeline Section */}
-      <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between mb-4">
+      <section className="order-3 overflow-hidden rounded-[24px] border border-indigo-100 bg-gradient-to-br from-white via-white to-indigo-50/70 p-5 shadow-sm shadow-indigo-100/50 dark:border-indigo-950/70 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/30 sm:p-6">
+        <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/80 bg-white/70 p-4 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-900/60 sm:flex-row sm:items-center">
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Recent Administrative Audit Events
-            </h3>
-            <p className="text-xs text-slate-500">
-              Microservice audit trail: Keycloak SSO, AWS S3 Material Service & AI Service
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-indigo-500" />
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                Academic calendar
+              </h2>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">
+              A quick view of classes, exams, and deadlines
             </p>
           </div>
           <button
-            onClick={() => onNavigate("audit")}
-            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+            onClick={() => onNavigate("calendar")}
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400"
           >
-            Audit Center →
+            Open full calendar <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
           </button>
         </div>
-
-        <div className="space-y-3">
-          {recentLogs.slice(0, 3).map((log) => (
-            <div
-              key={log.id}
-              className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30"
-            >
-              <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 shrink-0">
-                <Shield className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold text-slate-900 dark:text-white">
-                    {log.action}
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+          <div>
+            <div className="mb-3 flex items-center justify-between rounded-2xl border border-indigo-100/80 bg-white/70 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
+              <button
+                onClick={() =>
+                  setCalendarMonth(
+                    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1),
+                  )
+                }
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                {monthLabel}
+              </span>
+              <button
+                onClick={() =>
+                  setCalendarMonth(
+                    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1),
+                  )
+                }
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+                aria-label="Next month"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="rounded-2xl border border-white/80 bg-white/70 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <span key={day} className="py-2">
+                    {day.slice(0, 2)}
                   </span>
-                  <span className="text-[11px] text-slate-400 tabular-nums">
-                    {new Date(log.timestamp).toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{log.details}</p>
-                <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
-                  <span>Actor: {log.actorEmail}</span>
-                  <span>·</span>
-                  <span>IP: {log.ipAddress}</span>
-                </div>
+                ))}
+                {calendarCells.map((cell) => {
+                  const dayEvents = events.filter((event) => event.date === cell.key);
+                  const isSelected = selectedCalendarDate === cell.key;
+                  return (
+                    <button
+                      key={cell.key}
+                      onClick={() => setSelectedCalendarDate(cell.key)}
+                      className={`relative min-h-12 rounded-xl p-2 text-xs transition ${isSelected ? "bg-indigo-600 font-bold text-white shadow-md shadow-indigo-200 dark:shadow-none" : cell.isCurrentMonth ? "text-slate-700 hover:bg-indigo-50 dark:text-slate-300 dark:hover:bg-indigo-950/40" : "text-slate-300 dark:text-slate-700"}`}
+                    >
+                      <span>{cell.date.getDate()}</span>
+                      {dayEvents.length > 0 && (
+                        <span
+                          className={`absolute bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${isSelected ? "bg-white" : "bg-indigo-500"}`}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          ))}
+          </div>
+          <div className="relative overflow-hidden rounded-2xl bg-slate-950 p-5 text-white shadow-lg shadow-indigo-200/40 dark:bg-indigo-950/70 dark:shadow-none">
+            <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-indigo-500/30 blur-2xl" />
+            <div className="flex items-center justify-between">
+              <div className="relative">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-200">
+                  Selected day
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <span className="relative rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold text-indigo-100 ring-1 ring-white/15">
+                {selectedDayEvents.length} events
+              </span>
+            </div>
+            <div className="relative mt-5 space-y-2.5">
+              {selectedDayEvents.length > 0 ? (
+                selectedDayEvents.map((event) => (
+                  <button
+                    key={event.id}
+                    onClick={() => onNavigate("calendar")}
+                    className="flex w-full items-start gap-2.5 rounded-xl bg-white p-3 text-left shadow-sm transition hover:ring-2 hover:ring-indigo-200 dark:bg-slate-900 dark:hover:ring-indigo-800"
+                  >
+                    <span
+                      className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${event.type === "EXAM" ? "bg-rose-500" : event.type === "DEADLINE" ? "bg-amber-500" : "bg-indigo-500"}`}
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-[11px] font-semibold text-slate-900 dark:text-white">
+                        {event.title}
+                      </span>
+                      <span className="mt-1 block text-[10px] text-slate-400">
+                        {event.time} · {event.location}
+                      </span>
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="py-7 text-center">
+                  <CalendarDays className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600" />
+                  <p className="mt-2 text-xs text-slate-200">No events scheduled</p>
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Select another day to explore the schedule.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
+      </section>
+
+      <section className="order-5 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-6">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                Upcoming events
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">Stay ahead of the academic calendar</p>
+            </div>
+            <button
+              onClick={() => onNavigate("calendar")}
+              className="text-xs font-semibold text-indigo-600 dark:text-indigo-400"
+            >
+              Open calendar
+            </button>
+          </div>
+          <div className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
+            {events.slice(0, 4).map((event) => (
+              <div
+                key={event.id}
+                className="rounded-2xl border border-slate-100 p-4 dark:border-slate-800"
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase ${event.type === "EXAM" ? "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300" : "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300"}`}
+                  >
+                    {event.type}
+                  </span>
+                  <span className="text-[11px] text-slate-400">{event.date}</span>
+                </div>
+                <h3 className="mt-3 truncate text-xs font-semibold text-slate-900 dark:text-white">
+                  {event.title}
+                </h3>
+                <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
+                  <Clock3 className="h-3 w-3" />
+                  {event.time}
+                  <span>·</span>
+                  <span className="truncate">{event.location}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-6">
+            <div>
+              <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                Latest activity
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">Recent changes across the platform</p>
+            </div>
+            <button
+              onClick={() => onNavigate("audit")}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="space-y-5 p-5 sm:p-6">
+            {recentLogs.slice(0, 4).map((log, index) => (
+              <div key={log.id} className="flex gap-3">
+                <div className="relative flex flex-col items-center">
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-xl ${index === 0 ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300" : "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300"}`}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                  </span>
+                  {index < Math.min(recentLogs.length, 4) - 1 && (
+                    <span className="absolute top-9 h-8 w-px bg-slate-200 dark:bg-slate-800" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
+                      {log.action}
+                    </p>
+                    <span className="shrink-0 text-[10px] text-slate-400">
+                      {new Date(log.timestamp).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500">
+                    {log.details}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="order-6 flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50/60 px-5 py-4 dark:border-indigo-900/50 dark:bg-indigo-950/20">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-xs font-semibold text-slate-900 dark:text-white">
+              Need a deeper read?
+            </p>
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              Ask Mentify AI to summarize trends across your institution.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => onNavigate("ai-assistant")}
+          className="hidden rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 sm:block"
+        >
+          Launch assistant <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );

@@ -65,6 +65,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [dueDate, setDueDate] = useState("2026-10-30");
   const [maxMarks, setMaxMarks] = useState("100");
   const [duration, setDuration] = useState("45");
+  const [moduleDuration, setModuleDuration] = useState("1");
   const [assignmentModuleId, setAssignmentModuleId] = useState("");
   const [assignmentModules, setAssignmentModules] = useState<CourseContentModule[]>([]);
   const [courseGradeId, setCourseGradeId] = useState("");
@@ -111,18 +112,22 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       return;
     }
 
+    if (activeType === "module" && !/^[1-9]\d*$/.test(moduleDuration)) {
+      setIsSubmitting(false);
+      setFormError("Module duration must be a positive whole number of days.");
+      return;
+    }
+
     if (activeType === "event") {
       setIsSubmitting(false);
-      setFormError(
-        "Calendar event creation is unavailable until the backend permission and gateway contract are confirmed.",
-      );
+      setFormError("Calendar event creation is currently unavailable. Please try again later.");
       return;
     }
 
     if (activeType === "course") {
       if (!teacherId || !courseGradeId) {
         setIsSubmitting(false);
-        setFormError("Course creation requires a teacher ID and grade ID.");
+        setFormError("Course creation requires an account and grade selection.");
         return;
       }
       try {
@@ -159,6 +164,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           title,
           description,
           sequenceOrder: assignmentModules.length + 1,
+          dateDuration: Number(moduleDuration),
           isVisible: true,
         });
         setIsSubmitting(false);
@@ -188,6 +194,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         const created = await createModuleLesson(selectedCourseId, assignmentModuleId, {
           title,
           description,
+          durationMinutes: Number(duration) || 45,
           isVisible: true,
         });
         setIsSubmitting(false);
@@ -528,6 +535,23 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
                 />
               </div>
+
+              {activeType === "module" && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Duration in days
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={moduleDuration}
+                    onChange={(e) => setModuleDuration(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              )}
 
               {(activeType === "assignment" || activeType === "exam" || activeType === "event") && (
                 <div className="grid grid-cols-2 gap-3">

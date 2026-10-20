@@ -8,6 +8,7 @@ import {
   updateCommunicationSettings,
   type CommunicationSettings,
 } from "../api/settingsApi";
+import { NoticeModal } from "../components/ActionModal";
 
 interface TeacherSettingsViewProps {
   teacher: TeacherProfile;
@@ -30,6 +31,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [isCommunicationSaving, setIsCommunicationSaving] = useState(false);
   const [communicationSaved, setCommunicationSaved] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [securityNoticeOpen, setSecurityNoticeOpen] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -150,8 +152,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
           Account Settings & Preferences
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Configure security settings, Keycloak identity attributes, notification routing, and
-          interface appearance.
+          Configure your account, notification preferences, and interface appearance.
         </p>
       </div>
 
@@ -167,41 +168,38 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         </div>
       )}
 
-      {/* 1. Keycloak Security & Authentication */}
+      {/* 1. Account Security */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-4">
         <div className="flex items-center gap-2 text-indigo-700">
           <Shield className="w-4 h-4" />
-          <h2 className="text-sm font-bold text-slate-900">Institutional Identity & Security</h2>
+          <h2 className="text-sm font-bold text-slate-900">Account Security</h2>
         </div>
         <p className="text-xs text-slate-500 leading-relaxed">
-          Your Mentify faculty account is federated and managed via enterprise Keycloak Single
-          Sign-On (SSO).
+          Your faculty account is protected with secure sign-in and account recovery controls.
         </p>
 
         <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-900">Keycloak Realm:</span>
-              <span className="font-mono text-slate-600">mentify-university-faculty</span>
+              <span className="font-semibold text-slate-900">Account access:</span>
+              <span className="text-slate-600">Protected</span>
             </div>
             <div className="text-[11px] text-slate-500 mt-0.5">
-              Subject ID: <span className="font-mono">usr-keycloak-tch-4091-prod</span>
+              Your account is active and secure.
             </div>
           </div>
           <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 w-fit">
-            SSO Session Active
+            Account Active
           </span>
         </div>
 
         <div className="pt-2 flex items-center justify-between">
           <button
-            onClick={() =>
-              alert("Redirecting to University Keycloak Account Management Console...")
-            }
+            onClick={() => setSecurityNoticeOpen(true)}
             className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
           >
             <KeyRound className="w-3.5 h-3.5" />
-            <span>Manage Keycloak Password & MFA</span>
+            <span>Manage Password & Security</span>
             <ExternalLink className="w-3 h-3 ml-0.5" />
           </button>
         </div>
@@ -340,13 +338,10 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         </div>
       </div>
 
-      {/* 4. Session & Logout */}
+      {/* 4. Sign Out */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-3">
-        <h2 className="text-sm font-bold text-slate-900">Portal Session</h2>
-        <p className="text-xs text-slate-500">
-          Sign out of the faculty workspace on this device. You will need to re-authenticate with
-          your university credentials.
-        </p>
+        <h2 className="text-sm font-bold text-slate-900">Sign Out</h2>
+        <p className="text-xs text-slate-500">Sign out of the faculty workspace on this device.</p>
 
         <button
           onClick={() => void handleLogout()}
@@ -357,6 +352,12 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
           <span>{isLoggingOut ? "Signing Out..." : "Sign Out of Faculty Workspace"}</span>
         </button>
       </div>
+      <NoticeModal
+        isOpen={securityNoticeOpen}
+        title="Account security"
+        message="Password and security management is handled by the account service and is not available in this workspace yet."
+        onClose={() => setSecurityNoticeOpen(false)}
+      />
     </div>
   );
 };

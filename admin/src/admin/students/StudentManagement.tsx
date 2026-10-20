@@ -336,7 +336,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   Student Registration Wizard
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Provision new student record across Spring Boot and dispatch Keycloak invitation
+                  Add a new student and their academic details
                 </p>
               </div>
               <button
@@ -434,7 +434,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       <p className="text-rose-500 text-[11px] mt-1">{formErrors.email}</p>
                     )}
                     <span className="text-[11px] text-slate-400 mt-1 block">
-                      Keycloak invitation and temporary credentials link will be dispatched here.
+                      An invitation will be sent to this email address.
                     </span>
                   </div>
                   <div>
@@ -666,8 +666,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[11px] flex items-center gap-2">
                     <UserCheck className="w-4 h-4 shrink-0" />
                     <span>
-                      Notice: Student ID will be generated automatically by the PostgreSQL Student
-                      Service sequence upon confirmation.
+                      A student ID will be generated automatically when registration is confirmed.
                     </span>
                   </div>
                 </div>
@@ -685,7 +684,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                     Student Successfully Registered!
                   </h4>
                   <p className="text-xs text-slate-500 mt-1">
-                    Record provisioned in database and Keycloak invitation dispatched.
+                    The student has been registered and an invitation is ready to be sent.
                   </p>
                 </div>
 

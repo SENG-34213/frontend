@@ -163,7 +163,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
             assignments.length + quizzes.length + exams.length,
             "Assignments, quizzes, and exams",
           ],
-          ["Marks Returned", marksReturned.length, "Backend result records"],
+          ["Marks Returned", marksReturned.length, "Published result records"],
         ].map(([label, value, hint]) => (
           <div key={label} className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
             <span className="text-xs text-slate-500 font-medium">{label}</span>

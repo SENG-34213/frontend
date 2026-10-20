@@ -6,7 +6,7 @@ export type CourseContentModule = {
   title: string;
   description?: string;
   sequenceOrder: number;
-  dateDuration?: number;
+  dateDuration: number;
   visible?: boolean;
   moduleImage?: string;
 };
@@ -16,17 +16,24 @@ export type CourseContentLesson = {
   moduleId: string;
   title: string;
   description?: string;
+  durationMinutes: number;
+  contentMarkdown?: string;
+  materials?: CourseContentMaterial[];
   visible?: boolean;
   releaseDate?: string;
 };
 
 export type CourseContentMaterial = {
   id: string;
-  moduleId: string;
+  moduleId?: string;
   lessonId?: string;
   title: string;
-  type?: "PDF" | "VIDEO" | "IMAGE" | "AUDIO" | "DOC" | "PPT";
+  type?: string;
   fileUrl?: string;
+  originalFilename?: string;
+  contentType?: string;
+  fileSize?: number;
+  status?: string;
   materialId?: string;
 };
 
@@ -61,7 +68,13 @@ export function getCourseModules(courseId: string, signal?: AbortSignal) {
 
 export function createCourseModule(
   courseId: string,
-  payload: { title: string; description?: string; sequenceOrder: number; isVisible?: boolean },
+  payload: {
+    title: string;
+    description?: string;
+    sequenceOrder: number;
+    dateDuration: number;
+    isVisible?: boolean;
+  },
 ) {
   return apiRequest<CourseContentModule | ApiEnvelope<CourseContentModule>>(
     `/api/v1/course/${coursePath(courseId)}/modules`,
@@ -72,7 +85,13 @@ export function createCourseModule(
 export function updateCourseModule(
   courseId: string,
   moduleId: string,
-  payload: { title: string; description?: string; sequenceOrder: number; isVisible?: boolean },
+  payload: {
+    title: string;
+    description?: string;
+    sequenceOrder: number;
+    dateDuration: number;
+    isVisible?: boolean;
+  },
 ) {
   return apiRequest<CourseContentModule | ApiEnvelope<CourseContentModule>>(
     modulePath(courseId, moduleId),
@@ -94,7 +113,14 @@ export function getModuleLessons(courseId: string, moduleId: string, signal?: Ab
 export function createModuleLesson(
   courseId: string,
   moduleId: string,
-  payload: { title: string; description?: string; isVisible?: boolean; releaseDate?: string },
+  payload: {
+    title: string;
+    description?: string;
+    durationMinutes: number;
+    contentMarkdown?: string;
+    isVisible?: boolean;
+    releaseDate?: string;
+  },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(
     `${modulePath(courseId, moduleId)}/lessons`,
@@ -106,7 +132,14 @@ export function updateModuleLesson(
   courseId: string,
   moduleId: string,
   lessonId: string,
-  payload: { title: string; description?: string; isVisible?: boolean; releaseDate?: string },
+  payload: {
+    title: string;
+    description?: string;
+    durationMinutes: number;
+    contentMarkdown?: string;
+    isVisible?: boolean;
+    releaseDate?: string;
+  },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(
     `${modulePath(courseId, moduleId)}/lessons/${encodeURIComponent(lessonId)}`,
@@ -128,6 +161,35 @@ export function getModuleMaterials(courseId: string, moduleId: string, signal?: 
     `${modulePath(courseId, moduleId)}/learning-materials`,
     { signal },
   ).then(listData);
+}
+
+export function getLessonMaterials(
+  courseId: string,
+  moduleId: string,
+  lessonId: string,
+  signal?: AbortSignal,
+) {
+  return apiRequest<CourseContentMaterial[] | ApiEnvelope<CourseContentMaterial[]>>(
+    `${modulePath(courseId, moduleId)}/lessons/${encodeURIComponent(lessonId)}/materials`,
+    { signal },
+  ).then(listData);
+}
+
+export function uploadLessonMaterial(
+  courseId: string,
+  moduleId: string,
+  lessonId: string,
+  values: { title: string; description?: string; file: File },
+) {
+  const body = new FormData();
+  body.set("title", values.title);
+  if (values.description) body.set("description", values.description);
+  body.set("file", values.file);
+
+  return apiRequest<CourseContentMaterial | ApiEnvelope<CourseContentMaterial>>(
+    `${modulePath(courseId, moduleId)}/lessons/${encodeURIComponent(lessonId)}/materials/upload`,
+    { method: "POST", body },
+  ).then(unwrap);
 }
 
 export function createModuleMaterial(

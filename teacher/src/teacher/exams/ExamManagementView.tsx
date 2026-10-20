@@ -18,6 +18,7 @@ import {
   type ExamSummary,
 } from "../api/examApi";
 import type { BackendCourse } from "../api/courseApi";
+import { TextInputModal } from "../components/ActionModal";
 
 interface ExamManagementViewProps {
   onNavigate?: (tab: NavigationTab) => void;
@@ -112,6 +113,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [resultMarks, setResultMarks] = useState<Record<string, string>>({});
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsError, setResultsError] = useState<string | null>(null);
+  const [editingExam, setEditingExam] = useState<BackendExam | null>(null);
 
   useEffect(() => {
     if (
@@ -187,10 +189,13 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
     }
   };
 
-  const handleEditExam = async (exam: BackendExam) => {
-    if (exam.status !== "DRAFT") return;
-    const title = window.prompt("Exam title", exam.title)?.trim();
-    if (!title || title === exam.title) return;
+  const handleEditExam = async (title: string) => {
+    const exam = editingExam;
+    if (!exam || exam.status !== "DRAFT") return;
+    if (title === exam.title) {
+      setEditingExam(null);
+      return;
+    }
     try {
       const updated = await updateExam(exam.id, {
         title,
@@ -203,6 +208,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         type: exam.type,
       });
       replaceExam(updated);
+      setEditingExam(null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Exam could not be updated.");
     }
@@ -668,7 +674,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     <button
                       onClick={() => {
                         const record = backendExams.find((item) => item.id === exam.id);
-                        if (record) void handleEditExam(record);
+                        if (record) setEditingExam(record);
                       }}
                       className="px-2.5 py-1.5 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
                     >
@@ -798,6 +804,14 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
           </div>
         </div>
       )}
+      <TextInputModal
+        isOpen={Boolean(editingExam)}
+        title="Edit exam"
+        label="Exam title"
+        initialValue={editingExam?.title ?? ""}
+        onClose={() => setEditingExam(null)}
+        onSave={handleEditExam}
+      />
     </div>
   );
 };

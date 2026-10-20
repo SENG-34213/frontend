@@ -20,6 +20,7 @@ import {
   type CommunicationGroupMember,
   type CommunicationMessage,
 } from "../api/communicationApi";
+import { ConfirmModal, TextInputModal } from "../components/ActionModal";
 
 interface TeacherMessagesViewProps {
   backendCourses: BackendCourse[];
@@ -75,6 +76,8 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [editingMessage, setEditingMessage] = useState<CommunicationMessage | null>(null);
+  const [deletingMessage, setDeletingMessage] = useState<CommunicationMessage | null>(null);
 
   const activeGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
   const activeMessages = messagesByGroup[selectedGroupId] ?? [];
@@ -177,7 +180,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       const content = inputText.trim();
       if (!realtime.sendMessage(activeGroup.id, content)) {
         const message = await sendCommunicationMessage(activeGroup.id, content);
-        if (!message) throw new Error("The messaging service did not return the sent message.");
+        if (!message) throw new Error("Your message could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
           [activeGroup.id]: [...(current[activeGroup.id] ?? []), message],
@@ -193,18 +196,22 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     }
   }
 
-  async function handleEditMessage(message: CommunicationMessage) {
-    const content = window.prompt("Edit message", message.content)?.trim();
-    if (!activeGroup || !content || content === message.content) return;
+  async function handleEditMessage(content: string) {
+    const message = editingMessage;
+    if (!activeGroup || !message || !content || content === message.content) {
+      setEditingMessage(null);
+      return;
+    }
     try {
       const updated = await updateCommunicationMessage(activeGroup.id, message.id, content);
-      if (!updated) throw new Error("The messaging service did not return the updated message.");
+      if (!updated) throw new Error("Your message could not be updated.");
       setMessagesByGroup((current) => ({
         ...current,
         [activeGroup.id]: current[activeGroup.id].map((item) =>
           item.id === updated.id ? updated : item,
         ),
       }));
+      setEditingMessage(null);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Message could not be updated.",
@@ -212,8 +219,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     }
   }
 
-  async function handleDeleteMessage(message: CommunicationMessage) {
-    if (!activeGroup || !window.confirm("Delete this message for everyone?")) return;
+  async function handleDeleteMessage() {
+    const message = deletingMessage;
+    if (!activeGroup || !message) return;
     try {
       await deleteCommunicationMessage(activeGroup.id, message.id, "EVERYONE");
       setMessagesByGroup((current) => ({
@@ -222,6 +230,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
           item.id === message.id ? { ...item, deletedForEveryone: true, content: "" } : item,
         ),
       }));
+      setDeletingMessage(null);
     } catch (requestError) {
       setActionError(
         requestError instanceof Error ? requestError.message : "Message could not be deleted.",
@@ -242,7 +251,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         name,
         description: createGroupDescription.trim() || undefined,
       });
-      if (!created) throw new Error("The communication service did not return the new group.");
+      if (!created) throw new Error("The new group could not be created.");
       setGroups((current) => [created, ...current]);
       setSelectedGroupId(created.id);
       setCreateGroupName("");
@@ -305,8 +314,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       const content = announcementText.trim();
       if (!realtime.sendMessage(group.id, content)) {
         const message = await sendCommunicationMessage(group.id, content);
-        if (!message)
-          throw new Error("The announcement was not returned by the messaging service.");
+        if (!message) throw new Error("The announcement could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
           [group.id]: [...(current[group.id] ?? []), message],
@@ -342,7 +350,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
           </div>
         </div>
         <span className="text-xs text-slate-400 font-mono hidden sm:inline">
-          Mentify Messaging Service · TLS Encrypted
+          Mentify Messaging · Secure
         </span>
       </div>
 
@@ -519,13 +527,13 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                           {isMe && !message.deletedForEveryone && (
                             <div className="mt-1 flex gap-2">
                               <button
-                                onClick={() => void handleEditMessage(message)}
+                                onClick={() => setEditingMessage(message)}
                                 className="text-[10px] text-slate-400 hover:text-indigo-600"
                               >
                                 Edit
                               </button>
                               <button
-                                onClick={() => void handleDeleteMessage(message)}
+                                onClick={() => setDeletingMessage(message)}
                                 className="text-[10px] text-slate-400 hover:text-rose-600"
                               >
                                 Delete
@@ -656,6 +664,22 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
           </form>
         </div>
       )}
+      <TextInputModal
+        isOpen={Boolean(editingMessage)}
+        title="Edit message"
+        label="Message"
+        initialValue={editingMessage?.content ?? ""}
+        multiline
+        onClose={() => setEditingMessage(null)}
+        onSave={handleEditMessage}
+      />
+      <ConfirmModal
+        isOpen={Boolean(deletingMessage)}
+        title="Delete message?"
+        description="This deletes the message for everyone in the communication group."
+        onClose={() => setDeletingMessage(null)}
+        onConfirm={handleDeleteMessage}
+      />
     </div>
   );
 };

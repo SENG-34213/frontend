@@ -22,6 +22,8 @@ import {
   type BackendAssignment,
 } from "../api/assignmentApi";
 import { StatusBadge } from "../components/StatusBadge";
+import { ApiError } from "../api/client";
+import { ConfirmModal, TextInputModal } from "../components/ActionModal";
 
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
@@ -71,6 +73,8 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [editingAssignment, setEditingAssignment] = useState<BackendAssignment | null>(null);
+  const [deletingAssignment, setDeletingAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     if (backendCourses.length === 0) {
@@ -82,16 +86,33 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     const controller = new AbortController();
     setIsLoading(true);
     setError(null);
-    Promise.all(backendCourses.map((course) => getCourseAssignments(course.id, controller.signal)))
-      .then((responses) => {
-        const loaded = responses.flat();
+    Promise.allSettled(
+      backendCourses.map((course) => getCourseAssignments(course.id, controller.signal)),
+    )
+      .then((results) => {
+        if (controller.signal.aborted) return;
+
+        const successfulResponses = results.filter(
+          (result): result is PromiseFulfilledResult<BackendAssignment[]> =>
+            result.status === "fulfilled",
+        );
+        const failedResponses = results.filter((result) => result.status === "rejected");
+        const loaded = successfulResponses.flatMap((result) => result.value);
+        const nonNotFoundFailures = failedResponses.filter(
+          (result) => !(result.reason instanceof ApiError && result.reason.status === 404),
+        );
+
         setBackendAssignments(loaded);
         setAssignments(loaded.map((item) => toAssignment(item, backendCourses)));
-      })
-      .catch((requestError: unknown) => {
-        if (!controller.signal.aborted) {
+
+        // A course can legitimately have no assignment resource yet. One failed
+        // course must not hide assignments belonging to the other courses.
+        if (successfulResponses.length > 0 || nonNotFoundFailures.length === 0) {
+          setError(null);
+        } else {
+          const firstFailure = nonNotFoundFailures[0].reason;
           setError(
-            requestError instanceof Error ? requestError.message : "Assignments failed to load.",
+            firstFailure instanceof Error ? firstFailure.message : "Assignments failed to load.",
           );
         }
       })
@@ -124,11 +145,12 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
-  const handleEdit = async (assignment: Assignment) => {
-    const record = backendAssignments.find((entry) => entry.id === assignment.id);
-    if (!record) return;
-    const title = window.prompt("Assignment title", record.title);
-    if (!title || title.trim() === record.title) return;
+  const handleEdit = async (title: string) => {
+    const record = editingAssignment;
+    if (!record || title.trim() === record.title) {
+      setEditingAssignment(null);
+      return;
+    }
     try {
       const updated = await updateAssignment(record.id, {
         title: title.trim(),
@@ -149,6 +171,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           entry.id === updated.id ? toAssignment(updated, backendCourses) : entry,
         ),
       );
+      setEditingAssignment(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Assignment could not be updated.",
@@ -156,12 +179,14 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
-  const handleDelete = async (assignment: Assignment) => {
-    if (!window.confirm(`Delete ${assignment.title}?`)) return;
+  const handleDelete = async () => {
+    const assignment = deletingAssignment;
+    if (!assignment) return;
     try {
       await deleteAssignment(assignment.id);
       setBackendAssignments((current) => current.filter((entry) => entry.id !== assignment.id));
       setAssignments((current) => current.filter((entry) => entry.id !== assignment.id));
+      setDeletingAssignment(null);
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error ? requestError.message : "Assignment could not be deleted.",
@@ -228,7 +253,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
             {totalSubmissions}
           </div>
-          <p className="text-[11px] text-slate-400 mt-0.5">Logged in Spring Boot repository</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Across your active courses</p>
         </div>
 
         <div className="bg-white p-4 rounded-xl border border-indigo-200 shadow-2xs bg-indigo-50/20">
@@ -395,7 +420,11 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                   {asg.status === "Draft" && (
                     <button
                       type="button"
-                      onClick={() => void handleEdit(asg)}
+                      onClick={() =>
+                        setEditingAssignment(
+                          backendAssignments.find((entry) => entry.id === asg.id) ?? null,
+                        )
+                      }
                       className="px-2 py-1 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
                     >
                       Edit
@@ -403,7 +432,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                   )}
                   <button
                     type="button"
-                    onClick={() => void handleDelete(asg)}
+                    onClick={() => setDeletingAssignment(asg)}
                     className="px-2 py-1 text-[10px] font-medium text-rose-700 border border-rose-200 rounded-md"
                   >
                     Delete
@@ -414,6 +443,21 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           );
         })}
       </div>
+      <TextInputModal
+        isOpen={Boolean(editingAssignment)}
+        title="Edit assignment"
+        label="Assignment title"
+        initialValue={editingAssignment?.title ?? ""}
+        onClose={() => setEditingAssignment(null)}
+        onSave={handleEdit}
+      />
+      <ConfirmModal
+        isOpen={Boolean(deletingAssignment)}
+        title="Delete assignment?"
+        description={`Deleting “${deletingAssignment?.title ?? "this assignment"}” permanently removes it from the course.`}
+        onClose={() => setDeletingAssignment(null)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };

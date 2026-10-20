@@ -283,7 +283,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                   Teacher Registration Wizard
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Onboard faculty and register specializations in Spring Boot Teacher Service
+                  Add a new teacher and their professional details
                 </p>
               </div>
               <button onClick={resetWizard} className="text-slate-400 hover:text-slate-600 p-1">
@@ -598,7 +598,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                     Teacher Registered Successfully!
                   </h4>
                   <p className="text-xs text-slate-500 mt-1">
-                    Teacher record active in Spring Boot and Keycloak onboarding email dispatched.
+                    The teacher has been added and an invitation is ready to be sent.
                   </p>
                 </div>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Users, Layers, Award, Edit3, Plus, Clock } from "lucide-react";
+import { ArrowLeft, Users, Layers, Award, Plus, Clock } from "lucide-react";
 import { Assignment, Course, LearningMaterial, Module, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
@@ -15,7 +15,6 @@ interface CourseDetailsViewProps {
   course: Course;
   onBack: () => void;
   onNavigate: (tab: NavigationTab, param?: string) => void;
-  onEditCourse: (course: Course) => void;
 }
 
 type CourseTab =
@@ -57,7 +56,6 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   course,
   onBack,
   onNavigate,
-  onEditCourse,
 }) => {
   const [activeTab, setActiveTab] = useState<CourseTab>("overview");
   const [courseEvents, setCourseEvents] = useState<BackendCalendarEvent[]>([]);
@@ -140,7 +138,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 moduleId: lesson.moduleId,
                 title: lesson.title,
                 description: lesson.description || "",
-                durationMinutes: 0,
+                durationMinutes: lesson.durationMinutes ?? 1,
                 order: index + 1,
                 status: lesson.visible === false ? "Draft" : "Published",
                 contentType: "Lecture",
@@ -301,13 +299,6 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onEditCourse(displayCourse)}
-            className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-            <span>Edit Course</span>
-          </button>
           <button
             onClick={() => onNavigate("curriculum")}
             className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
@@ -621,7 +612,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
                       <tr>
                         <th className="px-4 py-3">Student</th>
-                        <th className="px-4 py-3">Student ID</th>
+                        <th className="px-4 py-3">Student Number</th>
                         <th className="px-4 py-3">Attendance</th>
                         <th className="px-4 py-3">GPA</th>
                         <th className="px-4 py-3">Academic Status</th>
@@ -684,7 +675,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">
-                  Course syllabus files, starter code archives, and slides stored on AWS S3.
+                  Course syllabus files, starter code archives, and slides are available here.
                 </p>
                 <button
                   onClick={() => onNavigate("materials")}
