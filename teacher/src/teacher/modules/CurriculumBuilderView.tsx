@@ -23,6 +23,8 @@ import {
   deleteModuleLesson,
   getCourseModules,
   getModuleLessons,
+  getLessonMaterials,
+  uploadLessonMaterial,
   updateCourseModule,
   updateModuleLesson,
   type CourseContentLesson,
@@ -41,21 +43,26 @@ const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   moduleId: lesson.moduleId,
   title: lesson.title,
   description: lesson.description || "",
+  contentMarkdown: lesson.contentMarkdown || "",
   durationMinutes: 0,
   order,
   status: lesson.visible === false ? "Draft" : "Published",
   contentType: "Lecture",
-  resourcesCount: 0,
+  resourcesCount: lesson.materials?.length || 0,
+  materials: lesson.materials,
 });
 
-const toModule = (module: CourseContentModule, lessons: CourseContentLesson[]): Module => ({
+const toModule = (
+  module: CourseContentModule,
+  lessons: Array<CourseContentLesson | Lesson>,
+): Module => ({
   id: module.id,
   courseId: module.courseId,
   title: module.title,
   description: module.description || "",
   order: module.sequenceOrder,
   status: module.visible === false ? "Draft" : "Published",
-  lessons: lessons.map((lesson, index) => toLesson(lesson, index + 1)),
+  lessons: lessons.map((lesson, index) => toLesson(lesson as CourseContentLesson, index + 1)),
 });
 
 export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
@@ -126,7 +133,22 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         const loaded = await Promise.all(
           items.map(async (item) => {
             const lessons = await getModuleLessons(selectedCourseId, item.id, controller.signal);
-            return toModule(item, lessons);
+            const lessonsWithMaterials = await Promise.all(
+              lessons.map(async (lesson) => {
+                try {
+                  const materials = await getLessonMaterials(
+                    selectedCourseId,
+                    item.id,
+                    lesson.id,
+                    controller.signal,
+                  );
+                  return { ...lesson, materials };
+                } catch {
+                  return lesson;
+                }
+              }),
+            );
+            return toModule(item, lessonsWithMaterials);
           }),
         );
         setModules(loaded.sort((a, b) => a.order - b.order));
@@ -158,7 +180,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     setIsEditorOpen(true);
   };
 
-  const handleSaveLesson = async (updatedLesson: Lesson) => {
+  const handleSaveLesson = async (updatedLesson: Lesson, pendingFiles: File[] = []) => {
     if (!selectedCourseId || !editingParentModule) return;
     setIsSaving(true);
     setError(null);
@@ -166,6 +188,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
       const payload = {
         title: updatedLesson.title.trim(),
         description: updatedLesson.description.trim(),
+        contentMarkdown: updatedLesson.contentMarkdown || "",
         isVisible: updatedLesson.status === "Published",
       };
       const saved = updatedLesson.id.startsWith("new-")
@@ -176,7 +199,17 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             updatedLesson.id,
             payload,
           );
-      const nextLesson = toLesson(saved, updatedLesson.order);
+      const savedMaterials = [...(saved.materials || updatedLesson.materials || [])];
+      for (const file of pendingFiles) {
+        const uploaded = await uploadLessonMaterial(
+          selectedCourseId,
+          editingParentModule.id,
+          saved.id,
+          { title: file.name.replace(/\.[^.]+$/, "") || file.name, file },
+        );
+        savedMaterials.push(uploaded);
+      }
+      const nextLesson = toLesson({ ...saved, materials: savedMaterials }, updatedLesson.order);
       setModules((prev) =>
         prev.map((mod) =>
           mod.id === editingParentModule.id

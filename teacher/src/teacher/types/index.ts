@@ -69,6 +69,16 @@ export interface Lesson {
   contentMarkdown?: string;
   resourcesCount: number;
   attachedMaterials?: string[];
+  materials?: Array<{
+    id: string;
+    materialId?: string;
+    title: string;
+    type?: string;
+    originalFilename?: string;
+    contentType?: string;
+    fileSize?: number;
+    status?: string;
+  }>;
 }
 
 export interface Module {
