@@ -73,6 +73,22 @@ export type ExamDraft = {
 };
 
 export type ExamUpdateDraft = Omit<ExamDraft, "courseId">;
+export type ExamSubmitOptions = {
+  instructionFile?: File | null;
+  studentVisible?: boolean;
+};
+
+export type ExamAttachment = {
+  id: string;
+  examId: string;
+  materialId: string;
+  originalFilename: string;
+  contentType: string;
+  sizeBytes: number;
+  studentVisible: boolean;
+  active: boolean;
+  createdAt: string;
+};
 export type ExamMarkEntry = Pick<
   ExamResult,
   "studentId" | "attendanceStatus" | "marksObtained" | "remarks"
@@ -94,20 +110,54 @@ export async function getExam(examId: string, signal?: AbortSignal) {
   return response.data as BackendExam;
 }
 
-export async function createExam(draft: ExamDraft) {
-  const response = await apiRequest<ApiResponse<BackendExam>>("/api/v1/exams", {
-    method: "POST",
-    body: draft,
-  });
+function createExamFormData(draft: ExamDraft | ExamUpdateDraft, instructionFile?: File | null) {
+  const formData = new FormData();
+  formData.append("exam", new Blob([JSON.stringify(draft)], { type: "application/json" }));
+  if (instructionFile) formData.append("file", instructionFile);
+  return formData;
+}
+
+export async function createExam(draft: ExamDraft, options: ExamSubmitOptions = {}) {
+  const studentVisible = options.studentVisible ?? true;
+  const response = await apiRequest<ApiResponse<BackendExam>>(
+    `/api/v1/exams?studentVisible=${studentVisible}`,
+    { method: "POST", body: createExamFormData(draft, options.instructionFile) },
+  );
   return response.data as BackendExam;
 }
 
-export async function updateExam(examId: string, draft: ExamUpdateDraft) {
+export async function updateExam(
+  examId: string,
+  draft: ExamUpdateDraft,
+  options: ExamSubmitOptions = {},
+) {
+  const studentVisible = options.studentVisible ?? true;
   const response = await apiRequest<ApiResponse<BackendExam>>(
-    `/api/v1/exams/${encodeURIComponent(examId)}`,
-    { method: "PUT", body: draft },
+    `/api/v1/exams/${encodeURIComponent(examId)}?studentVisible=${studentVisible}`,
+    { method: "PUT", body: createExamFormData(draft, options.instructionFile) },
   );
   return response.data as BackendExam;
+}
+
+export async function getExamAttachments(examId: string) {
+  const response = await apiRequest<ApiResponse<ExamAttachment[]>>(
+    `/api/v1/exams/${encodeURIComponent(examId)}/attachments`,
+  );
+  return response.data ?? [];
+}
+
+export function downloadExamAttachment(examId: string, attachmentId: string) {
+  return apiRequest<Blob>(
+    `/api/v1/exams/${encodeURIComponent(examId)}/attachments/${encodeURIComponent(attachmentId)}/download`,
+    { responseType: "blob" },
+  );
+}
+
+export async function deleteExamAttachment(examId: string, attachmentId: string) {
+  await apiRequest<ApiResponse<unknown>>(
+    `/api/v1/exams/${encodeURIComponent(examId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    { method: "DELETE" },
+  );
 }
 
 async function transitionExam(
