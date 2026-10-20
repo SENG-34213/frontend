@@ -1,6 +1,11 @@
 import { apiRequest, ApiError, restoreStudentSession } from "./client";
 import { clearSession, getSession, saveSession } from "../auth/authStorage";
-import type { ApiResponse, AuthSession, LoginResponse, StudentUserSummary } from "../auth/authTypes";
+import type {
+  ApiResponse,
+  AuthSession,
+  LoginResponse,
+  StudentUserSummary,
+} from "../auth/authTypes";
 
 export async function loginStudent(identifier: string, password: string): Promise<AuthSession> {
   const response = await apiRequest<ApiResponse<LoginResponse>>("/api/v1/auth/login", {

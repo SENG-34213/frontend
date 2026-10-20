@@ -87,7 +87,10 @@ interface StudentContextType {
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
-export const StudentProvider: React.FC<{ children: React.ReactNode; authUser?: StudentUserSummary }> = ({ children, authUser }) => {
+export const StudentProvider: React.FC<{
+  children: React.ReactNode;
+  authUser?: StudentUserSummary;
+}> = ({ children, authUser }) => {
   const [currentView, setCurrentView] = useState<StudentView>("dashboard");
   const [profile, setProfile] = useState<StudentProfile>(INITIAL_STUDENT_PROFILE);
   const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);

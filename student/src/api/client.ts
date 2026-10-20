@@ -83,12 +83,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const responseBody = await readJson(response);
 
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
-    if (await refreshSession()) return apiRequest<T>(path, { ...options, retryOnUnauthorized: false });
+    if (await refreshSession())
+      return apiRequest<T>(path, { ...options, retryOnUnauthorized: false });
   }
 
   if (!response.ok) {
     const message =
-      responseBody?.message || responseBody?.error || `Request failed with status ${response.status}`;
+      responseBody?.message ||
+      responseBody?.error ||
+      `Request failed with status ${response.status}`;
     throw new ApiError(message, response.status, responseBody);
   }
   return responseBody as T;
