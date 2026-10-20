@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Moon, Sun, Bell, Lock, ShieldCheck, Smartphone, Save, RotateCcw } from "lucide-react";
+import { Moon, Sun, Bell, Lock, ShieldCheck, Smartphone, Save, CheckCircle2 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
 export const SettingsView: React.FC = () => {
@@ -22,8 +22,7 @@ export const SettingsView: React.FC = () => {
           Portal & Account Settings
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Manage interface theme, notification delivery channels, and Keycloak SSO security
-          credentials
+          Manage your interface, notifications, and account security
         </p>
       </div>
 
@@ -147,36 +146,23 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Keycloak SSO & Security Session */}
+      {/* Account Security */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-4">
         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
           <ShieldCheck className="h-4 w-4" />
-          <span>Keycloak Identity Federation</span>
+          <span>Account Security</span>
         </div>
 
         <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white">
-          Active Student Authentication Session
+          Your account is protected
         </h3>
         <p className="text-xs text-slate-500 leading-relaxed">
-          Authentication is federated via Mentify Keycloak Identity Provider (OpenID Connect / OAuth
-          2.0).
+          Your sign-in is secure and managed by Mentify.
         </p>
 
-        <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60 font-mono text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
-          <div>Subject (sub): {profile.id}</div>
-          <div>Preferred Username: {profile.studentId}</div>
-          <div>Token Expiry: 12 Hours Remaining</div>
-          <div>MFA Security Status: Enforced (Hardware Key / TOTP)</div>
-        </div>
-
-        <div className="pt-2">
-          <button
-            onClick={() => showToast("Keycloak session refreshed.")}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>Refresh Keycloak Tokens</span>
-          </button>
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-xs text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>You are signed in securely as {profile.studentId}.</span>
         </div>
       </div>
     </div>

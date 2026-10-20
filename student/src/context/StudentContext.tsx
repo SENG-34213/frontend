@@ -28,8 +28,6 @@ import {
   deleteNotification as deleteNotificationApi,
   getUnreadNotificationCount,
   createAiConversation,
-  listAiConversationMessages,
-  listAiConversations,
   listCommunicationMessages,
   saveQuizAnswer as saveQuizAnswerApi,
   sendAiMessage,
@@ -96,7 +94,11 @@ interface StudentContextType {
   aiChats: ChatMessage[];
   isAiLoading: boolean;
   sendAiQuery: (query: string) => Promise<void>;
-  refreshCalendarEvents: (start: string, end: string) => Promise<void>;
+  refreshCalendarEvents: (
+    start: string,
+    end: string,
+    filters?: { type?: string; courseId?: string },
+  ) => Promise<void>;
   theme: "light" | "dark";
   toggleTheme: () => void;
   isSidebarCollapsed: boolean;
@@ -115,20 +117,62 @@ interface StudentContextType {
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
+const STUDENT_VIEWS: StudentView[] = [
+  "dashboard",
+  "my-courses",
+  "explore-courses",
+  "course-details",
+  "course-workspace",
+  "enrollments",
+  "materials",
+  "assignments",
+  "assignment-details",
+  "quizzes",
+  "quiz-taking",
+  "examinations",
+  "exam-taking",
+  "grades",
+  "calendar",
+  "messages",
+  "mentify-ai",
+  "notifications",
+  "profile",
+  "settings",
+];
+
+function getSavedView(userId?: string): StudentView {
+  if (typeof window === "undefined" || !userId) return "dashboard";
+  const savedView = window.localStorage.getItem(`student-current-view:${userId}`);
+  return savedView && STUDENT_VIEWS.includes(savedView as StudentView)
+    ? (savedView as StudentView)
+    : "dashboard";
+}
+
+function getSavedValue(userId: string | undefined, name: string): string {
+  if (typeof window === "undefined" || !userId) return "";
+  return window.localStorage.getItem(`student-${name}:${userId}`) || "";
+}
+
 export const StudentProvider: React.FC<{
   children: React.ReactNode;
   authUser?: StudentUserSummary;
 }> = ({ children, authUser }) => {
-  const [currentView, setCurrentView] = useState<StudentView>("dashboard");
+  const [currentView, setCurrentView] = useState<StudentView>(() => getSavedView(authUser?.id));
   const [profile, setProfile] = useState<StudentProfile>(() =>
     authUser ? toProfile(authUser) : ({} as StudentProfile),
   );
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState("");
-  const [selectedLessonId, setSelectedLessonId] = useState("");
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState("");
-  const [selectedQuizId, setSelectedQuizId] = useState("");
-  const [selectedExamId, setSelectedExamId] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState(() =>
+    getSavedValue(authUser?.id, "course"),
+  );
+  const [selectedLessonId, setSelectedLessonId] = useState(() =>
+    getSavedValue(authUser?.id, "lesson"),
+  );
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(() =>
+    getSavedValue(authUser?.id, "assignment"),
+  );
+  const [selectedQuizId, setSelectedQuizId] = useState(() => getSavedValue(authUser?.id, "quiz"));
+  const [selectedExamId, setSelectedExamId] = useState(() => getSavedValue(authUser?.id, "exam"));
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [examinations, setExaminations] = useState<Examination[]>([]);
@@ -143,7 +187,10 @@ export const StudentProvider: React.FC<{
   const [aiConversationId, setAiConversationId] = useState<string | null>(null);
   const [aiChats, setAiChats] = useState<ChatMessage[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+    return window.localStorage.getItem("student-theme") === "dark" ? "dark" : "light";
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [selectedMaterialForPreview, setSelectedMaterialForPreview] =
@@ -157,8 +204,30 @@ export const StudentProvider: React.FC<{
     );
   };
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
+    window.localStorage.setItem("student-theme", theme);
   }, [theme]);
+  useEffect(() => {
+    if (!authUser?.id) return;
+    window.localStorage.setItem(`student-current-view:${authUser.id}`, currentView);
+  }, [authUser?.id, currentView]);
+  useEffect(() => {
+    if (!authUser?.id) return;
+    window.localStorage.setItem(`student-course:${authUser.id}`, selectedCourseId);
+    window.localStorage.setItem(`student-lesson:${authUser.id}`, selectedLessonId);
+    window.localStorage.setItem(`student-assignment:${authUser.id}`, selectedAssignmentId);
+    window.localStorage.setItem(`student-quiz:${authUser.id}`, selectedQuizId);
+    window.localStorage.setItem(`student-exam:${authUser.id}`, selectedExamId);
+  }, [
+    authUser?.id,
+    selectedAssignmentId,
+    selectedCourseId,
+    selectedExamId,
+    selectedLessonId,
+    selectedQuizId,
+  ]);
   useEffect(() => {
     if (!authUser) return;
     let active = true;
@@ -182,48 +251,6 @@ export const StudentProvider: React.FC<{
         if (active)
           showToast(error instanceof Error ? error.message : "Could not load student data.");
       });
-    return () => {
-      active = false;
-    };
-  }, [authUser]);
-  useEffect(() => {
-    if (!authUser) return;
-    let active = true;
-    const loadAiConversation = async () => {
-      try {
-        const conversationsResponse = await listAiConversations();
-        const records = Array.isArray(conversationsResponse)
-          ? conversationsResponse
-          : (conversationsResponse as { data?: unknown }).data || [];
-        const first = Array.isArray(records) ? (records[0] as Record<string, unknown>) : undefined;
-        const conversationId = first?.id ? String(first.id) : undefined;
-        const id =
-          conversationId ||
-          String((await createAiConversation("Student study assistant")).data?.id || "");
-        if (!id) throw new Error("The AI service did not return a conversation id.");
-        const messageResponse = await listAiConversationMessages(id);
-        const messageRecords = Array.isArray(messageResponse)
-          ? messageResponse
-          : (messageResponse as { data?: unknown }).data || [];
-        if (!active) return;
-        setAiConversationId(id);
-        setAiChats(
-          (Array.isArray(messageRecords) ? messageRecords : []).map((item) => {
-            const message = item as Record<string, unknown>;
-            return {
-              id: String(message.id || ""),
-              sender: String(message.role).toUpperCase() === "USER" ? "user" : "assistant",
-              text: String(message.content || ""),
-              timestamp: String(message.createdAt || ""),
-            };
-          }),
-        );
-      } catch (error) {
-        if (active)
-          showToast(error instanceof Error ? error.message : "AI assistant is unavailable.");
-      }
-    };
-    loadAiConversation();
     return () => {
       active = false;
     };
@@ -378,8 +405,8 @@ export const StudentProvider: React.FC<{
     return { score, maxScore, percentage, passed: Boolean(result.passed) };
   };
   const refreshCalendarEvents = useCallback(
-    async (start: string, end: string) => {
-      const events = await listCalendarEvents(start, end);
+    async (start: string, end: string, filters: { type?: string; courseId?: string } = {}) => {
+      const events = await listCalendarEvents(start, end, filters);
       setCalendarEvents(
         events.map((event) => {
           const course = courses.find((item) => item.id === event.courseId);
@@ -425,6 +452,7 @@ export const StudentProvider: React.FC<{
       );
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Message could not be sent.");
+      throw error;
     }
   };
   const loadMoreMessages = async (conversationId: string) => {
@@ -433,9 +461,9 @@ export const StudentProvider: React.FC<{
       const response = await listCommunicationMessages(conversationId, page, 30);
       const raw = Array.isArray(response) ? response : (response as { data?: unknown }).data || [];
       const studentId = profile.id;
-      const olderMessages = (Array.isArray(raw) ? raw : []).map((item) =>
-        toCommunicationMessage(item as Record<string, unknown>, studentId),
-      );
+      const olderMessages = (Array.isArray(raw) ? raw : [])
+        .map((item) => toCommunicationMessage(item as Record<string, unknown>, studentId))
+        .reverse();
       setConversations((current) =>
         current.map((conversation) =>
           conversation.id === conversationId

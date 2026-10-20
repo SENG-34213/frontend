@@ -8,14 +8,21 @@ export const MessagesView: React.FC = () => {
   const [selectedConvId, setSelectedConvId] = useState<string>(conversations[0]?.id || "conv-1");
   const [inputText, setInputText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const activeConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !activeConv) return;
-    void sendMessage(activeConv.id, inputText);
-    setInputText("");
+    const message = inputText.trim();
+    if (!message || !activeConv || isSending) return;
+    setIsSending(true);
+    try {
+      await sendMessage(activeConv.id, message);
+      setInputText("");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const filteredConversations = conversations.filter(
@@ -199,16 +206,16 @@ export const MessagesView: React.FC = () => {
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                disabled={!activeConv}
+                disabled={!activeConv || isSending}
                 placeholder="Write your academic query or message..."
                 className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               <button
                 type="submit"
-                disabled={!activeConv || !inputText.trim()}
+                disabled={!activeConv || !inputText.trim() || isSending}
                 className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors shrink-0 shadow-2xs"
               >
-                <span>Send</span>
+                <span>{isSending ? "Sending..." : "Send"}</span>
                 <Send className="h-3.5 w-3.5" />
               </button>
             </form>

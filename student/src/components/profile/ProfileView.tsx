@@ -69,7 +69,7 @@ export const ProfileView: React.FC = () => {
               </h2>
               <span className="flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                 <ShieldCheck className="h-3 w-3" />
-                <span>Keycloak Verified</span>
+                <span>Account Verified</span>
               </span>
             </div>
 

@@ -283,7 +283,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
                 </p>
                 <div className="mt-1 flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span>Keycloak SSO Active · {profile.studentId}</span>
+                  <span>Signed in · {profile.studentId}</span>
                 </div>
               </div>
 

@@ -327,7 +327,7 @@ export const LearningMaterialsView: React.FC = () => {
 
             {/* Modal Footer */}
             <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900">
-              <span>Backend material preview</span>
+              <span>Material preview</span>
               <button
                 onClick={() => setPreviewMaterial(null)}
                 className="font-medium hover:text-slate-900 dark:hover:text-white"

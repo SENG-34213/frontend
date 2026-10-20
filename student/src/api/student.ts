@@ -317,7 +317,9 @@ function toConversation(
   members: JsonRecord[],
   studentId: string,
 ): Conversation {
-  const mappedMessages = messages.map((message) => toCommunicationMessage(message, studentId));
+  const mappedMessages = messages
+    .map((message) => toCommunicationMessage(message, studentId))
+    .reverse();
   const lastMessage = mappedMessages[mappedMessages.length - 1];
   return {
     id: idOf(value.id),
@@ -577,31 +579,22 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
   }
   const conversations = (
     await Promise.all(
-      communicationGroups
-        .filter((group) => {
-          const courseId = idOf(group.courseId);
-          return !courseId || courses.some((course) => course.enrolled && course.id === courseId);
-        })
-        .map(async (group) => {
-          const course = courseMap.get(idOf(group.courseId));
-          try {
-            const [membersResponse, messagesResponse] = await Promise.all([
-              apiRequest<unknown>(`/api/communication/groups/${idOf(group.id)}/members`),
-              apiRequest<unknown>(
-                `/api/communication/groups/${idOf(group.id)}/messages?page=0&size=30`,
-              ),
-            ]);
-            return toConversation(
-              group,
-              course,
-              listOf<JsonRecord>(messagesResponse),
-              listOf<JsonRecord>(membersResponse),
-              studentId,
-            );
-          } catch {
-            return null;
-          }
-        }),
+      communicationGroups.map(async (group) => {
+        const course = courseMap.get(idOf(group.courseId));
+        const [membersResponse, messagesResponse] = await Promise.allSettled([
+          apiRequest<unknown>(`/api/communication/groups/${idOf(group.id)}/members`),
+          apiRequest<unknown>(
+            `/api/communication/groups/${idOf(group.id)}/messages?page=0&size=30`,
+          ),
+        ]);
+        return toConversation(
+          group,
+          course,
+          messagesResponse.status === "fulfilled" ? listOf<JsonRecord>(messagesResponse.value) : [],
+          membersResponse.status === "fulfilled" ? listOf<JsonRecord>(membersResponse.value) : [],
+          studentId,
+        );
+      }),
     )
   ).filter((conversation): conversation is Conversation => conversation !== null);
 

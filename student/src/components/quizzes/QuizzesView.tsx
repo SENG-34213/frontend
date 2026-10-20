@@ -197,7 +197,7 @@ export const QuizzesView: React.FC = () => {
                     paused.
                   </li>
                   <li>You may flag questions and return to them using the question palette.</li>
-                  <li>Answers are autosaved continuously in your browser session.</li>
+                  <li>Answers are saved automatically while you work.</li>
                 </ul>
               </div>
             </div>
