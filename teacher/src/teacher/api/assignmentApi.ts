@@ -27,6 +27,23 @@ export type BackendAssignment = {
   gradedCount?: number;
 };
 
+export type AssignmentAttachment = {
+  id: string;
+  assignmentId: string;
+  materialId?: string;
+  originalFilename: string;
+  contentType: string;
+  fileSize: number;
+  materialBacked: boolean;
+  createdAt?: string;
+};
+
+export type AssignmentAttachmentDownload = AssignmentAttachment & {
+  downloadUrl?: string;
+  expiresAt?: string;
+  content?: string;
+};
+
 export type AssignmentDraft = {
   courseId: string;
   moduleId: string;
@@ -121,6 +138,40 @@ export async function publishAssignment(assignmentId: string) {
       `/api/v1/assignments/${encodeURIComponent(assignmentId)}/publish`,
       { method: "POST" },
     ),
+  );
+}
+
+export async function listAssignmentAttachments(assignmentId: string, signal?: AbortSignal) {
+  const response = await apiRequest<ApiResponse<AssignmentAttachment[]>>(
+    `/api/v1/assignments/${encodeURIComponent(assignmentId)}/attachments`,
+    { signal },
+  );
+  return response.data ?? [];
+}
+
+export async function uploadAssignmentAttachment(assignmentId: string, file: File) {
+  const body = new FormData();
+  body.set("file", file);
+  return unwrap(
+    await apiRequest<ApiResponse<AssignmentAttachment>>(
+      `/api/v1/assignments/${encodeURIComponent(assignmentId)}/attachments/upload`,
+      { method: "POST", body },
+    ),
+  );
+}
+
+export async function getAssignmentAttachmentDownload(assignmentId: string, attachmentId: string) {
+  return unwrap(
+    await apiRequest<ApiResponse<AssignmentAttachmentDownload>>(
+      `/api/v1/assignments/${encodeURIComponent(assignmentId)}/attachments/${encodeURIComponent(attachmentId)}/download`,
+    ),
+  );
+}
+
+export async function deleteAssignmentAttachment(assignmentId: string, attachmentId: string) {
+  return apiRequest<ApiResponse<unknown>>(
+    `/api/v1/assignments/${encodeURIComponent(assignmentId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    { method: "DELETE" },
   );
 }
 

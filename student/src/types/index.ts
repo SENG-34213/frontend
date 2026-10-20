@@ -57,9 +57,13 @@ export interface Teacher {
 export interface Lesson {
   id: string;
   moduleId: string;
+  order?: number;
   title: string;
+  description?: string;
   durationMinutes: number;
   type: "video" | "reading" | "interactive" | "exercise";
+  contentType?: string;
+  releaseDate?: string;
   completed: boolean;
   videoUrl?: string;
   content: string;
@@ -76,8 +80,12 @@ export interface Lesson {
 
 export interface CourseModule {
   id: string;
+  order?: number;
   title: string;
   description: string;
+  status?: "Published" | "Draft";
+  startDate?: string;
+  endDate?: string;
   lessons: Lesson[];
 }
 

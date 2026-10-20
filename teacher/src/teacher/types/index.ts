@@ -86,7 +86,8 @@ export interface Module {
   title: string;
   description: string;
   order: number;
-  dateDuration: number;
+  startDate: string;
+  endDate: string;
   status: "Published" | "Draft";
   lessons: Lesson[];
 }
@@ -115,10 +116,15 @@ export interface Assignment {
   courseCode: string;
   title: string;
   description: string;
+  openedDate?: string;
+  openedTime?: string;
   dueDate: string;
   dueTime: string;
+  dueAt?: string;
   maxMarks: number;
   weightagePercent: number;
+  allowedAttempts?: number;
+  allowLateSubmission?: boolean;
   status: "Active" | "Grading" | "Closed" | "Draft";
   totalSubmissions: number;
   gradedCount: number;

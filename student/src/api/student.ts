@@ -230,13 +230,25 @@ function toQuiz(value: JsonRecord, course?: Course): Quiz {
   };
 }
 
-function toLesson(value: JsonRecord, moduleId: string) {
+function toLesson(value: JsonRecord, moduleId: string, order?: number) {
+  const rawType = String(value.type || value.contentType || "reading").toLowerCase();
+  const type = rawType.includes("video")
+    ? "video"
+    : rawType.includes("interactive")
+      ? "interactive"
+      : rawType.includes("exercise")
+        ? "exercise"
+        : "reading";
   return {
     id: idOf(value.id),
     moduleId,
+    order: Number(value.sequenceOrder ?? value.order ?? order ?? 0),
     title: idOf(value.title),
+    description: idOf(value.description),
     durationMinutes: Number(value.durationMinutes ?? 0),
-    type: value.type || "reading",
+    type,
+    contentType: idOf(value.contentType || value.type || "Reading"),
+    releaseDate: idOf(value.releaseDate),
     completed: Boolean(value.completed),
     videoUrl: value.videoUrl,
     content: idOf(value.content || value.description),
@@ -246,8 +258,14 @@ function toLesson(value: JsonRecord, moduleId: string) {
 function toModuleRecord(value: JsonRecord, courseId: string) {
   return {
     id: idOf(value.id),
+    order: Number(value.sequenceOrder ?? value.order ?? 0),
     title: idOf(value.title),
     description: idOf(value.description),
+    status: (value.visible === false || value.isVisible === false ? "Draft" : "Published") as
+      | "Draft"
+      | "Published",
+    startDate: idOf(value.startDate),
+    endDate: idOf(value.endDate),
     courseId,
     lessons: [] as Course["modules"][number]["lessons"],
   };
@@ -414,8 +432,17 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     apiRequest<unknown>("/api/v1/exams/me/upcoming"),
   ]);
 
-  const enrollments =
-    enrollmentResponse.status === "fulfilled" ? listOf<JsonRecord>(enrollmentResponse.value) : [];
+  const enrollmentValues =
+    enrollmentResponse.status === "fulfilled" ? listOf<unknown>(enrollmentResponse.value) : [];
+  const enrollments = enrollmentValues.filter(
+    (value): value is JsonRecord => Boolean(value) && typeof value === "object",
+  );
+  // The student enrollment endpoint returns a plain UUID array, not enrollment
+  // objects. Preserve those IDs so the course lookup is driven by membership.
+  const directEnrolledIds = enrollmentValues
+    .filter((value): value is string => typeof value === "string")
+    .map(idOf)
+    .filter(Boolean);
   let enrollmentState: StudentEnrollmentState[] = [];
   try {
     enrollmentState = await loadEnrollmentState(studentId);
@@ -425,17 +452,34 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
   const enrollmentRecords = enrollmentState.length
     ? enrollmentState
     : enrollments.map(toEnrollment);
-  const enrolledIds = new Set(enrollmentRecords.flatMap((item) => item.courseIds));
+  const enrolledIds = new Set([
+    ...directEnrolledIds,
+    ...enrollmentRecords.flatMap((item) => item.courseIds),
+  ]);
   const rawCourses =
     courseResponse.status === "fulfilled" ? listOf<JsonRecord>(courseResponse.value) : [];
   let enrolledCourses: JsonRecord[] = [];
   try {
     enrolledCourses = listOf<JsonRecord>(await apiRequest<unknown>("/api/v1/course/my-courses"));
   } catch {
-    // The catalog remains usable when the enrolled-course projection is unavailable.
+    // This endpoint is teacher-scoped. Student course details are loaded below
+    // through the student-authorized lookup endpoint instead.
   }
+  const enrolledCourseDetails = (
+    await Promise.all(
+      [...enrolledIds].map(async (courseId) => {
+        try {
+          return dataOf<JsonRecord>(
+            await apiRequest<JsonRecord>(`/api/v1/course/${courseId}/lookup`),
+          );
+        } catch {
+          return null;
+        }
+      }),
+    )
+  ).filter((course): course is JsonRecord => Boolean(course));
   const courseById = new Map<string, JsonRecord>();
-  [...rawCourses, ...enrolledCourses].forEach((course) => {
+  [...rawCourses, ...enrolledCourses, ...enrolledCourseDetails].forEach((course) => {
     const id = idOf(course.id || course.courseId);
     if (id) courseById.set(id, { ...(courseById.get(id) || {}), ...course });
   });
@@ -445,7 +489,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     courses.map(async (course) => {
       try {
         const detail = dataOf<JsonRecord>(
-          await apiRequest<JsonRecord>(`/api/v1/course/${course.id}`),
+          await apiRequest<JsonRecord>(`/api/v1/course/${course.id}/lookup`),
         );
         const mapped = toCourse({ ...detail, enrolled: course.enrolled }, enrolledIds);
         Object.entries(mapped).forEach(([key, value]) => {
@@ -474,16 +518,16 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
                 ),
               );
               result.lessons = await Promise.all(
-                lessons.map(async (lesson) => {
+                lessons.map(async (lesson, lessonIndex) => {
                   try {
                     const detail = dataOf<JsonRecord>(
                       await apiRequest<JsonRecord>(
                         `/api/v1/course/${course.id}/modules/${result.id}/lessons/${idOf(lesson.id)}`,
                       ),
                     );
-                    return toLesson({ ...lesson, ...detail }, result.id);
+                    return toLesson({ ...lesson, ...detail }, result.id, lessonIndex + 1);
                   } catch {
-                    return toLesson(lesson, result.id);
+                    return toLesson(lesson, result.id, lessonIndex + 1);
                   }
                 }),
               );

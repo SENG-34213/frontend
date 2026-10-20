@@ -14,14 +14,24 @@ export async function loginStudent(identifier: string, password: string): Promis
     body: { identifier, password },
   });
   const data = response.data;
-  if (!data?.accessToken || !data.user || data.user.role !== "STUDENT") {
+  // The auth service returns the authenticated account as `profile`.
+  // Keep `user` as a compatibility fallback for older auth-service builds.
+  const rawUser = data?.profile ?? data?.user;
+  const role = String(rawUser?.role ?? "").replace(/^ROLE_/, "").toUpperCase();
+  if (!data?.accessToken || !rawUser || role !== "STUDENT") {
     throw new Error("This account does not have access to the student workspace.");
   }
+
+  const user: StudentUserSummary = {
+    ...rawUser,
+    id: rawUser.id ?? rawUser.userId,
+    role: "STUDENT",
+  };
 
   const session: AuthSession = {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
-    user: data.user,
+    user,
     expiresAt: Date.now() + data.expiresIn * 1000,
   };
   saveSession(session);

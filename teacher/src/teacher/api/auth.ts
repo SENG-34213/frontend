@@ -33,12 +33,17 @@ export async function loginTeacher(identifier: string, password: string): Promis
 export async function getCurrentTeacher() {
   try {
     const response = await apiRequest<ApiResponse<TeacherUserSummary>>("/api/v1/users/me");
-    const role = typeof response.data?.role === "string" ? response.data.role.trim().toUpperCase() : "";
+    const currentTeacher = response.data;
+    if (!currentTeacher) {
+      throw new Error("Teacher profile data was not returned by the server.");
+    }
+    const role =
+      typeof currentTeacher.role === "string" ? currentTeacher.role.trim().toUpperCase() : "";
     if (role !== "TEACHER") {
       clearSession();
       throw new Error("This account does not have access to the teacher workspace.");
     }
-    return response.data;
+    return currentTeacher;
   } catch (error) {
     if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
       clearSession();

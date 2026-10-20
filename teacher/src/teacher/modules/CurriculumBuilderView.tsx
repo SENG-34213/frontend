@@ -13,6 +13,12 @@ import {
   Check,
   AlertCircle,
   ExternalLink,
+  Presentation,
+  FlaskConical,
+  BookMarked,
+  MessagesSquare,
+  CalendarDays,
+  FileText,
 } from "lucide-react";
 import { Course, Module, Lesson, NavigationTab } from "../types";
 import type { BackendCourse } from "../api/courseApi";
@@ -39,6 +45,27 @@ interface CurriculumBuilderViewProps {
   backendCourses?: BackendCourse[];
 }
 
+const lessonTypeMeta = (type: Lesson["contentType"]) => {
+  switch (type) {
+    case "Lab":
+      return { Icon: FlaskConical, label: "Lab", classes: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+    case "Reading":
+      return { Icon: BookMarked, label: "Reading", classes: "bg-amber-50 text-amber-700 border-amber-200" };
+    case "Discussion":
+      return { Icon: MessagesSquare, label: "Discussion", classes: "bg-violet-50 text-violet-700 border-violet-200" };
+    default:
+      return { Icon: Presentation, label: "Lecture", classes: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+  }
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return "Not set";
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime())
+    ? "Not set"
+    : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+};
+
 const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   id: lesson.id,
   moduleId: lesson.moduleId,
@@ -48,7 +75,7 @@ const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   durationMinutes: lesson.durationMinutes ?? 1,
   order,
   status: lesson.visible === false ? "Draft" : "Published",
-  contentType: "Lecture",
+  contentType: (lesson.contentType as Lesson["contentType"]) || "Lecture",
   resourcesCount: lesson.materials?.length || 0,
   materials: lesson.materials,
 });
@@ -62,7 +89,8 @@ const toModule = (
   title: module.title,
   description: module.description || "",
   order: module.sequenceOrder,
-  dateDuration: module.dateDuration ?? 1,
+  startDate: module.startDate || "",
+  endDate: module.endDate || "",
   status: module.visible === false ? "Draft" : "Published",
   lessons: lessons.map((lesson, index) => toLesson(lesson as CourseContentLesson, index + 1)),
 });
@@ -77,11 +105,18 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const [lessonsLoading, setLessonsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    current: number;
+    total: number;
+    fileName: string;
+    status: "uploading" | "complete" | "error";
+  } | null>(null);
   const [expandedModuleIds, setExpandedModuleIds] = useState<Record<string, boolean>>({
     "mod-1": true,
     "mod-2": true,
     "mod-3": false,
   });
+  const [expandedLessonBodyIds, setExpandedLessonBodyIds] = useState<Record<string, boolean>>({});
 
   // Editor states
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
@@ -92,7 +127,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [newModuleDesc, setNewModuleDesc] = useState("");
-  const [newModuleDuration, setNewModuleDuration] = useState("1");
+  const [newModuleStartDate, setNewModuleStartDate] = useState("");
+  const [newModuleEndDate, setNewModuleEndDate] = useState("");
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
     type: "module" | "lesson";
@@ -183,6 +219,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   };
 
   const handleEditLesson = (lesson: Lesson, parentModule: Module) => {
+    setUploadProgress(null);
     setEditingLesson(lesson);
     setEditingParentModule(parentModule);
     setIsEditorOpen(true);
@@ -203,6 +240,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         title: updatedLesson.title.trim(),
         description: updatedLesson.description.trim(),
         durationMinutes,
+        contentType: updatedLesson.contentType,
         contentMarkdown: updatedLesson.contentMarkdown || "",
         isVisible: updatedLesson.status === "Published",
       };
@@ -215,16 +253,30 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             payload,
           );
       const savedMaterials = [...(saved.materials || updatedLesson.materials || [])];
-      for (const file of pendingFiles) {
-        const uploaded = await uploadLessonMaterial(
-          selectedCourseId,
-          editingParentModule.id,
-          saved.id,
-          { title: file.name.replace(/\.[^.]+$/, "") || file.name, file },
-        );
-        savedMaterials.push(uploaded);
+      if (pendingFiles.length) {
+        setUploadProgress({ current: 0, total: pendingFiles.length, fileName: "Preparing files…", status: "uploading" });
+        for (const [index, file] of pendingFiles.entries()) {
+          setUploadProgress({ current: index, total: pendingFiles.length, fileName: file.name, status: "uploading" });
+          try {
+            const uploaded = await uploadLessonMaterial(
+              selectedCourseId,
+              editingParentModule.id,
+              saved.id,
+              { title: file.name.replace(/\.[^.]+$/, "") || file.name, file },
+            );
+            savedMaterials.push(uploaded);
+            setUploadProgress({ current: index + 1, total: pendingFiles.length, fileName: file.name, status: "complete" });
+          } catch (uploadError) {
+            throw new Error(
+              `${file.name} could not be uploaded. ${uploadError instanceof Error ? uploadError.message : "Please try again."}`,
+            );
+          }
+        }
       }
-      const nextLesson = toLesson({ ...saved, materials: savedMaterials }, updatedLesson.order);
+      const nextLesson = toLesson(
+        { ...saved, contentType: updatedLesson.contentType, materials: savedMaterials },
+        updatedLesson.order,
+      );
       setModules((prev) =>
         prev.map((mod) =>
           mod.id === editingParentModule.id
@@ -239,9 +291,19 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             : mod,
         ),
       );
-      setEditingLesson(null);
-      setIsEditorOpen(false);
+      if (pendingFiles.length) {
+        // Keep the editor open so the teacher can see the completed upload and download it.
+        setEditingLesson(nextLesson);
+        setIsEditorOpen(true);
+      } else {
+        setEditingLesson(null);
+        setIsEditorOpen(false);
+        setUploadProgress(null);
+      }
     } catch (requestError: unknown) {
+      if (pendingFiles.length) {
+        setUploadProgress((current) => (current ? { ...current, status: "error" } : current));
+      }
       setError(requestError instanceof Error ? requestError.message : "Lesson could not be saved.");
     } finally {
       setIsSaving(false);
@@ -265,6 +327,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     };
 
     // Immediately open editor for this new lesson
+    setUploadProgress(null);
     setEditingLesson(newLesson);
     setEditingParentModule(parent);
     setIsEditorOpen(true);
@@ -275,8 +338,12 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     if (!newModuleTitle.trim()) return;
 
     if (!selectedCourseId) return;
-    if (!/^[1-9]\d*$/.test(newModuleDuration)) {
-      setError("Duration must be a positive whole number of days.");
+    if (!newModuleStartDate || !newModuleEndDate) {
+      setError("Please select a start date and an end date.");
+      return;
+    }
+    if (newModuleEndDate < newModuleStartDate) {
+      setError("The end date must be on or after the start date.");
       return;
     }
     setIsSaving(true);
@@ -286,7 +353,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         title: newModuleTitle.trim(),
         description: newModuleDesc.trim(),
         sequenceOrder: editingModule?.order || courseModules.length + 1,
-        dateDuration: Number(newModuleDuration),
+        startDate: newModuleStartDate,
+        endDate: newModuleEndDate,
         isVisible: editingModule?.status !== "Draft",
       };
       const saved = editingModule
@@ -301,7 +369,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
       setExpandedModuleIds((prev) => ({ ...prev, [nextModule.id]: true }));
       setNewModuleTitle("");
       setNewModuleDesc("");
-      setNewModuleDuration("1");
+      setNewModuleStartDate("");
+      setNewModuleEndDate("");
       setEditingModule(null);
       setIsCreatingModule(false);
     } catch (requestError: unknown) {
@@ -378,7 +447,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
               setEditingModule(null);
               setNewModuleTitle("");
               setNewModuleDesc("");
-              setNewModuleDuration("1");
+              setNewModuleStartDate("");
+              setNewModuleEndDate("");
               setIsCreatingModule(true);
             }}
             className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 shrink-0"
@@ -435,20 +505,26 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                Duration in days
+                Start date
               </label>
               <input
-                type="number"
-                min="1"
-                step="1"
+                type="date"
                 required
-                value={newModuleDuration}
-                onChange={(e) => setNewModuleDuration(e.target.value)}
+                value={newModuleStartDate}
+                onChange={(e) => setNewModuleStartDate(e.target.value)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
               />
-              <p className="mt-1 text-[10px] text-slate-400">
-                Use the arrows or type a whole number.
-              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">End date</label>
+              <input
+                type="date"
+                required
+                min={newModuleStartDate || undefined}
+                value={newModuleEndDate}
+                onChange={(e) => setNewModuleEndDate(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
           </div>
 
@@ -561,7 +637,9 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                     {mod.lessons.length} lessons
                   </span>
                   <span className="text-xs font-mono tabular-nums text-slate-500 hidden md:inline">
-                    Duration: {mod.dateDuration} days
+                    {mod.startDate && mod.endDate
+                      ? `${new Date(`${mod.startDate}T00:00:00`).toLocaleDateString()} – ${new Date(`${mod.endDate}T00:00:00`).toLocaleDateString()}`
+                      : "Dates not set"}
                   </span>
                   <button
                     type="button"
@@ -570,7 +648,8 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                       setEditingModule(mod);
                       setNewModuleTitle(mod.title);
                       setNewModuleDesc(mod.description);
-                      setNewModuleDuration(String(mod.dateDuration));
+                      setNewModuleStartDate(mod.startDate);
+                      setNewModuleEndDate(mod.endDate);
                       setIsCreatingModule(true);
                     }}
                     className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg"
@@ -611,52 +690,90 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                       building.
                     </div>
                   ) : (
-                    mod.lessons.map((lesson) => (
-                      <div
-                        key={lesson.id}
-                        className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-                      >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="w-7 h-7 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center font-mono text-xs font-semibold shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                            {lesson.order}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
-                                {lesson.title}
-                              </h4>
-                              <StatusBadge status={lesson.contentType} variant="clean" />
+                    mod.lessons.map((lesson) => {
+                      const lessonMeta = lessonTypeMeta(lesson.contentType);
+                      const TypeIcon = lessonMeta.Icon;
+                      const bodyContent = lesson.contentMarkdown?.trim() || "";
+                      const bodyOverview = bodyContent.replace(/[#*_`>-]/g, "").replace(/\s+/g, " ").trim();
+                      const isBodyExpanded = Boolean(expandedLessonBodyIds[lesson.id]);
+                      return (
+                        <div
+                          key={lesson.id}
+                          className="p-4 hover:bg-slate-50/70 transition-colors group"
+                        >
+                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                            <div className="flex items-start gap-3 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-mono text-xs font-semibold shrink-0 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                                {lesson.order}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
+                                    {lesson.title}
+                                  </h4>
+                                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${lessonMeta.classes}`}>
+                                    <TypeIcon className="h-3 w-3" />
+                                    {lessonMeta.label}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">{lesson.description || "No overview added yet."}</p>
+                                <div className="mt-3 grid grid-cols-1 gap-3 text-[11px] sm:grid-cols-3">
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 py-1 text-indigo-700">
+                                    <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> Opened: {formatDate(mod.startDate)}</span>
+                                    <span>Due: {formatDate(mod.endDate)}</span>
+                                  </div>
+                                  <div className="px-1 py-1 text-slate-700">
+                                    <span className="flex items-center gap-1 text-slate-700"><Clock className="h-3.5 w-3.5" /> {lesson.durationMinutes} minutes</span>
+                                  </div>
+                                  {lesson.materials?.length ? (
+                                    <div className="px-1 py-1 text-emerald-800">
+                                      <span className="flex items-center gap-1 text-emerald-800"><FileText className="h-3.5 w-3.5" /> {lesson.materials.length} attached file{lesson.materials.length === 1 ? "" : "s"}</span>
+                                    </div>
+                                  ) : null}
+                                </div>
+                                <div className={`${isBodyExpanded ? "rounded-lg border border-slate-200 bg-white px-3 py-2" : ""} mt-3`}>
+                                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Lesson body overview</p>
+                                  <p className={`${isBodyExpanded ? "whitespace-pre-wrap" : "line-clamp-2"} mt-1 text-xs leading-relaxed text-slate-600`}>
+                                    {isBodyExpanded ? bodyContent : bodyOverview || "No lesson body has been added yet."}
+                                  </p>
+                                  {bodyOverview.length > 180 && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setExpandedLessonBodyIds((current) => ({
+                                          ...current,
+                                          [lesson.id]: !current[lesson.id],
+                                        }))
+                                      }
+                                      className="mt-2 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                                    >
+                                      {isBodyExpanded ? "Hide full body" : "View full body"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <p className="text-xs text-slate-500 truncate mt-0.5">
-                              {lesson.description}
-                            </p>
+                            <div className="flex items-center gap-2 shrink-0 self-end lg:self-start">
+                              <button
+                                onClick={() => handleEditLesson(lesson, mod)}
+                                className="px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1.5 border border-slate-200"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                <span>Edit Unit</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteTarget({ type: "lesson", module: mod, lesson })}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
+                                aria-label={`Delete ${lesson.title}`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-4 text-xs text-slate-500 shrink-0 self-end sm:self-center">
-                          <span className="flex items-center gap-1 font-mono tabular-nums text-slate-600">
-                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{lesson.durationMinutes} min</span>
-                          </span>
-
-                          <button
-                            onClick={() => handleEditLesson(lesson, mod)}
-                            className="px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1.5 border border-slate-200"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>Edit Unit</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteTarget({ type: "lesson", module: mod, lesson })}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
-                            aria-label={`Delete ${lesson.title}`}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               )}
@@ -672,6 +789,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         module={editingParentModule}
         onClose={() => setIsEditorOpen(false)}
         onSave={handleSaveLesson}
+        uploadProgress={uploadProgress}
       />
       <ConfirmModal
         isOpen={Boolean(deleteTarget)}

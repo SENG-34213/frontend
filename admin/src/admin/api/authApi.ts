@@ -24,6 +24,10 @@ export async function loginAdmin(identifier: string, password: string): Promise<
   };
 
   saveSession(session);
+  if (!getSession()) {
+    clearSession();
+    throw new Error("Sign-in returned an incompatible session. Please try signing in again.");
+  }
   return session;
 }
 

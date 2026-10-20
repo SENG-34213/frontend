@@ -126,7 +126,8 @@ export const mockModules: Module[] = [
     description:
       "Big-O, Big-Omega, Big-Theta notation, array memory layout, linked lists, and circular buffers.",
     order: 1,
-    dateDuration: 14,
+    startDate: "2026-09-01",
+    endDate: "2026-09-14",
     status: "Published",
     lessons: [
       {
@@ -175,7 +176,8 @@ export const mockModules: Module[] = [
     description:
       "Binary search trees, AVL rotations, Red-Black balancing invariants, and hash collision resolution.",
     order: 2,
-    dateDuration: 14,
+    startDate: "2026-09-15",
+    endDate: "2026-09-28",
     status: "Published",
     lessons: [
       {
@@ -212,7 +214,8 @@ export const mockModules: Module[] = [
     description:
       "Adjacency lists, DFS, BFS, topological sorting, Dijkstra, and A* heuristic pathfinding.",
     order: 3,
-    dateDuration: 10,
+    startDate: "2026-09-29",
+    endDate: "2026-10-08",
     status: "Published",
     lessons: [
       {

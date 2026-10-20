@@ -193,6 +193,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleAuthExpired = () => {
+      setIsAuthenticated(false);
+      setCurrentRoute("dashboard");
+    };
+
+    window.addEventListener("mentify:auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("mentify:auth-expired", handleAuthExpired);
+  }, []);
+
+  useEffect(() => {
     if (!isAuthReady || typeof window === "undefined") return;
 
     const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);

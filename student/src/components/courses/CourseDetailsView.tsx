@@ -239,75 +239,119 @@ export const CourseDetailsView: React.FC = () => {
       {activeTab === "curriculum" && (
         <div className="space-y-4">
           {course.modules.length === 0 ? (
-            <p className="py-8 text-center text-xs text-slate-500">
-              Curriculum syllabus is currently being finalized.
-            </p>
+            <div className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center dark:border-slate-700">
+              <BookOpen className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <p className="mt-3 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                Curriculum syllabus is currently being finalized.
+              </p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Modules and lessons will appear here when published by your teacher.
+              </p>
+            </div>
           ) : (
-            course.modules.map((mod) => {
+            course.modules.map((mod, moduleIndex) => {
               const isExpanded = expandedModules[mod.id] ?? false;
               const completedCount = mod.lessons.filter((l) => l.completed).length;
+              const moduleNumber = mod.order || moduleIndex + 1;
 
               return (
                 <div
                   key={mod.id}
-                  className="rounded-xl border border-slate-200 bg-white overflow-hidden dark:border-slate-800 dark:bg-slate-900 shadow-2xs"
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
                 >
                   <button
                     onClick={() => toggleModule(mod.id)}
-                    className="flex w-full items-center justify-between p-4 sm:p-5 text-left hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                    className="flex w-full items-center justify-between gap-4 border-b border-slate-200 bg-slate-50/70 p-4 text-left transition-colors hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-800 sm:p-5"
                   >
-                    <div className="space-y-1">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-indigo-50 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                        {moduleNumber}
+                      </span>
+                      <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-display text-sm font-bold text-slate-900 dark:text-white">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+                          Module {moduleNumber}
+                        </span>
+                        <span className="truncate text-sm font-bold text-slate-900 dark:text-white">
                           {mod.title}
                         </span>
-                        <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {completedCount}/{mod.lessons.length} Completed
-                        </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {mod.description}
-                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{mod.description}</p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400">
+                        <span>{mod.lessons.length} lessons</span>
+                        <span>·</span>
+                        <span>{completedCount}/{mod.lessons.length} completed</span>
+                        {mod.startDate && mod.endDate && (
+                          <>
+                            <span>·</span>
+                            <span>{mod.startDate} – {mod.endDate}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    {isExpanded ? (
-                      <ChevronUp className="h-5 w-5 text-slate-400 shrink-0" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-slate-400 shrink-0" />
-                    )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <span className={`hidden rounded-md px-2 py-1 text-[10px] font-semibold sm:inline-flex ${
+                        mod.status === "Draft"
+                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                          : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                      }`}>
+                        {mod.status || "Published"}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp className="h-5 w-5 text-slate-400" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-slate-400" />
+                      )}
+                    </div>
                   </button>
 
                   {isExpanded && (
-                    <div className="border-t border-slate-100 divide-y divide-slate-100 dark:border-slate-800 dark:divide-slate-800 bg-slate-50/40 dark:bg-slate-900/60">
-                      {mod.lessons.map((lesson) => (
+                    <div className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900/60">
+                      {mod.lessons.length === 0 && (
+                        <p className="px-6 py-5 text-xs text-slate-400">No lessons published yet.</p>
+                      )}
+                      {mod.lessons.map((lesson, lessonIndex) => (
                         <div
                           key={lesson.id}
-                          className="flex items-center justify-between p-3.5 sm:px-6 hover:bg-white dark:hover:bg-slate-800/80 transition-colors"
+                          className="flex items-center justify-between gap-4 p-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 sm:px-6"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex min-w-0 items-center gap-3">
                             {lesson.completed ? (
                               <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                             ) : (
                               <div className="h-4 w-4 rounded-full border border-slate-300 dark:border-slate-600 shrink-0" />
                             )}
                             <div className="min-w-0">
-                              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                                {lesson.title}
-                              </p>
-                              <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                                <span className="capitalize">{lesson.type} Lesson</span>
-                                <span>·</span>
-                                <span>{lesson.durationMinutes} minutes</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[10px] text-slate-400">
+                                  {moduleNumber}.{lesson.order || lessonIndex + 1}
+                                </span>
+                                <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
+                                  {lesson.title}
+                                </p>
                               </div>
+                              <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                                {lesson.description || `${lesson.contentType || lesson.type} lesson`}
+                              </p>
                             </div>
                           </div>
 
-                          <button
-                            onClick={() => navigateToCourseWorkspace(course.id, lesson.id)}
-                            className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 shrink-0"
-                          >
-                            <span>Launch</span>
-                            <PlayCircle className="h-3.5 w-3.5" />
-                          </button>
+                          <div className="flex shrink-0 items-center gap-3 text-xs text-slate-500">
+                            <span className="hidden font-mono tabular-nums sm:inline">
+                              {lesson.durationMinutes} min
+                            </span>
+                            <span className="hidden rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300 md:inline">
+                              {lesson.contentType || lesson.type}
+                            </span>
+                            <button
+                              onClick={() => navigateToCourseWorkspace(course.id, lesson.id)}
+                              className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                            >
+                              <span>Launch</span>
+                              <PlayCircle className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

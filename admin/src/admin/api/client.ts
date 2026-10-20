@@ -1,4 +1,4 @@
-import { getAccessToken, getSession, saveSession } from "../auth/authStorage";
+import { clearSession, getAccessToken, getSession, saveSession } from "../auth/authStorage";
 import type { ApiResponse, TokenRefreshResponse } from "../auth/authTypes";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080").replace(
@@ -37,9 +37,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (authenticated && retryOnUnauthorized) {
     const session = getSession();
+    if (!session) {
+      throw new ApiError("Your session is no longer valid. Please sign in again.", 401);
+    }
     if (session && session.expiresAt <= Date.now() + 10_000) {
       const refreshed = await refreshStoredSession();
       if (!refreshed) {
+        expireAdminSession();
         throw new ApiError("Your session has expired. Please sign in again.", 401);
       }
     }
@@ -73,6 +77,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       return apiRequest<T>(path, { ...options, retryOnUnauthorized: false });
     }
 
+    expireAdminSession();
     throw new ApiError("Your session has expired. Please sign in again.", 401, responseBody);
   }
 
@@ -85,6 +90,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   return responseBody as T;
+}
+
+function expireAdminSession() {
+  clearSession();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("mentify:auth-expired"));
+  }
 }
 
 export async function refreshStoredSession(): Promise<boolean> {

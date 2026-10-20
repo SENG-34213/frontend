@@ -4,6 +4,7 @@ import {
   Calendar,
   Clock,
   Download,
+  Eye,
   Upload,
   CheckCircle2,
   AlertCircle,
@@ -13,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { downloadAssignmentAttachment } from "../../api/student";
 
 export const AssignmentDetailView: React.FC = () => {
   const { assignments, selectedAssignmentId, submitAssignment, setCurrentView, showToast } =
@@ -47,6 +49,24 @@ export const AssignmentDetailView: React.FC = () => {
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handlePreviewAttachment = async (
+    attachment: NonNullable<typeof assignment.attachments>[number],
+  ) => {
+    if (!attachment.id) {
+      showToast("This document is not available for preview yet.");
+      return;
+    }
+    try {
+      const response = await downloadAssignmentAttachment(assignment.id, attachment.id);
+      const payload = (response as { data?: { downloadUrl?: string } })?.data ?? response;
+      const url = (payload as { downloadUrl?: string })?.downloadUrl;
+      if (!url) throw new Error("A secure preview link was not returned.");
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Document preview is unavailable.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -194,8 +214,21 @@ export const AssignmentDetailView: React.FC = () => {
                         </div>
                       </div>
                       <button
-                        onClick={() => showToast(`Downloaded starter file: ${att.name}`)}
-                        className="rounded p-1 text-slate-400 hover:text-indigo-600"
+                        type="button"
+                        onClick={() => void handlePreviewAttachment(att)}
+                        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-50"
+                        aria-label={`Preview ${att.name}`}
+                        title="Preview document"
+                      >
+                        <Eye className="h-4 w-4" />
+                        <span>Preview</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handlePreviewAttachment(att)}
+                        className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600"
+                        aria-label={`Download ${att.name}`}
+                        title="Open document"
                       >
                         <Download className="h-4 w-4" />
                       </button>

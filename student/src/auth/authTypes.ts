@@ -6,6 +6,7 @@ export interface ApiResponse<T> {
 
 export interface StudentUserSummary {
   id?: string;
+  userId?: string;
   keycloakUserId?: string;
   email: string;
   firstName?: string;
@@ -26,6 +27,7 @@ export interface LoginResponse {
   scope?: string;
   issuedAt?: string;
   user?: StudentUserSummary;
+  profile?: StudentUserSummary;
 }
 
 export interface AuthSession {
