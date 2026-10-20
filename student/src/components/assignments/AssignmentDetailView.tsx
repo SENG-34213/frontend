@@ -19,43 +19,40 @@ export const AssignmentDetailView: React.FC = () => {
     useStudent();
   const [submissionText, setSubmissionText] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<
-    { name: string; size: string; uploadedAt: string }[]
+    { name: string; size: string; uploadedAt: string; file?: File }[]
   >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const assignment = assignments.find((a) => a.id === selectedAssignmentId) || assignments[0];
 
-  const handleSimulatedFileUpload = () => {
-    const mockFileNames = [
-      "alex_rivera_solution_code.py",
-      "dijkstra_fibonacci_benchmark_report.pdf",
-      "test_results_suite.json",
-    ];
-    const nextName = mockFileNames[uploadedFiles.length % mockFileNames.length];
-    const newFile = {
-      name: nextName,
-      size: `${(Math.random() * 2 + 0.8).toFixed(1)} MB`,
-      uploadedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-    setUploadedFiles((prev) => [...prev, newFile]);
-    showToast(`Added file: ${newFile.name}`);
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const nextFiles = files.map((file) => ({
+      name: file.name,
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      uploadedAt: new Date().toISOString(),
+      file,
+    }));
+    setUploadedFiles((prev) => [...prev, ...nextFiles]);
+    if (nextFiles.length) showToast(`${nextFiles.length} file(s) attached.`);
   };
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!submissionText.trim() && uploadedFiles.length === 0) {
       showToast("Please enter answer notes or attach at least one file before submitting.");
       return;
     }
     setIsSubmitting(true);
-    setTimeout(() => {
-      submitAssignment(assignment.id, submissionText, uploadedFiles);
+    try {
+      await submitAssignment(assignment.id, submissionText, uploadedFiles);
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   return (
@@ -240,10 +237,17 @@ export const AssignmentDetailView: React.FC = () => {
             {assignment.status === "PENDING" ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Drag and Drop File Upload Area */}
-                <div
-                  onClick={handleSimulatedFileUpload}
+                <label
+                  htmlFor="assignment-files"
                   className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 p-6 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all dark:border-slate-700 dark:bg-slate-800/40"
                 >
+                  <input
+                    id="assignment-files"
+                    type="file"
+                    multiple
+                    className="sr-only"
+                    onChange={handleFileUpload}
+                  />
                   <Upload className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mb-2" />
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     Click to add code package or PDF report
@@ -251,7 +255,7 @@ export const AssignmentDetailView: React.FC = () => {
                   <p className="text-[10px] text-slate-400 mt-1">
                     Accepts .zip, .tar.gz, .py, .pdf, .json (max 50MB)
                   </p>
-                </div>
+                </label>
 
                 {/* Uploaded Files Preview */}
                 {uploadedFiles.length > 0 && (

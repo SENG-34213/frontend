@@ -14,11 +14,12 @@ import { useStudent } from "../../context/StudentContext";
 export const ExamTakingView: React.FC = () => {
   const { examinations, selectedExamId, submitExam, setCurrentView, showToast } = useStudent();
   const exam = examinations.find((e) => e.id === selectedExamId) || examinations[0];
+  const safeExam = exam || { id: "", courseCode: "", title: "", durationMinutes: 0 };
 
-  const questions = exam.questions || [];
+  const questions = exam?.questions || [];
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
-  const [remainingSeconds, setRemainingSeconds] = useState(exam.durationMinutes * 60);
+  const [remainingSeconds, setRemainingSeconds] = useState(safeExam.durationMinutes * 60);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isHonorAccepted, setIsHonorAccepted] = useState(true);
 
@@ -30,23 +31,20 @@ export const ExamTakingView: React.FC = () => {
   }, []);
 
   const currentQ = questions[currentIdx] || {
-    id: "eq1",
-    prompt:
-      "Prove the runtime of Dijkstra's algorithm when using a Fibonacci heap compared to a standard binary heap.",
-    type: "multiple-choice",
-    options: [
-      {
-        id: "opt-1",
-        text: "Fibonacci heap runs in O(E + V log V); for dense graphs O(E) dominates and runs in O(V^2).",
-      },
-      {
-        id: "opt-2",
-        text: "Binary heap runs in O(E log V); it is strictly faster in all topological graphs.",
-      },
-    ],
-    correctAnswerIds: ["opt-1"],
-    points: 25,
+    id: "",
+    prompt: "",
+    type: "multiple-choice" as const,
+    options: [],
+    points: 0,
   };
+  if (!exam || !questions.length)
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+        {exam
+          ? "This exam has no student questions available yet."
+          : "No exam session is available for this account."}
+      </div>
+    );
 
   const formatTimer = (totalSec: number) => {
     const h = Math.floor(totalSec / 3600);
@@ -105,8 +103,8 @@ export const ExamTakingView: React.FC = () => {
           <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
               <span className="font-mono text-xs font-bold text-slate-400">
-                Examination Question {currentIdx + 1} of {questions.length || 2} (
-                {currentQ.points || 25} Marks)
+                Examination Question {currentIdx + 1} of {questions.length} ({currentQ.points || 25}{" "}
+                Marks)
               </span>
               <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                 <CheckCircle2 className="h-3.5 w-3.5" />
@@ -160,7 +158,7 @@ export const ExamTakingView: React.FC = () => {
                 <span>Previous Question</span>
               </button>
 
-              {currentIdx < (questions.length || 2) - 1 ? (
+              {currentIdx < questions.length - 1 ? (
                 <button
                   onClick={() => setCurrentIdx((prev) => prev + 1)}
                   className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs"
@@ -189,7 +187,7 @@ export const ExamTakingView: React.FC = () => {
             </h3>
 
             <div className="grid grid-cols-4 gap-2">
-              {(questions.length > 0 ? questions : [{ id: "eq1" }, { id: "eq2" }]).map((_, i) => (
+              {questions.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentIdx(i)}

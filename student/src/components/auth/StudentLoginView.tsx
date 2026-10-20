@@ -4,8 +4,8 @@ import { loginStudent, requestPasswordReset } from "../../api/auth";
 import type { AuthSession } from "../../auth/authTypes";
 
 export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) => void }) {
-  const [email, setEmail] = useState("student1@mentify.test");
-  const [password, setPassword] = useState("Sample@12345");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -188,7 +188,7 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
                 <Sparkles className="h-4 w-4" /> Local development account
               </div>
               <p className="mt-1 text-[11px] leading-5 text-indigo-700/80">
-                student1@mentify.test · Sample@12345
+                Use the credentials issued by your institution.
               </p>
             </div>
             <p className="mt-6 text-center text-[11px] text-slate-400">
