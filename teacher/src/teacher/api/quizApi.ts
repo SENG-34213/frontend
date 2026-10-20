@@ -127,6 +127,13 @@ export async function createQuiz(draft: QuizDraft) {
   return response.data as BackendQuiz;
 }
 
+export async function getQuiz(quizId: string) {
+  const response = await apiRequest<ApiResponse<BackendQuiz>>(
+    `/api/quizzes/${encodeURIComponent(quizId)}`,
+  );
+  return response.data as BackendQuiz;
+}
+
 export async function updateQuiz(
   quizId: string,
   draft: Omit<QuizDraft, "courseId" | "creationMethod">,

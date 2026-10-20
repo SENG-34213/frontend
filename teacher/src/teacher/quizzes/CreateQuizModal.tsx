@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AlertCircle, Calendar, CheckCircle2, Clock, Layers, Plus, Trash2, X } from "lucide-react";
 import { Course } from "../types";
-import { createQuiz, createQuizQuestion, publishQuiz, type BackendQuiz } from "../api/quizApi";
+import {
+  createQuiz,
+  createQuizQuestion,
+  getQuiz,
+  publishQuiz,
+  type BackendQuiz,
+} from "../api/quizApi";
 
 type DraftQuestion = {
   questionText: string;
@@ -45,6 +51,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   const [questions, setQuestions] = useState<DraftQuestion[]>([blankQuestion()]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [draftQuizId, setDraftQuizId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -60,6 +67,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     setShowResultImmediately(true);
     setQuestions([blankQuestion()]);
     setError("");
+    setDraftQuizId(null);
   }, [isOpen, courses]);
 
   const totalMarks = useMemo(
@@ -75,23 +83,41 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     );
   };
 
-  const validate = () => {
+  const validateSettings = () => {
     if (!courseId) return "Select a course.";
     if (!title.trim()) return "Quiz title is required.";
     if (title.trim().length > 150) return "Quiz title cannot exceed 150 characters.";
-    if (durationMinutes < 1) return "Duration must be at least 1 minute.";
-    if (maxAttempts < 1) return "Maximum attempts must be at least 1.";
-    if (passMark > totalMarks)
-      return `Pass mark (${passMark}) cannot be greater than total marks (${totalMarks}).`;
+    if (!Number.isInteger(durationMinutes) || durationMinutes < 1)
+      return "Duration must be a positive whole number of minutes.";
+    if (!Number.isInteger(passMark) || passMark < 0)
+      return "Pass mark must be a whole number of 0 or greater.";
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1)
+      return "Maximum attempts must be a positive whole number.";
+    return "";
+  };
+
+  const validateQuestions = () => {
     if (questions.some((question) => !question.questionText.trim()))
       return "Every question needs a prompt.";
     if (questions.some((question) => question.options.some((option) => !option.trim())))
       return "Every answer choice must have text.";
+    if (questions.some((question) => !Number.isInteger(question.marks) || question.marks < 1))
+      return "Every question must have a positive whole-number mark.";
+    return "";
+  };
+
+  const validate = (forPublish: boolean) => {
+    const settingsError = validateSettings();
+    if (settingsError) return settingsError;
+    const questionError = validateQuestions();
+    if (questionError) return questionError;
+    if (forPublish && passMark > totalMarks)
+      return `Pass mark (${passMark}) cannot be greater than total marks (${totalMarks}).`;
     return "";
   };
 
   const submit = async (publishImmediately: boolean) => {
-    const validationError = validate();
+    const validationError = validate(publishImmediately);
     if (validationError) {
       setError(validationError);
       setStep(
@@ -104,36 +130,80 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     setBusy(true);
     setError("");
     try {
-      const created = await createQuiz({
-        courseId,
-        title: title.trim(),
-        description: description.trim(),
-        durationMinutes,
-        passMark,
-        startTime: startTime || undefined,
-        endTime: endTime || undefined,
-        maxAttempts,
-        showResultImmediately,
-        creationMethod: "MANUAL",
-      });
-      for (const [index, question] of questions.entries()) {
-        await createQuizQuestion(created.id, {
-          questionText: question.questionText.trim(),
-          questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
-          marks: Number(question.marks) || 1,
-          questionOrder: index + 1,
-          options: question.options.map((option, optionIndex) => ({
-            optionText: option.trim(),
-            correct: optionIndex === question.correctOption,
-            optionOrder: optionIndex + 1,
-          })),
+      let quiz: BackendQuiz;
+      if (draftQuizId) {
+        try {
+          quiz = await getQuiz(draftQuizId);
+        } catch (requestError) {
+          throw new Error(
+            `The existing draft could not be recovered. ${
+              requestError instanceof Error ? requestError.message : "Please try again."
+            }`,
+          );
+        }
+      } else {
+        quiz = await createQuiz({
+          courseId,
+          title: title.trim(),
+          description: description.trim(),
+          durationMinutes,
+          passMark,
+          startTime: startTime || undefined,
+          endTime: endTime || undefined,
+          maxAttempts,
+          showResultImmediately,
+          creationMethod: "MANUAL",
         });
+        setDraftQuizId(quiz.id);
       }
-      const finalQuiz = publishImmediately ? await publishQuiz(created.id) : created;
+
+      const savedQuestionOrders = new Set(
+        (quiz.questions ?? []).map((question) => question.questionOrder),
+      );
+      for (const [index, question] of questions.entries()) {
+        if (savedQuestionOrders.has(index + 1)) continue;
+        try {
+          await createQuizQuestion(quiz.id, {
+            questionText: question.questionText.trim(),
+            questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
+            marks: question.marks,
+            questionOrder: index + 1,
+            options: question.options.map((option, optionIndex) => ({
+              optionText: option.trim(),
+              correct: optionIndex === question.correctOption,
+              optionOrder: optionIndex + 1,
+            })),
+          });
+        } catch (requestError) {
+          throw new Error(
+            `Question ${index + 1} could not be saved. ${
+              requestError instanceof Error ? requestError.message : "Please try again."
+            }`,
+          );
+        }
+      }
+
+      const refreshedQuiz = await getQuiz(quiz.id);
+      if (!publishImmediately) {
+        onQuizCreated(refreshedQuiz);
+        onClose();
+        return;
+      }
+      if (passMark > Number(refreshedQuiz.totalMarks)) {
+        setError(
+          `Publishing failed: pass mark (${passMark}) cannot be greater than total marks (${refreshedQuiz.totalMarks}).`,
+        );
+        return;
+      }
+      const finalQuiz = await publishQuiz(refreshedQuiz.id);
       onQuizCreated(finalQuiz);
       onClose();
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Quiz could not be created.");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Quiz could not be saved. The draft is preserved; retry to continue.",
+      );
     } finally {
       setBusy(false);
     }
@@ -402,14 +472,10 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
             {step === "config" ? (
               <button
                 onClick={() => {
-                  const validationError = validate();
-                  if (
-                    validationError &&
-                    !validationError.includes("question") &&
-                    !validationError.includes("choice")
-                  )
+                  const validationError = validateSettings();
+                  if (validationError) {
                     setError(validationError);
-                  else {
+                  } else {
                     setError("");
                     setStep("questions");
                   }
