@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  Search,
-  Send,
-  User,
-} from "lucide-react";
+import { Search, Send, User } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
 export const MessagesView: React.FC = () => {
