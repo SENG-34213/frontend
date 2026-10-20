@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { AdminCalendar } from "../../../../admin/src/admin/calendar/AdminCalendar";
+import { TeacherCalendar } from "./TeacherCalendar";
 import type { AcademicEvent, Course as AdminCourse } from "../../../../admin/src/admin/types";
 import type {
   CalendarEventFilters as AdminCalendarEventFilters,
@@ -155,7 +155,7 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
   );
 
   return (
-    <AdminCalendar
+    <TeacherCalendar
       events={events}
       courses={courses}
       onAddEvent={handleAddEvent}
