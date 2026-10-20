@@ -138,7 +138,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                 moduleId: lesson.moduleId,
                 title: lesson.title,
                 description: lesson.description || "",
-                durationMinutes: 0,
+                durationMinutes: lesson.durationMinutes ?? 1,
                 order: index + 1,
                 status: lesson.visible === false ? "Draft" : "Published",
                 contentType: "Lecture",

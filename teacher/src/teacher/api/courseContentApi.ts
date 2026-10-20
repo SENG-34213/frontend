@@ -16,6 +16,7 @@ export type CourseContentLesson = {
   moduleId: string;
   title: string;
   description?: string;
+  durationMinutes: number;
   contentMarkdown?: string;
   materials?: CourseContentMaterial[];
   visible?: boolean;
@@ -115,6 +116,7 @@ export function createModuleLesson(
   payload: {
     title: string;
     description?: string;
+    durationMinutes: number;
     contentMarkdown?: string;
     isVisible?: boolean;
     releaseDate?: string;
@@ -133,6 +135,7 @@ export function updateModuleLesson(
   payload: {
     title: string;
     description?: string;
+    durationMinutes: number;
     contentMarkdown?: string;
     isVisible?: boolean;
     releaseDate?: string;

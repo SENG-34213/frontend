@@ -194,6 +194,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         const created = await createModuleLesson(selectedCourseId, assignmentModuleId, {
           title,
           description,
+          durationMinutes: Number(duration) || 45,
           isVisible: true,
         });
         setIsSubmitting(false);

@@ -45,7 +45,7 @@ const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   title: lesson.title,
   description: lesson.description || "",
   contentMarkdown: lesson.contentMarkdown || "",
-  durationMinutes: 0,
+  durationMinutes: lesson.durationMinutes ?? 1,
   order,
   status: lesson.visible === false ? "Draft" : "Published",
   contentType: "Lecture",
@@ -193,9 +193,16 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     setIsSaving(true);
     setError(null);
     try {
+      const durationMinutes = Number(updatedLesson.durationMinutes);
+      if (!Number.isInteger(durationMinutes) || durationMinutes < 1) {
+        setError("Lesson duration must be a positive whole number of minutes.");
+        setIsSaving(false);
+        return;
+      }
       const payload = {
         title: updatedLesson.title.trim(),
         description: updatedLesson.description.trim(),
+        durationMinutes,
         contentMarkdown: updatedLesson.contentMarkdown || "",
         isVisible: updatedLesson.status === "Published",
       };
