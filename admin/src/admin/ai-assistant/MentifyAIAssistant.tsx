@@ -7,8 +7,10 @@ import {
   Copy,
   Ellipsis,
   FileText,
+  History,
   Menu,
   MessageSquare,
+  Paperclip,
   Pencil,
   Plus,
   Send,
@@ -121,6 +123,12 @@ function UserMessage({ message }: { message: AiMessage }) {
           <span className="font-semibold text-slate-900 dark:text-white">You</span>
         </div>
         <div className="rounded-2xl rounded-tr-sm bg-indigo-600 px-4 py-3 text-sm leading-6 text-white shadow-sm">
+          {message.attachmentName && (
+            <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-white/15 px-2 py-1 text-[11px]">
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{message.attachmentName}</span>
+            </div>
+          )}
           <div>{messageText(message)}</div>
         </div>
       </div>
@@ -136,7 +144,10 @@ export const MentifyAIAssistant: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [input, setInput] = useState("");
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -147,6 +158,7 @@ export const MentifyAIAssistant: React.FC = () => {
   const [renameValue, setRenameValue] = useState("");
   const [copied, setCopied] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const skipNextMessageLoadRef = useRef<string | null>(null);
 
   const activeConversation = conversations.find((item) => item.id === activeId);
   const filteredConversations = useMemo(
@@ -175,16 +187,32 @@ export const MentifyAIAssistant: React.FC = () => {
 
   useEffect(() => {
     if (!activeId) return;
+    if (skipNextMessageLoadRef.current === activeId) {
+      skipNextMessageLoadRef.current = null;
+      return;
+    }
+
+    let active = true;
+    setIsLoadingMessages(true);
+    setMessages([]);
     void (async () => {
       try {
         setError("");
-        setMessages(await fetchAiMessages(activeId));
+        const loadedMessages = await fetchAiMessages(activeId);
+        if (active) setMessages(loadedMessages);
       } catch (loadError) {
-        setError(
-          loadError instanceof Error ? loadError.message : "Unable to load this conversation.",
-        );
+        if (active) {
+          setError(
+            loadError instanceof Error ? loadError.message : "Unable to load this conversation.",
+          );
+        }
+      } finally {
+        if (active) setIsLoadingMessages(false);
       }
     })();
+    return () => {
+      active = false;
+    };
   }, [activeId]);
 
   useEffect(() => {
@@ -192,16 +220,36 @@ export const MentifyAIAssistant: React.FC = () => {
   }, [messages, isSending]);
 
   const startNewChat = () => {
+    skipNextMessageLoadRef.current = null;
     setActiveId(null);
     setMessages([]);
+    setIsLoadingMessages(false);
     setInput("");
+    setAttachedFile(null);
+    setIsDraggingFile(false);
     setError("");
     setMobileSidebarOpen(false);
   };
 
+  const selectAttachment = (file?: File) => {
+    if (!file) return;
+    const supported = /\.(pdf|docx|pptx|txt)$/i.test(file.name);
+    if (!supported) {
+      setError("Please choose a PDF, DOCX, PPTX, or TXT document.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("This file is too large. Please choose a file smaller than 10 MB.");
+      return;
+    }
+    setError("");
+    setAttachedFile(file);
+  };
+
   const handleSend = async (value = input) => {
-    const prompt = value.trim();
+    const prompt = value.trim() || (attachedFile ? "Please summarize the attached document." : "");
     if (!prompt || isSending) return;
+    const fileForMessage = attachedFile;
     setInput("");
     setError("");
     const clientMessageId = `client-${crypto.randomUUID?.() || Date.now()}`;
@@ -210,6 +258,7 @@ export const MentifyAIAssistant: React.FC = () => {
       role: "USER",
       message: prompt,
       timestamp: new Date().toISOString(),
+      attachmentName: fileForMessage?.name,
     };
     setMessages((current) => [...current, optimistic]);
     setIsSending(true);
@@ -218,9 +267,18 @@ export const MentifyAIAssistant: React.FC = () => {
       if (!conversation) {
         conversation = await createAiConversation(prompt.slice(0, 80));
         setConversations((current) => [conversation!, ...current]);
+        // The first message is already represented optimistically. Do not let
+        // the conversation-selection effect replace it with an empty history
+        // while the send request is still in flight.
+        skipNextMessageLoadRef.current = conversation.id;
         setActiveId(conversation.id);
       }
-      const response = await sendAiMessage(conversation.id, prompt, clientMessageId);
+      const response = await sendAiMessage(
+        conversation.id,
+        prompt,
+        clientMessageId,
+        fileForMessage || undefined,
+      );
       setMessages((current) => [
         ...current,
         {
@@ -231,8 +289,10 @@ export const MentifyAIAssistant: React.FC = () => {
           toolsUsed: response.toolsUsed,
         },
       ]);
+      setAttachedFile(null);
     } catch (sendError) {
       setMessages((current) => current.filter((item) => item.id !== clientMessageId));
+      setInput(value);
       setError(sendError instanceof Error ? sendError.message : "Unable to reach the AI service.");
     } finally {
       setIsSending(false);
@@ -325,7 +385,7 @@ export const MentifyAIAssistant: React.FC = () => {
                     }}
                     className={`flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left ${activeId === conversation.id ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"}`}
                   >
-                    <MessageSquare className="mt-0.5 h-4 w-4 shrink-0" />
+                    <History className="mt-0.5 h-4 w-4 shrink-0" />
                     <span className="min-w-0 truncate text-xs font-medium">
                       {conversation.title || "New conversation"}
                     </span>
@@ -379,7 +439,7 @@ export const MentifyAIAssistant: React.FC = () => {
                     }}
                     className={`group flex w-full items-start gap-2 rounded-lg px-2 py-2 text-left ${activeId === conversation.id ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300" : "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"}`}
                   >
-                    <MessageSquare className="mt-0.5 h-4 w-4 shrink-0" />
+                    <History className="mt-0.5 h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate text-xs font-medium">
                       {conversation.title || "New conversation"}
                       <span className="mt-1 block text-[10px] font-normal text-slate-400">
@@ -466,7 +526,7 @@ export const MentifyAIAssistant: React.FC = () => {
             </div>
           )}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-            {messages.length === 0 && !isLoading ? (
+            {messages.length === 0 && !isLoading && !isLoadingMessages ? (
               <div className="mx-auto flex max-w-2xl flex-col items-center justify-center py-16 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">
                   <Sparkles className="h-7 w-7" />
@@ -492,6 +552,11 @@ export const MentifyAIAssistant: React.FC = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+            ) : isLoadingMessages && !messages.length ? (
+              <div className="mx-auto flex max-w-2xl items-center justify-center py-16 text-sm text-slate-500">
+                <span className="mr-2 h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
+                Loading conversation…
               </div>
             ) : (
               <div className="mx-auto max-w-4xl space-y-5">
@@ -531,13 +596,63 @@ export const MentifyAIAssistant: React.FC = () => {
           </div>
 
           <div className="border-t border-slate-200 p-3 dark:border-slate-800 sm:p-4">
+            {attachedFile && (
+              <div className="mx-auto mb-2 flex max-w-4xl items-center justify-between gap-3 overflow-hidden rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-purple-50 px-3 py-2.5 text-xs shadow-sm dark:border-indigo-900 dark:from-indigo-950/40 dark:via-slate-900 dark:to-purple-950/30">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
+                    <FileText className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-slate-800 dark:text-slate-100">
+                      {attachedFile.name}
+                    </span>
+                    <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                      <span>Ready to attach</span>
+                      <span className="h-1 w-1 rounded-full bg-slate-400" />
+                      <span>{(attachedFile.size / 1024 / 1024).toFixed(1)} MB</span>
+                    </span>
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAttachedFile(null)}
+                  className="rounded p-1 hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
+                  aria-label="Remove attached file"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
             <form
               onSubmit={(event) => {
                 event.preventDefault();
                 void handleSend();
               }}
-              className="mx-auto flex max-w-4xl items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 focus-within:border-indigo-400 dark:border-slate-700 dark:bg-slate-800/60"
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDraggingFile(true);
+              }}
+              onDragLeave={(event) => {
+                if (event.currentTarget === event.target) setIsDraggingFile(false);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsDraggingFile(false);
+                selectAttachment(event.dataTransfer.files?.[0]);
+              }}
+              className={`relative mx-auto flex max-w-4xl items-end gap-2 rounded-xl border p-2 transition-all focus-within:border-indigo-400 dark:border-slate-700 dark:bg-slate-800/60 ${
+                isDraggingFile
+                  ? "border-indigo-500 bg-indigo-50 ring-4 ring-indigo-500/10 dark:bg-indigo-950/40"
+                  : "border-slate-200 bg-slate-50"
+              }`}
             >
+              {isDraggingFile && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-indigo-500 bg-indigo-50/95 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/95 dark:text-indigo-300">
+                  <span className="flex items-center gap-2">
+                    <Paperclip className="h-4 w-4" /> Drop your document here
+                  </span>
+                </div>
+              )}
               <textarea
                 value={input}
                 onChange={(event) => setInput(event.target.value.slice(0, 4000))}
@@ -551,11 +666,27 @@ export const MentifyAIAssistant: React.FC = () => {
                 placeholder="Ask Mentify AI about your platform..."
                 className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
               />
+              <label
+                className="cursor-pointer rounded-lg p-2.5 text-slate-500 hover:bg-slate-200 hover:text-indigo-600 dark:hover:bg-slate-700"
+                title="Attach a document"
+              >
+                <Paperclip className="h-4 w-4" />
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.pptx,.txt"
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.currentTarget.value = "";
+                    selectAttachment(file);
+                  }}
+                />
+              </label>
               <span className="hidden self-end pb-2 text-[10px] text-slate-400 sm:block">
                 {input.length}/4000
               </span>
               <button
-                disabled={!input.trim() || isSending}
+                disabled={(!input.trim() && !attachedFile) || isSending}
                 className="rounded-lg bg-indigo-600 p-2.5 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send className="h-4 w-4" />

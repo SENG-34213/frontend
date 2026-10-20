@@ -430,7 +430,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowUserMenu(false);
-                  onNavigate("settings");
+                  onLogout();
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left"
               >

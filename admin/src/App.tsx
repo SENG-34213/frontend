@@ -71,7 +71,8 @@ import { AuditAndActivity } from "./admin/audit/AuditAndActivity";
 import { AdminProfile } from "./admin/profile/AdminProfile";
 import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
-import { logoutAdmin } from "./admin/api/authApi";
+import { logoutAdmin, refreshAdminSession } from "./admin/api/authApi";
+import { clearSession, getSession } from "./admin/auth/authStorage";
 import {
   fetchAdminUsers,
   registerAdministrator,
@@ -81,7 +82,7 @@ import {
   updateUserStatus,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
-import { fetchCourses, updateCourse } from "./admin/api/coursesApi";
+import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi";
 import {
   createEnrollment,
   fetchEnrollments,
@@ -99,8 +100,11 @@ import {
   type CalendarEventFilters,
 } from "./admin/api/calendarApi";
 
+const ADMIN_ROUTE_STORAGE_KEY = "mentify_admin_current_route";
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
   const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -152,6 +156,53 @@ export default function App() {
   > | null>(null);
   const [registrationOverviewLoading, setRegistrationOverviewLoading] = useState(false);
   const [registrationOverviewError, setRegistrationOverviewError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreSession = async () => {
+      const storedSession = getSession();
+      if (!storedSession) {
+        if (mounted) setIsAuthReady(true);
+        return;
+      }
+
+      try {
+        if (storedSession.expiresAt <= Date.now() + 10_000) {
+          await refreshAdminSession();
+        }
+
+        const session = getSession();
+        if (mounted && session) {
+          setRole(session.user.role);
+          setIsAuthenticated(true);
+        }
+      } catch {
+        clearSession();
+      } finally {
+        if (mounted) setIsAuthReady(true);
+      }
+    };
+
+    void restoreSession();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthReady || typeof window === "undefined") return;
+
+    const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);
+    // The route is restored from browser storage after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (storedRoute) setCurrentRoute(storedRoute as AdminRoute);
+  }, [isAuthReady]);
+
+  useEffect(() => {
+    if (!isAuthReady || typeof window === "undefined") return;
+    window.sessionStorage.setItem(ADMIN_ROUTE_STORAGE_KEY, currentRoute);
+  }, [currentRoute, isAuthReady]);
 
   const loadAdminUsers = async () => {
     setUsersLoading(true);
@@ -300,6 +351,10 @@ export default function App() {
     [],
   );
 
+  if (!isAuthReady) {
+    return null;
+  }
+
   if (!isAuthenticated) {
     return (
       <AdminLoginView
@@ -312,7 +367,15 @@ export default function App() {
   }
 
   const handleLogout = () => {
-    void logoutAdmin().finally(() => setIsAuthenticated(false));
+    // Start server-side logout, but do not make the user wait for the request
+    // before returning to the login screen.
+    void logoutAdmin();
+    clearSession();
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(ADMIN_ROUTE_STORAGE_KEY);
+    }
+    setCurrentRoute("dashboard");
+    setIsAuthenticated(false);
   };
 
   const handleDismissToast = (id: string) => {
@@ -441,11 +504,47 @@ export default function App() {
     payload: Parameters<typeof updateCourse>[1],
   ) => {
     const updated = await updateCourse(courseId, payload);
-    setCourses((previous) =>
-      previous.map((course) => (course.id === courseId ? { ...course, ...updated } : course)),
+    const updatedGrade = gradesList.find((grade) => grade.id === updated.gradeId);
+    const updatedTeacher = teachers.find(
+      (teacher) =>
+        teacher.keycloakUserId === updated.assignedTeacherId ||
+        teacher.id === updated.assignedTeacherId,
     );
-    addToast("success", "Course Updated", `${updated.title} was updated successfully.`);
-    return updated;
+    const enrichedUpdated = {
+      ...updated,
+      gradeName: updatedGrade?.name || updated.gradeName,
+      grade: updatedGrade?.name || updated.grade,
+      teacherName: updatedTeacher
+        ? `${updatedTeacher.firstName} ${updatedTeacher.lastName}`
+        : updated.teacherName,
+      teacherCode: updatedTeacher?.teacherCode || updated.teacherCode,
+      teacherId: updated.assignedTeacherId || updated.teacherId,
+    };
+    setCourses((previous) =>
+      previous.map((course) =>
+        course.id === courseId ? { ...course, ...enrichedUpdated } : course,
+      ),
+    );
+    addToast("success", "Course Updated", `${enrichedUpdated.title} was updated successfully.`);
+    return enrichedUpdated;
+  };
+
+  const handleDeleteCourse = async (courseId: string) => {
+    try {
+      await deleteCourse(courseId);
+      setCourses((previous) => previous.filter((course) => course.id !== courseId));
+      setKpis((previous) => ({
+        ...previous,
+        totalCourses: Math.max(0, previous.totalCourses - 1),
+      }));
+      addToast("info", "Course Deleted", "The course was removed successfully.");
+      return { success: true as const };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : "Unable to delete the course.",
+      };
+    }
   };
 
   const handleCreateGrade = async (request: CreateGradeRequest) => {
@@ -678,6 +777,7 @@ export default function App() {
           materials={materials}
           onAddCourse={handleAddCourse}
           onUpdateCourse={handleUpdateCourse}
+          onDeleteCourse={handleDeleteCourse}
           showCreateModalDirectly={openCourseModal}
           preselectedGradeId={preselectedGradeId}
           onNavigateToGrades={() => setCurrentRoute("grades")}

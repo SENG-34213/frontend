@@ -6,6 +6,8 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:
   "",
 );
 
+let refreshPromise: Promise<boolean> | null = null;
+
 export class ApiError extends Error {
   status: number;
   details?: unknown;
@@ -32,10 +34,22 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers,
     ...requestInit
   } = options;
+
+  if (authenticated && retryOnUnauthorized) {
+    const session = getSession();
+    if (session && session.expiresAt <= Date.now() + 10_000) {
+      const refreshed = await refreshStoredSession();
+      if (!refreshed) {
+        throw new ApiError("Your session has expired. Please sign in again.", 401);
+      }
+    }
+  }
+
   const requestHeaders = new Headers(headers);
+  const isFormDataBody = typeof FormData !== "undefined" && body instanceof FormData;
 
   requestHeaders.set("Accept", "application/json");
-  if (body !== undefined) {
+  if (body !== undefined && !isFormDataBody) {
     requestHeaders.set("Content-Type", "application/json");
   }
 
@@ -49,7 +63,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...requestInit,
     headers: requestHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isFormDataBody ? body : JSON.stringify(body),
   });
 
   const responseBody = await response.json().catch(() => null);
@@ -58,6 +72,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     if (refreshed) {
       return apiRequest<T>(path, { ...options, retryOnUnauthorized: false });
     }
+
+    throw new ApiError("Your session has expired. Please sign in again.", 401, responseBody);
   }
 
   if (!response.ok) {
@@ -72,6 +88,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 }
 
 export async function refreshStoredSession(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = refreshStoredSessionInternal();
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+async function refreshStoredSessionInternal(): Promise<boolean> {
   const currentSession = getSession();
   if (!currentSession?.refreshToken) return false;
 
