@@ -5,7 +5,6 @@ export type NavigationTab =
   | "courses"
   | "curriculum"
   | "students"
-  | "enrollments"
   | "attendance"
   | "materials"
   | "assignments"
@@ -108,19 +107,6 @@ export interface Student {
   lastActive: string;
   submissionsPending: number;
   recentGradeAvg: number | null;
-}
-
-export interface EnrollmentRequest {
-  id: string;
-  studentId: string;
-  studentName: string;
-  studentEmail: string;
-  courseId: string;
-  courseCode: string;
-  courseTitle: string;
-  appliedDate: string;
-  status: "Pending" | "Approved" | "Rejected";
-  academicTerm: string;
 }
 
 export interface Assignment {

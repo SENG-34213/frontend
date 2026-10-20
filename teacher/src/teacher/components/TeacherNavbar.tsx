@@ -45,7 +45,6 @@ const tabTitles: Record<NavigationTab, { title: string; category: string }> = {
   courses: { title: "My Courses", category: "Teaching" },
   curriculum: { title: "Course Content & Curriculum", category: "Teaching" },
   students: { title: "Student Directory & Records", category: "Teaching" },
-  enrollments: { title: "Course Enrollments", category: "Teaching" },
   attendance: { title: "Attendance Management", category: "Teaching" },
   materials: { title: "Learning Materials", category: "Teaching" },
   assignments: { title: "Assignments", category: "Assessments" },

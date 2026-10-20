@@ -1,20 +1,18 @@
 import React, { useMemo, useState } from "react";
-import { Search, UserCheck } from "lucide-react";
-import { Student, Course, NavigationTab } from "../types";
+import { Search } from "lucide-react";
+import { Student, Course } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { StudentDetailsModal } from "./StudentDetailsModal";
 import { useTeacherStudents } from "../hooks/useTeacherStudents";
 import type { BackendCourse } from "../api/courseApi";
 
 interface StudentDirectoryViewProps {
-  onNavigate: (tab: NavigationTab, param?: string) => void;
   onSendMessage: (studentName: string) => void;
   courses: Course[];
   backendCourses: BackendCourse[];
 }
 
 export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
-  onNavigate,
   onSendMessage,
   courses,
   backendCourses,
@@ -63,16 +61,6 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
             Monitor academic progress, submission consistency, and attendance across all your
             classes.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onNavigate("enrollments")}
-            className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-slate-500" />
-            <span>Manage Enrollments</span>
-          </button>
         </div>
       </div>
 

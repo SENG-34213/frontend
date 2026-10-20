@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Users, Layers, Award, Edit3, Plus, Clock } from "lucide-react";
+import { ArrowLeft, Users, Layers, Award, Plus, Clock } from "lucide-react";
 import { Assignment, Course, LearningMaterial, Module, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
@@ -15,7 +15,6 @@ interface CourseDetailsViewProps {
   course: Course;
   onBack: () => void;
   onNavigate: (tab: NavigationTab, param?: string) => void;
-  onEditCourse: (course: Course) => void;
 }
 
 type CourseTab =
@@ -57,7 +56,6 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   course,
   onBack,
   onNavigate,
-  onEditCourse,
 }) => {
   const [activeTab, setActiveTab] = useState<CourseTab>("overview");
   const [courseEvents, setCourseEvents] = useState<BackendCalendarEvent[]>([]);
@@ -301,13 +299,6 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onEditCourse(displayCourse)}
-            className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-            <span>Edit Course</span>
-          </button>
           <button
             onClick={() => onNavigate("curriculum")}
             className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
