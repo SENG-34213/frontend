@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  X,
-  Save,
-  Eye,
-  Edit3,
-  Check,
-  FileText,
-  Upload,
-  Download,
-  FileArchive,
-} from "lucide-react";
+import { X, Save, Eye, Edit3, Check, FileText, Upload, Download, FileArchive } from "lucide-react";
 import { Lesson, Module } from "../types";
 import { deleteModuleMaterial } from "../api/courseContentApi";
 import { getMaterialDownload } from "../api/materialApi";
@@ -315,9 +305,15 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                       Upload any approved learning resource format. Files are stored securely.
                     </p>
                   </div>
-                  <label className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold ${isUploading ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400" : "cursor-pointer border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"}`}>
+                  <label
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold ${isUploading ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400" : "cursor-pointer border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"}`}
+                  >
                     <Upload className="w-3.5 h-3.5" />
-                    {isUploading ? "Uploading…" : materials.length || pendingFiles.length ? "Add more files" : "Add files"}
+                    {isUploading
+                      ? "Uploading…"
+                      : materials.length || pendingFiles.length
+                        ? "Add more files"
+                        : "Add files"}
                     <input
                       type="file"
                       multiple
@@ -334,7 +330,9 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                   </label>
                 </div>
                 {uploadProgress && (
-                  <div className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs ${uploadProgress.status === "error" ? "bg-rose-50 text-rose-700" : uploadProgress.status === "complete" ? "bg-emerald-50 text-emerald-700" : "bg-indigo-50 text-indigo-700"}`}>
+                  <div
+                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs ${uploadProgress.status === "error" ? "bg-rose-50 text-rose-700" : uploadProgress.status === "complete" ? "bg-emerald-50 text-emerald-700" : "bg-indigo-50 text-indigo-700"}`}
+                  >
                     <span className="font-semibold">
                       {uploadProgress.status === "complete"
                         ? "Upload complete"
@@ -358,8 +356,12 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                       <div className="min-w-0 flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => material.materialId && void downloadMaterial(material.materialId)}
-                          disabled={!material.materialId || downloadingMaterialId === material.materialId}
+                          onClick={() =>
+                            material.materialId && void downloadMaterial(material.materialId)
+                          }
+                          disabled={
+                            !material.materialId || downloadingMaterialId === material.materialId
+                          }
                           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition-colors hover:bg-indigo-100 disabled:cursor-default disabled:opacity-60"
                           aria-label={`Download ${materialLabel(material)}`}
                         >
@@ -384,7 +386,9 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                             className="text-xs text-indigo-600 hover:text-indigo-800 disabled:opacity-50 flex items-center gap-1"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            {downloadingMaterialId === material.materialId ? "Downloading…" : "Download"}
+                            {downloadingMaterialId === material.materialId
+                              ? "Downloading…"
+                              : "Download"}
                           </button>
                           <button
                             type="button"
@@ -406,7 +410,9 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                         <div className="flex items-center gap-2">
                           <PendingFilePreview file={file} />
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold text-indigo-900 truncate">{file.name}</p>
+                            <p className="text-xs font-semibold text-indigo-900 truncate">
+                              {file.name}
+                            </p>
                             <p className="text-[11px] text-indigo-700">
                               Preview ready · {formatBytes(file.size)}
                             </p>
@@ -437,12 +443,16 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                             ? "Upload failed"
                             : `Uploading file ${uploadProgress.current} of ${uploadProgress.total}`}
                       </span>
-                      <span>{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</span>
+                      <span>
+                        {Math.round((uploadProgress.current / uploadProgress.total) * 100)}%
+                      </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-indigo-100">
                       <div
                         className={`h-full rounded-full transition-all ${uploadProgress.status === "error" ? "bg-rose-500" : "bg-indigo-600"}`}
-                        style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                        style={{
+                          width: `${(uploadProgress.current / uploadProgress.total) * 100}%`,
+                        }}
                       />
                     </div>
                     <p className="truncate text-[11px] text-slate-500">{uploadProgress.fileName}</p>

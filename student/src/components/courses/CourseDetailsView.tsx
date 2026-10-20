@@ -268,34 +268,42 @@ export const CourseDetailsView: React.FC = () => {
                         {moduleNumber}
                       </span>
                       <div className="min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
-                          Module {moduleNumber}
-                        </span>
-                        <span className="truncate text-sm font-bold text-slate-900 dark:text-white">
-                          {mod.title}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+                            Module {moduleNumber}
+                          </span>
+                          <span className="truncate text-sm font-bold text-slate-900 dark:text-white">
+                            {mod.title}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {mod.description}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400">
+                          <span>{mod.lessons.length} lessons</span>
+                          <span>·</span>
+                          <span>
+                            {completedCount}/{mod.lessons.length} completed
+                          </span>
+                          {mod.startDate && mod.endDate && (
+                            <>
+                              <span>·</span>
+                              <span>
+                                {mod.startDate} – {mod.endDate}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{mod.description}</p>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400">
-                        <span>{mod.lessons.length} lessons</span>
-                        <span>·</span>
-                        <span>{completedCount}/{mod.lessons.length} completed</span>
-                        {mod.startDate && mod.endDate && (
-                          <>
-                            <span>·</span>
-                            <span>{mod.startDate} – {mod.endDate}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
-                      <span className={`hidden rounded-md px-2 py-1 text-[10px] font-semibold sm:inline-flex ${
-                        mod.status === "Draft"
-                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-                          : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                      }`}>
+                      <span
+                        className={`hidden rounded-md px-2 py-1 text-[10px] font-semibold sm:inline-flex ${
+                          mod.status === "Draft"
+                            ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                        }`}
+                      >
                         {mod.status || "Published"}
                       </span>
                       {isExpanded ? (
@@ -309,7 +317,9 @@ export const CourseDetailsView: React.FC = () => {
                   {isExpanded && (
                     <div className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900/60">
                       {mod.lessons.length === 0 && (
-                        <p className="px-6 py-5 text-xs text-slate-400">No lessons published yet.</p>
+                        <p className="px-6 py-5 text-xs text-slate-400">
+                          No lessons published yet.
+                        </p>
                       )}
                       {mod.lessons.map((lesson, lessonIndex) => (
                         <div
@@ -332,7 +342,8 @@ export const CourseDetailsView: React.FC = () => {
                                 </p>
                               </div>
                               <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-400">
-                                {lesson.description || `${lesson.contentType || lesson.type} lesson`}
+                                {lesson.description ||
+                                  `${lesson.contentType || lesson.type} lesson`}
                               </p>
                             </div>
                           </div>

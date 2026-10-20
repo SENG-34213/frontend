@@ -97,10 +97,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     averageGrade: course.gradingRate,
   }));
   const performanceCourses = dashboard?.coursePerformance ?? [];
-  const maxStudentCount = Math.max(
-    1,
-    ...performanceCourses.map((course) => course.studentCount),
-  );
+  const maxStudentCount = Math.max(1, ...performanceCourses.map((course) => course.studentCount));
   const totalSubmissions = performanceCourses.reduce(
     (total, course) => total + course.submissionCount,
     0,
@@ -132,52 +129,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 right-48 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
         <div className="relative z-10 flex w-full flex-col justify-between gap-8 lg:flex-row lg:items-end">
-        <div>
-          <div className="mb-4 flex items-center gap-2 text-xs font-medium text-indigo-200">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            Teaching overview <span className="text-slate-500">/</span>
-            <span>
-              {new Date().toLocaleDateString(undefined, {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
+          <div>
+            <div className="mb-4 flex items-center gap-2 text-xs font-medium text-indigo-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Teaching overview <span className="text-slate-500">/</span>
+              <span>
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-4xl">
+              Good morning, {firstName}!
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
+              Here's what's happening across your classes today. You have{" "}
+              <span className="font-semibold text-white">
+                {dashboard?.todayClassCount ?? 0} upcoming lectures
+              </span>{" "}
+              and{" "}
+              <span className="font-semibold text-indigo-200">
+                {dashboard?.pendingReviewCount ?? 0} submissions
+              </span>{" "}
+              awaiting review.
+            </p>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-4xl">
-            Good morning, {firstName}!
-          </h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
-            Here's what's happening across your classes today. You have{" "}
-            <span className="font-semibold text-white">
-              {dashboard?.todayClassCount ?? 0} upcoming lectures
-            </span>{" "}
-            and{" "}
-            <span className="font-semibold text-indigo-200">
-              {dashboard?.pendingReviewCount ?? 0} submissions
-            </span>{" "}
-            awaiting review.
-          </p>
-        </div>
 
-        <div className="relative z-10 flex shrink-0 items-center gap-2.5">
-          <button
-            onClick={() => onNavigate("attendance")}
-            className="flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2.5 text-xs font-bold text-slate-950 transition hover:bg-indigo-50"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-slate-600" />
-            <span>Mark Attendance</span>
-          </button>
-          <button
-            onClick={() => onNavigate("grading-workspace")}
-            className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-white/15"
-          >
-            <ClipboardList className="w-3.5 h-3.5" />
-            <span>Grading Queue</span>
-          </button>
+          <div className="relative z-10 flex shrink-0 items-center gap-2.5">
+            <button
+              onClick={() => onNavigate("attendance")}
+              className="flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2.5 text-xs font-bold text-slate-950 transition hover:bg-indigo-50"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-slate-600" />
+              <span>Mark Attendance</span>
+            </button>
+            <button
+              onClick={() => onNavigate("grading-workspace")}
+              className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-white/15"
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              <span>Grading Queue</span>
+            </button>
+          </div>
         </div>
-      </div>
       </div>
 
       {/* 2. KPI Cards */}
@@ -188,7 +185,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">My Courses <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" /></span>
+            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              My Courses{" "}
+              <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" />
+            </span>
             <BookOpen className="w-4 h-4" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -203,7 +203,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">Total Students <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" /></span>
+            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              Total Students{" "}
+              <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" />
+            </span>
             <Users className="w-4 h-4" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -218,7 +221,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">Active Assignments <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" /></span>
+            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              Active Assignments{" "}
+              <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" />
+            </span>
             <FileCheck className="w-4 h-4" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -233,7 +239,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-indigo-200 shadow-xs bg-indigo-50/20 hover:border-indigo-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-indigo-600 mb-2">
-            <span className="flex items-center gap-1 text-xs font-medium text-indigo-900">Pending Review <ArrowUpRight className="h-3 w-3 text-indigo-300 transition group-hover:text-indigo-600" /></span>
+            <span className="flex items-center gap-1 text-xs font-medium text-indigo-900">
+              Pending Review{" "}
+              <ArrowUpRight className="h-3 w-3 text-indigo-300 transition group-hover:text-indigo-600" />
+            </span>
             <ClipboardList className="w-4 h-4" />
           </div>
           <div className="text-2xl font-bold text-indigo-700 font-mono tabular-nums">
@@ -248,7 +257,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">Upcoming Exams <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" /></span>
+            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              Upcoming Exams{" "}
+              <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" />
+            </span>
             <GraduationCap className="w-4 h-4" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -263,7 +275,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">Today's Classes <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" /></span>
+            <span className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              Today's Classes{" "}
+              <ArrowUpRight className="h-3 w-3 text-slate-300 transition group-hover:text-indigo-500" />
+            </span>
             <Calendar className="w-4 h-4" />
           </div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
@@ -324,7 +339,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
                       <div
                         className="h-full rounded-full bg-indigo-500 transition-all"
-                        style={{ width: `${Math.max(4, (course.studentCount / maxStudentCount) * 100)}%` }}
+                        style={{
+                          width: `${Math.max(4, (course.studentCount / maxStudentCount) * 100)}%`,
+                        }}
                       />
                     </div>
                     <span className="w-10 text-right text-[10px] font-semibold text-indigo-600">
@@ -363,7 +380,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               }}
             >
               <div className="absolute inset-3 flex flex-col items-center justify-center rounded-full bg-white">
-                <span className="text-2xl font-bold tabular-nums text-slate-900">{gradingProgress}%</span>
+                <span className="text-2xl font-bold tabular-nums text-slate-900">
+                  {gradingProgress}%
+                </span>
                 <span className="text-[10px] text-slate-400">complete</span>
               </div>
             </div>
@@ -636,22 +655,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <p className="py-4 text-xs text-slate-400">No performance data available yet.</p>
               ) : (
                 performanceCourses.slice(0, 3).map((c, index) => (
-                <div key={c.courseId} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-800">
-                      {c.courseName}
-                    </span>
-                    <span className="font-mono tabular-nums font-bold text-slate-900">
-                      {c.gradingRate}%
-                    </span>
+                  <div key={c.courseId} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-800">{c.courseName}</span>
+                      <span className="font-mono tabular-nums font-bold text-slate-900">
+                        {c.gradingRate}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${["bg-indigo-600", "bg-violet-600", "bg-emerald-600"][index]}`}
+                        style={{ width: `${Math.min(100, Math.max(0, c.gradingRate))}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${["bg-indigo-600", "bg-violet-600", "bg-emerald-600"][index]}`}
-                      style={{ width: `${Math.min(100, Math.max(0, c.gradingRate))}%` }}
-                    />
-                  </div>
-                </div>
                 ))
               )}
             </div>

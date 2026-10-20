@@ -48,13 +48,29 @@ interface CurriculumBuilderViewProps {
 const lessonTypeMeta = (type: Lesson["contentType"]) => {
   switch (type) {
     case "Lab":
-      return { Icon: FlaskConical, label: "Lab", classes: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+      return {
+        Icon: FlaskConical,
+        label: "Lab",
+        classes: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      };
     case "Reading":
-      return { Icon: BookMarked, label: "Reading", classes: "bg-amber-50 text-amber-700 border-amber-200" };
+      return {
+        Icon: BookMarked,
+        label: "Reading",
+        classes: "bg-amber-50 text-amber-700 border-amber-200",
+      };
     case "Discussion":
-      return { Icon: MessagesSquare, label: "Discussion", classes: "bg-violet-50 text-violet-700 border-violet-200" };
+      return {
+        Icon: MessagesSquare,
+        label: "Discussion",
+        classes: "bg-violet-50 text-violet-700 border-violet-200",
+      };
     default:
-      return { Icon: Presentation, label: "Lecture", classes: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+      return {
+        Icon: Presentation,
+        label: "Lecture",
+        classes: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      };
   }
 };
 
@@ -254,9 +270,19 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
           );
       const savedMaterials = [...(saved.materials || updatedLesson.materials || [])];
       if (pendingFiles.length) {
-        setUploadProgress({ current: 0, total: pendingFiles.length, fileName: "Preparing files…", status: "uploading" });
+        setUploadProgress({
+          current: 0,
+          total: pendingFiles.length,
+          fileName: "Preparing files…",
+          status: "uploading",
+        });
         for (const [index, file] of pendingFiles.entries()) {
-          setUploadProgress({ current: index, total: pendingFiles.length, fileName: file.name, status: "uploading" });
+          setUploadProgress({
+            current: index,
+            total: pendingFiles.length,
+            fileName: file.name,
+            status: "uploading",
+          });
           try {
             const uploaded = await uploadLessonMaterial(
               selectedCourseId,
@@ -265,7 +291,12 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
               { title: file.name.replace(/\.[^.]+$/, "") || file.name, file },
             );
             savedMaterials.push(uploaded);
-            setUploadProgress({ current: index + 1, total: pendingFiles.length, fileName: file.name, status: "complete" });
+            setUploadProgress({
+              current: index + 1,
+              total: pendingFiles.length,
+              fileName: file.name,
+              status: "complete",
+            });
           } catch (uploadError) {
             throw new Error(
               `${file.name} could not be uploaded. ${uploadError instanceof Error ? uploadError.message : "Please try again."}`,
@@ -504,9 +535,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Start date
-              </label>
+              <label className="block text-xs font-medium text-slate-700 mb-1">Start date</label>
               <input
                 type="date"
                 required
@@ -694,7 +723,10 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                       const lessonMeta = lessonTypeMeta(lesson.contentType);
                       const TypeIcon = lessonMeta.Icon;
                       const bodyContent = lesson.contentMarkdown?.trim() || "";
-                      const bodyOverview = bodyContent.replace(/[#*_`>-]/g, "").replace(/\s+/g, " ").trim();
+                      const bodyOverview = bodyContent
+                        .replace(/[#*_`>-]/g, "")
+                        .replace(/\s+/g, " ")
+                        .trim();
                       const isBodyExpanded = Boolean(expandedLessonBodyIds[lesson.id]);
                       return (
                         <div
@@ -711,30 +743,52 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                                   <h4 className="text-xs sm:text-sm font-semibold text-slate-900">
                                     {lesson.title}
                                   </h4>
-                                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${lessonMeta.classes}`}>
+                                  <span
+                                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${lessonMeta.classes}`}
+                                  >
                                     <TypeIcon className="h-3 w-3" />
                                     {lessonMeta.label}
                                   </span>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1">{lesson.description || "No overview added yet."}</p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                  {lesson.description || "No overview added yet."}
+                                </p>
                                 <div className="mt-3 grid grid-cols-1 gap-3 text-[11px] sm:grid-cols-3">
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 py-1 text-indigo-700">
-                                    <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> Opened: {formatDate(mod.startDate)}</span>
+                                    <span className="flex items-center gap-1">
+                                      <CalendarDays className="h-3.5 w-3.5" /> Opened:{" "}
+                                      {formatDate(mod.startDate)}
+                                    </span>
                                     <span>Due: {formatDate(mod.endDate)}</span>
                                   </div>
                                   <div className="px-1 py-1 text-slate-700">
-                                    <span className="flex items-center gap-1 text-slate-700"><Clock className="h-3.5 w-3.5" /> {lesson.durationMinutes} minutes</span>
+                                    <span className="flex items-center gap-1 text-slate-700">
+                                      <Clock className="h-3.5 w-3.5" /> {lesson.durationMinutes}{" "}
+                                      minutes
+                                    </span>
                                   </div>
                                   {lesson.materials?.length ? (
                                     <div className="px-1 py-1 text-emerald-800">
-                                      <span className="flex items-center gap-1 text-emerald-800"><FileText className="h-3.5 w-3.5" /> {lesson.materials.length} attached file{lesson.materials.length === 1 ? "" : "s"}</span>
+                                      <span className="flex items-center gap-1 text-emerald-800">
+                                        <FileText className="h-3.5 w-3.5" />{" "}
+                                        {lesson.materials.length} attached file
+                                        {lesson.materials.length === 1 ? "" : "s"}
+                                      </span>
                                     </div>
                                   ) : null}
                                 </div>
-                                <div className={`${isBodyExpanded ? "rounded-lg border border-slate-200 bg-white px-3 py-2" : ""} mt-3`}>
-                                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Lesson body overview</p>
-                                  <p className={`${isBodyExpanded ? "whitespace-pre-wrap" : "line-clamp-2"} mt-1 text-xs leading-relaxed text-slate-600`}>
-                                    {isBodyExpanded ? bodyContent : bodyOverview || "No lesson body has been added yet."}
+                                <div
+                                  className={`${isBodyExpanded ? "rounded-lg border border-slate-200 bg-white px-3 py-2" : ""} mt-3`}
+                                >
+                                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                    Lesson body overview
+                                  </p>
+                                  <p
+                                    className={`${isBodyExpanded ? "whitespace-pre-wrap" : "line-clamp-2"} mt-1 text-xs leading-relaxed text-slate-600`}
+                                  >
+                                    {isBodyExpanded
+                                      ? bodyContent
+                                      : bodyOverview || "No lesson body has been added yet."}
                                   </p>
                                   {bodyOverview.length > 180 && (
                                     <button
@@ -763,7 +817,9 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setDeleteTarget({ type: "lesson", module: mod, lesson })}
+                                onClick={() =>
+                                  setDeleteTarget({ type: "lesson", module: mod, lesson })
+                                }
                                 className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
                                 aria-label={`Delete ${lesson.title}`}
                               >
