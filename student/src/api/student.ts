@@ -127,7 +127,7 @@ function toEnrollment(value: JsonRecord): StudentEnrollmentState {
 }
 
 function toAssignment(value: JsonRecord, course?: Course): Assignment {
-  const status = String(value.status || "PENDING").toUpperCase();
+  const status = String(value.status || "UNKNOWN").toUpperCase();
   return {
     id: idOf(value.id),
     courseId: idOf(value.courseId),
@@ -138,10 +138,12 @@ function toAssignment(value: JsonRecord, course?: Course): Assignment {
     instructions: idOf(value.instructions),
     dueDate: idOf(value.dueDate),
     maxScore: Number(value.maxMarks ?? value.maxScore ?? 0),
-    status: ["SUBMITTED", "GRADED", "OVERDUE"].includes(status)
+    status: ["PENDING", "SUBMITTED", "GRADED", "OVERDUE"].includes(status)
       ? (status as Assignment["status"])
-      : "PENDING",
-    priority: "MEDIUM",
+      : "UNKNOWN",
+    priority: value.priority
+      ? (String(value.priority).toUpperCase() as Assignment["priority"])
+      : "UNKNOWN",
     submittedDate: value.submittedAt,
     grade: value.marks,
     feedback: value.feedback,
@@ -341,7 +343,16 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
   );
   const courseMap = new Map(courses.map((course) => [course.id, course]));
 
-  const assignments = (
+  let mySubmissions: JsonRecord[] = [];
+  try {
+    mySubmissions = listOf<JsonRecord>(await apiRequest<unknown>("/api/v1/submissions/my"));
+  } catch {
+    // Assignment records remain visible when the submission projection is unavailable.
+  }
+  const submissionsByAssignment = new Map(
+    mySubmissions.map((submission) => [idOf(submission.assignmentId), submission]),
+  );
+  const assignmentShells = (
     await Promise.all(
       courses
         .filter((course) => course.enrolled)
@@ -355,6 +366,70 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
         }),
     )
   ).flat();
+  const assignments = await Promise.all(
+    assignmentShells.map(async (assignment) => {
+      const course = courseMap.get(assignment.courseId);
+      let detail: JsonRecord = {};
+      let attachments: JsonRecord[] = [];
+      try {
+        detail =
+          dataOf<JsonRecord>(
+            await apiRequest<JsonRecord>(`/api/v1/assignments/${assignment.id}`),
+          ) || {};
+      } catch {
+        // Keep the course-scoped assignment when detail retrieval is unavailable.
+      }
+      try {
+        attachments = listOf<JsonRecord>(
+          await apiRequest<unknown>(`/api/v1/assignments/${assignment.id}/attachments`),
+        );
+      } catch {
+        // Attachments are optional and do not block assignment details.
+      }
+      const submission = submissionsByAssignment.get(assignment.id);
+      let submittedFiles: JsonRecord[] = [];
+      if (submission?.id) {
+        try {
+          submittedFiles = listOf<JsonRecord>(
+            await apiRequest<unknown>(`/api/v1/submissions/${idOf(submission.id)}/files`),
+          );
+        } catch {
+          // File metadata is optional when the submission is still processing.
+        }
+      }
+      const mapped = toAssignment({ ...detail, ...submission }, course);
+      const merged: Assignment = { ...assignment };
+      Object.entries(mapped).forEach(([key, value]) => {
+        if (
+          value !== "" &&
+          value !== undefined &&
+          value !== null &&
+          value !== "UNKNOWN" &&
+          !(Array.isArray(value) && value.length === 0)
+        ) {
+          (merged as unknown as JsonRecord)[key] = value;
+        }
+      });
+      return {
+        ...merged,
+        attachments: attachments.length
+          ? attachments.map((item) => ({
+              id: idOf(item.id || item.attachmentId),
+              name: idOf(item.originalFilename || item.name),
+              size: idOf(item.fileSize || item.size),
+              url: item.downloadUrl,
+            }))
+          : assignment.attachments,
+        submittedFiles: submittedFiles.length
+          ? submittedFiles.map((item) => ({
+              name: idOf(item.originalFilename || item.name),
+              size: idOf(item.fileSize || item.size),
+              uploadedAt: idOf(item.createdAt),
+            }))
+          : assignment.submittedFiles,
+      };
+    }),
+  );
 
   const quizzes = (
     await Promise.all(
@@ -509,6 +584,47 @@ export async function uploadSubmissionFile(submissionId: string, file: File) {
 export async function finalizeAssignmentSubmission(submissionId: string) {
   return apiRequest<ApiEnvelope<JsonRecord>>(`/api/v1/submissions/${submissionId}/submit`, {
     method: "POST",
+  });
+}
+
+export async function updateAssignmentSubmission(submissionId: string, content: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/v1/submissions/${submissionId}`, {
+    method: "PUT",
+    body: { content },
+  });
+}
+
+export async function listMySubmissions() {
+  return apiRequest<unknown>("/api/v1/submissions/my");
+}
+
+export async function listAssignmentAttachments(assignmentId: string) {
+  return apiRequest<unknown>(`/api/v1/assignments/${assignmentId}/attachments`);
+}
+
+export async function downloadAssignmentAttachment(assignmentId: string, attachmentId: string) {
+  return apiRequest<unknown>(
+    `/api/v1/assignments/${assignmentId}/attachments/${attachmentId}/download`,
+  );
+}
+
+export async function deleteAssignmentAttachment(assignmentId: string, attachmentId: string) {
+  return apiRequest<unknown>(`/api/v1/assignments/${assignmentId}/attachments/${attachmentId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listSubmissionFiles(submissionId: string) {
+  return apiRequest<unknown>(`/api/v1/submissions/${submissionId}/files`);
+}
+
+export async function downloadSubmissionFile(submissionId: string, fileId: string) {
+  return apiRequest<unknown>(`/api/v1/submissions/${submissionId}/files/${fileId}/download`);
+}
+
+export async function deleteSubmissionFile(submissionId: string, fileId: string) {
+  return apiRequest<unknown>(`/api/v1/submissions/${submissionId}/files/${fileId}`, {
+    method: "DELETE",
   });
 }
 

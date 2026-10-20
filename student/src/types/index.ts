@@ -122,8 +122,8 @@ export interface Assignment {
   instructions: string;
   dueDate: string;
   maxScore: number;
-  status: "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE";
-  priority: "HIGH" | "MEDIUM" | "LOW";
+  status: "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE" | "UNKNOWN";
+  priority: "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
   submittedDate?: string;
   grade?: number;
   letterGrade?: string;
@@ -134,6 +134,7 @@ export interface Assignment {
     description: string;
   }[];
   attachments?: {
+    id?: string;
     name: string;
     size: string;
     url?: string;
