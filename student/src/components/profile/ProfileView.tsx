@@ -27,7 +27,7 @@ export const ProfileView: React.FC = () => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(formData);
+    void updateProfile(formData);
     setIsEditing(false);
   };
 
@@ -185,18 +185,20 @@ export const ProfileView: React.FC = () => {
           <div className="text-xs space-y-2 pt-2">
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Anticipated Graduation:</span>
-              <span className="font-bold text-slate-900 dark:text-white">May 2027</span>
+              <span className="font-bold text-slate-900 dark:text-white">Not available</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Cumulative GPA:</span>
               <span className="font-bold font-mono text-emerald-600">
-                {profile.currentGpa.toFixed(2)}
+                {profile.currentGpa ? profile.currentGpa.toFixed(2) : "—"}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Degree Requirements:</span>
               <span className="font-bold text-slate-900 dark:text-white">
-                {profile.creditsCompleted} of {profile.totalCreditsRequired} Credits Completed
+                {profile.totalCreditsRequired
+                  ? `${profile.creditsCompleted} of ${profile.totalCreditsRequired} Credits Completed`
+                  : "Not available"}
               </span>
             </div>
           </div>

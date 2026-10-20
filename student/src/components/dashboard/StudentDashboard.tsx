@@ -88,17 +88,28 @@ export const StudentDashboard: React.FC = () => {
       })),
   ];
 
-  // Weekly study hours data
-  const studyHours = [
-    { day: "Mon", hours: 4.2 },
-    { day: "Tue", hours: 5.8 },
-    { day: "Wed", hours: 3.5 },
-    { day: "Thu", hours: 6.2 },
-    { day: "Fri", hours: 4.0 },
-    { day: "Sat", hours: 2.5 },
-    { day: "Sun", hours: 3.8 },
-  ];
-  const maxHours = 7;
+  const recentActivity = [
+    ...assignments
+      .filter((assignment) => assignment.submittedDate)
+      .map((assignment) => ({
+        id: `assignment-${assignment.id}`,
+        title: "Assignment Submitted",
+        detail: `${assignment.courseCode || assignment.courseTitle}: ${assignment.title}`,
+        date: assignment.submittedDate || "",
+        icon: "assignment" as const,
+      })),
+    ...assignments
+      .filter((assignment) => assignment.status === "GRADED" && assignment.grade !== undefined)
+      .map((assignment) => ({
+        id: `grade-${assignment.id}`,
+        title: "Assignment Graded",
+        detail: `${assignment.courseCode || assignment.courseTitle}: ${assignment.title}`,
+        date: assignment.submittedDate || "",
+        icon: "grade" as const,
+      })),
+  ]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
 
   return (
     <div className="space-y-8 pb-12">
@@ -106,11 +117,30 @@ export const StudentDashboard: React.FC = () => {
       <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 p-6 text-white shadow-sm dark:border-indigo-950 sm:p-8">
         <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="space-y-2 max-w-xl">
-            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
+            <div className="hidden">
               <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
-              <span>Fall Semester 2026 · Week 8</span>
-              <span className="text-indigo-400">·</span>
-              <span>Degree Progress: 81%</span>
+              <span>{profile.semester || "Current semester"}</span>
+              {profile.totalCreditsRequired > 0 && (
+                <>
+                  <span className="text-indigo-400">·</span>
+                  <span>
+                    Degree Progress:{" "}
+                    {Math.round((profile.creditsCompleted / profile.totalCreditsRequired) * 100)}%
+                  </span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-indigo-300">
+              <span>{profile.semester || "Current semester"}</span>
+              {profile.totalCreditsRequired > 0 && (
+                <>
+                  <span className="text-indigo-400">·</span>
+                  <span>
+                    Degree Progress:{" "}
+                    {Math.round((profile.creditsCompleted / profile.totalCreditsRequired) * 100)}%
+                  </span>
+                </>
+              )}
             </div>
             <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
               Good morning, {profile.name.split(" ")[0]}!
@@ -122,7 +152,7 @@ export const StudentDashboard: React.FC = () => {
               </span>{" "}
               due this week and{" "}
               <span className="font-semibold text-white">
-                {upcomingExams.length} upcoming midterm
+                {upcomingExams.length} upcoming exam{upcomingExams.length === 1 ? "" : "s"}
               </span>
               .
             </p>
@@ -216,7 +246,9 @@ export const StudentDashboard: React.FC = () => {
             </span>
             <span className="text-[11px] text-slate-500">scheduled</span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">CS 301 Midterm</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {upcomingExams.length ? "Scheduled exams" : "No scheduled exams"}
+          </p>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
@@ -230,7 +262,9 @@ export const StudentDashboard: React.FC = () => {
             </span>
             <span className="text-[11px] text-slate-500">done</span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">+4 this week</p>
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            From your course progress
+          </p>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
@@ -354,7 +388,7 @@ export const StudentDashboard: React.FC = () => {
                     Next Up
                   </span>
                   <p className="mt-0.5 text-xs font-medium text-slate-800 dark:text-slate-200 line-clamp-1">
-                    {course.lastAccessedLessonTitle || "Module 1: Introduction"}
+                    {course.lastAccessedLessonTitle || "No lesson progress recorded"}
                   </p>
                 </div>
               </div>
@@ -446,53 +480,14 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Weekly Study Activity Chart */}
-        <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div>
-            <div className="flex items-center justify-between">
-              <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-                Study Velocity
-              </h2>
-              <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                29.8 hrs total
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Weekly active learning time
-            </p>
-
-            {/* Bar Chart */}
-            <div className="mt-6 flex h-40 items-end justify-between gap-2 border-b border-slate-100 pb-2 dark:border-slate-800">
-              {studyHours.map((s) => {
-                const heightPct = (s.hours / maxHours) * 100;
-                return (
-                  <div
-                    key={s.day}
-                    className="group relative flex flex-1 flex-col items-center gap-1"
-                  >
-                    {/* Tooltip */}
-                    <div className="pointer-events-none absolute -top-8 rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-mono text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                      {s.hours}h
-                    </div>
-                    <div className="w-full rounded-t-md bg-indigo-100 dark:bg-indigo-950/60 overflow-hidden h-32 flex items-end">
-                      <div
-                        className="w-full rounded-t-md bg-indigo-600 group-hover:bg-indigo-500 transition-all duration-300"
-                        style={{ height: `${heightPct}%` }}
-                      />
-                    </div>
-                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                      {s.day}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-lg bg-indigo-50/60 p-3 text-xs text-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200">
-            <span className="font-semibold">Optimal Momentum:</span> You are pacing 18% above your
-            target course completion velocity for midterms.
-          </div>
+        {/* Study Activity */}
+        <div className="flex flex-col justify-center rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
+            Study Activity
+          </h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Study-time analytics are not available for your account yet.
+          </p>
         </div>
       </div>
 
@@ -527,20 +522,16 @@ export const StudentDashboard: React.FC = () => {
           <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {[
               {
-                label: "Explain why scaling by 1/sqrt(d_k) is required in Transformers",
-                course: "CS 440",
+                label: "Help me understand a difficult topic",
               },
               {
-                label: "Prove Fibonacci heap decrease-key amortized O(1) bound",
-                course: "CS 301",
+                label: "Help me prepare for my next assessment",
               },
               {
-                label: "How does Raft resolve concurrent split votes in elections?",
-                course: "CS 325",
+                label: "Summarize my current course material",
               },
               {
-                label: "Quiz me with 3 practice questions on Graph Algorithms",
-                course: "CS 301",
+                label: "Create practice questions for me",
               },
             ].map((prompt) => (
               <button
@@ -552,9 +543,6 @@ export const StudentDashboard: React.FC = () => {
                 className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-left transition-all hover:border-indigo-300 hover:bg-indigo-50/40 dark:border-slate-800 dark:bg-slate-800/80 dark:hover:border-indigo-700"
               >
                 <div className="min-w-0 pr-2">
-                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
-                    {prompt.course}
-                  </span>
                   <p className="text-xs font-medium text-slate-800 dark:text-slate-200 line-clamp-1">
                     {prompt.label}
                   </p>
@@ -612,44 +600,35 @@ export const StudentDashboard: React.FC = () => {
         <h2 className="font-display text-base font-bold text-slate-900 dark:text-white mb-4">
           Recent Learning Activity
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-start gap-3 rounded-lg border border-slate-100 p-3 dark:border-slate-800">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                Completed Lesson 3.1
-              </p>
-              <p className="text-[11px] text-slate-500">
-                CS 301: Priority Queues & Min-Heap Foundations
-              </p>
-              <span className="text-[10px] text-slate-400 mt-1 block">Completed yesterday</span>
-            </div>
+        {recentActivity.length ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {recentActivity.map((activity) => (
+              <div
+                key={activity.id}
+                className="flex items-start gap-3 rounded-lg border border-slate-100 p-3 dark:border-slate-800"
+              >
+                {activity.icon === "assignment" ? (
+                  <FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
+                ) : (
+                  <Award className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                    {activity.title}
+                  </p>
+                  <p className="truncate text-[11px] text-slate-500">{activity.detail}</p>
+                  <span className="mt-1 block text-[10px] text-slate-400">
+                    {new Date(activity.date).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="flex items-start gap-3 rounded-lg border border-slate-100 p-3 dark:border-slate-800">
-            <FileCheck2 className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                Assignment Submitted
-              </p>
-              <p className="text-[11px] text-slate-500">CS 325: Raft Consensus Election Protocol</p>
-              <span className="text-[10px] text-slate-400 mt-1 block">Submitted Oct 16</span>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 rounded-lg border border-slate-100 p-3 dark:border-slate-800">
-            <Award className="h-5 w-5 text-violet-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                Grade Published: 98/100 (A+)
-              </p>
-              <p className="text-[11px] text-slate-500">
-                DES 210: Milestone 2 Design Tokens System
-              </p>
-              <span className="text-[10px] text-slate-400 mt-1 block">
-                Feedback published Oct 14
-              </span>
-            </div>
-          </div>
-        </div>
+        ) : (
+          <p className="py-6 text-center text-xs text-slate-500">
+            No recent learning activity is available.
+          </p>
+        )}
       </div>
     </div>
   );

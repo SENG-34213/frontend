@@ -102,7 +102,7 @@ export interface Course {
   lastAccessedLessonId?: string;
   lastAccessedLessonTitle?: string;
   credits: number;
-  level: "Beginner" | "Intermediate" | "Advanced";
+  level: string;
   modules: CourseModule[];
   schedule: string;
   room: string;
@@ -169,7 +169,7 @@ export interface Quiz {
   durationMinutes: number;
   questionsCount: number;
   totalPoints: number;
-  status: "AVAILABLE" | "UPCOMING" | "COMPLETED" | "IN_PROGRESS";
+  status: "AVAILABLE" | "UPCOMING" | "COMPLETED" | "IN_PROGRESS" | "UNKNOWN";
   dueDate: string;
   attemptsAllowed?: number;
   attemptsUsed?: number;
@@ -190,7 +190,7 @@ export interface Examination {
   durationMinutes: number;
   location: string;
   proctorName: string;
-  status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
+  status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED" | "UNKNOWN";
   totalMarks: number;
   weightPercentage: number;
   rules: string[];

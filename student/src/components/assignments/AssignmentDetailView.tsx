@@ -25,6 +25,14 @@ export const AssignmentDetailView: React.FC = () => {
 
   const assignment = assignments.find((a) => a.id === selectedAssignmentId) || assignments[0];
 
+  if (!assignment) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
+        Assignment details are not available yet.
+      </div>
+    );
+  }
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     const nextFiles = files.map((file) => ({
@@ -253,7 +261,7 @@ export const AssignmentDetailView: React.FC = () => {
                     Click to add code package or PDF report
                   </p>
                   <p className="text-[10px] text-slate-400 mt-1">
-                    Accepts .zip, .tar.gz, .py, .pdf, .json (max 50MB)
+                    Select a file to attach to your submission.
                   </p>
                 </label>
 

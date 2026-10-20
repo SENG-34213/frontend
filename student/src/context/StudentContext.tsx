@@ -39,13 +39,14 @@ import {
   getMaterialDownload,
   toProfile,
   uploadSubmissionFile,
+  updateCurrentStudentProfile,
 } from "../api/student";
 
 interface StudentContextType {
   currentView: StudentView;
   setCurrentView: (view: StudentView) => void;
   profile: StudentProfile;
-  updateProfile: (updates: Partial<StudentProfile>) => void;
+  updateProfile: (updates: Partial<StudentProfile>) => Promise<void>;
   courses: Course[];
   selectedCourseId: string;
   setSelectedCourseId: (id: string) => void;
@@ -180,7 +181,7 @@ export const StudentProvider: React.FC<{
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messagePages, setMessagePages] = useState<Record<string, number>>({});
-  const [announcements] = useState<Announcement[]>([]);
+  const announcements: Announcement[] = [];
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [attendanceSummaries, setAttendanceSummaries] = useState<AttendanceSummary[]>([]);
@@ -228,25 +229,27 @@ export const StudentProvider: React.FC<{
     selectedLessonId,
     selectedQuizId,
   ]);
-  useEffect(() => {
+  const refreshWorkspace = useCallback(async () => {
     if (!authUser) return;
+    const workspace = await loadStudentWorkspace(authUser);
+    setProfile(workspace.profile);
+    setCourses(workspace.courses);
+    setAssignments(workspace.assignments);
+    setQuizzes(workspace.quizzes);
+    setExaminations(workspace.examinations);
+    setMaterials(workspace.materials);
+    setCalendarEvents(workspace.calendarEvents);
+    setNotifications(workspace.notifications);
+    setUnreadNotificationCount(workspace.unreadNotificationCount);
+    setAttendanceSummaries(workspace.attendanceSummaries);
+    setConversations(workspace.conversations);
+    setMessagePages({});
+  }, [authUser]);
+
+  useEffect(() => {
     let active = true;
-    loadStudentWorkspace(authUser)
-      .then((workspace) => {
-        if (!active) return;
-        setProfile(workspace.profile);
-        setCourses(workspace.courses);
-        setAssignments(workspace.assignments);
-        setQuizzes(workspace.quizzes);
-        setExaminations(workspace.examinations);
-        setMaterials(workspace.materials);
-        setCalendarEvents(workspace.calendarEvents);
-        setNotifications(workspace.notifications);
-        setUnreadNotificationCount(workspace.unreadNotificationCount);
-        setAttendanceSummaries(workspace.attendanceSummaries);
-        setConversations(workspace.conversations);
-        setMessagePages({});
-      })
+    Promise.resolve()
+      .then(() => refreshWorkspace())
       .catch((error) => {
         if (active)
           showToast(error instanceof Error ? error.message : "Could not load student data.");
@@ -254,10 +257,21 @@ export const StudentProvider: React.FC<{
     return () => {
       active = false;
     };
-  }, [authUser]);
-  const updateProfile = (updates: Partial<StudentProfile>) => {
-    setProfile((current) => ({ ...current, ...updates }));
-    showToast("Profile changes are local until the profile update API is enabled.");
+  }, [refreshWorkspace]);
+  const updateProfile = async (updates: Partial<StudentProfile>) => {
+    try {
+      const [firstName, ...lastNameParts] = updates.name?.trim().split(/\s+/) || [];
+      await updateCurrentStudentProfile({
+        firstName,
+        lastName: lastNameParts.join(" ") || undefined,
+        phoneNumber: updates.phone || undefined,
+        bio: updates.bio || undefined,
+      });
+      await refreshWorkspace();
+      showToast("Profile updated successfully.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Profile update failed.");
+    }
   };
   const enrollInCourse = async (courseId: string) => {
     try {
@@ -273,13 +287,7 @@ export const StudentProvider: React.FC<{
               ? "PENDING"
               : "ACTIVE";
       if (status === "PAYMENT_REQUIRED") await startCoursePayment(courseId);
-      setCourses((current) =>
-        current.map((course) =>
-          course.id === courseId
-            ? { ...course, enrolled: status !== "REJECTED", enrollmentStatus: status }
-            : course,
-        ),
-      );
+      await refreshWorkspace();
       showToast(
         status === "PAYMENT_REQUIRED"
           ? "Payment is required to complete enrollment."
@@ -296,32 +304,11 @@ export const StudentProvider: React.FC<{
   const markLessonComplete = async (courseId: string, lessonId: string, complete = true) => {
     try {
       await markLesson(courseId, lessonId, complete);
+      await refreshWorkspace();
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Could not update lesson progress.");
       return;
     }
-    setCourses((current) =>
-      current.map((course) => {
-        if (course.id !== courseId) return course;
-        let total = 0;
-        let done = 0;
-        const modules = course.modules.map((module) => ({
-          ...module,
-          lessons: module.lessons.map((lesson) => {
-            const completed = lesson.id === lessonId ? complete : lesson.completed;
-            total += 1;
-            if (completed) done += 1;
-            return lesson.id === lessonId ? { ...lesson, completed } : lesson;
-          }),
-        }));
-        return {
-          ...course,
-          modules,
-          progressPercentage: total ? Math.round((done / total) * 100) : course.progressPercentage,
-          lastAccessedLessonId: lessonId,
-        };
-      }),
-    );
     showToast(complete ? "Lesson marked as complete!" : "Lesson status updated.");
   };
   const submitAssignment = async (
@@ -336,19 +323,7 @@ export const StudentProvider: React.FC<{
       if (!submissionId) throw new Error("The backend did not return a submission id.");
       for (const item of files) if (item.file) await uploadSubmissionFile(submissionId, item.file);
       await finalizeAssignmentSubmission(submissionId);
-      setAssignments((current) =>
-        current.map((assignment) =>
-          assignment.id === assignmentId
-            ? {
-                ...assignment,
-                status: "SUBMITTED",
-                submissionText,
-                submittedFiles: files,
-                submittedDate: new Date().toISOString(),
-              }
-            : assignment,
-        ),
-      );
+      await refreshWorkspace();
       showToast("Assignment submitted successfully.");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Assignment submission failed.");
@@ -373,9 +348,7 @@ export const StudentProvider: React.FC<{
     if (!attemptId) throw new Error("The backend did not return a quiz attempt id.");
     const attempt = { attemptId, startedAt: response.data?.startedAt };
     window.localStorage.setItem(storageKey, JSON.stringify(attempt));
-    setQuizzes((current) =>
-      current.map((item) => (item.id === quizId ? { ...item, status: "IN_PROGRESS" } : item)),
-    );
+    await refreshWorkspace();
     return attempt;
   };
   const saveQuizAnswer = async (
@@ -394,13 +367,7 @@ export const StudentProvider: React.FC<{
     const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
     window.localStorage.removeItem(storageKey);
     window.localStorage.removeItem(`student:quiz-answers:${attemptId}`);
-    setQuizzes((current) =>
-      current.map((item) =>
-        item.id === quizId
-          ? { ...item, status: "COMPLETED", lastScore: score, lastScorePercentage: percentage }
-          : item,
-      ),
-    );
+    await refreshWorkspace();
     showToast(`Quiz completed: ${score}/${maxScore} (${percentage}%).`);
     return { score, maxScore, percentage, passed: Boolean(result.passed) };
   };

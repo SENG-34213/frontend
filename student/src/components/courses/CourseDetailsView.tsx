@@ -31,13 +31,16 @@ export const CourseDetailsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "overview" | "curriculum" | "materials" | "assignments" | "grades"
   >("overview");
-  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({
-    "mod-1": true,
-    "mod-2": true,
-    "mod-3": true,
-  });
+  const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
   const course = courses.find((c) => c.id === selectedCourseId) || courses[0];
+  if (!course) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
+        Course details are not available yet.
+      </div>
+    );
+  }
   const courseAssignments = assignments.filter((a) => a.courseId === course.id);
   const courseMaterials = materials.filter((m) => m.courseId === course.id);
 
@@ -228,16 +231,6 @@ export const CourseDetailsView: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-5 dark:border-indigo-950 dark:bg-indigo-950/40">
-              <h4 className="font-display text-xs font-bold text-indigo-950 dark:text-indigo-200">
-                Academic Office Hours
-              </h4>
-              <p className="mt-1 text-xs text-indigo-800 dark:text-indigo-300 leading-relaxed">
-                TAs hold daily lab consulting sessions in Turing Hall 104 and via Mentify Virtual
-                Rooms every afternoon.
-              </p>
-            </div>
           </div>
         </div>
       )}
@@ -397,8 +390,9 @@ export const CourseDetailsView: React.FC = () => {
               Academic Performance in {course.code}
             </h3>
             <span className="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-              Grade: {course.currentGrade || "In Progress"} ({course.currentScorePercentage || 94.2}
-              %)
+              Grade: {course.currentGrade || "Not recorded"}
+              {course.currentScorePercentage !== undefined &&
+                ` (${course.currentScorePercentage}%)`}
             </span>
           </div>
           <p className="text-xs text-slate-500">

@@ -97,7 +97,7 @@ function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
     lastAccessedLessonId: idOf(value.lastAccessedLessonId),
     lastAccessedLessonTitle: idOf(value.lastAccessedLessonTitle),
     credits: Number(value.credits ?? value.creditCount ?? 0),
-    level: value.level || "Intermediate",
+    level: idOf(value.level),
     modules: [],
     schedule: idOf(value.schedule),
     room: idOf(value.room),
@@ -130,7 +130,19 @@ function toEnrollment(value: JsonRecord): StudentEnrollmentState {
 }
 
 function toAssignment(value: JsonRecord, course?: Course): Assignment {
-  const status = String(value.status || "UNKNOWN").toUpperCase();
+  const submissionStatus = String(value.submissionStatus || "").toUpperCase();
+  const assignmentStatus = String(value.assignmentStatus || value.status || "").toUpperCase();
+  const status = submissionStatus || assignmentStatus || "UNKNOWN";
+  const mappedStatus =
+    status === "DRAFT" || status === "PUBLISHED" || status === "ASSIGNED"
+      ? "PENDING"
+      : status === "UNDER_REVIEW"
+        ? "SUBMITTED"
+        : status === "RETURNED"
+          ? "GRADED"
+          : ["PENDING", "SUBMITTED", "GRADED", "OVERDUE"].includes(status)
+            ? status
+            : "UNKNOWN";
   return {
     id: idOf(value.id),
     courseId: idOf(value.courseId),
@@ -141,9 +153,7 @@ function toAssignment(value: JsonRecord, course?: Course): Assignment {
     instructions: idOf(value.instructions),
     dueDate: idOf(value.dueDate),
     maxScore: Number(value.maxMarks ?? value.maxScore ?? 0),
-    status: ["PENDING", "SUBMITTED", "GRADED", "OVERDUE"].includes(status)
-      ? (status as Assignment["status"])
-      : "UNKNOWN",
+    status: mappedStatus as Assignment["status"],
     priority: value.priority
       ? (String(value.priority).toUpperCase() as Assignment["priority"])
       : "UNKNOWN",
@@ -209,7 +219,11 @@ function toQuiz(value: JsonRecord, course?: Course): Quiz {
     durationMinutes: Number(value.durationMinutes ?? 0),
     questionsCount: questions.length,
     totalPoints: Number(value.totalMarks ?? 0),
-    status: "AVAILABLE",
+    status: ["AVAILABLE", "UPCOMING", "COMPLETED", "IN_PROGRESS"].includes(
+      String(value.status).toUpperCase(),
+    )
+      ? (String(value.status).toUpperCase() as Quiz["status"])
+      : "UNKNOWN",
     dueDate: endTime,
     attemptsAllowed: Number(value.maxAttempts ?? 0),
     questions,
@@ -298,6 +312,43 @@ function toAttendanceSummary(value: JsonRecord): AttendanceSummary {
   };
 }
 
+function toExamination(value: JsonRecord): Examination {
+  const startTime = idOf(value.startTime);
+  const endTime = idOf(value.endTime);
+  const startMinutes = startTime ? timeToMinutes(startTime) : 0;
+  const endMinutes = endTime ? timeToMinutes(endTime) : 0;
+  const durationMinutes = endMinutes > startMinutes ? endMinutes - startMinutes : 0;
+  const rawStatus = String(value.status || value.examStatus || "UNKNOWN").toUpperCase();
+  return {
+    id: idOf(value.examId || value.id),
+    courseId: idOf(value.courseId),
+    courseCode: "",
+    courseTitle: "",
+    title: idOf(value.title),
+    type: ["MIDTERM", "FINAL", "COMPREHENSIVE"].includes(String(value.type).toUpperCase())
+      ? (String(value.type).toUpperCase() as Examination["type"])
+      : "FINAL",
+    scheduledDate: idOf(value.examDate),
+    startTime,
+    durationMinutes,
+    location: idOf(value.location),
+    proctorName: idOf(value.proctorName),
+    status: ["UPCOMING", "IN_PROGRESS", "COMPLETED"].includes(rawStatus)
+      ? (rawStatus as Examination["status"])
+      : "UNKNOWN",
+    totalMarks: Number(value.totalMarks ?? 0),
+    weightPercentage: Number(value.weightPercentage ?? 0),
+    rules: [],
+    score: value.marksObtained,
+    letterGrade: value.grade,
+  };
+}
+
+function timeToMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return Number.isFinite(hours) && Number.isFinite(minutes) ? hours * 60 + minutes : 0;
+}
+
 export function toCommunicationMessage(value: JsonRecord, studentId: string): Message {
   return {
     id: idOf(value.id),
@@ -351,6 +402,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     notificationResponse,
     unreadNotificationResponse,
     examResponse,
+    upcomingExamResponse,
   ] = await Promise.allSettled([
     apiRequest<unknown>("/api/v1/course"),
     apiRequest<unknown>(`/api/v1/enrollments/students/${studentId}/courses`),
@@ -359,6 +411,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     apiRequest<unknown>("/api/v1/notifications?size=100"),
     apiRequest<unknown>("/api/v1/notifications/unread-count"),
     apiRequest<unknown>("/api/v1/exams/me"),
+    apiRequest<unknown>("/api/v1/exams/me/upcoming"),
   ]);
 
   const enrollments =
@@ -472,20 +525,15 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
   const submissionsByAssignment = new Map(
     mySubmissions.map((submission) => [idOf(submission.assignmentId), submission]),
   );
-  const assignmentShells = (
-    await Promise.all(
-      courses
-        .filter((course) => course.enrolled)
-        .map(async (course) => {
-          try {
-            const response = await apiRequest<unknown>(`/api/v1/courses/${course.id}/assignments`);
-            return listOf<JsonRecord>(response).map((item) => toAssignment(item, course));
-          } catch {
-            return [];
-          }
-        }),
-    )
-  ).flat();
+  let assignmentShells: Assignment[] = [];
+  try {
+    const response = await apiRequest<unknown>("/api/v1/assignments/me?size=100");
+    assignmentShells = listOf<JsonRecord>(response).map((item) =>
+      toAssignment(item, courseMap.get(idOf(item.courseId))),
+    );
+  } catch {
+    assignmentShells = [];
+  }
   const assignments = await Promise.all(
     assignmentShells.map(async (assignment) => {
       const course = courseMap.get(assignment.courseId);
@@ -632,31 +680,21 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     quizzes,
     attendanceSummaries,
     conversations,
-    examinations:
-      examResponse.status === "fulfilled"
-        ? listOf<JsonRecord>(examResponse.value).map(
-            (item) =>
-              ({
-                id: idOf(item.examId || item.id),
-                courseId: idOf(item.courseId),
-                courseCode: "",
-                courseTitle: "",
-                title: idOf(item.title),
-                type: item.type || "FINAL",
-                scheduledDate: idOf(item.examDate),
-                startTime: "",
-                durationMinutes: 0,
-                location: "",
-                proctorName: "",
-                status: item.examStatus === "COMPLETED" ? "COMPLETED" : "UPCOMING",
-                totalMarks: Number(item.totalMarks ?? 0),
-                weightPercentage: 0,
-                rules: [],
-                score: item.marksObtained,
-                letterGrade: item.grade,
-              }) satisfies Examination,
-          )
-        : [],
+    examinations: Array.from(
+      new Map(
+        [
+          ...(examResponse.status === "fulfilled"
+            ? listOf<JsonRecord>(examResponse.value).map(toExamination)
+            : []),
+          ...(upcomingExamResponse.status === "fulfilled"
+            ? listOf<JsonRecord>(upcomingExamResponse.value).map(toExamination)
+            : []),
+        ].map((exam) => [exam.id, exam] as const),
+      ).values(),
+    ).map((exam) => {
+      const course = courseMap.get(exam.courseId);
+      return { ...exam, courseCode: course?.code || "", courseTitle: course?.title || "" };
+    }),
     materials: [
       ...courseScopedMaterials,
       ...(materialResponse.status === "fulfilled"
@@ -749,7 +787,10 @@ export async function createAssignmentSubmission(assignmentId: string, content: 
 export async function uploadSubmissionFile(submissionId: string, file: File) {
   const form = new FormData();
   form.append("file", file);
-  return apiUpload<ApiEnvelope<JsonRecord>>(`/api/v1/submissions/${submissionId}/files`, form);
+  return apiUpload<ApiEnvelope<JsonRecord>>(
+    `/api/v1/submissions/${submissionId}/files/upload`,
+    form,
+  );
 }
 
 export async function finalizeAssignmentSubmission(submissionId: string) {
@@ -840,11 +881,20 @@ export async function getMaterialDownload(materialId: string) {
   return apiRequest<ApiEnvelope<JsonRecord>>(`/api/v1/materials/${materialId}/download`);
 }
 
-export async function markLesson(courseId: string, lessonId: string, complete: boolean) {
-  return apiRequest<unknown>(`/api/v1/progress/courses/${courseId}/lessons/${lessonId}`, {
+export async function markLesson(_courseId: string, lessonId: string, complete: boolean) {
+  return apiRequest<unknown>(`/api/v1/progress/lessons/${lessonId}`, {
     method: "PUT",
     body: { completed: complete },
   });
+}
+
+export async function updateCurrentStudentProfile(updates: {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  bio?: string;
+}) {
+  return apiRequest<unknown>("/api/v1/users/me", { method: "PATCH", body: updates });
 }
 
 export async function markNotificationRead(id: string) {

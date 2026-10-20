@@ -23,12 +23,7 @@ export const ExploreCoursesView: React.FC = () => {
 
   const categories = [
     "All",
-    "Computer Science",
-    "Artificial Intelligence",
-    "Robotics",
-    "Bioinformatics",
-    "Human-Computer Interaction",
-    "Cybersecurity",
+    ...Array.from(new Set(courses.map((course) => course.category).filter(Boolean))).sort(),
   ];
 
   // All courses available in the institutional catalog
@@ -43,7 +38,7 @@ export const ExploreCoursesView: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const featuredCourse = courses.find((c) => c.code === "CS 480") || courses[0];
+  const featuredCourse = courses[0];
 
   return (
     <div className="space-y-8 pb-12">
@@ -65,7 +60,7 @@ export const ExploreCoursesView: React.FC = () => {
             <div className="space-y-3 max-w-xl">
               <div className="flex items-center gap-2">
                 <span className="rounded bg-indigo-500/30 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-indigo-300">
-                  Featured Elective · Fall 2026
+                  Featured Course
                 </span>
                 <span className="flex items-center gap-1 text-xs text-amber-300 font-semibold">
                   <Star className="h-3.5 w-3.5 fill-amber-300 text-amber-300" />
@@ -106,7 +101,7 @@ export const ExploreCoursesView: React.FC = () => {
                     className="flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-400 transition-colors"
                   >
                     <GraduationCap className="h-4 w-4" />
-                    <span>Enroll Now (Free with Student Plan)</span>
+                    <span>Enroll Now</span>
                   </button>
                 )}
                 <button
@@ -298,16 +293,6 @@ export const ExploreCoursesView: React.FC = () => {
                   </span>
                   <span className="text-slate-400 block text-[11px]">{previewCourse.room}</span>
                 </div>
-              </div>
-
-              <div>
-                <h4 className="font-display text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-                  Academic Prerequisites & Eligibility
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  Open to all Computer Science, Data Science, and Engineering majors in good
-                  academic standing (GPA &ge; 2.50).
-                </p>
               </div>
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">

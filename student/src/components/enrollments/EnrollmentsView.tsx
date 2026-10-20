@@ -81,15 +81,17 @@ export const EnrollmentsView: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="font-display text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
-              {profile.creditsCompleted}
+              {profile.creditsCompleted || "—"}
             </span>
-            <span className="text-xs text-slate-500">/ {profile.totalCreditsRequired} credits</span>
+            <span className="text-xs text-slate-500">
+              {profile.totalCreditsRequired ? `/ ${profile.totalCreditsRequired} credits` : ""}
+            </span>
           </div>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div
               className="h-full rounded-full bg-emerald-500"
               style={{
-                width: `${(profile.creditsCompleted / profile.totalCreditsRequired) * 100}%`,
+                width: `${profile.totalCreditsRequired ? (profile.creditsCompleted / profile.totalCreditsRequired) * 100 : 0}%`,
               }}
             />
           </div>
@@ -102,7 +104,7 @@ export const EnrollmentsView: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="font-display text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
-              {profile.currentGpa.toFixed(2)}
+              {profile.currentGpa ? profile.currentGpa.toFixed(2) : "—"}
             </span>
             <span className="text-xs text-emerald-600 font-semibold">Distinction</span>
           </div>

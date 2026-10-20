@@ -35,13 +35,20 @@ export const CourseWorkspaceView: React.FC = () => {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const [videoProgress, setVideoProgress] = useState<number>(38);
+  const [videoProgress, setVideoProgress] = useState<number>(0);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAiHelperOpen, setIsAiHelperOpen] = useState(false);
   const [quickAiQuestion, setQuickAiQuestion] = useState("");
 
   const course = courses.find((c) => c.id === selectedCourseId) || courses[0];
+  if (!course) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
+        Course content is not available yet.
+      </div>
+    );
+  }
   const allLessons = course.modules.flatMap((m) => m.lessons);
   const currentLessonIndex = allLessons.findIndex((l) => l.id === selectedLessonId);
   const currentLesson = allLessons[currentLessonIndex] || allLessons[0];
