@@ -86,7 +86,7 @@ function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
     category: idOf(value.subject || value.category),
     description: idOf(value.courseDescription || value.description),
     instructor: toTeacher(value.instructor || value.teacher),
-    bannerColor: "from-indigo-600 to-indigo-900",
+    bannerColor: idOf(value.bannerColor),
     coverImage: idOf(value.courseThumbnail || value.coverImage),
     enrolled: enrolledIds.has(id) || Boolean(value.enrolled),
     enrollmentStatus: enrolledIds.has(id) ? "ACTIVE" : "AVAILABLE",
@@ -227,7 +227,36 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
   );
   const rawCourses =
     courseResponse.status === "fulfilled" ? listOf<JsonRecord>(courseResponse.value) : [];
-  const courses = rawCourses.map((course) => toCourse(course, enrolledIds));
+  let enrolledCourses: JsonRecord[] = [];
+  try {
+    enrolledCourses = listOf<JsonRecord>(await apiRequest<unknown>("/api/v1/course/my-courses"));
+  } catch {
+    // The catalog remains usable when the enrolled-course projection is unavailable.
+  }
+  const courseById = new Map<string, JsonRecord>();
+  [...rawCourses, ...enrolledCourses].forEach((course) => {
+    const id = idOf(course.id || course.courseId);
+    if (id) courseById.set(id, { ...(courseById.get(id) || {}), ...course });
+  });
+  const courses = [...courseById.values()].map((course) => toCourse(course, enrolledIds));
+  const courseScopedMaterials: LearningMaterial[] = [];
+  await Promise.all(
+    courses.map(async (course) => {
+      try {
+        const detail = dataOf<JsonRecord>(
+          await apiRequest<JsonRecord>(`/api/v1/course/${course.id}`),
+        );
+        const mapped = toCourse({ ...detail, enrolled: course.enrolled }, enrolledIds);
+        Object.entries(mapped).forEach(([key, value]) => {
+          if (key !== "modules" && value !== "" && value !== undefined && value !== null) {
+            (course as unknown as JsonRecord)[key] = value;
+          }
+        });
+      } catch {
+        // Keep the catalog DTO when a detail record is not available.
+      }
+    }),
+  );
   await Promise.all(
     courses.map(async (course) => {
       try {
@@ -243,7 +272,36 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
                   `/api/v1/course/${course.id}/modules/${result.id}/lessons`,
                 ),
               );
-              result.lessons = lessons.map((lesson) => toLesson(lesson, result.id));
+              result.lessons = await Promise.all(
+                lessons.map(async (lesson) => {
+                  try {
+                    const detail = dataOf<JsonRecord>(
+                      await apiRequest<JsonRecord>(
+                        `/api/v1/course/${course.id}/modules/${result.id}/lessons/${idOf(lesson.id)}`,
+                      ),
+                    );
+                    return toLesson({ ...lesson, ...detail }, result.id);
+                  } catch {
+                    return toLesson(lesson, result.id);
+                  }
+                }),
+              );
+              try {
+                const materials = listOf<JsonRecord>(
+                  await apiRequest<unknown>(
+                    `/api/v1/course/${course.id}/modules/${result.id}/learning-materials`,
+                  ),
+                );
+                courseScopedMaterials.push(
+                  ...materials.map((material) => ({
+                    ...toMaterial({ ...material, courseId: course.id }),
+                    courseCode: course.code,
+                    courseTitle: course.title,
+                  })),
+                );
+              } catch {
+                // Material availability follows the published module state.
+              }
             } catch {
               /* content can be unavailable while a course is being published */
             }
@@ -335,8 +393,9 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
               }) satisfies Examination,
           )
         : [],
-    materials:
-      materialResponse.status === "fulfilled"
+    materials: [
+      ...courseScopedMaterials,
+      ...(materialResponse.status === "fulfilled"
         ? listOf<JsonRecord>(materialResponse.value)
             .map(toMaterial)
             .map((material) => ({
@@ -344,7 +403,8 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
               courseCode: courseMap.get(material.courseId)?.code || "",
               courseTitle: courseMap.get(material.courseId)?.title || "",
             }))
-        : [],
+        : []),
+    ].filter((material, index, all) => all.findIndex((item) => item.id === material.id) === index),
     calendarEvents:
       calendarResponse.status === "fulfilled"
         ? listOf<JsonRecord>(calendarResponse.value).map(toCalendarEvent)

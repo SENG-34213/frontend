@@ -39,6 +39,7 @@ async function refreshSession(): Promise<AuthSession | null> {
   const body = (await readJson(response)) as ApiResponse<LoginResponse> | null;
   if (!response.ok || !body?.data?.accessToken) {
     clearSession();
+    if (typeof window !== "undefined") window.dispatchEvent(new Event("student:session-expired"));
     return null;
   }
 
@@ -97,7 +98,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return responseBody as T;
 }
 
-export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+export async function apiUpload<T>(
+  path: string,
+  formData: FormData,
+  retryOnUnauthorized = true,
+): Promise<T> {
   const accessToken = getAccessToken();
   const headers = new Headers({ Accept: "application/json" });
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
@@ -107,6 +112,9 @@ export async function apiUpload<T>(path: string, formData: FormData): Promise<T>
     body: formData,
   });
   const body = await readJson(response);
+  if (response.status === 401 && retryOnUnauthorized && (await refreshSession())) {
+    return apiUpload<T>(path, formData, false);
+  }
   if (!response.ok)
     throw new ApiError(
       body?.message || `Request failed with status ${response.status}`,

@@ -143,6 +143,12 @@ export default function App() {
       .finally(() => setIsRestoring(false));
   }, []);
 
+  useEffect(() => {
+    const handleExpiredSession = () => setSession(null);
+    window.addEventListener("student:session-expired", handleExpiredSession);
+    return () => window.removeEventListener("student:session-expired", handleExpiredSession);
+  }, []);
+
   if (isRestoring) {
     return (
       <main className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-500">
