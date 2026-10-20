@@ -16,6 +16,7 @@ interface CourseApiResponse {
   discountOfferPercent?: number | null;
   visible?: boolean;
   isPublished?: boolean;
+  published?: boolean;
   courseStatus?: string | null;
   publishedDate?: string | null;
   numberOfStudents?: number;
@@ -54,8 +55,9 @@ export function mapCourseResponse(course: CourseApiResponse): Course {
   const enrollmentCount = Number.isFinite(course.numberOfStudents)
     ? course.numberOfStudents || 0
     : 0;
-  const isPublished = Boolean(course.isPublished);
   const status = course.courseStatus?.toUpperCase();
+  const isPublished =
+    course.isPublished ?? course.published ?? status === "PUBLISHED";
 
   return {
     id: course.id,

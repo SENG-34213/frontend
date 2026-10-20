@@ -57,6 +57,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [createdStudentId, setCreatedStudentId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -97,7 +98,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
     if (step === 1) {
       if (!formData.firstName.trim()) errors.firstName = "First name is required";
       if (!formData.lastName.trim()) errors.lastName = "Last name is required";
-      if (!formData.email.trim() || !formData.email.includes("@"))
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
         errors.email = "Valid institutional or student email is required";
     }
     if (step === 2) {
@@ -124,6 +125,9 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   };
 
   const handleFinalSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setFormErrors({});
     try {
       const createdStudent = await onRegisterStudent(formData);
       onAddStudent(createdStudent);
@@ -133,6 +137,8 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       setFormErrors({
         api: error instanceof Error ? error.message : "Unable to register student.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -155,6 +161,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       postalCode: "95112",
     });
     setFormErrors({});
+    setIsSubmitting(false);
     setCurrentStep(1);
     setIsWizardOpen(false);
   };
@@ -681,10 +688,10 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                    Student Successfully Registered!
+                    Student Registered
                   </h4>
                   <p className="text-xs text-slate-500 mt-1">
-                    The student has been registered and an invitation is ready to be sent.
+                    The student account was created successfully. The invitation email is being sent in the background.
                   </p>
                 </div>
 
@@ -761,11 +768,11 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   </button>
                 ) : (
                   <button
+                    disabled={isSubmitting}
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white flex items-center gap-1.5"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Confirm & Register Student</span>
+                    {isSubmitting ? <span>Registering...</span> : <><CheckCircle2 className="w-4 h-4" /><span>Confirm & Register Student</span></>}
                   </button>
                 )}
               </div>

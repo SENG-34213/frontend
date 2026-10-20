@@ -44,6 +44,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [createdTeacherCode, setCreatedTeacherCode] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -96,7 +97,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
     if (step === 1) {
       if (!formData.firstName.trim()) errors.firstName = "First name is required";
       if (!formData.lastName.trim()) errors.lastName = "Last name is required";
-      if (!formData.email.trim() || !formData.email.includes("@"))
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
         errors.email = "Valid institutional faculty email is required";
     }
     if (step === 2) {
@@ -119,6 +120,9 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   };
 
   const handleFinalSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setFormErrors({});
     try {
       const createdTeacher = await onRegisterTeacher(formData);
       onAddTeacher(createdTeacher);
@@ -128,6 +132,8 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
       setFormErrors({
         api: error instanceof Error ? error.message : "Unable to register teacher.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -147,6 +153,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
       postalCode: "95112",
     });
     setFormErrors({});
+    setIsSubmitting(false);
     setCurrentStep(1);
     setIsWizardOpen(false);
   };
@@ -595,10 +602,10 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                    Teacher Registered Successfully!
+                    Teacher Registered
                   </h4>
                   <p className="text-xs text-slate-500 mt-1">
-                    The teacher has been added and an invitation is ready to be sent.
+                    The teacher account was created successfully. The invitation email is being sent in the background.
                   </p>
                 </div>
 
@@ -668,11 +675,11 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                   </button>
                 ) : (
                   <button
+                    disabled={isSubmitting}
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white flex items-center gap-1.5"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Confirm & Onboard Teacher</span>
+                    {isSubmitting ? <span>Registering...</span> : <><CheckCircle2 className="w-4 h-4" /><span>Confirm & Onboard Teacher</span></>}
                   </button>
                 )}
               </div>

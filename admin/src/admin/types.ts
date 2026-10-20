@@ -91,6 +91,7 @@ export interface CreateCourseRequest {
   isOnline?: boolean;
   isVisible?: boolean;
   isPublished?: boolean;
+  published?: boolean;
   courseEnrollmentId?: string | null;
   courseFeeMonthly?: number;
 }
