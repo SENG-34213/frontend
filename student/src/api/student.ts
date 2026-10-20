@@ -105,6 +105,27 @@ function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
   };
 }
 
+export type StudentEnrollmentState = {
+  id: string;
+  studentId: string;
+  courseIds: string[];
+  status?: string;
+};
+
+function toEnrollment(value: JsonRecord): StudentEnrollmentState {
+  const courseIds = Array.isArray(value.courseIds)
+    ? value.courseIds.map(idOf)
+    : value.courseId
+      ? [idOf(value.courseId)]
+      : [];
+  return {
+    id: idOf(value.id || value.enrollmentId),
+    studentId: idOf(value.studentId),
+    courseIds,
+    status: value.status ? String(value.status).toUpperCase() : undefined,
+  };
+}
+
 function toAssignment(value: JsonRecord, course?: Course): Assignment {
   const status = String(value.status || "PENDING").toUpperCase();
   return {
@@ -220,11 +241,16 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
 
   const enrollments =
     enrollmentResponse.status === "fulfilled" ? listOf<JsonRecord>(enrollmentResponse.value) : [];
-  const enrolledIds = new Set(
-    enrollments.flatMap((item) =>
-      (Array.isArray(item.courseIds) ? item.courseIds : [item.courseId]).filter(Boolean).map(idOf),
-    ),
-  );
+  let enrollmentState: StudentEnrollmentState[] = [];
+  try {
+    enrollmentState = await loadEnrollmentState(studentId);
+  } catch {
+    // The student-scoped enrollment response above remains the safe fallback.
+  }
+  const enrollmentRecords = enrollmentState.length
+    ? enrollmentState
+    : enrollments.map(toEnrollment);
+  const enrolledIds = new Set(enrollmentRecords.flatMap((item) => item.courseIds));
   const rawCourses =
     courseResponse.status === "fulfilled" ? listOf<JsonRecord>(courseResponse.value) : [];
   let enrolledCourses: JsonRecord[] = [];
@@ -417,10 +443,54 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
 }
 
 export async function enrollStudent(courseId: string, studentId: string) {
+  const alreadyEnrolled = await checkEnrollmentExists(studentId, courseId);
+  if (alreadyEnrolled) throw new Error("You are already enrolled in this course.");
   return apiRequest<unknown>("/api/v1/enrollments/me", {
     method: "POST",
     body: { studentId, courseId },
   });
+}
+
+export async function createEnrollment(courseId: string, studentId: string) {
+  return apiRequest<unknown>("/api/v1/enrollments", {
+    method: "POST",
+    body: { studentId, courseId },
+  });
+}
+
+export async function startCoursePayment(courseId: string) {
+  return apiRequest<unknown>("/api/v1/payments/course", {
+    method: "POST",
+    body: { courseId },
+  });
+}
+
+export async function checkEnrollmentExists(studentId: string, courseId: string) {
+  return apiRequest<boolean>(
+    `/api/v1/enrollments/students/${studentId}/courses/${courseId}/exists`,
+  );
+}
+
+export async function loadEnrollmentState(studentId: string) {
+  const [studentCoursesResponse, allEnrollmentsResponse] = await Promise.allSettled([
+    apiRequest<unknown>(`/api/v1/enrollments/students/${studentId}/courses`),
+    apiRequest<unknown>("/api/v1/enrollments"),
+  ]);
+  const studentCourses =
+    studentCoursesResponse.status === "fulfilled"
+      ? listOf<JsonRecord>(studentCoursesResponse.value).map(toEnrollment)
+      : [];
+  const allEnrollments =
+    allEnrollmentsResponse.status === "fulfilled"
+      ? listOf<JsonRecord>(allEnrollmentsResponse.value)
+          .map(toEnrollment)
+          .filter((enrollment) => !enrollment.studentId || enrollment.studentId === studentId)
+      : [];
+  const records = [...studentCourses, ...allEnrollments];
+  return records.filter(
+    (record, index) =>
+      records.findIndex((item) => item.id && item.id === record.id) === index || !record.id,
+  );
 }
 
 export async function createAssignmentSubmission(assignmentId: string, content: string) {

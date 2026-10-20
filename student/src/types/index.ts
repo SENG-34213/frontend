@@ -91,7 +91,13 @@ export interface Course {
   bannerColor: string;
   coverImage?: string;
   enrolled: boolean;
-  enrollmentStatus: "ACTIVE" | "PENDING" | "COMPLETED" | "AVAILABLE";
+  enrollmentStatus:
+    | "ACTIVE"
+    | "PENDING"
+    | "COMPLETED"
+    | "AVAILABLE"
+    | "REJECTED"
+    | "PAYMENT_REQUIRED";
   progressPercentage: number;
   lastAccessedLessonId?: string;
   lastAccessedLessonTitle?: string;

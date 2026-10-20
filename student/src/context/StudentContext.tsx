@@ -18,11 +18,13 @@ import {
   createAssignmentSubmission,
   enrollStudent,
   finalizeAssignmentSubmission,
+  loadEnrollmentState,
   loadStudentWorkspace,
   markAllNotificationsRead as markAllNotificationsReadApi,
   markLesson,
   markNotificationRead,
   sendAiMessage,
+  startCoursePayment,
   toProfile,
   uploadSubmissionFile,
 } from "../api/student";
@@ -156,14 +158,33 @@ export const StudentProvider: React.FC<{
   const enrollInCourse = async (courseId: string) => {
     try {
       await enrollStudent(courseId, profile.id);
+      const records = await loadEnrollmentState(profile.id);
+      const record = records.find((item) => item.courseIds.includes(courseId));
+      const status =
+        record?.status === "PAYMENT_REQUIRED"
+          ? "PAYMENT_REQUIRED"
+          : record?.status === "REJECTED"
+            ? "REJECTED"
+            : record?.status === "PENDING"
+              ? "PENDING"
+              : "ACTIVE";
+      if (status === "PAYMENT_REQUIRED") await startCoursePayment(courseId);
       setCourses((current) =>
         current.map((course) =>
           course.id === courseId
-            ? { ...course, enrolled: true, enrollmentStatus: "ACTIVE" }
+            ? { ...course, enrolled: status !== "REJECTED", enrollmentStatus: status }
             : course,
         ),
       );
-      showToast("Successfully enrolled in course!");
+      showToast(
+        status === "PAYMENT_REQUIRED"
+          ? "Payment is required to complete enrollment."
+          : status === "PENDING"
+            ? "Enrollment request is pending approval."
+            : status === "REJECTED"
+              ? "Enrollment was rejected."
+              : "Successfully enrolled in course!",
+      );
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Enrollment failed.");
     }
