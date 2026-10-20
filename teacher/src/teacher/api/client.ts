@@ -22,9 +22,11 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   authenticated?: boolean;
   retryOnUnauthorized?: boolean;
+  responseType?: "json" | "blob";
 };
 
-async function readResponse(response: Response) {
+async function readResponse(response: Response, responseType: "json" | "blob" = "json") {
+  if (responseType === "blob") return response.blob();
   return response.json().catch(() => null);
 }
 
@@ -65,6 +67,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     body,
     authenticated = true,
     retryOnUnauthorized = true,
+    responseType = "json",
     headers,
     ...requestInit
   } = options;
@@ -83,7 +86,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers: requestHeaders,
     body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
   });
-  const responseBody = await readResponse(response);
+  const responseBody = await readResponse(response, responseType);
 
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
     const refreshedSession = await refreshSession();

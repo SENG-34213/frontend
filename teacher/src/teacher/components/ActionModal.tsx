@@ -104,6 +104,8 @@ interface TextInputModalProps {
   initialValue: string;
   placeholder?: string;
   multiline?: boolean;
+  extraContent?: React.ReactNode;
+  isSubmitting?: boolean;
   onSave: (value: string) => void | Promise<void>;
   onClose: () => void;
 }
@@ -115,6 +117,8 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
   initialValue,
   placeholder,
   multiline = false,
+  extraContent,
+  isSubmitting = false,
   onSave,
   onClose,
 }) => {
@@ -131,7 +135,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
         onSubmit={(event) => {
           event.preventDefault();
           const trimmed = value.trim();
-          if (trimmed) void onSave(trimmed);
+          if (trimmed && !isSubmitting) void onSave(trimmed);
         }}
       >
         <label className="block text-xs font-semibold text-slate-700">
@@ -153,6 +157,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
             />
           )}
         </label>
+        {extraContent}
         <div className="flex justify-end gap-2">
           <button
             type="button"
@@ -163,9 +168,10 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+            disabled={isSubmitting}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Save changes
+            {isSubmitting ? "Saving..." : "Save changes"}
           </button>
         </div>
       </form>
