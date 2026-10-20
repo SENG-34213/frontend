@@ -293,7 +293,7 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                     Single Choice Question
                   </p>
                   <p className="text-[10px] text-slate-400">
-                    Backend rule: 4–5 choices with 1 verified correct answer
+                    Use 4–5 choices with one verified correct answer
                   </p>
                   <textarea
                     rows={3}

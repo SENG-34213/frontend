@@ -8,14 +8,14 @@
 @theme inline {
   --color-background: var(--surface, #f9f9ff);
   --color-foreground: var(--ink, #141b2b);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 @layer base {
   body {
     min-height: 100%;
-    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
   }
   button,
   input,

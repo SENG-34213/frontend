@@ -113,16 +113,14 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
     if (activeType === "event") {
       setIsSubmitting(false);
-      setFormError(
-        "Calendar event creation is unavailable until the backend permission and gateway contract are confirmed.",
-      );
+      setFormError("Calendar event creation is currently unavailable. Please try again later.");
       return;
     }
 
     if (activeType === "course") {
       if (!teacherId || !courseGradeId) {
         setIsSubmitting(false);
-        setFormError("Course creation requires a teacher ID and grade ID.");
+        setFormError("Course creation requires an account and grade selection.");
         return;
       }
       try {

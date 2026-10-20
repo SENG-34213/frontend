@@ -219,9 +219,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
 
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between shrink-0">
-          <span className="text-xs text-slate-400">
-            Changes sync automatically with Spring Boot curriculum service
-          </span>
+          <span className="text-xs text-slate-400">Changes are saved automatically</span>
 
           <div className="flex items-center gap-2">
             <button

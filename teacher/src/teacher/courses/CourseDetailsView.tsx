@@ -621,7 +621,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
                       <tr>
                         <th className="px-4 py-3">Student</th>
-                        <th className="px-4 py-3">Student ID</th>
+                        <th className="px-4 py-3">Student Number</th>
                         <th className="px-4 py-3">Attendance</th>
                         <th className="px-4 py-3">GPA</th>
                         <th className="px-4 py-3">Academic Status</th>
@@ -684,7 +684,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-slate-500">
-                  Course syllabus files, starter code archives, and slides stored on AWS S3.
+                  Course syllabus files, starter code archives, and slides are available here.
                 </p>
                 <button
                   onClick={() => onNavigate("materials")}

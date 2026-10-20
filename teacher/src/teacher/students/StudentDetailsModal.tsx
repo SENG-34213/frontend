@@ -154,7 +154,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                 <StatusBadge status={student.status} />
               </div>
               <p className="text-xs text-slate-500 font-mono mt-0.5">
-                ID: {student.studentId} · {student.email}
+                {student.studentId} · {student.email}
               </p>
             </div>
           </div>

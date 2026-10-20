@@ -144,7 +144,7 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="px-5 py-3">Student</th>
-                <th className="px-4 py-3">Student ID</th>
+                <th className="px-4 py-3">Student Number</th>
                 <th className="px-4 py-3">Courses</th>
                 <th className="px-4 py-3">Attendance</th>
                 <th className="px-4 py-3">GPA</th>
