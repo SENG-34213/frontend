@@ -1,19 +1,13 @@
 import React, { useState } from "react";
 import {
-  MessageSquare,
   Search,
   Send,
   User,
-  Paperclip,
-  CheckCheck,
-  Bell,
-  Sparkles,
-  AlertCircle,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
 export const MessagesView: React.FC = () => {
-  const { conversations, sendMessage, announcements, profile, showToast } = useStudent();
+  const { conversations, sendMessage, loadMoreMessages, announcements } = useStudent();
   const [activeTab, setActiveTab] = useState<"MESSAGES" | "ANNOUNCEMENTS">("MESSAGES");
   const [selectedConvId, setSelectedConvId] = useState<string>(conversations[0]?.id || "conv-1");
   const [inputText, setInputText] = useState("");
@@ -23,8 +17,8 @@ export const MessagesView: React.FC = () => {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
-    sendMessage(activeConv.id, inputText);
+    if (!inputText.trim() || !activeConv) return;
+    void sendMessage(activeConv.id, inputText);
     setInputText("");
   };
 
@@ -58,7 +52,7 @@ export const MessagesView: React.FC = () => {
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
             }`}
           >
-            Direct Messages
+            Course Groups
           </button>
           <button
             onClick={() => setActiveTab("ANNOUNCEMENTS")}
@@ -68,7 +62,7 @@ export const MessagesView: React.FC = () => {
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
             }`}
           >
-            Course Broadcasts ({announcements.length})
+            Announcements ({announcements.length})
           </button>
         </div>
       </div>
@@ -84,7 +78,7 @@ export const MessagesView: React.FC = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search faculty or messages..."
+                  placeholder="Search course groups or messages..."
                   className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
@@ -128,6 +122,11 @@ export const MessagesView: React.FC = () => {
                   </button>
                 );
               })}
+              {!filteredConversations.length && (
+                <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                  No course communication groups are available.
+                </div>
+              )}
             </div>
           </div>
 
@@ -148,7 +147,8 @@ export const MessagesView: React.FC = () => {
                       {activeConv.participantName}
                     </h3>
                     <p className="text-[11px] text-slate-500">
-                      {activeConv.participantTitle} · {activeConv.courseCode}
+                      {activeConv.participantTitle || "Course communication group"}
+                      {activeConv.courseCode ? ` · ${activeConv.courseCode}` : ""}
                     </p>
                   </div>
                 </div>
@@ -157,6 +157,15 @@ export const MessagesView: React.FC = () => {
 
             {/* Message Stream */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              {activeConv && activeConv.messages.length >= 30 && (
+                <button
+                  type="button"
+                  onClick={() => void loadMoreMessages(activeConv.id)}
+                  className="mx-auto block text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                >
+                  Load older messages
+                </button>
+              )}
               {activeConv?.messages.map((msg) => (
                 <div
                   key={msg.id}
@@ -178,6 +187,11 @@ export const MessagesView: React.FC = () => {
                   </div>
                 </div>
               ))}
+              {activeConv && !activeConv.messages.length && (
+                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
+                  No messages in this group yet.
+                </div>
+              )}
             </div>
 
             {/* Composer */}
@@ -189,11 +203,13 @@ export const MessagesView: React.FC = () => {
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
+                disabled={!activeConv}
                 placeholder="Write your academic query or message..."
                 className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               <button
                 type="submit"
+                disabled={!activeConv || !inputText.trim()}
                 className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors shrink-0 shadow-2xs"
               >
                 <span>Send</span>
@@ -205,6 +221,11 @@ export const MessagesView: React.FC = () => {
       ) : (
         /* Announcements View */
         <div className="space-y-4">
+          {!announcements.length && (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+              No announcements are available.
+            </div>
+          )}
           {announcements.map((ann) => (
             <div
               key={ann.id}

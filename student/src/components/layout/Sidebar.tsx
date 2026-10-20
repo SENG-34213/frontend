@@ -48,7 +48,7 @@ export const Sidebar: React.FC = () => {
   } = useStudent();
 
   const pendingAssignmentsCount = assignments.filter((a) => a.status === "PENDING").length;
-  const unreadMessagesCount = conversations.reduce((acc, c) => acc + c.unreadCount, 0);
+  const unreadMessagesCount = conversations.reduce((acc, c) => acc + (c.unreadCount ?? 0), 0);
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
   const navGroups: NavGroup[] = [

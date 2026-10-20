@@ -83,7 +83,7 @@ export const MentifyAIView: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 hidden sm:inline">
-            Active syllabi: CS 301, CS 440, CS 325, DES 210
+            Active courses: {courses.filter((course) => course.enrolled).map((course) => course.code).join(", ") || "—"}
           </span>
         </div>
       </div>

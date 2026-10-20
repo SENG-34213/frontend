@@ -250,10 +250,15 @@ export interface Conversation {
   participantTitle: string;
   participantAvatar: string;
   courseCode?: string;
-  unreadCount: number;
+  unreadCount?: number;
   lastMessage: string;
   lastMessageTime: string;
   messages: Message[];
+  members?: {
+    userId: string;
+    role: string;
+    joinedAt: string;
+  }[];
 }
 
 export interface Announcement {
@@ -289,4 +294,15 @@ export interface ChatMessage {
     language: string;
     code: string;
   };
+}
+
+export interface AttendanceSummary {
+  studentId: string;
+  courseId: string;
+  completedSessions: number;
+  presentCount: number;
+  lateCount: number;
+  absentCount: number;
+  attendedCount: number;
+  attendancePercentage: number;
 }

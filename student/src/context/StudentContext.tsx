@@ -4,6 +4,7 @@ import {
   StudentProfile,
   Course,
   Assignment,
+  AttendanceSummary,
   Quiz,
   Examination,
   LearningMaterial,
@@ -24,8 +25,16 @@ import {
   markAllNotificationsRead as markAllNotificationsReadApi,
   markLesson,
   markNotificationRead,
+  deleteNotification as deleteNotificationApi,
+  getUnreadNotificationCount,
+  createAiConversation,
+  listAiConversationMessages,
+  listAiConversations,
+  listCommunicationMessages,
   saveQuizAnswer as saveQuizAnswerApi,
   sendAiMessage,
+  sendCommunicationMessage,
+  toCommunicationMessage,
   startCoursePayment,
   startQuizAttempt as startQuizAttemptApi,
   finalizeQuizAttempt,
@@ -74,11 +83,16 @@ interface StudentContextType {
   materials: LearningMaterial[];
   calendarEvents: CalendarEvent[];
   conversations: Conversation[];
-  sendMessage: (conversationId: string, text: string) => void;
+  sendMessage: (conversationId: string, text: string) => Promise<void>;
+  loadMoreMessages: (conversationId: string) => Promise<void>;
   announcements: Announcement[];
   notifications: NotificationItem[];
+  unreadNotificationCount: number;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
+  deleteNotification: (id: string) => Promise<void>;
+  attendanceSummaries: AttendanceSummary[];
+  attendanceOverall: AttendanceSummary | null;
   aiChats: ChatMessage[];
   isAiLoading: boolean;
   sendAiQuery: (query: string) => Promise<void>;
@@ -120,9 +134,13 @@ export const StudentProvider: React.FC<{
   const [examinations, setExaminations] = useState<Examination[]>([]);
   const [materials, setMaterials] = useState<LearningMaterial[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [conversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messagePages, setMessagePages] = useState<Record<string, number>>({});
   const [announcements] = useState<Announcement[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [attendanceSummaries, setAttendanceSummaries] = useState<AttendanceSummary[]>([]);
+  const [aiConversationId, setAiConversationId] = useState<string | null>(null);
   const [aiChats, setAiChats] = useState<ChatMessage[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -155,11 +173,56 @@ export const StudentProvider: React.FC<{
         setMaterials(workspace.materials);
         setCalendarEvents(workspace.calendarEvents);
         setNotifications(workspace.notifications);
+        setUnreadNotificationCount(workspace.unreadNotificationCount);
+        setAttendanceSummaries(workspace.attendanceSummaries);
+        setConversations(workspace.conversations);
+        setMessagePages({});
       })
       .catch((error) => {
         if (active)
           showToast(error instanceof Error ? error.message : "Could not load student data.");
       });
+    return () => {
+      active = false;
+    };
+  }, [authUser]);
+  useEffect(() => {
+    if (!authUser) return;
+    let active = true;
+    const loadAiConversation = async () => {
+      try {
+        const conversationsResponse = await listAiConversations();
+        const records = Array.isArray(conversationsResponse)
+          ? conversationsResponse
+          : ((conversationsResponse as { data?: unknown }).data || []);
+        const first = Array.isArray(records) ? (records[0] as Record<string, unknown>) : undefined;
+        const conversationId = first?.id ? String(first.id) : undefined;
+        const id =
+          conversationId ||
+          String((await createAiConversation("Student study assistant")).data?.id || "");
+        if (!id) throw new Error("The AI service did not return a conversation id.");
+        const messageResponse = await listAiConversationMessages(id);
+        const messageRecords = Array.isArray(messageResponse)
+          ? messageResponse
+          : ((messageResponse as { data?: unknown }).data || []);
+        if (!active) return;
+        setAiConversationId(id);
+        setAiChats(
+          (Array.isArray(messageRecords) ? messageRecords : []).map((item) => {
+            const message = item as Record<string, unknown>;
+            return {
+              id: String(message.id || ""),
+              sender: String(message.role).toUpperCase() === "USER" ? "user" : "assistant",
+              text: String(message.content || ""),
+              timestamp: String(message.createdAt || ""),
+            };
+          }),
+        );
+      } catch (error) {
+        if (active) showToast(error instanceof Error ? error.message : "AI assistant is unavailable.");
+      }
+    };
+    loadAiConversation();
     return () => {
       active = false;
     };
@@ -334,8 +397,62 @@ export const StudentProvider: React.FC<{
   const submitExam = (examId: string) => {
     showToast(`Exam ${examId} submission is not supported by the current backend contract.`);
   };
-  const sendMessage = () => {
-    showToast("Messaging is not available until a student communication contract is connected.");
+  const sendMessage = async (conversationId: string, text: string) => {
+    try {
+      const response = await sendCommunicationMessage(conversationId, text);
+      const data = response.data || {};
+      const message = {
+        id: String(data.id || ""),
+        senderId: String(data.senderId || profile.id),
+        senderName: String(data.senderId || profile.id),
+        senderAvatar: "",
+        isSenderStudent: true,
+        timestamp: String(data.sentAt || ""),
+        text: String(data.content || text),
+      };
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                lastMessage: message.text,
+                lastMessageTime: message.timestamp,
+                messages: [...conversation.messages, message],
+              }
+            : conversation,
+        ),
+      );
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Message could not be sent.");
+    }
+  };
+  const loadMoreMessages = async (conversationId: string) => {
+    const page = (messagePages[conversationId] ?? 0) + 1;
+    try {
+      const response = await listCommunicationMessages(conversationId, page, 30);
+      const raw = Array.isArray(response)
+        ? response
+        : ((response as { data?: unknown }).data || []);
+      const studentId = profile.id;
+      const olderMessages = (Array.isArray(raw) ? raw : []).map((item) =>
+        toCommunicationMessage(item as Record<string, unknown>, studentId),
+      );
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                messages: [...olderMessages, ...conversation.messages.filter(
+                  (message) => !olderMessages.some((older) => older.id === message.id),
+                )],
+              }
+            : conversation,
+        ),
+      );
+      setMessagePages((current) => ({ ...current, [conversationId]: page }));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not load older messages.");
+    }
   };
   const markNotificationAsRead = async (id: string) => {
     try {
@@ -343,6 +460,8 @@ export const StudentProvider: React.FC<{
       setNotifications((current) =>
         current.map((item) => (item.id === id ? { ...item, read: true } : item)),
       );
+      const count = await getUnreadNotificationCount();
+      setUnreadNotificationCount(Number(count.data ?? 0));
     } catch {
       showToast("Could not mark notification as read.");
     }
@@ -351,12 +470,33 @@ export const StudentProvider: React.FC<{
     try {
       await markAllNotificationsReadApi();
       setNotifications((current) => current.map((item) => ({ ...item, read: true })));
+      setUnreadNotificationCount(0);
     } catch {
       showToast("Could not mark notifications as read.");
     }
   };
+  const deleteNotification = async (id: string) => {
+    try {
+      await deleteNotificationApi(id);
+      setNotifications((current) => current.filter((item) => item.id !== id));
+      const count = await getUnreadNotificationCount();
+      setUnreadNotificationCount(Number(count.data ?? 0));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not delete notification.");
+    }
+  };
   const sendAiQuery = async (query: string) => {
     if (!query.trim()) return;
+    let conversationId = aiConversationId;
+    if (!conversationId) {
+      const response = await createAiConversation("Student study assistant");
+      conversationId = String(response.data?.id || "");
+      setAiConversationId(conversationId);
+    }
+    if (!conversationId) {
+      showToast("The AI service did not return a conversation id.");
+      return;
+    }
     setAiChats((current) => [
       ...current,
       {
@@ -368,7 +508,7 @@ export const StudentProvider: React.FC<{
     ]);
     setIsAiLoading(true);
     try {
-      const response = await sendAiMessage(query);
+      const response = await sendAiMessage(conversationId, query, `student-${Date.now()}`);
       const data = response.data || {};
       setAiChats((current) => [
         ...current,
@@ -376,7 +516,7 @@ export const StudentProvider: React.FC<{
           id: String(data.messageId || Date.now()),
           sender: "assistant",
           text: String(data.message || ""),
-          timestamp: String(data.timestamp || new Date().toISOString()),
+          timestamp: String(data.timestamp || ""),
         },
       ]);
     } catch (error) {
@@ -397,6 +537,28 @@ export const StudentProvider: React.FC<{
     setSelectedCourseId(courseId);
     setCurrentView("course-details");
   };
+  const attendanceOverall = attendanceSummaries.length
+    ? (() => {
+        const completedSessions = attendanceSummaries.reduce(
+          (total, summary) => total + summary.completedSessions,
+          0,
+        );
+        const attendedCount = attendanceSummaries.reduce(
+          (total, summary) => total + summary.attendedCount,
+          0,
+        );
+        return {
+          studentId: profile.id,
+          courseId: "",
+          completedSessions,
+          presentCount: attendanceSummaries.reduce((total, summary) => total + summary.presentCount, 0),
+          lateCount: attendanceSummaries.reduce((total, summary) => total + summary.lateCount, 0),
+          absentCount: attendanceSummaries.reduce((total, summary) => total + summary.absentCount, 0),
+          attendedCount,
+          attendancePercentage: completedSessions ? (attendedCount / completedSessions) * 100 : 0,
+        };
+      })()
+    : null;
   return (
     <StudentContext.Provider
       value={{
@@ -430,10 +592,15 @@ export const StudentProvider: React.FC<{
         refreshCalendarEvents,
         conversations,
         sendMessage,
+        loadMoreMessages,
         announcements,
         notifications,
+        unreadNotificationCount,
         markNotificationAsRead,
         markAllNotificationsAsRead,
+        deleteNotification,
+        attendanceSummaries,
+        attendanceOverall,
         aiChats,
         isAiLoading,
         sendAiQuery,

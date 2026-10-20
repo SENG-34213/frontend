@@ -30,6 +30,8 @@ export const StudentDashboard: React.FC = () => {
     setSelectedAssignmentId,
     setCurrentView,
     sendAiQuery,
+    attendanceSummaries,
+    attendanceOverall,
   } = useStudent();
 
   // Summary counts
@@ -233,21 +235,58 @@ export const StudentDashboard: React.FC = () => {
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <span className="text-xs font-medium">Average Grade</span>
+            <span className="text-xs font-medium">Attendance</span>
             <TrendingUp className="h-4 w-4 text-violet-600 dark:text-violet-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="font-display text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
-              {profile.currentGpa.toFixed(2)}
+              {attendanceOverall ? `${attendanceOverall.attendancePercentage.toFixed(1)}%` : "—"}
             </span>
-            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-              92.4%
-            </span>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">overall</span>
           </div>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Dean&apos;s Honor Roll
+            {attendanceOverall ? `${attendanceOverall.attendedCount} attended sessions` : "No attendance data"}
           </p>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+          <div>
+            <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
+              Course Attendance
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Attendance summaries reported by the attendance service
+            </p>
+          </div>
+        </div>
+        {attendanceSummaries.length === 0 ? (
+          <p className="py-6 text-center text-xs text-slate-500">
+            No attendance records are available yet.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-3">
+            {attendanceSummaries.map((summary) => {
+              const course = courses.find((item) => item.id === summary.courseId);
+              return (
+                <div key={summary.courseId} className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">
+                      {course?.code || summary.courseId}
+                    </span>
+                    <span className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                      {summary.attendancePercentage.toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {summary.attendedCount} attended · {summary.absentCount} absent
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* 3. Continue Learning Horizontal Cards */}

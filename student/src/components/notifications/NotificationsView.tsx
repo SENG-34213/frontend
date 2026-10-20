@@ -17,6 +17,7 @@ export const NotificationsView: React.FC = () => {
     notifications,
     markNotificationAsRead,
     markAllNotificationsAsRead,
+    deleteNotification,
     setCurrentView,
     setSelectedAssignmentId,
   } = useStudent();
@@ -134,6 +135,15 @@ export const NotificationsView: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void deleteNotification(item.id);
+                  }}
+                  className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-slate-500 hover:text-rose-600 dark:border-slate-700"
+                >
+                  Delete
+                </button>
                 <button className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs">
                   <span>Open</span>
                   <ArrowRight className="h-3.5 w-3.5" />

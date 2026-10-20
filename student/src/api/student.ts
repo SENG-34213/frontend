@@ -1,10 +1,13 @@
 import { apiRequest, apiUpload } from "./client";
 import type {
   Assignment,
+  AttendanceSummary,
   CalendarEvent,
   Course,
   Examination,
   LearningMaterial,
+  Conversation,
+  Message,
   NotificationItem,
   Quiz,
   StudentProfile,
@@ -269,13 +272,69 @@ export function toCalendarEvent(value: JsonRecord): CalendarEvent {
 }
 
 function toNotification(value: JsonRecord): NotificationItem {
+  const type = String(value.type || "ANNOUNCEMENT").toUpperCase();
   return {
     id: idOf(value.id),
     title: idOf(value.title),
     description: idOf(value.message || value.description),
     timestamp: idOf(value.occurredAt || value.createdAt),
-    type: value.type || "ANNOUNCEMENT",
+    type: ["DEADLINE", "GRADE", "ANNOUNCEMENT", "EXAM", "MATERIAL"].includes(type)
+      ? (type as NotificationItem["type"])
+      : "ANNOUNCEMENT",
     read: Boolean(value.readAt),
+  };
+}
+
+function toAttendanceSummary(value: JsonRecord): AttendanceSummary {
+  return {
+    studentId: idOf(value.studentId),
+    courseId: idOf(value.courseId),
+    completedSessions: Number(value.completedSessions ?? 0),
+    presentCount: Number(value.presentCount ?? 0),
+    lateCount: Number(value.lateCount ?? 0),
+    absentCount: Number(value.absentCount ?? 0),
+    attendedCount: Number(value.attendedCount ?? 0),
+    attendancePercentage: Number(value.attendancePercentage ?? 0),
+  };
+}
+
+export function toCommunicationMessage(value: JsonRecord, studentId: string): Message {
+  return {
+    id: idOf(value.id),
+    senderId: idOf(value.senderId),
+    senderName: idOf(value.senderId),
+    senderAvatar: "",
+    isSenderStudent: idOf(value.senderId) === studentId,
+    timestamp: idOf(value.sentAt),
+    text: value.deletedForEveryone ? "Message deleted" : idOf(value.content),
+  };
+}
+
+function toConversation(
+  value: JsonRecord,
+  course: Course | undefined,
+  messages: JsonRecord[],
+  members: JsonRecord[],
+  studentId: string,
+): Conversation {
+  const mappedMessages = messages.map((message) => toCommunicationMessage(message, studentId));
+  const lastMessage = mappedMessages[mappedMessages.length - 1];
+  return {
+    id: idOf(value.id),
+    participantId: idOf(value.id),
+    participantName: idOf(value.name || course?.title),
+    participantTitle: idOf(value.description),
+    participantAvatar: "",
+    courseCode: course?.code,
+    unreadCount: undefined,
+    lastMessage: lastMessage?.text || "",
+    lastMessageTime: lastMessage?.timestamp || "",
+    messages: mappedMessages,
+    members: members.map((member) => ({
+      userId: idOf(member.userId),
+      role: idOf(member.role),
+      joinedAt: idOf(member.joinedAt),
+    })),
   };
 }
 
@@ -288,6 +347,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     materialResponse,
     calendarResponse,
     notificationResponse,
+    unreadNotificationResponse,
     examResponse,
   ] = await Promise.allSettled([
     apiRequest<unknown>("/api/v1/course"),
@@ -295,6 +355,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     apiRequest<unknown>("/api/v1/materials"),
     apiRequest<unknown>("/api/v1/calendar/upcoming?limit=100"),
     apiRequest<unknown>("/api/v1/notifications?size=100"),
+    apiRequest<unknown>("/api/v1/notifications/unread-count"),
     apiRequest<unknown>("/api/v1/exams/me"),
   ]);
 
@@ -488,6 +549,62 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     }),
   );
 
+  const attendanceSummaries = (
+    await Promise.all(
+      courses
+        .filter((course) => course.enrolled)
+        .map(async (course) => {
+          try {
+            return toAttendanceSummary(
+              dataOf<JsonRecord>(
+                await apiRequest<JsonRecord>(`/api/v1/attendance/courses/${course.id}/me`),
+              ),
+            );
+          } catch {
+            return null;
+          }
+        }),
+    )
+  ).filter((summary): summary is AttendanceSummary => summary !== null);
+
+  let communicationGroups: JsonRecord[] = [];
+  try {
+    communicationGroups = listOf<JsonRecord>(
+      await apiRequest<unknown>("/api/communication/groups"),
+    );
+  } catch {
+    // Communication is optional; the rest of the student workspace remains usable.
+  }
+  const conversations = (
+    await Promise.all(
+      communicationGroups
+        .filter((group) => {
+          const courseId = idOf(group.courseId);
+          return !courseId || courses.some((course) => course.enrolled && course.id === courseId);
+        })
+        .map(async (group) => {
+          const course = courseMap.get(idOf(group.courseId));
+          try {
+            const [membersResponse, messagesResponse] = await Promise.all([
+              apiRequest<unknown>(`/api/communication/groups/${idOf(group.id)}/members`),
+              apiRequest<unknown>(
+                `/api/communication/groups/${idOf(group.id)}/messages?page=0&size=30`,
+              ),
+            ]);
+            return toConversation(
+              group,
+              course,
+              listOf<JsonRecord>(messagesResponse),
+              listOf<JsonRecord>(membersResponse),
+              studentId,
+            );
+          } catch {
+            return null;
+          }
+        }),
+    )
+  ).filter((conversation): conversation is Conversation => conversation !== null);
+
   const quizzes = (
     await Promise.all(
       courses
@@ -520,6 +637,8 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     courses,
     assignments,
     quizzes,
+    attendanceSummaries,
+    conversations,
     examinations:
       examResponse.status === "fulfilled"
         ? listOf<JsonRecord>(examResponse.value).map(
@@ -569,6 +688,10 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
       notificationResponse.status === "fulfilled"
         ? listOf<JsonRecord>(notificationResponse.value).map(toNotification)
         : [],
+    unreadNotificationCount:
+      unreadNotificationResponse.status === "fulfilled"
+        ? Number(dataOf<unknown>(unreadNotificationResponse.value) ?? 0)
+        : 0,
   };
 }
 
@@ -739,10 +862,80 @@ export async function markAllNotificationsRead() {
   return apiRequest<unknown>("/api/v1/notifications/read-all", { method: "PATCH" });
 }
 
-export async function sendAiMessage(query: string) {
+export async function getUnreadNotificationCount() {
+  return apiRequest<ApiEnvelope<number>>("/api/v1/notifications/unread-count");
+}
+
+export async function deleteNotification(id: string) {
+  return apiRequest<unknown>(`/api/v1/notifications/${id}`, { method: "DELETE" });
+}
+
+export async function listCommunicationGroups() {
+  return apiRequest<unknown>("/api/communication/groups");
+}
+
+export async function listCommunicationMembers(groupId: string) {
+  return apiRequest<unknown>(`/api/communication/groups/${groupId}/members`);
+}
+
+export async function listCommunicationMessages(groupId: string, page = 0, size = 30) {
+  return apiRequest<unknown>(
+    `/api/communication/groups/${groupId}/messages?page=${page}&size=${size}`,
+  );
+}
+
+export async function sendCommunicationMessage(groupId: string, content: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(`/api/communication/groups/${groupId}/messages`, {
+    method: "POST",
+    body: { content },
+  });
+}
+
+export async function updateCommunicationMessage(
+  groupId: string,
+  messageId: string,
+  content: string,
+) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(
+    `/api/communication/groups/${groupId}/messages/${messageId}`,
+    { method: "PATCH", body: { content } },
+  );
+}
+
+export async function deleteCommunicationMessage(
+  groupId: string,
+  messageId: string,
+  scope: "ME" | "EVERYONE" = "ME",
+) {
+  return apiRequest<unknown>(
+    `/api/communication/groups/${groupId}/messages/${messageId}?scope=${scope}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function listAiConversations() {
+  return apiRequest<unknown>("/api/ai/conversations");
+}
+
+export async function createAiConversation(title?: string) {
+  return apiRequest<ApiEnvelope<JsonRecord>>("/api/ai/conversations", {
+    method: "POST",
+    body: title ? { title } : {},
+  });
+}
+
+export async function listAiConversationMessages(conversationId: string) {
+  return apiRequest<unknown>(`/api/ai/conversations/${conversationId}/messages`);
+}
+
+export async function sendAiMessage(
+  conversationId: string,
+  message: string,
+  clientMessageId?: string,
+) {
   return apiRequest<ApiEnvelope<JsonRecord>>("/api/ai/chat", {
     method: "POST",
-    body: { message: query },
+    body: { conversationId, message, clientMessageId },
   });
 }
 

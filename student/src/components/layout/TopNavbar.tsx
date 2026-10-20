@@ -54,6 +54,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
     toggleTheme,
     setIsCommandPaletteOpen,
     notifications,
+    unreadNotificationCount,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     profile,
@@ -170,9 +171,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
             className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
           >
             <Bell className="h-4.5 w-4.5" />
-            {unreadNotifs.length > 0 && (
+            {unreadNotificationCount > 0 && (
               <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
-                {unreadNotifs.length}
+                {unreadNotificationCount}
               </span>
             )}
           </button>
