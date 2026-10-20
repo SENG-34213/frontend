@@ -192,7 +192,7 @@ export const QuizzesView: React.FC = () => {
                   Assessment Rules:
                 </span>
                 <ul className="list-disc pl-4 space-y-1 text-slate-500 dark:text-slate-400">
-                  <li>The timer begins the moment you click "Begin Quiz" and cannot be paused.</li>
+                  <li>The timer begins the moment you click &quot;Begin Quiz&quot; and cannot be paused.</li>
                   <li>You may flag questions and return to them using the question palette.</li>
                   <li>Answers are autosaved continuously in your browser session.</li>
                 </ul>

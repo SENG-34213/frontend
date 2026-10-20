@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Clock,
   AlertTriangle,
@@ -26,6 +26,12 @@ export const QuizTakingView: React.FC = () => {
     percentage: number;
   } | null>(null);
 
+  const handleAutoSubmit = useCallback(() => {
+    showToast("Time expired! Auto-submitting answers.");
+    const res = submitQuizAnswers(quiz.id, answers);
+    setResultsData(res);
+  }, [answers, quiz.id, showToast, submitQuizAnswers]);
+
   // Timer countdown
   useEffect(() => {
     if (resultsData) return;
@@ -40,7 +46,7 @@ export const QuizTakingView: React.FC = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [resultsData]);
+  }, [handleAutoSubmit, resultsData]);
 
   const currentQ = quiz.questions[currentQuestionIdx];
 
@@ -60,12 +66,6 @@ export const QuizTakingView: React.FC = () => {
   const toggleFlag = () => {
     if (!currentQ) return;
     setFlaggedQuestions((prev) => ({ ...prev, [currentQ.id]: !prev[currentQ.id] }));
-  };
-
-  const handleAutoSubmit = () => {
-    showToast("Time expired! Auto-submitting answers.");
-    const res = submitQuizAnswers(quiz.id, answers);
-    setResultsData(res);
   };
 
   const handleConfirmSubmit = () => {

@@ -147,7 +147,7 @@ export const AssignmentDetailView: React.FC = () => {
                 Instructor Written Feedback
               </span>
               <p className="mt-1 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                "{assignment.feedback}"
+                &quot;{assignment.feedback}&quot;
               </p>
             </div>
           )}

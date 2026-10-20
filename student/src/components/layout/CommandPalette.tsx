@@ -46,9 +46,16 @@ export const CommandPalette: React.FC = () => {
 
   useEffect(() => {
     if (isCommandPaletteOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-      setQuery("");
-      setSelectedIndex(0);
+      const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);
+      const resetTimer = setTimeout(() => {
+        setQuery("");
+        setSelectedIndex(0);
+      }, 0);
+
+      return () => {
+        clearTimeout(focusTimer);
+        clearTimeout(resetTimer);
+      };
     }
   }, [isCommandPaletteOpen]);
 
@@ -206,7 +213,7 @@ export const CommandPalette: React.FC = () => {
         <div className="max-h-96 overflow-y-auto p-2">
           {results.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
-              No matching courses, assessments, or materials found for "{query}".
+              No matching courses, assessments, or materials found for &quot;{query}&quot;.
             </div>
           ) : (
             <div className="space-y-1">

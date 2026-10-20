@@ -56,7 +56,7 @@ export const GradesView: React.FC = () => {
             <span className="text-xs font-bold text-slate-400">/ 4.00 Scale</span>
           </div>
           <span className="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 block">
-            Dean's First Class Honors
+            Dean&apos;s First Class Honors
           </span>
         </div>
 
@@ -181,7 +181,7 @@ export const GradesView: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
-                  "Exemplary separation of primitive and semantic tokens."
+                  &quot;Exemplary separation of primitive and semantic tokens.&quot;
                 </td>
               </tr>
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
@@ -198,7 +198,7 @@ export const GradesView: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
-                  "Solid understanding of the 1/sqrt(d_k) scaling rationale."
+                  &quot;Solid understanding of the 1/sqrt(d_k) scaling rationale.&quot;
                 </td>
               </tr>
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
@@ -217,7 +217,7 @@ export const GradesView: React.FC = () => {
                   </span>
                 </td>
                 <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate">
-                  "Clean left-leaning rotation logic. Check leaf invariants."
+                  &quot;Clean left-leaning rotation logic. Check leaf invariants.&quot;
                 </td>
               </tr>
             </tbody>
