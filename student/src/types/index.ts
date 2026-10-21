@@ -246,8 +246,10 @@ export interface Message {
   timestamp: string;
   text: string;
   attachments?: {
+    id?: string;
     name: string;
     size: string;
+    contentType?: string;
   }[];
 }
 

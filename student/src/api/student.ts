@@ -19,7 +19,7 @@ type ApiEnvelope<T> = { data?: T; message?: string };
 // Backend DTOs are intentionally normalized at this boundary because services currently
 // return different envelopes while the contract is being consolidated.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type JsonRecord = Record<string, any>;
+export type JsonRecord = Record<string, any>;
 
 function dataOf<T>(response: ApiEnvelope<T> | T): T {
   return (
@@ -368,6 +368,17 @@ function timeToMinutes(value: string) {
 }
 
 export function toCommunicationMessage(value: JsonRecord, studentId: string): Message {
+  const attachments = Array.isArray(value.attachments)
+    ? value.attachments.map((attachment) => {
+        const item = attachment as JsonRecord;
+        return {
+          id: idOf(item.id),
+          name: idOf(item.originalFilename),
+          size: `${Math.ceil(Number(item.fileSize || 0) / 1024)} KB`,
+          contentType: idOf(item.contentType),
+        };
+      })
+    : [];
   return {
     id: idOf(value.id),
     senderId: idOf(value.senderId),
@@ -376,6 +387,7 @@ export function toCommunicationMessage(value: JsonRecord, studentId: string): Me
     isSenderStudent: idOf(value.senderId) === studentId,
     timestamp: idOf(value.sentAt),
     text: value.deletedForEveryone ? "Message deleted" : idOf(value.content),
+    attachments,
   };
 }
 
@@ -976,6 +988,16 @@ export async function sendCommunicationMessage(groupId: string, content: string)
     method: "POST",
     body: { content },
   });
+}
+
+export async function getCommunicationAttachmentDownload(
+  groupId: string,
+  messageId: string,
+  attachmentId: string,
+) {
+  return apiRequest<ApiEnvelope<JsonRecord>>(
+    `/api/communication/groups/${groupId}/messages/${messageId}/attachments/${attachmentId}/download`,
+  );
 }
 
 export async function updateCommunicationMessage(

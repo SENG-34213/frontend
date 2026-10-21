@@ -1,6 +1,36 @@
 import React, { useState } from "react";
-import { Search, Send, User } from "lucide-react";
+import { Download, FileText, Search, Send, User } from "lucide-react";
+import { getCommunicationAttachmentDownload } from "../../api/student";
 import { useStudent } from "../../context/StudentContext";
+import type { Message } from "../../types";
+
+const VoiceAttachment: React.FC<{
+  groupId: string;
+  messageId: string;
+  attachment: NonNullable<Message["attachments"]>[number];
+}> = ({ groupId, messageId, attachment }) => {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    if (url || !attachment.id || loading) return;
+    setLoading(true);
+    try {
+      const response = await getCommunicationAttachmentDownload(groupId, messageId, attachment.id);
+      setUrl(String(response.data?.downloadUrl || ""));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return url ? (
+    <audio className="mt-2 max-w-full" controls preload="none" src={url} />
+  ) : (
+    <button type="button" onClick={() => void load()} className="mt-2 text-[10px] underline">
+      {loading ? "Loading voice..." : "Play voice message"}
+    </button>
+  );
+};
 
 export const MessagesView: React.FC = () => {
   const { conversations, sendMessage, loadMoreMessages, announcements } = useStudent();
@@ -22,6 +52,21 @@ export const MessagesView: React.FC = () => {
       setInputText("");
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const openAttachment = async (messageId: string, attachmentId?: string) => {
+    if (!activeConv || !attachmentId) return;
+    try {
+      const response = await getCommunicationAttachmentDownload(
+        activeConv.id,
+        messageId,
+        attachmentId,
+      );
+      const url = String(response.data?.downloadUrl || "");
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+    } catch {
+      // The existing student toast flow handles request failures during the next refresh.
     }
   };
 
@@ -186,7 +231,29 @@ export const MessagesView: React.FC = () => {
                         : "border border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 rounded-tl-none"
                     }`}
                   >
-                    {msg.text}
+                    {msg.text && <div>{msg.text}</div>}
+                    {msg.attachments?.map((attachment) => {
+                      const isAudio = attachment.contentType?.startsWith("audio/");
+                      return isAudio ? (
+                        <VoiceAttachment
+                          key={attachment.id || attachment.name}
+                          groupId={activeConv.id}
+                          messageId={msg.id}
+                          attachment={attachment}
+                        />
+                      ) : (
+                        <button
+                          key={attachment.id || attachment.name}
+                          type="button"
+                          onClick={() => void openAttachment(msg.id, attachment.id)}
+                          className="mt-2 flex w-full items-center gap-2 rounded-lg bg-black/10 px-2.5 py-2 text-left hover:bg-black/20"
+                        >
+                          <FileText className="h-4 w-4 shrink-0" />
+                          <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+                          <Download className="h-3.5 w-3.5 shrink-0" />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               ))}

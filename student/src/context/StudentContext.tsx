@@ -41,6 +41,7 @@ import {
   uploadSubmissionFile,
   updateCurrentStudentProfile,
 } from "../api/student";
+import { useStudentCommunicationRealtime } from "../api/communicationRealtime";
 
 interface StudentContextType {
   currentView: StudentView;
@@ -258,6 +259,25 @@ export const StudentProvider: React.FC<{
       active = false;
     };
   }, [refreshWorkspace]);
+
+  useStudentCommunicationRealtime(
+    conversations.map((conversation) => conversation.id),
+    (incoming) => {
+      const message = toCommunicationMessage(incoming, profile.id);
+      setConversations((current) =>
+        current.map((conversation) => {
+          if (conversation.id !== incoming.groupId) return conversation;
+          if (conversation.messages.some((item) => item.id === message.id)) return conversation;
+          return {
+            ...conversation,
+            lastMessage: message.text,
+            lastMessageTime: message.timestamp,
+            messages: [...conversation.messages, message],
+          };
+        }),
+      );
+    },
+  );
   const updateProfile = async (updates: Partial<StudentProfile>) => {
     try {
       const [firstName, ...lastNameParts] = updates.name?.trim().split(/\s+/) || [];

@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   BellRing,
   CheckCheck,
   Download,
   FileText,
+  Mic,
   Plus,
   Search,
   Send,
+  Square,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -74,6 +76,10 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   );
   const [inputText, setInputText] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
   const [activeTab, setActiveTab] = useState<"direct" | "announcements">("direct");
   const [search, setSearch] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
@@ -111,6 +117,58 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       });
     },
   );
+
+  useEffect(() => {
+    if (!isRecording) return;
+    const timer = window.setInterval(() => setRecordingSeconds((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [isRecording]);
+
+  useEffect(
+    () => () => recorderRef.current?.stream.getTracks().forEach((track) => track.stop()),
+    [],
+  );
+
+  async function toggleVoiceRecording() {
+    if (isRecording) {
+      recorderRef.current?.stop();
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setActionError("Voice recording is not supported by this browser.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg"].find((type) =>
+        MediaRecorder.isTypeSupported(type),
+      );
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recordingChunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordingChunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const type = recorder.mimeType || "audio/webm";
+        const extension = type.includes("ogg") ? "ogg" : "webm";
+        const voiceFile = new File(recordingChunksRef.current, `voice-message.${extension}`, {
+          type,
+        });
+        setPendingAttachments((files) => [...files, voiceFile]);
+        stream.getTracks().forEach((track) => track.stop());
+        recorderRef.current = null;
+        setIsRecording(false);
+        setRecordingSeconds(0);
+      };
+      recorderRef.current = recorder;
+      recorder.start();
+      setRecordingSeconds(0);
+      setIsRecording(true);
+      setActionError(null);
+    } catch {
+      setActionError("Microphone access is required to record a voice message.");
+    }
+  }
 
   useEffect(() => {
     setCreateCourseId((current) =>
@@ -664,6 +722,21 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     onChange={setPendingAttachments}
                     disabled={activeGroup.status === "ARCHIVED" || isSending}
                   />
+                  <button
+                    type="button"
+                    onClick={() => void toggleVoiceRecording()}
+                    disabled={activeGroup.status === "ARCHIVED" || isSending}
+                    title={isRecording ? "Stop recording" : "Record voice message"}
+                    aria-label={isRecording ? "Stop recording" : "Record voice message"}
+                    className={`relative shrink-0 rounded-lg p-2 ${isRecording ? "bg-rose-100 text-rose-600" : "text-slate-400 hover:bg-slate-100 hover:text-indigo-600"}`}
+                  >
+                    {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    {isRecording && (
+                      <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] text-rose-600">
+                        {recordingSeconds}s
+                      </span>
+                    )}
+                  </button>
                   <input
                     disabled={activeGroup.status === "ARCHIVED" || isSending}
                     type="text"
