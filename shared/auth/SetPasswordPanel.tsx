@@ -36,7 +36,9 @@ export function SetPasswordPanel({ email, roleLabel, onSubmit, onCancel }: Props
     try {
       await onSubmit(currentPassword, newPassword);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to update your password.");
+      setError(
+        submitError instanceof Error ? submitError.message : "Unable to update your password.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -78,32 +80,146 @@ export function SetPasswordPanel({ email, roleLabel, onSubmit, onCancel }: Props
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-indigo-500 text-xl font-bold shadow-lg shadow-indigo-950/30">M</span>
-            <div><p className="text-lg font-bold tracking-tight">Mentify</p><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">{roleLabel} Workspace</p></div>
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-indigo-500 text-xl font-bold shadow-lg shadow-indigo-950/30">
+              M
+            </span>
+            <div>
+              <p className="text-lg font-bold tracking-tight">Mentify</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
+                {roleLabel} Workspace
+              </p>
+            </div>
           </div>
           <div className="mt-24 max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-indigo-300">Secure account setup</p>
-            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight xl:text-5xl">Make your workspace yours.</h1>
-            <p className="mt-5 max-w-lg text-sm leading-7 text-indigo-100/80">Create a personal password to finish activating your Mentify account.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-indigo-300">
+              Secure account setup
+            </p>
+            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight xl:text-5xl">
+              Make your workspace yours.
+            </h1>
+            <p className="mt-5 max-w-lg text-sm leading-7 text-indigo-100/80">
+              Create a personal password to finish activating your Mentify account.
+            </p>
           </div>
         </div>
-        <div className="relative flex items-center gap-2 text-xs text-indigo-100/80"><Icon>✓</Icon> Your temporary password will stop working after this step.</div>
+        <div className="relative flex items-center gap-2 text-xs text-indigo-100/80">
+          <Icon>✓</Icon> Your temporary password will stop working after this step.
+        </div>
       </section>
 
       <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8">
         <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center gap-3 lg:hidden"><span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-lg font-bold text-white">M</span><div><p className="text-base font-bold text-slate-900">Mentify</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">Account Setup</p></div></div>
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-lg font-bold text-white">
+              M
+            </span>
+            <div>
+              <p className="text-base font-bold text-slate-900">Mentify</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
+                Account Setup
+              </p>
+            </div>
+          </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-9">
-            <div className="mb-7"><div className="mb-5 grid h-11 w-11 place-items-center rounded-xl bg-indigo-50 text-indigo-600 text-lg"><Icon>⌘</Icon></div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">One-time setup</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">Create your password</h2><p className="mt-2 text-sm leading-6 text-slate-500">You are setting up <span className="font-semibold text-slate-700">{email}</span>. Choose a password you will remember.</p></div>
-            {error && <div role="alert" className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700">{error}</div>}
+            <div className="mb-7">
+              <div className="mb-5 grid h-11 w-11 place-items-center rounded-xl bg-indigo-50 text-indigo-600 text-lg">
+                <Icon>⌘</Icon>
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600">
+                One-time setup
+              </p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                Create your password
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                You are setting up <span className="font-semibold text-slate-700">{email}</span>.
+                Choose a password you will remember.
+              </p>
+            </div>
+            {error && (
+              <div
+                role="alert"
+                className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700"
+              >
+                {error}
+              </div>
+            )}
             <form className="space-y-4" onSubmit={handleSubmit}>
-              {passwordField("Temporary password", currentPassword, setCurrentPassword, showCurrent, () => setShowCurrent((value: boolean) => !value), "current-password")}
-              {passwordField("New password", newPassword, setNewPassword, showNew, () => setShowNew((value: boolean) => !value), "new-password")}
-              {newPassword && <div className="-mt-1 space-y-2"><div className="flex items-center gap-1.5" aria-label={`Password strength: ${strength.label}`}>{[1, 2, 3, 4].map((bar) => <span key={bar} className={`h-1.5 flex-1 rounded-full ${bar <= strength.bars ? strength.tone : "bg-slate-200"}`} />)}<span className="ml-1 text-[11px] font-semibold text-slate-500">{strength.label}</span></div><div className="grid gap-1 sm:grid-cols-2">{rules.map((rule: { label: string; valid: boolean }) => <div key={rule.label} className={`flex items-center gap-1.5 text-[11px] ${rule.valid ? "text-emerald-600" : "text-slate-400"}`}>{rule.valid ? <Icon>✓</Icon> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}{rule.label}</div>)}</div></div>}
-              {passwordField("Confirm new password", confirmPassword, setConfirmPassword, showConfirm, () => setShowConfirm((value: boolean) => !value), "new-password")}
-              {confirmPassword && !matches && <p className="text-xs font-medium text-rose-600">Passwords do not match.</p>}
-              <button type="submit" disabled={isSubmitting} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60">{isSubmitting ? "Saving password…" : "Save password and continue"}{!isSubmitting && <Icon>→</Icon>}</button>
-              <button type="button" onClick={onCancel} className="w-full pt-1 text-xs font-semibold text-slate-500 hover:text-indigo-600">Back to sign in</button>
+              {passwordField(
+                "Temporary password",
+                currentPassword,
+                setCurrentPassword,
+                showCurrent,
+                () => setShowCurrent((value: boolean) => !value),
+                "current-password",
+              )}
+              {passwordField(
+                "New password",
+                newPassword,
+                setNewPassword,
+                showNew,
+                () => setShowNew((value: boolean) => !value),
+                "new-password",
+              )}
+              {newPassword && (
+                <div className="-mt-1 space-y-2">
+                  <div
+                    className="flex items-center gap-1.5"
+                    aria-label={`Password strength: ${strength.label}`}
+                  >
+                    {[1, 2, 3, 4].map((bar) => (
+                      <span
+                        key={bar}
+                        className={`h-1.5 flex-1 rounded-full ${bar <= strength.bars ? strength.tone : "bg-slate-200"}`}
+                      />
+                    ))}
+                    <span className="ml-1 text-[11px] font-semibold text-slate-500">
+                      {strength.label}
+                    </span>
+                  </div>
+                  <div className="grid gap-1 sm:grid-cols-2">
+                    {rules.map((rule: { label: string; valid: boolean }) => (
+                      <div
+                        key={rule.label}
+                        className={`flex items-center gap-1.5 text-[11px] ${rule.valid ? "text-emerald-600" : "text-slate-400"}`}
+                      >
+                        {rule.valid ? (
+                          <Icon>✓</Icon>
+                        ) : (
+                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                        )}
+                        {rule.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {passwordField(
+                "Confirm new password",
+                confirmPassword,
+                setConfirmPassword,
+                showConfirm,
+                () => setShowConfirm((value: boolean) => !value),
+                "new-password",
+              )}
+              {confirmPassword && !matches && (
+                <p className="text-xs font-medium text-rose-600">Passwords do not match.</p>
+              )}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Saving password…" : "Save password and continue"}
+                {!isSubmitting && <Icon>→</Icon>}
+              </button>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="w-full pt-1 text-xs font-semibold text-slate-500 hover:text-indigo-600"
+              >
+                Back to sign in
+              </button>
             </form>
           </div>
         </div>
