@@ -21,10 +21,11 @@ import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { ConfirmationDialog } from "../components/ConfirmationDialog";
 import { DetailDrawer } from "../components/DetailDrawer";
-import { Grade, CreateGradeRequest, UpdateGradeRequest } from "../types";
+import { AdministratorProfile, Grade, CreateGradeRequest, UpdateGradeRequest } from "../types";
 
 interface GradeManagementProps {
   grades: Grade[];
+  administrators: AdministratorProfile[];
   onCreateGrade: (req: CreateGradeRequest) => Promise<Grade>;
   onUpdateGrade: (gradeId: string, req: UpdateGradeRequest) => Promise<void>;
   onDeleteGrade: (gradeId: string) => Promise<{ success: boolean; error?: string }>;
@@ -47,11 +48,22 @@ const CUSTOM_GRADE_OPTION = "__custom__";
 
 export const GradeManagement: React.FC<GradeManagementProps> = ({
   grades,
+  administrators,
   onCreateGrade,
   onUpdateGrade,
   onDeleteGrade,
   onProceedToCourseCreation,
 }) => {
+  const getCreatorName = (creatorId?: string) => {
+    if (!creatorId) return "System Administrator";
+
+    const creator = administrators.find((administrator) => administrator.id === creatorId);
+    if (creator) return `${creator.firstName} ${creator.lastName}`.trim();
+
+    // Avoid exposing UUIDs when the creator is not included in the current admin directory.
+    return creatorId.includes("-") ? "System Administrator" : creatorId;
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
 
@@ -372,9 +384,6 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                         <div>
                           <span className="font-bold text-slate-900 dark:text-white block">
                             {grade.name}
-                          </span>
-                          <span className="font-mono text-[10px] text-slate-400">
-                            UUID: {grade.id}
                           </span>
                         </div>
                       </div>
@@ -844,7 +853,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
         <DetailDrawer
           isOpen={!!selectedGrade}
           title={selectedGrade.name}
-          subtitle={`Grade UUID: ${selectedGrade.id}`}
+          subtitle="Academic grade details"
           onClose={() => setSelectedGrade(null)}
           width="md"
         >
@@ -903,7 +912,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
               <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 block text-[10px]">Created By</span>
                 <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">
-                  {selectedGrade.createdBy || "System Admin"}
+                  {getCreatorName(selectedGrade.createdBy)}
                 </span>
               </div>
               <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">

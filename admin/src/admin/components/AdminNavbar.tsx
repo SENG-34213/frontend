@@ -26,7 +26,6 @@ import { AdminRoute } from "./AdminSidebar";
 interface AdminNavbarProps {
   currentRoute: AdminRoute;
   role: AdminRole;
-  onRoleChange: (newRole: AdminRole) => void;
   onNavigate: (route: AdminRoute) => void;
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
@@ -43,7 +42,6 @@ interface AdminNavbarProps {
 export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   currentRoute,
   role,
-  onRoleChange,
   onNavigate,
   notifications,
   onMarkNotificationRead,
@@ -87,7 +85,6 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
     dashboard: "Platform Overview",
     analytics: "Analytics & Insights",
     notifications: "Notification Center",
-    users: "All Users Directory",
     students: "Student Management",
     teachers: "Teacher Management",
     administrators: "Administrator Oversight",
@@ -156,33 +153,6 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
             ⌘K
           </kbd>
         </button>
-
-        {/* Role Switcher (Simulation Toggle) */}
-        <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
-          <span className="px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            Role:
-          </span>
-          <button
-            onClick={() => onRoleChange("ADMIN")}
-            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              role === "ADMIN"
-                ? "bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            ADMIN
-          </button>
-          <button
-            onClick={() => onRoleChange("SUPER_ADMIN")}
-            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              role === "SUPER_ADMIN"
-                ? "bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-300 shadow-xs"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            SUPER_ADMIN
-          </button>
-        </div>
 
         {/* Quick Actions Dropdown */}
         <div className="relative" ref={quickActionsRef}>

@@ -29,7 +29,6 @@ interface AdminManagementProps {
   onAddAdministrator: (admin: AdministratorProfile) => void;
   onRegisterAdministrator: (request: RegisterAdministratorRequest) => Promise<AdministratorProfile>;
   onResendInvitation: (email: string, role: string) => Promise<void>;
-  onSwitchToSuperAdmin: () => void;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -39,7 +38,6 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   onAddAdministrator,
   onRegisterAdministrator,
   onResendInvitation,
-  onSwitchToSuperAdmin,
   showRegistrationWizardDirectly = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,14 +98,6 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
             </p>
           </div>
 
-          <div className="pt-2">
-            <button
-              onClick={onSwitchToSuperAdmin}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
-            >
-              Switch Role to SUPER_ADMIN (Preview Mode)
-            </button>
-          </div>
         </div>
       </div>
     );

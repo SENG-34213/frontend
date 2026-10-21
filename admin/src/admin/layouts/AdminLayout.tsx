@@ -36,7 +36,6 @@ interface AdminLayoutProps {
   currentRoute: AdminRoute;
   onNavigate: (route: AdminRoute) => void;
   role: AdminRole;
-  onRoleChange: (newRole: AdminRole) => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
   notifications: NotificationItem[];
@@ -52,7 +51,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   currentRoute,
   onNavigate,
   role,
-  onRoleChange,
   isDarkMode,
   onToggleTheme,
   notifications,
@@ -87,7 +85,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: "dashboard", title: "Platform Overview Dashboard", category: "Overview" },
     { id: "analytics", title: "Analytics & Trend Charts", category: "Overview" },
     { id: "notifications", title: "System Notifications & Webhooks", category: "Overview" },
-    { id: "users", title: "All Users Management Directory", category: "User Management" },
     {
       id: "students",
       title: "Student Management & Registration Wizard",
@@ -158,7 +155,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <AdminNavbar
           currentRoute={currentRoute}
           role={role}
-          onRoleChange={onRoleChange}
           onNavigate={onNavigate}
           notifications={notifications}
           onMarkNotificationRead={onMarkNotificationRead}

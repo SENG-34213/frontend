@@ -23,7 +23,6 @@ import {
   NotificationItem,
   AuditEvent,
   PlatformKPIs,
-  AccountStatus,
 } from "./admin/types";
 import {
   INITIAL_KPIS,
@@ -46,7 +45,6 @@ import {
 
 // Screens
 import { AdminDashboard } from "./admin/dashboard/AdminDashboard";
-import { UsersManagement } from "./admin/users/UsersManagement";
 import { StudentManagement } from "./admin/students/StudentManagement";
 import { TeacherManagement } from "./admin/teachers/TeacherManagement";
 import { AdminManagement } from "./admin/administrators/AdminManagement";
@@ -74,15 +72,12 @@ import { AdminLoginView } from "./admin/auth/AdminLoginView";
 import { changeAdminPassword, logoutAdmin, refreshAdminSession } from "./admin/api/authApi";
 import { clearSession, getSession } from "./admin/auth/authStorage";
 import { SetPasswordPanel } from "../../shared/auth/SetPasswordPanel";
-import { ApiError } from "./admin/api/client";
 import {
   fetchAdminUsers,
   registerAdministrator,
   registerStudent,
   registerTeacher,
   resendUserInvitation,
-  deleteUser,
-  updateUserStatus,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
 import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi";
@@ -153,8 +148,6 @@ export default function App() {
   const [openAdminWizard, setOpenAdminWizard] = useState(false);
   const [openCourseModal, setOpenCourseModal] = useState(false);
   const [preselectedGradeId, setPreselectedGradeId] = useState<string | null>(null);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [usersError, setUsersError] = useState("");
   const [registrationOverview, setRegistrationOverview] = useState<Awaited<
     ReturnType<typeof fetchRegistrationOverview>
   > | null>(null);
@@ -213,7 +206,11 @@ export default function App() {
     const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);
     // The route is restored from browser storage after hydration.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (storedRoute) setCurrentRoute(storedRoute as AdminRoute);
+    if (storedRoute === "users") {
+      setCurrentRoute("dashboard");
+    } else if (storedRoute) {
+      setCurrentRoute(storedRoute as AdminRoute);
+    }
   }, [isAuthReady]);
 
   useEffect(() => {
@@ -222,17 +219,17 @@ export default function App() {
   }, [currentRoute, isAuthReady]);
 
   const loadAdminUsers = async () => {
-    setUsersLoading(true);
-    setUsersError("");
     try {
       const data = await fetchAdminUsers();
       setStudents(data.students);
       setTeachers(data.teachers);
       setAdministrators(data.administrators);
     } catch (error) {
-      setUsersError(error instanceof Error ? error.message : "Unable to load users.");
-    } finally {
-      setUsersLoading(false);
+      addToast(
+        "error",
+        "Users unavailable",
+        error instanceof Error ? error.message : "Unable to load user information.",
+      );
     }
   };
 
@@ -457,48 +454,6 @@ export default function App() {
         "Invitation not sent",
         error instanceof Error ? error.message : "Please try again shortly.",
       );
-    }
-  };
-
-  const handleUpdateUserStatus = (userId: string, newStatus: AccountStatus) => {
-    void updateUserStatus(userId, newStatus === "ACTIVE")
-      .then(() => {
-        setStudents((prev) => prev.map((s) => (s.id === userId ? { ...s, status: newStatus } : s)));
-        setTeachers((prev) => prev.map((t) => (t.id === userId ? { ...t, status: newStatus } : t)));
-        setAdministrators((prev) =>
-          prev.map((a) => (a.id === userId ? { ...a, status: newStatus } : a)),
-        );
-        addToast("success", "Account Status Updated", `User account has been set to ${newStatus}.`);
-      })
-      .catch((error) => {
-        addToast(
-          "error",
-          "Status Update Failed",
-          error instanceof Error ? error.message : undefined,
-        );
-      });
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      await deleteUser(userId);
-      setStudents((prev) => prev.filter((student) => student.id !== userId));
-      setTeachers((prev) => prev.filter((teacher) => teacher.id !== userId));
-      setAdministrators((prev) => prev.filter((administrator) => administrator.id !== userId));
-      addToast("success", "User Deleted", "The user account and profile data were deleted.");
-    } catch (error) {
-      const message =
-        error instanceof ApiError && error.status >= 500
-          ? "We could not delete this account right now. Please try again after the user service is restarted."
-          : error instanceof ApiError && error.status === 404
-            ? "This account no longer exists. Refresh the user list to update the page."
-            : error instanceof ApiError && error.status === 403
-              ? "You do not have permission to delete this account."
-              : error instanceof Error
-                ? error.message
-                : "The account could not be deleted. Please try again.";
-      addToast("error", "Account Not Deleted", message);
-      throw error;
     }
   };
 
@@ -745,7 +700,6 @@ export default function App() {
         setOpenCourseModal(false);
       }}
       role={role}
-      onRoleChange={setRole}
       isDarkMode={isDarkMode}
       onToggleTheme={() => setIsDarkMode((p) => !p)}
       notifications={notifications}
@@ -770,23 +724,6 @@ export default function App() {
           registrationOverview={registrationOverview}
           registrationOverviewLoading={registrationOverviewLoading}
           registrationOverviewError={registrationOverviewError}
-        />
-      )}
-
-      {currentRoute === "users" && (
-        <UsersManagement
-          students={students}
-          teachers={teachers}
-          administrators={administrators}
-          currentAdminRole={role}
-          onUpdateUserStatus={handleUpdateUserStatus}
-          onDeleteUser={handleDeleteUser}
-          onResendInvitation={handleResendInvitation}
-          onRegisterStudent={() => handleQuickAction("register-student")}
-          onRegisterTeacher={() => handleQuickAction("register-teacher")}
-          isLoading={usersLoading}
-          error={usersError}
-          onRetry={() => void loadAdminUsers()}
         />
       )}
 
@@ -821,7 +758,6 @@ export default function App() {
           onAddAdministrator={handleAddAdministrator}
           onRegisterAdministrator={handleRegisterAdministrator}
           onResendInvitation={handleResendInvitation}
-          onSwitchToSuperAdmin={() => setRole("SUPER_ADMIN")}
           showRegistrationWizardDirectly={openAdminWizard}
         />
       )}
@@ -855,6 +791,7 @@ export default function App() {
       {currentRoute === "grades" && (
         <GradeManagement
           grades={gradesList}
+          administrators={administrators}
           onCreateGrade={handleCreateGrade}
           onUpdateGrade={handleUpdateGrade}
           onDeleteGrade={handleDeleteGrade}

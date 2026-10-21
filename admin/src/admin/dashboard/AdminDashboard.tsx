@@ -521,10 +521,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </p>
             </div>
             <button
-              onClick={() => onNavigate("users")}
+              onClick={() => onNavigate("registrations")}
               className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
             >
-              View directory <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+              View registrations <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
             </button>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">

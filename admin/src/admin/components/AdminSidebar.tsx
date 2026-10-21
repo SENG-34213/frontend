@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   BarChart3,
   Bell,
-  Users,
   GraduationCap,
   Briefcase,
   ShieldAlert,
@@ -35,7 +34,6 @@ export type AdminRoute =
   | "dashboard"
   | "analytics"
   | "notifications"
-  | "users"
   | "students"
   | "teachers"
   | "administrators"
@@ -113,7 +111,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       key: "USER_MANAGEMENT",
       label: "User Management",
       items: [
-        { id: "users" as AdminRoute, label: "All Users", icon: Users },
         { id: "students" as AdminRoute, label: "Students", icon: GraduationCap },
         { id: "teachers" as AdminRoute, label: "Teachers", icon: Briefcase },
         {
