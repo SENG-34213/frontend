@@ -27,12 +27,9 @@ export const MyCoursesView: React.FC = () => {
 
   const categories = [
     "All",
-    "Computer Science",
-    "Artificial Intelligence",
-    "Software Systems",
-    "Human-Computer Interaction",
-    "Cybersecurity",
+    ...Array.from(new Set(enrolledCourses.map((course) => course.category).filter(Boolean))).sort(),
   ];
+  const activeCategory = categories.includes(selectedCategory) ? selectedCategory : "All";
 
   const filteredCourses = enrolledCourses
     .filter((c) => {
@@ -41,7 +38,7 @@ export const MyCoursesView: React.FC = () => {
         c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.instructor.name.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesCategory = selectedCategory === "All" || c.category === selectedCategory;
+      const matchesCategory = activeCategory === "All" || c.category === activeCategory;
 
       const matchesStatus =
         selectedStatus === "All" ||
@@ -172,7 +169,7 @@ export const MyCoursesView: React.FC = () => {
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={`rounded-lg px-2.5 py-1 whitespace-nowrap transition-colors ${
-                selectedCategory === cat
+                activeCategory === cat
                   ? "bg-indigo-50 text-indigo-700 font-semibold dark:bg-indigo-950 dark:text-indigo-300"
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
