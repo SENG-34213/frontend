@@ -65,7 +65,7 @@ function mapEvent(event: BackendCalendarEvent, courses: AdminCourse[]): Academic
 function mapCourse(course: BackendCourse): AdminCourse {
   return {
     id: course.id,
-    code: course.code || course.id,
+    code: course.title || course.code || "Course",
     title: course.courseName,
     teacherId: course.assignedTeacherId || "",
     teacherName: "Faculty Member",

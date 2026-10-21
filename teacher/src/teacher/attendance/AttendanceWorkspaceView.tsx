@@ -19,10 +19,6 @@ import type { Course } from "../types";
 type AttendanceWorkspaceViewProps = { courses: Course[]; backendCourses: BackendCourse[] };
 type EditableRecord = BackendAttendanceRecord & { remarks: string };
 
-function shortId(value: string) {
-  return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
-}
-
 function displayTime(value: string) {
   return value.length > 5 ? value.slice(0, 5) : value;
 }
@@ -413,7 +409,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                 {records.map((record) => (
                   <tr key={record.id} className="hover:bg-slate-50/60">
                     <td className="px-5 py-3.5 font-semibold text-slate-900">
-                      Student {shortId(record.studentId)}
+                      Student name unavailable
                     </td>
                     <td className="px-4 py-3.5 text-slate-500">
                       {record.markedAt ? new Date(record.markedAt).toLocaleString() : "—"}

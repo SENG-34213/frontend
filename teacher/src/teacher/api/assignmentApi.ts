@@ -74,6 +74,7 @@ export type BackendSubmission = {
   id: string;
   assignmentId: string;
   studentId: string;
+  studentName?: string | null;
   attemptNumber: number;
   status: BackendSubmissionStatus;
   content?: string;

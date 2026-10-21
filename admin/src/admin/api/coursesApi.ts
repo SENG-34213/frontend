@@ -11,6 +11,7 @@ interface CourseApiResponse {
   assignedTeacherId?: string | null;
   courseEnrollmentId?: string | null;
   gradeId?: string | null;
+  gradeName?: string | null;
   subject?: string | null;
   online?: boolean;
   discountOfferPercent?: number | null;
@@ -66,8 +67,9 @@ export function mapCourseResponse(course: CourseApiResponse): Course {
     teacherId: course.assignedTeacherId || "",
     teacherName: course.assignedTeacherId ? "Assigned faculty" : "Unassigned faculty",
     assignedTeacherId: course.assignedTeacherId || undefined,
-    grade: course.gradeId || "Grade not specified",
+    grade: course.gradeName || "Grade not specified",
     gradeId: course.gradeId || undefined,
+    gradeName: course.gradeName || undefined,
     enrollmentCount,
     maxCapacity: Math.max(enrollmentCount, 1),
     status: statusMap[status || ""] || (isPublished ? "ACTIVE" : "UPCOMING"),
