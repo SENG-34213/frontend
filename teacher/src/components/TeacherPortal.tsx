@@ -33,7 +33,9 @@ import { NotificationCenterView } from "../teacher/notifications/NotificationCen
 import { TeacherProfileView } from "../teacher/profile/TeacherProfileView";
 import { TeacherSettingsView } from "../teacher/settings/TeacherSettingsView";
 import { TeacherLoginView } from "../teacher/auth/TeacherLoginView";
-import { getCurrentTeacher, logoutTeacher } from "../teacher/api/auth";
+import { changeTeacherPassword, getCurrentTeacher, logoutTeacher } from "../teacher/api/auth";
+import { SetPasswordPanel } from "../../../shared/auth/SetPasswordPanel";
+import { clearSession } from "../teacher/auth/authStorage";
 import { restoreTeacherSession } from "../teacher/api/client";
 import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
@@ -47,6 +49,7 @@ import { getCourseAssignments, type BackendAssignment } from "../teacher/api/ass
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
   const restoreStartedRef = useRef(false);
   const [currentTab, setCurrentTab] = useState<NavigationTab>("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -103,6 +106,7 @@ export default function App() {
         // This prevents a stale session for another role from reaching the shell.
         await getCurrentTeacher();
         setSession(restoredSession);
+        setRequiresPasswordChange(Boolean(restoredSession.mustChangePassword));
       })
       .catch(() => {
         setSession(null);
@@ -213,7 +217,36 @@ export default function App() {
     return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher session" />;
   }
 
-  if (!session) return <TeacherLoginView onLogin={setSession} />;
+  if (!session) {
+    return (
+      <TeacherLoginView
+        onLogin={(nextSession) => {
+          setSession(nextSession);
+          setRequiresPasswordChange(Boolean(nextSession.mustChangePassword));
+        }}
+      />
+    );
+  }
+
+  if (requiresPasswordChange) {
+    return (
+      <SetPasswordPanel
+        email={session.user.email}
+        roleLabel="Teacher"
+        onSubmit={async (currentPassword, newPassword) => {
+          await changeTeacherPassword(currentPassword, newPassword);
+          clearSession();
+          setRequiresPasswordChange(false);
+          setSession(null);
+        }}
+        onCancel={() => {
+          clearSession();
+          setRequiresPasswordChange(false);
+          setSession(null);
+        }}
+      />
+    );
+  }
 
   if (shellData.isLoading || !shellData.teacherProfile) {
     return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher workspace" />;

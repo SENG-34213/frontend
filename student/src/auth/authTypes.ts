@@ -15,6 +15,7 @@ export interface StudentUserSummary {
   accountStatus?: string;
   emailVerified?: boolean;
   profileComplete?: boolean;
+  mustChangePassword?: boolean;
   [key: string]: unknown;
 }
 
@@ -26,6 +27,7 @@ export interface LoginResponse {
   refreshExpiresIn?: number;
   scope?: string;
   issuedAt?: string;
+  mustChangePassword?: boolean;
   user?: StudentUserSummary;
   profile?: StudentUserSummary;
 }
@@ -35,4 +37,5 @@ export interface AuthSession {
   refreshToken?: string;
   user: StudentUserSummary;
   expiresAt: number;
+  mustChangePassword?: boolean;
 }

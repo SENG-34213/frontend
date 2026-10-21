@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { StudentLoginView } from "./components/auth/StudentLoginView";
-import { logoutStudent, restoreStudentAuth } from "./api/auth";
+import { changeStudentPassword, logoutStudent, restoreStudentAuth } from "./api/auth";
+import { clearSession } from "./auth/authStorage";
+import { SetPasswordPanel } from "../../shared/auth/SetPasswordPanel";
 import type { AuthSession } from "./auth/authTypes";
 import { StudentProvider, useStudent } from "./context/StudentContext";
 import { Sidebar } from "./components/layout/Sidebar";
@@ -136,10 +138,14 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
 
   useEffect(() => {
     restoreStudentAuth()
-      .then(setSession)
+      .then((restoredSession) => {
+        setSession(restoredSession);
+        setRequiresPasswordChange(Boolean(restoredSession?.mustChangePassword));
+      })
       .finally(() => setIsRestoring(false));
   }, []);
 
@@ -156,7 +162,36 @@ export default function App() {
       </main>
     );
   }
-  if (!session) return <StudentLoginView onLogin={setSession} />;
+  if (!session) {
+    return (
+      <StudentLoginView
+        onLogin={(nextSession) => {
+          setSession(nextSession);
+          setRequiresPasswordChange(Boolean(nextSession.mustChangePassword));
+        }}
+      />
+    );
+  }
+
+  if (requiresPasswordChange) {
+    return (
+      <SetPasswordPanel
+        email={session.user.email}
+        roleLabel="Student"
+        onSubmit={async (currentPassword, newPassword) => {
+          await changeStudentPassword(currentPassword, newPassword);
+          clearSession();
+          setRequiresPasswordChange(false);
+          setSession(null);
+        }}
+        onCancel={() => {
+          clearSession();
+          setRequiresPasswordChange(false);
+          setSession(null);
+        }}
+      />
+    );
+  }
 
   return (
     <StudentProvider authUser={session.user}>

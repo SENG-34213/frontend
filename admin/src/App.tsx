@@ -71,8 +71,9 @@ import { AuditAndActivity } from "./admin/audit/AuditAndActivity";
 import { AdminProfile } from "./admin/profile/AdminProfile";
 import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
-import { logoutAdmin, refreshAdminSession } from "./admin/api/authApi";
+import { changeAdminPassword, logoutAdmin, refreshAdminSession } from "./admin/api/authApi";
 import { clearSession, getSession } from "./admin/auth/authStorage";
+import { SetPasswordPanel } from "../../shared/auth/SetPasswordPanel";
 import { ApiError } from "./admin/api/client";
 import {
   fetchAdminUsers,
@@ -110,6 +111,7 @@ export default function App() {
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
   const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
 
   // Sync theme with HTML document
   useEffect(() => {
@@ -177,6 +179,7 @@ export default function App() {
         const session = getSession();
         if (mounted && session) {
           setRole(session.user.role);
+          setRequiresPasswordChange(Boolean(session.mustChangePassword));
           setIsAuthenticated(true);
         }
       } catch {
@@ -374,10 +377,34 @@ export default function App() {
       <AdminLoginView
         onLogin={(session) => {
           setRole(session.user.role);
+          setRequiresPasswordChange(Boolean(session.mustChangePassword));
           setIsAuthenticated(true);
         }}
       />
     );
+  }
+
+  if (requiresPasswordChange) {
+    const session = getSession();
+    if (session) {
+      return (
+        <SetPasswordPanel
+          email={session.user.email}
+          roleLabel="Administration"
+          onSubmit={async (currentPassword, newPassword) => {
+            await changeAdminPassword(currentPassword, newPassword);
+            clearSession();
+            setRequiresPasswordChange(false);
+            setIsAuthenticated(false);
+          }}
+          onCancel={() => {
+            clearSession();
+            setRequiresPasswordChange(false);
+            setIsAuthenticated(false);
+          }}
+        />
+      );
+    }
   }
 
   const handleLogout = () => {

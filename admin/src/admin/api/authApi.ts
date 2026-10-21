@@ -21,6 +21,7 @@ export async function loginAdmin(identifier: string, password: string): Promise<
     refreshToken: response.data.refreshToken,
     user,
     expiresAt: Date.now() + response.data.expiresIn * 1000,
+    mustChangePassword: Boolean(response.data.mustChangePassword ?? user.mustChangePassword),
   };
 
   saveSession(session);
@@ -29,6 +30,13 @@ export async function loginAdmin(identifier: string, password: string): Promise<
     throw new Error("Sign-in returned an incompatible session. Please try signing in again.");
   }
   return session;
+}
+
+export async function changeAdminPassword(currentPassword: string, newPassword: string) {
+  return apiRequest<ApiResponse<null>>("/api/v1/users/me/password", {
+    method: "PUT",
+    body: { currentPassword, newPassword },
+  });
 }
 
 export async function refreshAdminSession() {
