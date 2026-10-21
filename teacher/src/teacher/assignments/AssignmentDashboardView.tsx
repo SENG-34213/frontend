@@ -677,7 +677,7 @@ const toAssignment = (item: BackendAssignment, courses: BackendCourse[]): Assign
   return {
     id: item.id,
     courseId: item.courseId,
-    courseCode: course?.subject || course?.courseName || item.courseId,
+    courseCode: course?.courseCode || course?.courseName || item.courseId,
     title: item.title,
     description: item.description || item.instructions || "",
     openedDate: Number.isNaN(opened.getTime()) ? item.startDate : opened.toLocaleDateString(),

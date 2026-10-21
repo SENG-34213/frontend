@@ -8,6 +8,8 @@ import type {
   CalendarEventRequest as AdminCalendarEventRequest,
 } from "../../../../admin/src/admin/api/calendarApi";
 import type { BackendCourse } from "../api/courseApi";
+import type { TeacherProfile } from "../types";
+import type { CalendarInstructor } from "./TeacherCalendar";
 import {
   cancelCalendarEvent,
   createCalendarEvent,
@@ -17,7 +19,10 @@ import {
   type CalendarEventRequest,
 } from "../api/calendarApi";
 
-type TeacherCalendarViewProps = { backendCourses: BackendCourse[] };
+type TeacherCalendarViewProps = {
+  backendCourses: BackendCourse[];
+  teacher?: Pick<TeacherProfile, "name" | "email" | "department">;
+};
 
 function mapEvent(event: BackendCalendarEvent, courses: AdminCourse[]): AcademicEvent {
   const start = new Date(event.startDateTime);
@@ -65,18 +70,18 @@ function mapEvent(event: BackendCalendarEvent, courses: AdminCourse[]): Academic
 function mapCourse(course: BackendCourse): AdminCourse {
   return {
     id: course.id,
-    code: course.title || course.code || "Course",
+    code: course.courseCode || "",
     title: course.courseName,
     teacherId: course.assignedTeacherId || "",
-    teacherName: "Faculty Member",
-    grade: "",
-    enrollmentCount: course.numberOfStudents || 0,
-    maxCapacity: 0,
+    teacherName: "",
+    grade: course.gradeName || "",
+    enrollmentCount: course.numberOfStudents ?? 0,
+    maxCapacity: course.maxCapacity ?? 0,
     status: course.courseStatus || "PUBLISHED",
-    description: course.courseDescription || "",
-    modulesCount: 0,
-    category: course.subject || "Academic",
-    startDate: "",
+    description: course.courseDescription ?? "",
+    modulesCount: Number(course.moduleCount ?? 0),
+    category: course.subject ?? "",
+    startDate: course.publishedDate || "",
     endDate: "",
   };
 }
@@ -96,8 +101,16 @@ function toTeacherRequest(request: AdminCalendarEventRequest): CalendarEventRequ
   };
 }
 
-export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backendCourses }) => {
+export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({
+  backendCourses,
+  teacher,
+}) => {
   const courses = useMemo(() => backendCourses.map(mapCourse), [backendCourses]);
+  const instructors = useMemo<CalendarInstructor[]>(
+    () =>
+      teacher?.name ? [{ name: teacher.name, email: teacher.email, dept: teacher.department }] : [],
+    [teacher],
+  );
   const [events, setEvents] = useState<AcademicEvent[]>([]);
 
   const loadEvents = useCallback(
@@ -114,8 +127,9 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
   );
 
   useEffect(() => {
-    const start = new Date(2026, 9, 1);
-    const end = new Date(2026, 10, 1);
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     void loadEvents(start, end).catch(() => setEvents([]));
   }, [loadEvents]);
 
@@ -158,6 +172,7 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({ backen
     <TeacherCalendar
       events={events}
       courses={courses}
+      instructors={instructors}
       onAddEvent={handleAddEvent}
       onUpdateEvent={handleUpdateEvent}
       onCancelEvent={handleCancelEvent}

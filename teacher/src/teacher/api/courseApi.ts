@@ -5,7 +5,7 @@ import type { Course } from "../types";
 export type BackendCourse = {
   id: string;
   courseName: string;
-  code?: string;
+  courseCode?: string;
   title?: string;
   courseDescription?: string;
   courseThumbnail?: string;
@@ -13,10 +13,14 @@ export type BackendCourse = {
   gradeId?: string;
   gradeName?: string;
   subject?: string;
+  level?: string | null;
+  semester?: string | null;
+  academicYear?: string | null;
   online?: boolean;
   visible?: boolean;
   isPublished?: boolean;
   courseStatus?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  publishedDate?: string;
   numberOfStudents?: number;
   moduleCount?: number | null;
   lessonCount?: number | null;
@@ -74,13 +78,13 @@ export async function getCourseById(
 export function mapBackendCourse(course: BackendCourse): Course {
   return {
     id: course.id,
-    code: course.subject || "COURSE",
+    code: course.courseCode || "",
     title: course.courseName,
-    description: course.courseDescription || "No course description available.",
-    category: course.subject || "Academic Course",
-    level: "Undergraduate",
-    semester: "Current Semester",
-    academicYear: "",
+    description: course.courseDescription || "",
+    category: course.subject || "",
+    level: course.level || "",
+    semester: course.semester || "",
+    academicYear: course.academicYear || "",
     enrolledCount: course.numberOfStudents ?? 0,
     maxCapacity: course.maxCapacity ?? 0,
     status:
@@ -89,7 +93,7 @@ export function mapBackendCourse(course: BackendCourse): Course {
         : course.courseStatus === "ARCHIVED"
           ? "Archived"
           : "Draft",
-    coverTheme: "indigo",
+    coverTheme: undefined,
     modulesCount: Number(course.moduleCount ?? 0),
     assignmentsCount: Number(course.assignmentCount ?? 0),
     averageGrade: Number(course.averageGrade ?? 0),

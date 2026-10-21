@@ -154,13 +154,14 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCourses.map((course) => {
-            const themeColors =
-              {
-                indigo: "from-indigo-600 to-indigo-800",
-                violet: "from-violet-600 to-purple-800",
-                emerald: "from-emerald-600 to-teal-800",
-                amber: "from-amber-600 to-orange-700",
-              }[course.coverTheme] || "from-indigo-600 to-indigo-800";
+            const themeColors = course.coverTheme
+              ? {
+                  indigo: "from-indigo-600 to-indigo-800",
+                  violet: "from-violet-600 to-purple-800",
+                  emerald: "from-emerald-600 to-teal-800",
+                  amber: "from-amber-600 to-orange-700",
+                }[course.coverTheme]
+              : "from-indigo-600 to-indigo-800";
 
             return (
               <div

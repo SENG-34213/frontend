@@ -155,17 +155,22 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
   const currentBackendCourse = backendCourses.find((course) => course.id === selectedCourseId);
   const currentCourse: Course = {
     id: selectedCourseId,
-    code: currentBackendCourse?.subject || "COURSE",
-    title: currentBackendCourse?.courseName || "Select a course",
+    code: currentBackendCourse?.courseCode || "",
+    title: currentBackendCourse?.courseName || "",
     description: currentBackendCourse?.courseDescription || "",
-    category: currentBackendCourse?.subject || "Academic Course",
-    level: "Undergraduate",
-    semester: "Current Semester",
-    academicYear: "",
-    enrolledCount: currentBackendCourse?.numberOfStudents || 0,
+    category: currentBackendCourse?.subject || "",
+    level: currentBackendCourse?.level || "",
+    semester: currentBackendCourse?.semester || "",
+    academicYear: currentBackendCourse?.academicYear || "",
+    enrolledCount: currentBackendCourse?.numberOfStudents ?? 0,
     maxCapacity: currentBackendCourse?.maxCapacity ?? 0,
-    status: "Active",
-    coverTheme: "indigo",
+    status:
+      currentBackendCourse?.courseStatus === "PUBLISHED"
+        ? "Active"
+        : currentBackendCourse?.courseStatus === "ARCHIVED"
+          ? "Archived"
+          : "Draft",
+    coverTheme: undefined,
     modulesCount: modules.length,
     assignmentsCount: currentBackendCourse?.assignmentCount ?? 0,
     averageGrade: Number(currentBackendCourse?.averageGrade ?? 0),

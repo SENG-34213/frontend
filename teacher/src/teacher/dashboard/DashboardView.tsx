@@ -81,7 +81,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const pendingGradingAssignments = (dashboard?.pendingGrading ?? []).map((item) => ({
     id: item.assignmentId,
     submissionId: item.submissionId,
-    courseCode: "Course",
+    courseCode: item.courseId,
     title: item.assignmentTitle,
     dueDate: formatDateTime(item.submittedAt),
     gradedCount: 0,

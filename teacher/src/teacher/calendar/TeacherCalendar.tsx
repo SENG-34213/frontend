@@ -46,6 +46,7 @@ import type {
 interface TeacherCalendarProps {
   events: AcademicEvent[];
   courses: Course[];
+  instructors?: CalendarInstructor[];
   onAddEvent: (event: CalendarEventRequest) => Promise<void>;
   onUpdateEvent: (eventId: string, event: CalendarEventRequest) => Promise<void>;
   onCancelEvent: (eventId: string) => Promise<void>;
@@ -113,77 +114,9 @@ interface VenueStatus {
   type: string;
 }
 
-const CAMPUS_VENUES: VenueStatus[] = [
-  {
-    id: "v-01",
-    name: "Science Hall Auditorium B",
-    building: "Science Complex",
-    capacity: 120,
-    type: "Exam Certified",
-  },
-  {
-    id: "v-02",
-    name: "Turing Computing Lab 304",
-    building: "Engineering Wing",
-    capacity: 80,
-    type: "Computer Lab",
-  },
-  {
-    id: "v-03",
-    name: "BioTech Seminar Hall 101",
-    building: "Life Sciences Center",
-    capacity: 60,
-    type: "Tiered Hall",
-  },
-  {
-    id: "v-04",
-    name: "Newton Lecture Theater 201",
-    building: "Core Campus",
-    capacity: 150,
-    type: "Lecture Theater",
-  },
-  {
-    id: "v-05",
-    name: "Council Boardroom 401",
-    building: "Administration Block",
-    capacity: 25,
-    type: "Executive Boardroom",
-  },
-  {
-    id: "v-06",
-    name: "Faculty Wing Room 310",
-    building: "Faculty Wing",
-    capacity: 15,
-    type: "Advising Room",
-  },
-  {
-    id: "v-07",
-    name: "Mentify LMS Submission Portal",
-    building: "Cloud Platform",
-    capacity: 2000,
-    type: "Virtual Platform",
-  },
-];
+const CAMPUS_VENUES: VenueStatus[] = [];
 
-const KNOWN_COURSES = [
-  { code: "MATH-401", title: "Advanced Calculus & Real Analysis", dept: "Mathematics" },
-  { code: "CS-302", title: "Data Structures & Algorithms", dept: "Computer Science" },
-  { code: "PHYS-402", title: "Quantum Mechanics & Field Foundations", dept: "Physics" },
-  { code: "BIO-204", title: "Molecular Genetics & Cellular Biology", dept: "Biology" },
-  { code: "CHEM-201", title: "Organic Chemistry & Reaction Mechanisms", dept: "Chemistry" },
-  { code: "CS-450", title: "Artificial Intelligence & Ethics", dept: "Computer Science" },
-  { code: "SENATE", title: "Institutional Governance Council", dept: "Administration" },
-  { code: "REGISTRAR", title: "Academic Registrar & Records", dept: "Administration" },
-];
-
-const KNOWN_INSTRUCTORS = [
-  { name: "Dr. Sarah Chen", email: "sarah.chen@mentify.edu", dept: "Computer Science" },
-  { name: "Dr. Marcus Sterling", email: "marcus.sterling@mentify.edu", dept: "Mathematics" },
-  { name: "Prof. David Okafor", email: "david.okafor@mentify.edu", dept: "Physics" },
-  { name: "Dr. Priya Nambiar", email: "priya.nambiar@mentify.edu", dept: "Biology" },
-  { name: "Dr. Aravind Swaminathan", email: "aravind.s@mentify.edu", dept: "Chemistry" },
-  { name: "Alex Mercer", email: "alex.mercer@mentify.edu", dept: "Administration" },
-];
+export type CalendarInstructor = { name: string; email: string; dept: string };
 
 const EVENT_TYPE_COLORS: Record<
   string,
@@ -270,6 +203,7 @@ const TIME_HOURS_GRID = [
 export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   events: initialEvents,
   courses,
+  instructors = [],
   onAddEvent,
   onUpdateEvent,
   onCancelEvent,
@@ -281,10 +215,10 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         title: course.title,
         dept: course.category,
       }))
-    : KNOWN_COURSES;
+    : [];
 
   // Calendar base state (anchor date: October 18, 2026)
-  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 9, 18));
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<CalendarViewMode>("month");
   const [localEvents, setLocalEvents] = useState<AcademicEvent[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(false);
@@ -387,16 +321,14 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   const [formType, setFormType] = useState<"CLASS" | "EXAM" | "QUIZ" | "DEADLINE" | "SESSION">(
     "EXAM",
   );
-  const [formDate, setFormDate] = useState("2026-10-26");
+  const [formDate, setFormDate] = useState("");
   const [formStartTime, setFormStartTime] = useState("09:00 AM");
   const [formEndTime, setFormEndTime] = useState("11:30 AM");
-  const [formLocation, setFormLocation] = useState("Science Hall Auditorium B");
-  const [formCourseCode, setFormCourseCode] = useState(courseOptions[0]?.code || "MATH-401");
-  const [formCourseTitle, setFormCourseTitle] = useState(
-    courseOptions[0]?.title || "Advanced Calculus & Real Analysis",
-  );
-  const [formInstructorName, setFormInstructorName] = useState("Dr. Marcus Sterling");
-  const [formInstructorEmail, setFormInstructorEmail] = useState("marcus.sterling@mentify.edu");
+  const [formLocation, setFormLocation] = useState("");
+  const [formCourseCode, setFormCourseCode] = useState(courseOptions[0]?.code || "");
+  const [formCourseTitle, setFormCourseTitle] = useState(courseOptions[0]?.title || "");
+  const [formInstructorName, setFormInstructorName] = useState("");
+  const [formInstructorEmail, setFormInstructorEmail] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formVisibility, setFormVisibility] = useState<EventVisibility>("PUBLIC_STUDENTS");
   const [formStatus, setFormStatus] = useState<"SCHEDULED" | "COMPLETED" | "CANCELLED">(
@@ -415,12 +347,12 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     );
     setFormStartTime("09:00 AM");
     setFormEndTime("11:30 AM");
-    setFormLocation("Science Hall Auditorium B");
-    setFormCourseCode(courseOptions[0]?.code || "MATH-401");
-    setFormCourseTitle(courseOptions[0]?.title || "Advanced Calculus & Real Analysis");
-    setFormInstructorName("Dr. Marcus Sterling");
-    setFormInstructorEmail("marcus.sterling@mentify.edu");
-    setFormDescription("Supervised examination in designated campus facility.");
+    setFormLocation("");
+    setFormCourseCode(courseOptions[0]?.code || "");
+    setFormCourseTitle(courseOptions[0]?.title || "");
+    setFormInstructorName("");
+    setFormInstructorEmail("");
+    setFormDescription("");
     setFormVisibility("PUBLIC_STUDENTS");
     setFormStatus("SCHEDULED");
     setFormErrors({});
@@ -440,12 +372,10 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     setFormEndTime(times[1] || "10:30 AM");
 
     setFormLocation(evt.location);
-    setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "MATH-401");
-    setFormCourseTitle(
-      evt.courseTitle || courseOptions[0]?.title || "Advanced Calculus & Real Analysis",
-    );
-    setFormInstructorName(evt.instructorName || "Dr. Marcus Sterling");
-    setFormInstructorEmail(evt.instructorEmail || "marcus.sterling@mentify.edu");
+    setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "");
+    setFormCourseTitle(evt.courseTitle || courseOptions[0]?.title || "");
+    setFormInstructorName(evt.instructorName || "");
+    setFormInstructorEmail(evt.instructorEmail || "");
     setFormDescription(evt.description || "");
     setFormVisibility(evt.visibility || "PUBLIC_STUDENTS");
     setFormStatus(evt.status || "SCHEDULED");
@@ -469,7 +399,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
 
   const handleToday = () => {
     triggerSimulatedLoading();
-    setCurrentDate(new Date(2026, 9, 18));
+    setCurrentDate(new Date());
   };
 
   const handlePrevWeek = () => {
@@ -517,7 +447,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   // Instructor change in form: auto-populate instructorEmail
   const handleInstructorSelectionChange = (name: string) => {
     setFormInstructorName(name);
-    const found = KNOWN_INSTRUCTORS.find((i) => i.name === name);
+    const found = instructors.find((i) => i.name === name);
     if (found) {
       setFormInstructorEmail(found.email);
     }
@@ -618,7 +548,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       // 7. Date Range Filter
       if (dateRangePreset === "THIS_WEEK") {
         const d = new Date(e.date + "T00:00:00");
-        const now = new Date(2026, 9, 18);
+        const now = new Date();
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
         const weekEnd = new Date(weekStart);
@@ -1363,8 +1293,8 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 onChange={(e) => setSelectedInstructor(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
               >
-                <option value="ALL">All Faculty Members ({KNOWN_INSTRUCTORS.length})</option>
-                {KNOWN_INSTRUCTORS.map((i) => (
+                <option value="ALL">All Faculty Members ({instructors.length})</option>
+                {instructors.map((i) => (
                   <option key={i.email} value={i.name}>
                     {i.name} ({i.dept})
                   </option>
@@ -2122,7 +2052,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
               >
                 <option value="ALL">All Faculty</option>
-                {KNOWN_INSTRUCTORS.map((i) => (
+                {instructors.map((i) => (
                   <option key={i.email} value={i.name}>
                     {i.name}
                   </option>
@@ -2565,7 +2495,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     onChange={(e) => handleInstructorSelectionChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
                   >
-                    {KNOWN_INSTRUCTORS.map((i) => (
+                    {instructors.map((i) => (
                       <option key={i.email} value={i.name}>
                         {i.name} ({i.dept})
                       </option>

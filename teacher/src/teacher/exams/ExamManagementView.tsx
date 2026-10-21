@@ -72,7 +72,7 @@ const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examinatio
   return {
     id: exam.id,
     courseId: exam.courseId,
-    courseCode: course?.subject || course?.courseName || exam.courseId,
+    courseCode: course?.courseCode || course?.courseName || exam.courseId,
     title: exam.title,
     examType: examTypeLabel(exam.type),
     scheduledDate: exam.examDate,
@@ -310,7 +310,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       setError("Select a course before creating an exam.");
       return;
     }
-    const courseCode = backendCourse.subject || backendCourse.courseName;
+    const courseCode = backendCourse.courseCode || backendCourse.courseName;
     const startTime = fromDisplayTime(wizardTime);
     const startDate = new Date(`1970-01-01T${startTime}`);
     const endDate = new Date(startDate.getTime() + (Number(wizardDuration) || 120) * 60_000);

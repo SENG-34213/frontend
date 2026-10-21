@@ -6,7 +6,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { NavigationTab, Course } from "../teacher/types";
-import { mockAssignments, mockConversations } from "../teacher/data/mockData";
 import { TeacherSidebar } from "../teacher/components/TeacherSidebar";
 import { TeacherNavbar } from "../teacher/components/TeacherNavbar";
 import { GlobalSearchModal } from "../teacher/components/GlobalSearchModal";
@@ -42,9 +41,10 @@ import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
 import { createQuiz } from "../teacher/api/quizApi";
-import { mapBackendCourse } from "../teacher/api/courseApi";
+import { mapBackendCourse, type BackendCourse } from "../teacher/api/courseApi";
 import { useTeacherStudents } from "../teacher/hooks/useTeacherStudents";
 import { getCourseAssignments, type BackendAssignment } from "../teacher/api/assignmentApi";
+import { getTeacherDashboard, type TeacherDashboardData } from "../teacher/api/dashboardApi";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -74,23 +74,36 @@ export default function App() {
 
   // Deep view states
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<Course | null>(null);
-  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("asg-01");
+  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("");
   const [aiPreloadedPrompt, setAiPreloadedPrompt] = useState<string>("");
   const shellData = useTeacherShellData(Boolean(session));
   const teacherCourses = useTeacherCourses(Boolean(session));
   const teacherStudents = useTeacherStudents(Boolean(session), teacherCourses.courses);
   const [searchAssignments, setSearchAssignments] = useState<BackendAssignment[]>([]);
   const recentNotifications = useTeacherNotifications(Boolean(session), 4);
+  const [dashboardData, setDashboardData] = useState<TeacherDashboardData | null>(null);
 
   // Course state
   const [courses, setCourses] = useState<Course[]>([]);
 
   // Counts
-  const pendingSubmissionsCount = mockAssignments.reduce(
-    (acc, a) => acc + (a.totalSubmissions - a.gradedCount),
-    0,
-  );
-  const unreadMessagesCount = mockConversations.reduce((acc, c) => acc + c.unreadCount, 0);
+  const pendingSubmissionsCount = dashboardData?.pendingReviewCount ?? 0;
+
+  useEffect(() => {
+    if (!session) {
+      setDashboardData(null);
+      return;
+    }
+    const controller = new AbortController();
+    getTeacherDashboard(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) setDashboardData(data ?? null);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setDashboardData(null);
+      });
+    return () => controller.abort();
+  }, [session]);
   useEffect(() => {
     if (restoreStartedRef.current) return;
     restoreStartedRef.current = true;
@@ -179,25 +192,7 @@ export default function App() {
 
   const handleItemCreated = (type: QuickCreateType, item: any) => {
     if (type === "course") {
-      const courseTitle = item.courseName || item.title || "Untitled course";
-      const newCourse: Course = {
-        id: item.id,
-        code: item.subject || courseTitle.split(" ")[0] || "COURSE",
-        title: courseTitle,
-        description:
-          item.courseDescription || item.description || "No course description available.",
-        category: "Computer Science",
-        level: "Undergraduate",
-        semester: "Fall Semester",
-        academicYear: "2026-2027",
-        enrolledCount: 0,
-        maxCapacity: 50,
-        status: "Active",
-        coverTheme: "indigo",
-        modulesCount: 0,
-        assignmentsCount: 0,
-        averageGrade: 0,
-      };
+      const newCourse: Course = mapBackendCourse(item as BackendCourse);
       setCourses([newCourse, ...courses]);
       setSelectedCourseForDetail(newCourse);
       setCurrentTab("courses");
@@ -298,12 +293,13 @@ export default function App() {
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
         teacher={teacherProfile}
+        courseCount={teacherCourses.courses.length}
+        studentCount={teacherStudents.students.length}
         onLogout={async () => {
           await logoutTeacher();
           setSession(null);
         }}
         pendingSubmissionsCount={pendingSubmissionsCount}
-        unreadMessagesCount={unreadMessagesCount}
         unreadNotificationsCount={notificationUnreadCount}
       />
 
@@ -449,7 +445,7 @@ export default function App() {
           )}
 
           {currentTab === "calendar" && (
-            <TeacherCalendarView backendCourses={teacherCourses.courses} />
+            <TeacherCalendarView backendCourses={teacherCourses.courses} teacher={teacherProfile} />
           )}
 
           {currentTab === "messages" && (

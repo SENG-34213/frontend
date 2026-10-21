@@ -12,8 +12,8 @@ import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel
 type Props = { onLogin: (session: AuthSession) => void };
 
 export function TeacherLoginView({ onLogin }: Props) {
-  const [email, setEmail] = useState("teacher1@mentify.test");
-  const [password, setPassword] = useState("Sample@12345");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -195,7 +195,7 @@ export function TeacherLoginView({ onLogin }: Props) {
               </p>
             </div>
             <p className="mt-6 text-center text-[11px] text-slate-400">
-              Protected faculty workspace · Sample UI mode
+              Protected faculty workspace
             </p>
           </div>
         </div>

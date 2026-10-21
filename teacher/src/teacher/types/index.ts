@@ -42,13 +42,13 @@ export interface Course {
   title: string;
   description: string;
   category: string;
-  level: "Undergraduate" | "Graduate" | "Foundational";
+  level: string;
   semester: string;
   academicYear: string;
   enrolledCount: number;
   maxCapacity: number;
   status: "Active" | "Draft" | "Archived";
-  coverTheme: "indigo" | "emerald" | "violet" | "amber";
+  coverTheme?: "indigo" | "emerald" | "violet" | "amber";
   modulesCount: number;
   assignmentsCount: number;
   nextSession?: string;

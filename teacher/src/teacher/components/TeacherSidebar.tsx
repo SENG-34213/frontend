@@ -32,8 +32,9 @@ interface TeacherSidebarProps {
   isMobileOpen: boolean;
   onCloseMobile: () => void;
   teacher: TeacherProfile;
+  courseCount: number;
+  studentCount: number;
   pendingSubmissionsCount: number;
-  unreadMessagesCount: number;
   unreadNotificationsCount: number;
   onLogout: () => void | Promise<void>;
 }
@@ -60,8 +61,9 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
   teacher,
+  courseCount,
+  studentCount,
   pendingSubmissionsCount,
-  unreadMessagesCount,
   unreadNotificationsCount,
   onLogout,
 }) => {
@@ -91,9 +93,9 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
     {
       groupName: "TEACHING",
       items: [
-        { id: "courses", label: "My Courses", icon: BookOpen, badge: 4 },
+        { id: "courses", label: "My Courses", icon: BookOpen, badge: courseCount },
         { id: "curriculum", label: "Course Content", icon: Layers },
-        { id: "students", label: "My Students", icon: Users, badge: 142 },
+        { id: "students", label: "My Students", icon: Users, badge: studentCount },
         { id: "attendance", label: "Attendance", icon: ClipboardCheck },
         { id: "materials", label: "Learning Materials", icon: FolderOpen },
       ],
@@ -121,7 +123,6 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           id: "messages",
           label: "Messages",
           icon: MessageSquare,
-          badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
           badgeColor: "bg-indigo-600 text-white",
         },
         {

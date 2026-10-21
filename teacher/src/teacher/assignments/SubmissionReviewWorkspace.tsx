@@ -39,7 +39,7 @@ const mapBackendAssignment = (item: BackendAssignment): Assignment => {
   return {
     id: item.id,
     courseId: item.courseId,
-    courseCode: "Course",
+    courseCode: item.courseId,
     title: item.title,
     description: item.description || item.instructions || "",
     dueDate: Number.isNaN(due.getTime()) ? item.dueDate : due.toLocaleDateString(),
@@ -87,7 +87,7 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
 };
 
 export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps> = ({
-  initialAssignmentId = "asg-01",
+  initialAssignmentId = "",
   onBack,
   onNavigate,
 }) => {

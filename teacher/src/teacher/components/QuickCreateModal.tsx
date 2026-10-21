@@ -64,7 +64,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   // Form states
   const [courseCode, setCourseCode] = useState("");
   const [courseTitle, setCourseTitle] = useState("");
-  const [courseCategory, setCourseCategory] = useState("Computer Science");
+  const [courseCategory, setCourseCategory] = useState("");
   const [courseThumbnail, setCourseThumbnail] = useState("");
   const [courseIsOnline, setCourseIsOnline] = useState(true);
   const [courseIsVisible, setCourseIsVisible] = useState(true);
