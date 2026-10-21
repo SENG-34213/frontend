@@ -27,11 +27,7 @@ export const MyCoursesView: React.FC = () => {
 
   const categories = [
     "All",
-    "Computer Science",
-    "Artificial Intelligence",
-    "Software Systems",
-    "Human-Computer Interaction",
-    "Cybersecurity",
+    ...Array.from(new Set(enrolledCourses.map((course) => course.category).filter(Boolean))).sort(),
   ];
 
   const filteredCourses = enrolledCourses
