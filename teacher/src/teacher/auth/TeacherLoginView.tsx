@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import {
   loginTeacher,
   requestTeacherPasswordReset,
@@ -186,14 +186,6 @@ export function TeacherLoginView({ onLogin }: Props) {
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>
-            <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/70 p-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-800">
-                <Sparkles className="h-4 w-4" /> Demo teacher account
-              </div>
-              <p className="mt-1 text-[11px] leading-5 text-indigo-700/80">
-                alex.rivera@mentify.edu · teacher-demo
-              </p>
-            </div>
             <p className="mt-6 text-center text-[11px] text-slate-400">
               Protected faculty workspace
             </p>

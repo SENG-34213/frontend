@@ -76,7 +76,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentStartDate, setAssignmentStartDate] = useState(
     `${new Date().toISOString().slice(0, 10)}T09:00`,
   );
-  const [dueDate, setDueDate] = useState("2026-10-30T23:59");
+  const [dueDate, setDueDate] = useState("");
   const [maxMarks, setMaxMarks] = useState("100");
   const [duration, setDuration] = useState("45");
   const [moduleStartDate, setModuleStartDate] = useState("");

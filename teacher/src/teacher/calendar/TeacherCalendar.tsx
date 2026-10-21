@@ -106,16 +106,6 @@ const PageHeader: React.FC<CalendarPageHeaderProps> = ({
 
 type CalendarViewMode = "month" | "week" | "day" | "agenda";
 
-interface VenueStatus {
-  id: string;
-  name: string;
-  building: string;
-  capacity: number;
-  type: string;
-}
-
-const CAMPUS_VENUES: VenueStatus[] = [];
-
 export type CalendarInstructor = { name: string; email: string; dept: string };
 
 const EVENT_TYPE_COLORS: Record<
@@ -223,6 +213,10 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   const [localEvents, setLocalEvents] = useState<AcademicEvent[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSimulatedError, setHasSimulatedError] = useState(false);
+  const venueOptions = useMemo(
+    () => Array.from(new Set(localEvents.map((event) => event.location).filter(Boolean))),
+    [localEvents],
+  );
 
   // Sync with prop changes
   useEffect(() => {
@@ -464,11 +458,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         const b = localEvents[j];
         if (a.date === b.date && a.status !== "CANCELLED" && b.status !== "CANCELLED") {
           // Check venue overlap
-          if (
-            a.location === b.location &&
-            a.location !== "Mentify LMS Submission Portal" &&
-            a.location !== "Campus Wide"
-          ) {
+          if (a.location && a.location === b.location) {
             conflicts.push({
               eventA: a,
               eventB: b,
@@ -476,12 +466,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             });
           }
           // Check teacher overlap
-          if (
-            a.instructorName &&
-            b.instructorName &&
-            a.instructorName === b.instructorName &&
-            a.instructorName !== "Alex Mercer"
-          ) {
+          if (a.instructorName && b.instructorName && a.instructorName === b.instructorName) {
             conflicts.push({
               eventA: a,
               eventB: b,
@@ -502,9 +487,6 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   // In-form real-time conflict detector
   const inlineFormConflict = useMemo(() => {
     if (!formDate || !formLocation) return null;
-    if (formLocation === "Mentify LMS Submission Portal" || formLocation === "Campus Wide")
-      return null;
-
     const conflict = localEvents.find(
       (e) =>
         e.id !== editingEventId &&
@@ -555,7 +537,13 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         weekEnd.setDate(weekStart.getDate() + 6);
         if (d < weekStart || d > weekEnd) return false;
       } else if (dateRangePreset === "THIS_MONTH") {
-        if (!e.date.startsWith("2026-10")) return false;
+        const eventDate = new Date(`${e.date}T00:00:00`);
+        const now = new Date();
+        if (
+          eventDate.getFullYear() !== now.getFullYear() ||
+          eventDate.getMonth() !== now.getMonth()
+        )
+          return false;
       } else if (dateRangePreset === "CUSTOM") {
         if (customStartDate && e.date < customStartDate) return false;
         if (customEndDate && e.date > customEndDate) return false;
@@ -1457,9 +1445,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-[11.5px]"
               >
                 <option value="ALL">All Campus Facilities</option>
-                {CAMPUS_VENUES.map((v) => (
-                  <option key={v.id} value={v.name}>
-                    {v.name}
+                {venueOptions.map((venue) => (
+                  <option key={venue} value={venue}>
+                    {venue}
                   </option>
                 ))}
               </select>
@@ -2216,9 +2204,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   <span>{selectedEvent.location}</span>
                 </div>
                 <span className="text-[10.5px] text-slate-400 block">
-                  Seating Capacity:{" "}
-                  {CAMPUS_VENUES.find((v) => v.name === selectedEvent.location)?.capacity || 100}{" "}
-                  seats
+                  Seating Capacity: Seating capacity is not provided by the calendar service.
                 </span>
               </div>
             </div>
@@ -2238,9 +2224,6 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                       Module Code: {selectedEvent.courseCode}
                     </span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">
-                    4 Academic Credits
-                  </span>
                 </div>
               </div>
             )}
@@ -2563,17 +2546,13 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Campus Venue
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                  >
-                    {CAMPUS_VENUES.map((v) => (
-                      <option key={v.id} value={v.name}>
-                        {v.name} (Cap: {v.capacity})
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Enter venue or online location"
+                  />
                 </div>
 
                 <div>

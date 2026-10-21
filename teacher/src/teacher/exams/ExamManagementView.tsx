@@ -105,10 +105,10 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [wizardTitle, setWizardTitle] = useState("");
   const [wizardDescription, setWizardDescription] = useState("");
   const [wizardType, setWizardType] = useState<"Midterm" | "Final" | "Practical Exam">("Midterm");
-  const [wizardDate, setWizardDate] = useState("2026-11-15");
+  const [wizardDate, setWizardDate] = useState("");
   const [wizardTime, setWizardTime] = useState("10:00 AM");
   const [wizardDuration, setWizardDuration] = useState("120");
-  const [wizardRoom, setWizardRoom] = useState("Alan Turing Auditorium");
+  const [wizardRoom, setWizardRoom] = useState("");
   const [wizardWeight, setWizardWeight] = useState("30");
   const [resultsExam, setResultsExam] = useState<BackendExam | null>(null);
   const [resultSheet, setResultSheet] = useState<ExamResultSheet | null>(null);
@@ -591,7 +591,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                       type="text"
                       value={wizardRoom}
                       onChange={(e) => setWizardRoom(e.target.value)}
-                      placeholder="e.g. Turing Hall Theatre A"
+                      placeholder="Enter lecture hall or online venue"
                       className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
                     />
                   </div>

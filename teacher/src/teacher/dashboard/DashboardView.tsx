@@ -607,20 +607,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
               {/* Quick AI Prompts */}
               <div className="mt-4 space-y-1.5">
-                {[
-                  "Draft 5 quiz questions for CS-201 AVL Trees",
-                  "Generate rubric for Distributed Systems Milestone",
-                  "Summarize student performance for CS-420",
-                ].map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => onOpenAIWithPrompt(prompt)}
-                    className="w-full text-left text-xs p-2 rounded-lg bg-white/10 hover:bg-white/15 text-indigo-100 transition-colors flex items-center justify-between group"
-                  >
-                    <span className="truncate">{prompt}</span>
-                    <ArrowRight className="w-3 h-3 text-indigo-300 group-hover:translate-x-0.5 transition-transform shrink-0 ml-1" />
-                  </button>
-                ))}
+                {performanceCourses.slice(0, 3).map((course) => {
+                  const prompt = `Review ${course.courseName} student performance and suggest next teaching actions`;
+                  return (
+                    <button
+                      key={course.courseId}
+                      onClick={() => onOpenAIWithPrompt(prompt)}
+                      className="w-full text-left text-xs p-2 rounded-lg bg-white/10 hover:bg-white/15 text-indigo-100 transition-colors flex items-center justify-between group"
+                    >
+                      <span className="truncate">{prompt}</span>
+                      <ArrowRight className="w-3 h-3 text-indigo-300 group-hover:translate-x-0.5 transition-transform shrink-0 ml-1" />
+                    </button>
+                  );
+                })}
+                {performanceCourses.length === 0 && (
+                  <p className="rounded-lg bg-white/10 p-2 text-xs text-indigo-200/80">
+                    Course performance data is not available yet.
+                  </p>
+                )}
               </div>
 
               <div className="mt-4 pt-3 border-t border-indigo-800/60 flex items-center justify-between">
@@ -631,7 +635,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span>Open Full AI Studio</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
-                <span className="text-[10px] text-indigo-400 font-mono">Gemini 2.5 Flash</span>
+                <span className="text-[10px] text-indigo-400 font-mono">AI tools</span>
               </div>
             </div>
           </div>

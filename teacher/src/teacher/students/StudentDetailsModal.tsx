@@ -366,7 +366,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                   >
                     <p>{note}</p>
                     <span className="text-[10px] text-slate-400 mt-1 block">
-                      Logged by Prof. Alex Rivera
+                      Logged by the current teacher
                     </span>
                   </div>
                 ))}
