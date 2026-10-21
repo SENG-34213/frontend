@@ -314,7 +314,7 @@ export const StudentDashboard: React.FC = () => {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-bold text-slate-900 dark:text-white">
-                      {course?.code || summary.courseId}
+                      {course?.title || "Course unavailable"}
                     </span>
                     <span className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                       {summary.attendancePercentage.toFixed(1)}%

@@ -81,7 +81,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const pendingGradingAssignments = (dashboard?.pendingGrading ?? []).map((item) => ({
     id: item.assignmentId,
     submissionId: item.submissionId,
-    courseCode: item.courseId.slice(0, 8),
+    courseCode: "Course",
     title: item.assignmentTitle,
     dueDate: formatDateTime(item.submittedAt),
     gradedCount: 0,
@@ -89,7 +89,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }));
   const activeCourses = (dashboard?.coursePerformance ?? []).map((course) => ({
     id: course.courseId,
-    code: course.courseId.slice(0, 8),
+    code: course.courseName || "Course",
     title: course.courseName,
     description: `${course.activeAssignmentCount} active assignments · ${course.submissionCount} submissions`,
     status: "Active",

@@ -10,6 +10,8 @@ export type BackendCourse = {
   courseDescription?: string;
   courseThumbnail?: string;
   assignedTeacherId?: string;
+  gradeId?: string;
+  gradeName?: string;
   subject?: string;
   online?: boolean;
   visible?: boolean;

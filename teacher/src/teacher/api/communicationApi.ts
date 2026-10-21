@@ -4,6 +4,7 @@ import type { ApiResponse } from "../auth/authTypes";
 export type CommunicationGroup = {
   id: string;
   courseId: string;
+  courseName?: string;
   name: string;
   description?: string;
   status: "ACTIVE" | "ARCHIVED" | string;

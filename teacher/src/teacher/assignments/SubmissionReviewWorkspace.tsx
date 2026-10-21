@@ -39,7 +39,7 @@ const mapBackendAssignment = (item: BackendAssignment): Assignment => {
   return {
     id: item.id,
     courseId: item.courseId,
-    courseCode: item.courseId,
+    courseCode: "Course",
     title: item.title,
     description: item.description || item.instructions || "",
     dueDate: Number.isNaN(due.getTime()) ? item.dueDate : due.toLocaleDateString(),
@@ -64,7 +64,7 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
     id: item.id,
     assignmentId: item.assignmentId,
     studentId: item.studentId,
-    studentName: item.studentId,
+    studentName: item.studentName || "Student name unavailable",
     studentEmail: "",
     submissionDate: item.submittedAt
       ? new Date(item.submittedAt).toLocaleString()

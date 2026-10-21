@@ -84,7 +84,7 @@ function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
   const id = idOf(value.id || value.courseId);
   return {
     id,
-    code: idOf(value.courseCode || value.code),
+    code: idOf(value.courseCode || value.code || value.courseName),
     title: idOf(value.courseName || value.title),
     category: idOf(value.subject || value.category),
     description: idOf(value.courseDescription || value.description),

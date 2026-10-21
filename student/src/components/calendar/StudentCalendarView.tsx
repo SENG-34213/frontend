@@ -338,7 +338,8 @@ export const StudentCalendarView: React.FC = () => {
             </span>
             {courseFilter !== "ALL" && (
               <span className="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
-                Course: {courses.find((course) => course.id === courseFilter)?.code || courseFilter}
+                Course:{" "}
+                {courses.find((course) => course.id === courseFilter)?.title || "Selected course"}
               </span>
             )}
             {typeFilter !== "ALL" && (

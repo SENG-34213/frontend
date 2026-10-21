@@ -49,7 +49,7 @@ export function mapEnrollmentRecords(
         studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown student",
         studentEmail: student?.email || "",
         courseId,
-        courseCode: course?.code || courseId,
+        courseCode: course?.code || "Course",
         courseTitle: course?.title || "Course unavailable",
         enrolledDate: enrollment.enrolledOn,
         status: "ACTIVE" as const,
