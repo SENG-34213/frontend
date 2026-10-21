@@ -48,6 +48,7 @@ export function useCommunicationRealtime(
   const [error, setError] = useState<string | null>(null);
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef(new Map<string, StompSubscription>());
+  const receivedMessageIdsRef = useRef(new Set<string>());
   const groupIdsRef = useRef(groupIds);
   const onMessageRef = useRef(onMessage);
 
@@ -95,7 +96,14 @@ export function useCommunicationRealtime(
           `/topic/groups/${encodeURIComponent(groupId)}`,
           (frame) => {
             const message = parseMessage(frame);
-            if (message && message.groupId === groupId) onMessageRef.current(message);
+            if (
+              message &&
+              message.groupId === groupId &&
+              !receivedMessageIdsRef.current.has(message.id)
+            ) {
+              receivedMessageIdsRef.current.add(message.id);
+              onMessageRef.current(message);
+            }
           },
         );
         subscriptionsRef.current.set(groupId, subscription);
@@ -146,7 +154,14 @@ export function useCommunicationRealtime(
         `/topic/groups/${encodeURIComponent(groupId)}`,
         (frame) => {
           const message = parseMessage(frame);
-          if (message && message.groupId === groupId) onMessageRef.current(message);
+          if (
+            message &&
+            message.groupId === groupId &&
+            !receivedMessageIdsRef.current.has(message.id)
+          ) {
+            receivedMessageIdsRef.current.add(message.id);
+            onMessageRef.current(message);
+          }
         },
       );
       if (subscription) subscriptionsRef.current.set(groupId, subscription);
