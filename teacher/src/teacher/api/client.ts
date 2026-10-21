@@ -30,6 +30,17 @@ async function readResponse(response: Response, responseType: "json" | "blob" = 
   return response.json().catch(() => null);
 }
 
+function safeErrorMessage(body: any, status: number): string {
+  const raw = typeof body?.message === "string" ? body.message : typeof body?.error === "string" ? body.error : "";
+  const technical = /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(raw);
+  if (status >= 500 || technical) {
+    return status === 502 || status === 503 || status === 504
+      ? "The service is temporarily unavailable. Please try again shortly."
+      : "Something went wrong. Please try again later.";
+  }
+  return raw || `Request failed with status ${status}`;
+}
+
 async function refreshSession(): Promise<AuthSession | null> {
   const currentSession = getSession();
   if (!currentSession?.refreshToken) return null;
@@ -81,11 +92,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     if (accessToken) requestHeaders.set("Authorization", `Bearer ${accessToken}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...requestInit,
-    headers: requestHeaders,
-    body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...requestInit,
+      headers: requestHeaders,
+      body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch (error) {
+    throw new ApiError("The service is temporarily unavailable. Please try again shortly.", 503, error);
+  }
   const responseBody = await readResponse(response, responseType);
 
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
@@ -94,10 +110,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
-    const message =
-      responseBody?.message ||
-      responseBody?.error ||
-      `Request failed with status ${response.status}`;
+    const message = safeErrorMessage(responseBody, response.status);
     throw new ApiError(message, response.status, responseBody);
   }
   return responseBody as T;

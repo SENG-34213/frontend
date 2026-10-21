@@ -16,6 +16,7 @@ import {
   X,
   UserCheck,
   Send,
+  RefreshCw,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
@@ -31,7 +32,7 @@ interface StudentManagementProps {
   attendanceSessions: AttendanceSession[];
   onAddStudent: (newStudent: StudentProfile) => void;
   onRegisterStudent: (request: RegisterStudentRequest) => Promise<StudentProfile>;
-  onResendInvitation: (email: string, role: string) => void;
+  onResendInvitation: (email: string, role: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -58,6 +59,16 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [createdStudentId, setCreatedStudentId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  const handleResend = async (email: string, role: string) => {
+    setResendingEmail(email);
+    try {
+      await onResendInvitation(email, role);
+    } finally {
+      setResendingEmail(null);
+    }
+  };
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -315,11 +326,16 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                         </button>
                         {stu.status === "INVITED" && (
                           <button
-                            onClick={() => onResendInvitation(stu.email, "STUDENT")}
-                            className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
+                            disabled={resendingEmail === stu.email}
+                            onClick={() => void handleResend(stu.email, "STUDENT")}
+                            className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
                           >
-                            <Send className="w-3 h-3" />
-                            Resend
+                            {resendingEmail === stu.email ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Send className="w-3 h-3" />
+                            )}
+                            {resendingEmail === stu.email ? "Sending..." : "Resend"}
                           </button>
                         )}
                       </div>

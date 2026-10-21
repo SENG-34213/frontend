@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   X,
   Send,
+  RefreshCw,
   Trash2,
   Award,
 } from "lucide-react";
@@ -27,7 +28,7 @@ interface TeacherManagementProps {
   courses: Course[];
   onAddTeacher: (teacher: TeacherProfile) => void;
   onRegisterTeacher: (request: RegisterTeacherRequest) => Promise<TeacherProfile>;
-  onResendInvitation: (email: string, role: string) => void;
+  onResendInvitation: (email: string, role: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -45,6 +46,16 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [createdTeacherCode, setCreatedTeacherCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  const handleResend = async (email: string, role: string) => {
+    setResendingEmail(email);
+    try {
+      await onResendInvitation(email, role);
+    } finally {
+      setResendingEmail(null);
+    }
+  };
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -264,11 +275,16 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                       </button>
                       {teacher.status === "INVITED" && (
                         <button
-                          onClick={() => onResendInvitation(teacher.email, "TEACHER")}
-                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
+                          disabled={resendingEmail === teacher.email}
+                          onClick={() => void handleResend(teacher.email, "TEACHER")}
+                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
                         >
-                          <Send className="w-3 h-3" />
-                          Resend
+                          {resendingEmail === teacher.email ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Send className="w-3 h-3" />
+                          )}
+                          {resendingEmail === teacher.email ? "Sending..." : "Resend"}
                         </button>
                       )}
                     </div>

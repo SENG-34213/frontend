@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   X,
   Send,
+  RefreshCw,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { RoleBadge } from "../components/RoleBadge";
@@ -27,7 +28,7 @@ interface AdminManagementProps {
   currentRole: AdminRole;
   onAddAdministrator: (admin: AdministratorProfile) => void;
   onRegisterAdministrator: (request: RegisterAdministratorRequest) => Promise<AdministratorProfile>;
-  onResendInvitation: (email: string, role: string) => void;
+  onResendInvitation: (email: string, role: string) => Promise<void>;
   onSwitchToSuperAdmin: () => void;
   showRegistrationWizardDirectly?: boolean;
 }
@@ -47,6 +48,16 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [createdAdminCode, setCreatedAdminCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  const handleResend = async (email: string, role: string) => {
+    setResendingEmail(email);
+    try {
+      await onResendInvitation(email, role);
+    } finally {
+      setResendingEmail(null);
+    }
+  };
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -273,11 +284,16 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                       </button>
                       {admin.status === "INVITED" && (
                         <button
-                          onClick={() => onResendInvitation(admin.email, "ADMIN")}
-                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
+                          disabled={resendingEmail === admin.email}
+                          onClick={() => void handleResend(admin.email, "ADMIN")}
+                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
                         >
-                          <Send className="w-3 h-3" />
-                          Resend
+                          {resendingEmail === admin.email ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Send className="w-3 h-3" />
+                          )}
+                          {resendingEmail === admin.email ? "Sending..." : "Resend"}
                         </button>
                       )}
                     </div>

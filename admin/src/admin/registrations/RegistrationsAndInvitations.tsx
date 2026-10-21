@@ -21,7 +21,7 @@ interface RegistrationsAndInvitationsProps {
   students: StudentProfile[];
   teachers: TeacherProfile[];
   administrators: AdministratorProfile[];
-  onResendInvitation: (email: string, role: string) => void;
+  onResendInvitation: (email: string, role: string) => Promise<void>;
 }
 
 export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsProps> = ({
@@ -76,12 +76,13 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const handleResend = (email: string, role: string) => {
+  const handleResend = async (email: string, role: string) => {
     setResendingEmail(email);
-    setTimeout(() => {
-      onResendInvitation(email, role);
+    try {
+      await onResendInvitation(email, role);
+    } finally {
       setResendingEmail(null);
-    }, 600);
+    }
   };
 
   const invitedCount = allAccounts.filter((a) => a.status === "INVITED").length;

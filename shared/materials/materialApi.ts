@@ -8,6 +8,16 @@ import type {
 
 type ApiEnvelope<T> = { data?: T; message?: string; error?: string };
 
+function safeErrorMessage(payload: ApiEnvelope<unknown>, status: number) {
+  const raw = typeof payload?.message === "string" ? payload.message : typeof payload?.error === "string" ? payload.error : "";
+  if (status >= 500 || /entitymanager|hibernate|jdbc|sql|postgres|datasource|timeout|exception|stack trace|org\.springframework|java\./i.test(raw)) {
+    return status === 502 || status === 503 || status === 504
+      ? "The service is temporarily unavailable. Please try again shortly."
+      : "Something went wrong. Please try again later.";
+  }
+  return raw || `Material service request failed (${status}).`;
+}
+
 function read<T>(payload: ApiEnvelope<T> | T): T {
   return payload && typeof payload === "object" && "data" in payload && payload.data !== undefined
     ? (payload.data as T)
@@ -54,19 +64,22 @@ function token() {
 }
 
 async function request<T>(baseUrl: string, path: string, init: RequestInit = {}) {
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
-      ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
-      ...(init.headers || {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: {
+        ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+        ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
+        ...(init.headers || {}),
+      },
+    });
+  } catch {
+    throw new Error("The service is temporarily unavailable. Please try again shortly.");
+  }
   const payload = await response.json().catch(() => ({}));
   if (!response.ok)
-    throw new Error(
-      payload.message || payload.error || `Material service request failed (${response.status}).`,
-    );
+    throw new Error(safeErrorMessage(payload, response.status));
   return read<T>(payload);
 }
 
@@ -102,7 +115,7 @@ function uploadWithProgress(
           reject(new Error("Image is too large. Please choose an image smaller than 5 MB."));
           return;
         }
-        reject(new Error(serverMessage || `Material upload failed (${xhr.status}).`));
+        reject(new Error(safeErrorMessage(payload, xhr.status)));
         return;
       }
       resolve(read<Material>(payload));

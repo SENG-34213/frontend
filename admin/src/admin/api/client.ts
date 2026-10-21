@@ -26,6 +26,17 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   retryOnUnauthorized?: boolean;
 };
 
+function safeErrorMessage(body: any, status: number): string {
+  const raw = typeof body?.message === "string" ? body.message : typeof body?.error === "string" ? body.error : "";
+  const technical = /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(raw);
+  if (status >= 500 || technical) {
+    return status === 502 || status === 503 || status === 504
+      ? "The service is temporarily unavailable. Please try again shortly."
+      : "Something went wrong. Please try again later.";
+  }
+  return raw || `Request failed with status ${status}`;
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const {
     body,
@@ -64,11 +75,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     }
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...requestInit,
-    headers: requestHeaders,
-    body: body === undefined ? undefined : isFormDataBody ? body : JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...requestInit,
+      headers: requestHeaders,
+      body: body === undefined ? undefined : isFormDataBody ? body : JSON.stringify(body),
+    });
+  } catch (error) {
+    throw new ApiError("The service is temporarily unavailable. Please try again shortly.", 503, error);
+  }
 
   const responseBody = await response.json().catch(() => null);
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
@@ -82,10 +98,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   if (!response.ok) {
-    const message =
-      responseBody?.message ||
-      responseBody?.error ||
-      `Request failed with status ${response.status}`;
+    const message = safeErrorMessage(responseBody, response.status);
     throw new ApiError(message, response.status, responseBody);
   }
 

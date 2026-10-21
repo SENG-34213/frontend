@@ -13,6 +13,7 @@ import {
   Ban,
   UserCheck,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { RoleBadge } from "../components/RoleBadge";
@@ -37,7 +38,7 @@ interface UsersManagementProps {
   currentAdminRole: AdminRole;
   onUpdateUserStatus: (userId: string, newStatus: AccountStatus) => void;
   onDeleteUser: (userId: string) => Promise<void>;
-  onResendInvitation: (email: string, role: string) => void;
+  onResendInvitation: (email: string, role: string) => Promise<void>;
   onRegisterStudent: () => void;
   onRegisterTeacher: () => void;
   isLoading?: boolean;
@@ -69,6 +70,16 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
     action: "ACTIVATE" | "DEACTIVATE" | "DELETE";
   }>({ isOpen: false, user: null, action: "DEACTIVATE" });
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  const handleResend = async (email: string, role: string) => {
+    setResendingEmail(email);
+    try {
+      await onResendInvitation(email, role);
+    } finally {
+      setResendingEmail(null);
+    }
+  };
 
   // Merge users for unified directory
   const allUsers = useMemo(() => {
@@ -301,12 +312,17 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
 
                         {user.status === "INVITED" && (
                           <button
-                            onClick={() => onResendInvitation(user.email, user.role)}
-                            className="px-2 py-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-medium flex items-center gap-1"
+                            disabled={resendingEmail === user.email}
+                            onClick={() => void handleResend(user.email, user.role)}
+                            className="px-2 py-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
                             title="Resend invitation email"
                           >
-                            <Send className="w-3 h-3" />
-                            Resend
+                            {resendingEmail === user.email ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Send className="w-3 h-3" />
+                            )}
+                            {resendingEmail === user.email ? "Sending..." : "Resend"}
                           </button>
                         )}
 

@@ -423,38 +423,41 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const handleResendInvitation = (email: string, targetRole: string) => {
+  const handleResendInvitation = async (email: string, targetRole: string) => {
     const user = [...students, ...teachers, ...administrators].find((item) => item.email === email);
     if (!user) {
       addToast("error", "Invitation Failed", "The selected user could not be found.");
       return;
     }
 
-    void resendUserInvitation(user.id)
-      .then(() => {
-        addToast(
-          "success",
-          "Invitation Dispatched",
-          `Keycloak temporary password activation link dispatched to ${email} (${targetRole}).`,
-        );
-      })
-      .catch((error) => {
-        addToast("error", "Invitation Failed", error instanceof Error ? error.message : undefined);
-      });
+    try {
+      await resendUserInvitation(user.id);
+      addToast(
+        "success",
+        "Invitation sent",
+        `A new activation email was sent to ${email}.`,
+      );
 
-    // Record audit event
-    const newLog: AuditEvent = {
-      id: `aud-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      actorEmail: "alex.mercer@mentify.edu",
-      actorRole: role,
-      category: "KEYCLOAK_AUTH",
-      action: "RESEND_INVITATION",
-      details: `Dispatched Keycloak credential email to ${email}`,
-      ipAddress: "192.168.10.45",
-      payloadJson: JSON.stringify({ email, targetRole, realm: "mentify-prod" }, null, 2),
-    };
-    setAuditLogs((prev) => [newLog, ...prev]);
+      // Record the action only after the backend confirms delivery/dispatch.
+      const newLog: AuditEvent = {
+        id: `aud-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actorEmail: "alex.mercer@mentify.edu",
+        actorRole: role,
+        category: "KEYCLOAK_AUTH",
+        action: "RESEND_INVITATION",
+        details: `Dispatched Keycloak credential email to ${email}`,
+        ipAddress: "192.168.10.45",
+        payloadJson: JSON.stringify({ email, targetRole, realm: "mentify-prod" }, null, 2),
+      };
+      setAuditLogs((prev) => [newLog, ...prev]);
+    } catch (error) {
+      addToast(
+        "error",
+        "Invitation not sent",
+        error instanceof Error ? error.message : "Please try again shortly.",
+      );
+    }
   };
 
   const handleUpdateUserStatus = (userId: string, newStatus: AccountStatus) => {
