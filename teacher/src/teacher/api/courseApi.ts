@@ -18,6 +18,13 @@ export type BackendCourse = {
   isPublished?: boolean;
   courseStatus?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   numberOfStudents?: number;
+  moduleCount?: number | null;
+  lessonCount?: number | null;
+  assignmentCount?: number | null;
+  quizCount?: number | null;
+  examCount?: number | null;
+  averageGrade?: number | string | null;
+  maxCapacity?: number | null;
 };
 
 export type CreateCoursePayload = {
@@ -75,7 +82,7 @@ export function mapBackendCourse(course: BackendCourse): Course {
     semester: "Current Semester",
     academicYear: "",
     enrolledCount: course.numberOfStudents ?? 0,
-    maxCapacity: course.numberOfStudents ?? 0,
+    maxCapacity: course.maxCapacity ?? 0,
     status:
       course.courseStatus === "PUBLISHED"
         ? "Active"
@@ -83,8 +90,8 @@ export function mapBackendCourse(course: BackendCourse): Course {
           ? "Archived"
           : "Draft",
     coverTheme: "indigo",
-    modulesCount: 0,
-    assignmentsCount: 0,
-    averageGrade: 0,
+    modulesCount: Number(course.moduleCount ?? 0),
+    assignmentsCount: Number(course.assignmentCount ?? 0),
+    averageGrade: Number(course.averageGrade ?? 0),
   };
 }
