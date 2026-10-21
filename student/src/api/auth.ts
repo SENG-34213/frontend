@@ -28,6 +28,7 @@ export async function loginStudent(identifier: string, password: string): Promis
     ...rawUser,
     id: rawUser.id ?? rawUser.userId,
     role: "STUDENT",
+    mustChangePassword: Boolean(data.mustChangePassword ?? rawUser.mustChangePassword),
   };
 
   const session: AuthSession = {
@@ -35,9 +36,17 @@ export async function loginStudent(identifier: string, password: string): Promis
     refreshToken: data.refreshToken,
     user,
     expiresAt: Date.now() + data.expiresIn * 1000,
+    mustChangePassword: Boolean(data.mustChangePassword ?? rawUser.mustChangePassword),
   };
   saveSession(session);
   return session;
+}
+
+export async function changeStudentPassword(currentPassword: string, newPassword: string) {
+  return apiRequest<ApiResponse<null>>("/api/v1/users/me/password", {
+    method: "PUT",
+    body: { currentPassword, newPassword },
+  });
 }
 
 export async function getCurrentStudent(): Promise<StudentUserSummary> {

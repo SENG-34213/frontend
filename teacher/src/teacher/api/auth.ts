@@ -25,9 +25,17 @@ export async function loginTeacher(identifier: string, password: string): Promis
     refreshToken: data.refreshToken,
     user,
     expiresAt: Date.now() + data.expiresIn * 1000,
+    mustChangePassword: Boolean(data.mustChangePassword ?? user.mustChangePassword),
   };
   saveSession(session);
   return session;
+}
+
+export async function changeTeacherPassword(currentPassword: string, newPassword: string) {
+  return apiRequest<ApiResponse<null>>("/api/v1/users/me/password", {
+    method: "PUT",
+    body: { currentPassword, newPassword },
+  });
 }
 
 export async function getCurrentTeacher() {
