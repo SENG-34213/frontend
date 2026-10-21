@@ -163,12 +163,12 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     semester: "Current Semester",
     academicYear: "",
     enrolledCount: currentBackendCourse?.numberOfStudents || 0,
-    maxCapacity: currentBackendCourse?.numberOfStudents || 0,
+    maxCapacity: currentBackendCourse?.maxCapacity ?? 0,
     status: "Active",
     coverTheme: "indigo",
     modulesCount: modules.length,
-    assignmentsCount: 0,
-    averageGrade: 0,
+    assignmentsCount: currentBackendCourse?.assignmentCount ?? 0,
+    averageGrade: Number(currentBackendCourse?.averageGrade ?? 0),
   };
   const courseModules = modules.filter((m) => m.courseId === selectedCourseId);
 
