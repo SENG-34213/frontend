@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
-import { loginStudent, requestPasswordReset } from "../../api/auth";
+import {
+  resetStudentPassword,
+  loginStudent,
+  requestPasswordReset,
+  verifyPasswordResetOtp,
+} from "../../api/auth";
 import type { AuthSession } from "../../auth/authTypes";
+import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel";
 
 export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) => void }) {
   const [email, setEmail] = useState("");
@@ -10,6 +16,7 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,22 +36,21 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
     }
   }
 
-  async function handleForgotPassword() {
-    if (!email.trim()) {
-      setError("Enter your email address first so we can send reset instructions.");
-      return;
-    }
-    setError("");
-    try {
-      const response = await requestPasswordReset(email.trim());
-      setNotice(
-        response.message || "If an account matches that email, reset instructions will be sent.",
-      );
-    } catch (resetError) {
-      setError(
-        resetError instanceof Error ? resetError.message : "Unable to request a password reset.",
-      );
-    }
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordPanel
+        roleLabel="Student"
+        initialEmail={email}
+        requestReset={requestPasswordReset}
+        verifyOtp={verifyPasswordResetOtp}
+        resetPassword={resetStudentPassword}
+        onComplete={() => {
+          setShowForgotPassword(false);
+          setNotice("Your password was reset successfully. Sign in with your new password.");
+        }}
+        onCancel={() => setShowForgotPassword(false)}
+      />
+    );
   }
 
   return (
@@ -168,7 +174,11 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
                 </label>
                 <button
                   type="button"
-                  onClick={handleForgotPassword}
+                  onClick={() => {
+                    setError("");
+                    setNotice("");
+                    setShowForgotPassword(true);
+                  }}
                   className="font-semibold text-indigo-600 hover:text-indigo-800"
                 >
                   Forgot password?
