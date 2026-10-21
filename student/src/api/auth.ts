@@ -80,6 +80,24 @@ export async function requestPasswordReset(email: string) {
   });
 }
 
+export async function verifyPasswordResetOtp(email: string, otp: string) {
+  const response = await apiRequest<ApiResponse<{ resetToken: string }>>(
+    "/api/v1/auth/forgot-password/verify",
+    { method: "POST", authenticated: false, body: { email, otp } },
+  );
+  if (!response.data?.resetToken)
+    throw new Error("The reset token was not returned by the server.");
+  return response.data.resetToken;
+}
+
+export async function resetStudentPassword(resetToken: string, newPassword: string) {
+  return apiRequest<ApiResponse<null>>("/api/v1/auth/forgot-password/reset", {
+    method: "POST",
+    authenticated: false,
+    body: { resetToken, newPassword },
+  });
+}
+
 export async function logoutStudent() {
   const refreshToken = getSession()?.refreshToken;
   try {

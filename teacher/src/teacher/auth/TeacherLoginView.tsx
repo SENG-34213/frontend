@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
-import { loginTeacher } from "../api/auth";
+import {
+  loginTeacher,
+  requestTeacherPasswordReset,
+  resetTeacherPassword,
+  verifyTeacherPasswordResetOtp,
+} from "../api/auth";
 import type { AuthSession } from "./authTypes";
+import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel";
 
 type Props = { onLogin: (session: AuthSession) => void };
 
@@ -11,6 +17,7 @@ export function TeacherLoginView({ onLogin }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +35,23 @@ export function TeacherLoginView({ onLogin }: Props) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordPanel
+        roleLabel="Teacher"
+        initialEmail={email}
+        requestReset={requestTeacherPasswordReset}
+        verifyOtp={verifyTeacherPasswordResetOtp}
+        resetPassword={resetTeacherPassword}
+        onComplete={() => {
+          setShowForgotPassword(false);
+          setError("");
+        }}
+        onCancel={() => setShowForgotPassword(false)}
+      />
+    );
   }
 
   return (
@@ -144,9 +168,10 @@ export function TeacherLoginView({ onLogin }: Props) {
                 </label>
                 <button
                   type="button"
-                  onClick={() =>
-                    setError("Use the sample teacher credentials below for local verification.")
-                  }
+                  onClick={() => {
+                    setError("");
+                    setShowForgotPassword(true);
+                  }}
                   className="font-semibold text-indigo-600 hover:text-indigo-800"
                 >
                   Forgot password?

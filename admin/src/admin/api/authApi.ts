@@ -39,6 +39,32 @@ export async function changeAdminPassword(currentPassword: string, newPassword: 
   });
 }
 
+export async function requestAdminPasswordReset(email: string) {
+  return apiRequest<ApiResponse<null>>("/api/v1/auth/forgot-password", {
+    method: "POST",
+    authenticated: false,
+    body: { email },
+  });
+}
+
+export async function verifyAdminPasswordResetOtp(email: string, otp: string) {
+  const response = await apiRequest<ApiResponse<{ resetToken: string }>>(
+    "/api/v1/auth/forgot-password/verify",
+    { method: "POST", authenticated: false, body: { email, otp } },
+  );
+  if (!response.data?.resetToken)
+    throw new Error("The reset token was not returned by the server.");
+  return response.data.resetToken;
+}
+
+export async function resetAdminPassword(resetToken: string, newPassword: string) {
+  return apiRequest<ApiResponse<null>>("/api/v1/auth/forgot-password/reset", {
+    method: "POST",
+    authenticated: false,
+    body: { resetToken, newPassword },
+  });
+}
+
 export async function refreshAdminSession() {
   const refreshed = await refreshStoredSession();
   if (!refreshed) {
