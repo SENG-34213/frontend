@@ -42,6 +42,9 @@ const COMMON_CURRENCIES = [
   { code: "SGD", label: "SGD - Singapore Dollar", symbol: "S$" },
 ];
 
+const STANDARD_GRADE_OPTIONS = Array.from({ length: 12 }, (_, index) => `Grade ${index + 1}`);
+const CUSTOM_GRADE_OPTION = "__custom__";
+
 export const GradeManagement: React.FC<GradeManagementProps> = ({
   grades,
   onCreateGrade,
@@ -73,6 +76,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
     currencyCode: "LKR",
     active: true,
   });
+  const [gradeNameOption, setGradeNameOption] = useState("");
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -99,6 +103,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
       currencyCode: "LKR",
       active: true,
     });
+    setGradeNameOption("");
     setFormErrors({});
     setApiError(null);
     setIsSubmitting(false);
@@ -110,6 +115,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
   };
 
   const openEditModal = (grade: Grade) => {
+    const isStandardGrade = STANDARD_GRADE_OPTIONS.includes(grade.name);
     setFormData({
       name: grade.name,
       description: grade.description || "",
@@ -117,6 +123,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
       currencyCode: grade.currencyCode || "LKR",
       active: grade.active,
     });
+    setGradeNameOption(isStandardGrade ? grade.name : CUSTOM_GRADE_OPTION);
     setFormErrors({});
     setApiError(null);
     setEditingGrade(grade);
@@ -128,6 +135,15 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
       errors.name = "Grade Name is required.";
     } else if (formData.name.length > 100) {
       errors.name = "Grade Name cannot exceed 100 characters.";
+    }
+
+    const duplicateGrade = grades.some(
+      (grade) =>
+        grade.name.trim().toLowerCase() === formData.name.trim().toLowerCase() &&
+        grade.id !== editingGrade?.id,
+    );
+    if (duplicateGrade) {
+      errors.name = "A grade with this name already exists. Choose another grade name.";
     }
 
     const feeNum = parseFloat(formData.monthlyFee);
@@ -147,6 +163,23 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleGradeNameOptionChange = (value: string) => {
+    setGradeNameOption(value);
+    if (value !== CUSTOM_GRADE_OPTION) {
+      setFormData((previous) => ({ ...previous, name: value }));
+      setFormErrors((previous) => ({ ...previous, name: "" }));
+    } else {
+      setFormData((previous) => ({ ...previous, name: "" }));
+    }
+  };
+
+  const handleCustomGradeNameChange = (value: string) => {
+    setFormData((previous) => ({ ...previous, name: value }));
+    if (value.trim()) {
+      setFormErrors((previous) => ({ ...previous, name: "" }));
+    }
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -453,24 +486,47 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                   <label className="text-slate-700 dark:text-slate-300 font-semibold">
                     Grade Name <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-[11px] text-slate-400 tabular-nums">
-                    {formData.name.length} / 100
-                  </span>
                 </div>
-                <input
-                  type="text"
-                  required
-                  maxLength={100}
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Grade 10"
+                <select
+                  value={gradeNameOption}
+                  onChange={(e) => handleGradeNameOptionChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                />
+                >
+                  <option value="">Select a standard grade</option>
+                  {STANDARD_GRADE_OPTIONS.map((gradeName) => (
+                    <option key={gradeName} value={gradeName}>
+                      {gradeName}
+                    </option>
+                  ))}
+                  <option value={CUSTOM_GRADE_OPTION}>Add a custom grade...</option>
+                </select>
+
+                {gradeNameOption === CUSTOM_GRADE_OPTION && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-600 dark:text-slate-400 font-medium">
+                        Custom grade name
+                      </label>
+                      <span className="text-[11px] text-slate-400 tabular-nums">
+                        {formData.name.length} / 100
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={100}
+                      value={formData.name}
+                      onChange={(e) => handleCustomGradeNameChange(e.target.value)}
+                      placeholder="e.g. Foundation Level"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                )}
                 {formErrors.name && (
                   <p className="text-rose-500 text-[11px] mt-1">{formErrors.name}</p>
                 )}
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  Institutional grade tier identifier used during course assignment.
+                  Select Grade 1–12, or choose “Add a custom grade...” to enter your own label.
                 </span>
               </div>
 
@@ -622,17 +678,36 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                 <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1">
                   Grade Name <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={100}
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                <select
+                  value={gradeNameOption}
+                  onChange={(e) => handleGradeNameOptionChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
+                >
+                  <option value="">Select a standard grade</option>
+                  {STANDARD_GRADE_OPTIONS.map((gradeName) => (
+                    <option key={gradeName} value={gradeName}>
+                      {gradeName}
+                    </option>
+                  ))}
+                  <option value={CUSTOM_GRADE_OPTION}>Add a custom grade...</option>
+                </select>
+                {gradeNameOption === CUSTOM_GRADE_OPTION && (
+                  <input
+                    type="text"
+                    required
+                    maxLength={100}
+                    value={formData.name}
+                    onChange={(e) => handleCustomGradeNameChange(e.target.value)}
+                    placeholder="Enter custom grade name"
+                    className="w-full mt-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                )}
                 {formErrors.name && (
                   <p className="text-rose-500 text-[11px] mt-1">{formErrors.name}</p>
                 )}
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Select a standard grade or use a custom grade name.
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
