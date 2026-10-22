@@ -457,9 +457,18 @@ export const StudentProvider: React.FC<{
           questionMarks: Number(answer.questionMarks ?? 0),
         }))
       : [];
-    const completedResult = { score, maxScore, percentage, passed: Boolean(result.passed), answers };
+    const completedResult = {
+      score,
+      maxScore,
+      percentage,
+      passed: Boolean(result.passed),
+      answers,
+    };
     const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
-    window.localStorage.setItem(`student:quiz-result:${profile.id}:${quizId}`, JSON.stringify(completedResult));
+    window.localStorage.setItem(
+      `student:quiz-result:${profile.id}:${quizId}`,
+      JSON.stringify(completedResult),
+    );
     window.localStorage.removeItem(storageKey);
     window.localStorage.removeItem(`student:quiz-answers:${attemptId}`);
     await refreshWorkspace();

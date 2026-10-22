@@ -227,7 +227,14 @@ export const Sidebar: React.FC = () => {
           className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors"
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 font-semibold text-indigo-700 dark:bg-indigo-900/80 dark:text-indigo-300">
-            {profile.avatar ? <img src={profile.avatar} alt="" className="h-full w-full object-cover" /> : profile.name.split(" ").map((n) => n[0]).join("")}
+            {profile.avatar ? (
+              <img src={profile.avatar} alt="" className="h-full w-full object-cover" />
+            ) : (
+              profile.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+            )}
           </div>
           {!isSidebarCollapsed && (
             <div className="min-w-0 flex-1">
