@@ -114,14 +114,22 @@ export const AnalyticsDashboard: React.FC = () => {
   const quizzes = analytics?.quizzes;
   const exams = analytics?.exams;
   const payments = analytics?.payments;
-  const accountStatusMix = Object.entries(users?.accountStatusMix ?? {});
+  const accountStatusMix = Object.entries(users?.accountStatusMix ?? {}).flatMap(
+    ([status, count]) => {
+      const normalized = nonNegative(count);
+      return normalized === undefined ? [] : [[status, normalized] as const];
+    },
+  );
   const enrollmentTrend = Object.entries(enrollment?.enrollmentTrend ?? {}).flatMap(
     ([period, count]) => {
       const normalized = nonNegative(count);
       return normalized === undefined ? [] : [[period, normalized] as const];
     },
   );
-  const coursePopularity = enrollment?.coursePopularity ?? [];
+  const coursePopularity = (enrollment?.coursePopularity ?? []).filter(
+    (course) => nonNegative(course.enrollmentCount) !== undefined,
+  );
+  const maxEnrollmentTrend = Math.max(...enrollmentTrend.map(([, value]) => value), 1);
 
   return (
     <div className="space-y-6">
@@ -305,7 +313,7 @@ export const AnalyticsDashboard: React.FC = () => {
                           <div
                             className="h-full rounded-full bg-indigo-500"
                             style={{
-                              width: `${Math.min(100, Math.max(4, (count / Math.max(...enrollmentTrend.map(([, value]) => value), 1)) * 100))}%`,
+                              width: `${Math.min(100, (count / maxEnrollmentTrend) * 100)}%`,
                             }}
                           />
                         </div>
