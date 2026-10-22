@@ -28,8 +28,16 @@ type RequestOptions = Omit<RequestInit, "body"> & {
 };
 
 function safeErrorMessage(body: any, status: number): string {
-  const raw = typeof body?.message === "string" ? body.message : typeof body?.error === "string" ? body.error : "";
-  const technical = /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(raw);
+  const raw =
+    typeof body?.message === "string"
+      ? body.message
+      : typeof body?.error === "string"
+        ? body.error
+        : "";
+  const technical =
+    /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(
+      raw,
+    );
   if (status >= 500 || technical) {
     return status === 502 || status === 503 || status === 504
       ? "The service is temporarily unavailable. Please try again shortly."
@@ -85,10 +93,15 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       body: body === undefined ? undefined : isFormDataBody ? body : JSON.stringify(body),
     });
   } catch (error) {
-    throw new ApiError("The service is temporarily unavailable. Please try again shortly.", 503, error);
+    throw new ApiError(
+      "The service is temporarily unavailable. Please try again shortly.",
+      503,
+      error,
+    );
   }
 
-  const responseBody = responseType === "blob" ? await response.blob() : await response.json().catch(() => null);
+  const responseBody =
+    responseType === "blob" ? await response.blob() : await response.json().catch(() => null);
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
     const refreshed = await refreshStoredSession();
     if (refreshed) {

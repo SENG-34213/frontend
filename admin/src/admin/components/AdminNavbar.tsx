@@ -356,7 +356,11 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
             onClick={() => setShowUserMenu((p) => !p)}
             className="flex items-center gap-2 p-1 pl-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <UserAvatar name={profile ? `${profile.firstName} ${profile.lastName}` : "Admin"} avatarUrl={profile?.avatarUrl} size="sm" />
+            <UserAvatar
+              name={profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}
+              avatarUrl={profile?.avatarUrl}
+              size="sm"
+            />
             <div className="hidden xl:block text-left">
               <span className="text-xs font-semibold text-slate-900 dark:text-white block leading-tight">
                 {profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}
@@ -371,7 +375,9 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-52 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-xs font-semibold text-slate-900 dark:text-white">{profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                  {profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}
+                </p>
                 <p className="text-[11px] text-slate-400 truncate">{profile?.email || ""}</p>
               </div>
 

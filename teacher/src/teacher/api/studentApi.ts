@@ -40,15 +40,24 @@ export async function getStudentProfiles(studentIds: string[], signal?: AbortSig
     { signal },
   );
   const profiles = response.data ?? [];
-  return Promise.all(profiles.map(async (profile) => {
-    if (!profile.avatar || profile.avatar.startsWith("http") || profile.avatar.startsWith("data:")) return profile;
-    try {
-      const blob = await apiBlob(`/api/v1/profile-images?key=${encodeURIComponent(profile.avatar)}`);
-      return { ...profile, avatar: URL.createObjectURL(blob) };
-    } catch {
-      return { ...profile, avatar: undefined };
-    }
-  }));
+  return Promise.all(
+    profiles.map(async (profile) => {
+      if (
+        !profile.avatar ||
+        profile.avatar.startsWith("http") ||
+        profile.avatar.startsWith("data:")
+      )
+        return profile;
+      try {
+        const blob = await apiBlob(
+          `/api/v1/profile-images?key=${encodeURIComponent(profile.avatar)}`,
+        );
+        return { ...profile, avatar: URL.createObjectURL(blob) };
+      } catch {
+        return { ...profile, avatar: undefined };
+      }
+    }),
+  );
 }
 
 export async function getStudentAttendanceSummary(

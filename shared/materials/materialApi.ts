@@ -9,8 +9,18 @@ import type {
 type ApiEnvelope<T> = { data?: T; message?: string; error?: string };
 
 function safeErrorMessage(payload: ApiEnvelope<unknown>, status: number) {
-  const raw = typeof payload?.message === "string" ? payload.message : typeof payload?.error === "string" ? payload.error : "";
-  if (status >= 500 || /entitymanager|hibernate|jdbc|sql|postgres|datasource|timeout|exception|stack trace|org\.springframework|java\./i.test(raw)) {
+  const raw =
+    typeof payload?.message === "string"
+      ? payload.message
+      : typeof payload?.error === "string"
+        ? payload.error
+        : "";
+  if (
+    status >= 500 ||
+    /entitymanager|hibernate|jdbc|sql|postgres|datasource|timeout|exception|stack trace|org\.springframework|java\./i.test(
+      raw,
+    )
+  ) {
     return status === 502 || status === 503 || status === 504
       ? "The service is temporarily unavailable. Please try again shortly."
       : "Something went wrong. Please try again later.";
@@ -78,8 +88,7 @@ async function request<T>(baseUrl: string, path: string, init: RequestInit = {})
     throw new Error("The service is temporarily unavailable. Please try again shortly.");
   }
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(safeErrorMessage(payload, response.status));
+  if (!response.ok) throw new Error(safeErrorMessage(payload, response.status));
   return read<T>(payload);
 }
 

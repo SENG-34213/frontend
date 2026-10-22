@@ -8,20 +8,37 @@ interface UserAvatarProps {
   className?: string;
 }
 
-export const UserAvatar: React.FC<UserAvatarProps> = ({ name, avatarUrl, size = "md", className = "" }) => {
+export const UserAvatar: React.FC<UserAvatarProps> = ({
+  name,
+  avatarUrl,
+  size = "md",
+  className = "",
+}) => {
   const [resolvedAvatar, setResolvedAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!avatarUrl) { setResolvedAvatar(null); return; }
+    if (!avatarUrl) {
+      return;
+    }
     if (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) {
-      setResolvedAvatar(avatarUrl); return;
+      return;
     }
     let active = true;
     let objectUrl: string | undefined;
     void apiBlob(`/api/v1/profile-images?key=${encodeURIComponent(avatarUrl)}`)
-      .then((blob) => { if (active) { objectUrl = URL.createObjectURL(blob); setResolvedAvatar(objectUrl); } })
-      .catch(() => { if (active) setResolvedAvatar(null); });
-    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+      .then((blob) => {
+        if (active) {
+          objectUrl = URL.createObjectURL(blob);
+          setResolvedAvatar(objectUrl);
+        }
+      })
+      .catch(() => {
+        if (active) setResolvedAvatar(null);
+      });
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, [avatarUrl]);
   const getInitials = (n: string) => {
     const parts = n.trim().split(/\s+/);
@@ -53,7 +70,25 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ name, avatarUrl, size = 
       className={`relative inline-flex items-center justify-center rounded-full bg-gradient-to-br font-medium shrink-0 select-none shadow-xs ${sizeClasses[size]} ${getGradient(name)} ${className}`}
       aria-label={name}
     >
-      {resolvedAvatar ? <img src={resolvedAvatar} alt={name} className="w-full h-full rounded-full object-cover" /> : <span>{getInitials(name)}</span>}
+      {(
+        avatarUrl?.startsWith("http") || avatarUrl?.startsWith("data:")
+          ? avatarUrl
+          : avatarUrl
+            ? resolvedAvatar
+            : null
+      ) ? (
+        <img
+          src={
+            avatarUrl?.startsWith("http") || avatarUrl?.startsWith("data:")
+              ? avatarUrl
+              : (resolvedAvatar ?? "")
+          }
+          alt={name}
+          className="w-full h-full rounded-full object-cover"
+        />
+      ) : (
+        <span>{getInitials(name)}</span>
+      )}
     </div>
   );
 };

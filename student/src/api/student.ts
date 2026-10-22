@@ -78,7 +78,9 @@ function toProfile(user: StudentUserSummary): StudentProfile {
       email: idOf(record.academicAdvisorEmail),
       office: idOf(record.academicAdvisorOffice),
     },
-    phone: idOf(record.phoneNumber || record.phone || studentProfile.phoneNumber || studentProfile.phone),
+    phone: idOf(
+      record.phoneNumber || record.phone || studentProfile.phoneNumber || studentProfile.phone,
+    ),
     bio: idOf(studentProfile.bio || studentProfile.biography || record.bio),
     joinedDate: idOf(record.joinedDate || record.createdAt),
   };
@@ -249,7 +251,8 @@ function toQuiz(value: JsonRecord, course?: Course): Quiz {
   const questions = Array.isArray(value.questions) ? value.questions.map(toQuizQuestion) : [];
   const endTime = idOf(value.endTime);
   const rawStatus = String(value.status ?? "").toUpperCase();
-  const status = rawStatus === "PUBLISHED" ? "AVAILABLE" : rawStatus === "CLOSED" ? "COMPLETED" : rawStatus;
+  const status =
+    rawStatus === "PUBLISHED" ? "AVAILABLE" : rawStatus === "CLOSED" ? "COMPLETED" : rawStatus;
   return {
     id: idOf(value.id),
     courseId: idOf(value.courseId || course?.id),
@@ -270,8 +273,7 @@ function toQuiz(value: JsonRecord, course?: Course): Quiz {
     lastScore: value.lastScore == null ? undefined : Number(value.lastScore),
     lastScorePercentage:
       value.lastScorePercentage == null ? undefined : Number(value.lastScorePercentage),
-    showResultImmediately:
-      value.showResultImmediately ?? value.showResultsImmediately ?? true,
+    showResultImmediately: value.showResultImmediately ?? value.showResultsImmediately ?? true,
     questions,
   };
 }
@@ -431,7 +433,9 @@ export function toCommunicationMessage(
     : [];
   const senderId = idOf(value.senderId);
   const senderName =
-    readableName(value.senderName || value.senderFullName || value.sender?.fullName || value.sender?.name) ||
+    readableName(
+      value.senderName || value.senderFullName || value.sender?.fullName || value.sender?.name,
+    ) ||
     readableName(senderNames?.get(senderId)) ||
     (senderId === studentId ? "You" : "Course participant");
   return {
@@ -512,17 +516,19 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     currentUserResponse.status === "fulfilled"
       ? dataOf<JsonRecord>(currentUserResponse.value)
       : null;
-  const profile = await resolveProfileAvatar(toProfile(
-    (currentUser
-      ? {
-          ...user,
-          ...currentUser,
-          // Keep the authenticated identity used by course/enrollment APIs.
-          id: user.id,
-          keycloakUserId: user.keycloakUserId || currentUser.authUserId,
-        }
-      : user) as StudentUserSummary,
-  ));
+  const profile = await resolveProfileAvatar(
+    toProfile(
+      (currentUser
+        ? {
+            ...user,
+            ...currentUser,
+            // Keep the authenticated identity used by course/enrollment APIs.
+            id: user.id,
+            keycloakUserId: user.keycloakUserId || currentUser.authUserId,
+          }
+        : user) as StudentUserSummary,
+    ),
+  );
 
   const enrollmentValues =
     enrollmentResponse.status === "fulfilled" ? listOf<unknown>(enrollmentResponse.value) : [];
@@ -663,8 +669,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
           await apiRequest<JsonRecord>(`/api/v1/users/teachers/${teacherId}/lookup`),
         );
         const teacherName = idOf(
-          response.fullName ||
-            [response.firstName, response.lastName].filter(Boolean).join(" "),
+          response.fullName || [response.firstName, response.lastName].filter(Boolean).join(" "),
         );
         if (!teacherName) return;
         courses.forEach((course) => {

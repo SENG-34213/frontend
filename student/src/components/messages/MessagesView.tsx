@@ -41,7 +41,13 @@ export const MessagesView: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const messageListRef = useRef<HTMLDivElement | null>(null);
 
-  const activeConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
+  const effectiveSelectedConvId = conversations.some(
+    (conversation) => conversation.id === selectedConvId,
+  )
+    ? selectedConvId
+    : conversations[0]?.id || "";
+  const activeConv =
+    conversations.find((c) => c.id === effectiveSelectedConvId) || conversations[0];
 
   useEffect(() => {
     const messageList = messageListRef.current;
@@ -51,13 +57,6 @@ export const MessagesView: React.FC = () => {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [activeConv?.id, activeConv?.lastMessage, activeConv?.lastMessageTime]);
-
-  useEffect(() => {
-    if (!conversations.length) return;
-    if (!conversations.some((conversation) => conversation.id === selectedConvId)) {
-      setSelectedConvId(conversations[0].id);
-    }
-  }, [conversations, selectedConvId]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();

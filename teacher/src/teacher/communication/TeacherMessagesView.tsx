@@ -402,7 +402,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       if (!updated) throw new Error("Group settings could not be saved.");
       setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
     } catch (requestError) {
-      setActionError(requestError instanceof Error ? requestError.message : "Group settings could not be saved.");
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Group settings could not be saved.",
+      );
     } finally {
       setIsGroupSettingsSaving(false);
     }
@@ -420,7 +422,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       if (!updated) throw new Error("Student messaging access could not be updated.");
       setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
     } catch (requestError) {
-      setActionError(requestError instanceof Error ? requestError.message : "Student messaging access could not be updated.");
+      setActionError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Student messaging access could not be updated.",
+      );
     } finally {
       setIsGroupSettingsSaving(false);
     }
@@ -430,19 +436,24 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     if (!activeGroup) return;
     setIsGroupSettingsSaving(true);
     try {
-      const updated = activeGroup.status === "ARCHIVED"
-        ? await unarchiveCommunicationGroup(activeGroup.id)
-        : await archiveCommunicationGroup(activeGroup.id);
-      if (updated) setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
+      const updated =
+        activeGroup.status === "ARCHIVED"
+          ? await unarchiveCommunicationGroup(activeGroup.id)
+          : await archiveCommunicationGroup(activeGroup.id);
+      if (updated)
+        setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
     } catch (requestError) {
-      setActionError(requestError instanceof Error ? requestError.message : "Group status could not be updated.");
+      setActionError(
+        requestError instanceof Error ? requestError.message : "Group status could not be updated.",
+      );
     } finally {
       setIsGroupSettingsSaving(false);
     }
   }
 
   async function handleCreateGroup() {
-    const course = availableCourses.find((item) => item.id === createCourseId) ?? availableCourses[0];
+    const course =
+      availableCourses.find((item) => item.id === createCourseId) ?? availableCourses[0];
     if (!course) {
       setActionError("No courses are available to create a communication group.");
       return;
@@ -575,7 +586,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                 disabled={availableCourses.length === 0}
                 className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Create group"
-                title={availableCourses.length === 0 ? "No courses assigned to you" : "Create group"}
+                title={
+                  availableCourses.length === 0 ? "No courses assigned to you" : "Create group"
+                }
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -597,7 +610,8 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                   <option value="">Select course</option>
                   {availableCourses.map((course) => (
                     <option key={course.id} value={course.id}>
-                      {course.courseName}{course.courseCode ? ` · ${course.courseCode}` : ""}
+                      {course.courseName}
+                      {course.courseCode ? ` · ${course.courseCode}` : ""}
                     </option>
                   ))}
                 </select>
@@ -898,7 +912,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                               {initials(name)}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-[11px] font-semibold text-slate-800">{name}</p>
+                              <p className="truncate text-[11px] font-semibold text-slate-800">
+                                {name}
+                              </p>
                               <p className="truncate text-[10px] text-slate-400">
                                 {student?.email || "Communication member"}
                               </p>
@@ -923,7 +939,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     <div className="flex items-center justify-between border-b border-indigo-100 bg-indigo-50 px-4 py-3">
                       <div>
                         <p className="text-xs font-bold text-slate-900">Group settings</p>
-                        <p className="mt-0.5 text-[10px] text-slate-500">Manage this conversation</p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                          Manage this conversation
+                        </p>
                       </div>
                       <button
                         type="button"
@@ -955,7 +973,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                         />
                       </label>
                       <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                        <p className="text-[11px] font-semibold text-slate-800">Student messaging</p>
+                        <p className="text-[11px] font-semibold text-slate-800">
+                          Student messaging
+                        </p>
                         <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
                           {activeGroup.studentMessagingEnabled === false
                             ? "Students are currently unable to send messages."
@@ -967,7 +987,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                           disabled={isGroupSettingsSaving}
                           className={`mt-3 w-full rounded-lg px-3 py-2 text-[11px] font-semibold disabled:opacity-50 ${activeGroup.studentMessagingEnabled === false ? "bg-emerald-600 text-white" : "bg-rose-100 text-rose-700"}`}
                         >
-                          {activeGroup.studentMessagingEnabled === false ? "Allow student messages" : "Pause student messages"}
+                          {activeGroup.studentMessagingEnabled === false
+                            ? "Allow student messages"
+                            : "Pause student messages"}
                         </button>
                       </div>
                     </div>
@@ -1026,9 +1048,10 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                 {availableCourses.length === 0 ? (
                   <option value="">No courses available</option>
                 ) : (
-                availableCourses.map((course) => (
+                  availableCourses.map((course) => (
                     <option key={course.id} value={course.id}>
-                      {course.courseName}{course.courseCode ? ` · ${course.courseCode}` : ""}
+                      {course.courseName}
+                      {course.courseCode ? ` · ${course.courseCode}` : ""}
                     </option>
                   ))
                 )}

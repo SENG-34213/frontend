@@ -311,7 +311,9 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           title="Refresh current page data"
           aria-label="Refresh current page data"
         >
-          <RefreshCw className={`h-4 w-4 text-indigo-600 dark:text-indigo-400 ${isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`h-4 w-4 text-indigo-600 dark:text-indigo-400 ${isRefreshing ? "animate-spin" : ""}`}
+          />
         </button>
 
         <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block" />
