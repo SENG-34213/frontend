@@ -21,6 +21,14 @@ import {
 import { useStudent } from "../../context/StudentContext";
 
 const clamp = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
+const normalizePercentage = (score: unknown, maxScore = 100): number | null => {
+  const numericScore = Number(score);
+  const numericMaxScore = Number(maxScore);
+  if (!Number.isFinite(numericScore) || !Number.isFinite(numericMaxScore) || numericMaxScore <= 0) {
+    return null;
+  }
+  return clamp((numericScore / numericMaxScore) * 100);
+};
 const dateLabel = (value: string) =>
   new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const timeLabel = (value: string) =>
@@ -126,13 +134,22 @@ export const StudentDashboard: React.FC = () => {
   const assessmentPerformance = useMemo(() => {
     const assignmentScores = assignments
       .filter((assignment) => assignment.status === "GRADED" && assignment.grade != null)
-      .map((assignment) => (assignment.grade! / Math.max(assignment.maxScore, 1)) * 100);
+      .flatMap((assignment) => {
+        const percentage = normalizePercentage(assignment.grade, assignment.maxScore);
+        return percentage == null ? [] : [percentage];
+      });
     const quizScores = quizzes
       .filter((quiz) => quiz.status === "COMPLETED" && quiz.lastScorePercentage != null)
-      .map((quiz) => quiz.lastScorePercentage!);
+      .flatMap((quiz) => {
+        const percentage = normalizePercentage(quiz.lastScorePercentage);
+        return percentage == null ? [] : [percentage];
+      });
     const examScores = examinations
       .filter((exam) => exam.status === "COMPLETED" && exam.scorePercentage != null)
-      .map((exam) => exam.scorePercentage!);
+      .flatMap((exam) => {
+        const percentage = normalizePercentage(exam.scorePercentage);
+        return percentage == null ? [] : [percentage];
+      });
     const average = (scores: number[]) =>
       scores.length ? scores.reduce((total, score) => total + score, 0) / scores.length : null;
 
