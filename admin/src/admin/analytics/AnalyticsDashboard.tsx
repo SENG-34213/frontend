@@ -4,12 +4,14 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   AlertTriangle,
   Award,
+  BarChart3,
   BookOpen,
   CalendarCheck2,
   CircleDollarSign,
   GraduationCap,
   Loader2,
   RefreshCcw,
+  ShieldAlert,
   Users,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
@@ -34,6 +36,14 @@ function formatPercentage(value: number | undefined): string {
 
 function formatCurrency(value: number | undefined): string {
   return value === undefined ? "—" : currencyFormatter.format(value);
+}
+
+function formatLabel(value: string): string {
+  return value
+    .toLowerCase()
+    .split(/[_-]+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function getErrorMessage(error: unknown): string {
@@ -93,8 +103,13 @@ export const AnalyticsDashboard: React.FC = () => {
   const courses = analytics?.courses;
   const enrollment = analytics?.enrollment;
   const attendance = analytics?.attendance;
-  const assessment = analytics?.assessment;
+  const assignments = analytics?.assignments;
+  const quizzes = analytics?.quizzes;
+  const exams = analytics?.exams;
   const payments = analytics?.payments;
+  const accountStatusMix = Object.entries(users?.accountStatusMix ?? {});
+  const enrollmentTrend = Object.entries(enrollment?.enrollmentTrend ?? {});
+  const coursePopularity = enrollment?.coursePopularity ?? [];
 
   return (
     <div className="space-y-6">
@@ -162,13 +177,13 @@ export const AnalyticsDashboard: React.FC = () => {
             <StatCard
               title="Active Courses"
               value={formatNumber(courses?.activeCourses)}
-              subtitle={`${formatNumber(courses?.totalCourses)} total courses`}
+              subtitle={`${formatNumber(courses?.newThisMonth)} new this month`}
               icon={BookOpen}
             />
             <StatCard
               title="Average Attendance"
               value={formatPercentage(attendance?.averageAttendance)}
-              subtitle={`${formatNumber(enrollment?.activeEnrollments)} active enrollments`}
+              subtitle={`${formatNumber(enrollment?.uniqueStudents)} unique students`}
               icon={CalendarCheck2}
             />
             <StatCard
@@ -212,15 +227,18 @@ export const AnalyticsDashboard: React.FC = () => {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <StatCard
                   title="Assignment Completion"
-                  value={formatPercentage(assessment?.assignmentCompletionRate)}
+                  value={formatPercentage(assignments?.completionRate)}
+                  subtitle={`${formatPercentage(assignments?.missingRate)} missing`}
                 />
                 <StatCard
                   title="Average Quiz Score"
-                  value={formatPercentage(assessment?.averageQuizScore)}
+                  value={formatPercentage(quizzes?.averageScore)}
+                  subtitle={`${formatPercentage(quizzes?.completionRate)} completed`}
                 />
                 <StatCard
                   title="Average Exam Score"
-                  value={formatPercentage(assessment?.averageExamScore)}
+                  value={formatPercentage(exams?.averageScore)}
+                  subtitle={`${formatPercentage(exams?.completionRate)} completed`}
                 />
               </div>
             </section>
@@ -247,7 +265,107 @@ export const AnalyticsDashboard: React.FC = () => {
               <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
                 Historical trends
               </h2>
-              <MetricUnavailable label="Historical trend charts" />
+              {enrollmentTrend.length > 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="mb-4 flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      Enrollment activity by period
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {enrollmentTrend.map(([period, count]) => (
+                      <div key={period} className="flex items-center gap-3 text-sm">
+                        <span className="w-24 shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                          {period}
+                        </span>
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                          <div
+                            className="h-full rounded-full bg-indigo-500"
+                            style={{
+                              width: `${Math.min(100, Math.max(4, (count / Math.max(...enrollmentTrend.map(([, value]) => value), 1)) * 100))}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="w-10 text-right font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                          {formatNumber(count)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <MetricUnavailable label="Historical enrollment trends" />
+              )}
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-4 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Account status mix
+                </h2>
+              </div>
+              {accountStatusMix.length > 0 ? (
+                <div className="space-y-3">
+                  {accountStatusMix.map(([status, count]) => (
+                    <div key={status} className="flex items-center justify-between text-sm">
+                      <span className="text-slate-500 dark:text-slate-400">
+                        {formatLabel(status)}
+                      </span>
+                      <span className="font-semibold tabular-nums text-slate-900 dark:text-white">
+                        {formatNumber(count)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <MetricUnavailable label="Account status data" />
+              )}
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-4 flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Popular courses
+                </h2>
+              </div>
+              {coursePopularity.length > 0 ? (
+                <div className="space-y-3">
+                  {coursePopularity.slice(0, 5).map((course, index) => (
+                    <div
+                      key={course.courseId ?? index}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span className="truncate pr-3 text-slate-500 dark:text-slate-400">
+                        Course {course.courseId?.slice(0, 8) ?? "—"}
+                      </span>
+                      <span className="font-semibold tabular-nums text-slate-900 dark:text-white">
+                        {formatNumber(course.enrollmentCount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <MetricUnavailable label="Course popularity data" />
+              )}
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <div className="mb-4 flex items-center gap-2">
+                <CircleDollarSign className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Payment health
+                </h2>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard title="Successful" value={formatNumber(payments?.successfulPayments)} />
+                <StatCard title="Failed" value={formatNumber(payments?.failedPayments)} />
+                <StatCard title="Refunded" value={formatNumber(payments?.refundedPayments)} />
+              </div>
             </div>
           </section>
         </>
