@@ -67,6 +67,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
   const gradeDistribution = analytics?.gradeDistribution ?? [];
   const correlation = analytics?.attendanceCorrelation ?? [];
   const atRisk = analytics?.atRiskStudents ?? [];
+  const courseTrends = analytics?.courseTrends ?? [];
   const cards: Array<{
     label: string;
     cardValue: number | string | null;
@@ -235,6 +236,71 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
             )}
           </div>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              Course Performance Comparison
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Attendance and assessment averages for your available courses
+            </p>
+          </div>
+          <TrendingUp className="w-4 h-4 text-indigo-600" />
+        </div>
+        {courseTrends.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400">
+                  <th className="pb-3 pr-4 font-semibold">Course</th>
+                  <th className="pb-3 px-2 text-right font-semibold">Attendance</th>
+                  <th className="pb-3 px-2 text-right font-semibold">Assignments</th>
+                  <th className="pb-3 px-2 text-right font-semibold">Quizzes</th>
+                  <th className="pb-3 pl-2 text-right font-semibold">Exams</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {courseTrends.map((course) => (
+                  <tr key={course.courseId} className="text-slate-700">
+                    <td className="py-3 pr-4">
+                      <p className="font-semibold text-slate-900">{course.courseName}</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-400">
+                        {course.courseId}
+                      </p>
+                    </td>
+                    <td className="px-2 py-3 text-right font-mono tabular-nums">
+                      {value(course.attendanceRate) == null
+                        ? "—"
+                        : `${Number(value(course.attendanceRate)).toFixed(1)}%`}
+                    </td>
+                    <td className="px-2 py-3 text-right font-mono tabular-nums">
+                      {value(course.assignmentAverage) == null
+                        ? "—"
+                        : `${Number(value(course.assignmentAverage)).toFixed(1)}%`}
+                    </td>
+                    <td className="px-2 py-3 text-right font-mono tabular-nums">
+                      {value(course.quizAverage) == null
+                        ? "—"
+                        : `${Number(value(course.quizAverage)).toFixed(1)}%`}
+                    </td>
+                    <td className="pl-2 py-3 text-right font-mono tabular-nums">
+                      {value(course.examAverage) == null
+                        ? "—"
+                        : `${Number(value(course.examAverage)).toFixed(1)}%`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="py-6 text-center text-xs text-slate-400">
+            No cross-course comparison is available for this period.
+          </p>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
