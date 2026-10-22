@@ -21,6 +21,10 @@ import {
 import { useStudent } from "../../context/StudentContext";
 
 const clamp = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
+const boundedPercentage = (value: unknown): number | null => {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? clamp(numericValue) : null;
+};
 const normalizePercentage = (score: unknown, maxScore = 100): number | null => {
   const numericScore = Number(score);
   const numericMaxScore = Number(maxScore);
@@ -407,7 +411,9 @@ export const StudentDashboard: React.FC = () => {
                 <p className="text-[10px] uppercase tracking-wider text-slate-400">Attendance</p>
                 <p className="mt-1 text-2xl font-bold text-emerald-600">
                   {attendanceOverall
-                    ? `${attendanceOverall.attendancePercentage.toFixed(1)}%`
+                    ? boundedPercentage(attendanceOverall.attendancePercentage) == null
+                      ? "—"
+                      : `${boundedPercentage(attendanceOverall.attendancePercentage)!.toFixed(1)}%`
                     : "—"}
                 </p>
               </div>
@@ -546,6 +552,7 @@ export const StudentDashboard: React.FC = () => {
             ) : (
               attendanceSummaries.slice(0, 4).map((summary) => {
                 const course = courses.find((item) => item.id === summary.courseId);
+                const attendancePercentage = boundedPercentage(summary.attendancePercentage);
                 return (
                   <div key={summary.courseId}>
                     <div className="mb-1.5 flex items-center justify-between gap-3">
@@ -553,13 +560,13 @@ export const StudentDashboard: React.FC = () => {
                         {course?.title || "Course"}
                       </span>
                       <span className="text-xs font-bold text-emerald-600">
-                        {summary.attendancePercentage.toFixed(1)}%
+                        {attendancePercentage == null ? "—" : `${attendancePercentage.toFixed(1)}%`}
                       </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                       <div
-                        className={`h-full rounded-full ${summary.attendancePercentage < 75 ? "bg-amber-400" : "bg-emerald-500"}`}
-                        style={{ width: `${clamp(summary.attendancePercentage)}%` }}
+                        className={`h-full rounded-full ${attendancePercentage != null && attendancePercentage < 75 ? "bg-amber-400" : "bg-emerald-500"}`}
+                        style={{ width: `${attendancePercentage ?? 0}%` }}
                       />
                     </div>
                     <p className="mt-1 text-[10px] text-slate-400">
