@@ -13,6 +13,7 @@ import {
   GraduationCap,
   MessageSquare,
   PlayCircle,
+  RefreshCw,
   Sparkles,
   Target,
   TrendingUp,
@@ -98,6 +99,9 @@ export const StudentDashboard: React.FC = () => {
     sendAiQuery,
     attendanceSummaries,
     attendanceOverall,
+    workspaceLoading,
+    workspaceError,
+    retryWorkspace,
   } = useStudent();
   const enrolledCourses = courses.filter((course) => course.enrolled);
   const pendingAssignments = assignments.filter((assignment) => assignment.status === "PENDING");
@@ -172,6 +176,27 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12">
+      {workspaceError && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200 sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            Live learning data could not be refreshed. Existing records may be incomplete.
+          </span>
+          <button
+            type="button"
+            onClick={() => void retryWorkspace()}
+            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800 dark:bg-slate-900 dark:text-rose-300"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        </div>
+      )}
+      {workspaceLoading && (
+        <div className="flex items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-indigo-700 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-200">
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+          Refreshing your live learning analytics…
+        </div>
+      )}
       <section className="relative overflow-hidden rounded-[30px] bg-[#111827] p-6 text-white shadow-2xl shadow-slate-300/30 sm:p-9">
         <div className="absolute -right-24 -top-32 h-80 w-80 rounded-full bg-indigo-500/25 blur-3xl" />
         <div className="absolute -bottom-40 left-1/3 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
