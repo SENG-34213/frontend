@@ -263,11 +263,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-xs font-semibold text-white shadow-2xs">
-              {profile.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
+            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-xs font-semibold text-white shadow-2xs">
+              {profile.avatar ? <img src={profile.avatar} alt="" className="h-full w-full object-cover" /> : profile.name.split(" ").map((n) => n[0]).join("")}
             </div>
             <span className="hidden lg:inline text-xs font-semibold text-slate-700 dark:text-slate-200">
               {profile.name}
@@ -281,10 +278,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                   {profile.email}
                 </p>
-                <div className="mt-1 flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span>Signed in · {profile.studentId}</span>
-                </div>
               </div>
 
               <div className="py-1">

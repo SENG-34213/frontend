@@ -18,6 +18,15 @@
   body {
     font-family: var(--font-sans);
     letter-spacing: -0.011em;
+    background-color: #f8fafc;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark body {
+    background-color: #020617;
+    color: #e2e8f0;
   }
 
   h1,
@@ -34,6 +43,41 @@
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
   }
+}
+
+/* Shared Mentify dark palette, matching the admin workspace surfaces. */
+@layer utilities {
+  .dark .bg-white { background-color: #0f172a; }
+  .dark .bg-white\/95 { background-color: rgb(15 23 42 / 0.95); }
+  .dark .bg-slate-50 { background-color: #020617; }
+  .dark .bg-slate-50\/40 { background-color: rgb(15 23 42 / 0.4); }
+  .dark .bg-slate-50\/60 { background-color: rgb(15 23 42 / 0.6); }
+  .dark .bg-indigo-50 { background-color: rgb(49 46 129 / 0.35); }
+  .dark .bg-indigo-50\/60 { background-color: rgb(49 46 129 / 0.25); }
+  .dark .bg-indigo-50\/70 { background-color: rgb(49 46 129 / 0.25); }
+  .dark .bg-violet-50 { background-color: rgb(76 29 149 / 0.3); }
+  .dark .bg-rose-50 { background-color: rgb(127 29 29 / 0.35); }
+  .dark .bg-amber-50 { background-color: rgb(120 53 15 / 0.35); }
+  .dark .bg-emerald-50 { background-color: rgb(6 78 59 / 0.35); }
+  .dark .text-slate-900 { color: #f8fafc; }
+  .dark .text-slate-800 { color: #e2e8f0; }
+  .dark .text-slate-700 { color: #cbd5e1; }
+  .dark .text-slate-600 { color: #94a3b8; }
+  .dark .text-slate-500 { color: #94a3b8; }
+  .dark .text-slate-400 { color: #64748b; }
+  .dark .text-indigo-700 { color: #a5b4fc; }
+  .dark .text-indigo-600 { color: #818cf8; }
+  .dark .text-violet-700 { color: #c4b5fd; }
+  .dark .border-slate-200 { border-color: #334155; }
+  .dark .border-slate-200\/80 { border-color: rgb(51 65 85 / 0.8); }
+  .dark .border-slate-100 { border-color: #1e293b; }
+  .dark .border-indigo-100 { border-color: #3730a3; }
+  .dark .divide-slate-100 > :not(:last-child) { border-color: #1e293b; }
+  .dark .hover\:bg-slate-50:hover { background-color: #1e293b; }
+  .dark .hover\:bg-slate-100:hover { background-color: #1e293b; }
+  .dark .hover\:bg-slate-200:hover { background-color: #334155; }
+  .dark .hover\:text-slate-800:hover { color: #e2e8f0; }
+  .dark .hover\:text-slate-900:hover { color: #f8fafc; }
 }
 
 /* Custom scrollbars */

@@ -179,13 +179,17 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
                     <td className="px-4 py-3.5">
                       <div className="flex flex-wrap gap-1">
                         {st.enrolledCourseIds.map((cid) => {
-                          const course = courses.find((c) => c.id === cid);
+                          const course = backendCourses.find((c) => c.id === cid);
                           return (
                             <span
                               key={cid}
-                              className="px-1.5 py-0.5 rounded-md text-[10px] font-mono bg-slate-100 text-slate-700"
+                              className="px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 text-slate-700"
                             >
-                              {course?.code || cid}
+                              {course?.courseName ||
+                                course?.title ||
+                                course?.subject ||
+                                course?.courseCode ||
+                                "Course unavailable"}
                             </span>
                           );
                         })}

@@ -93,14 +93,33 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   let response: Response;
+  const requestController = new AbortController();
+  const callerSignal = requestInit.signal;
+  let timedOut = false;
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true;
+    requestController.abort();
+  }, 30_000);
+  const abortRequest = () => requestController.abort();
+
+  if (callerSignal?.aborted) requestController.abort();
+  else callerSignal?.addEventListener("abort", abortRequest, { once: true });
+
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...requestInit,
       headers: requestHeaders,
       body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
+      signal: requestController.signal,
     });
   } catch (error) {
+    if (timedOut) {
+      throw new ApiError("The service is taking too long to respond. Please try again shortly.", 504, error);
+    }
     throw new ApiError("The service is temporarily unavailable. Please try again shortly.", 503, error);
+  } finally {
+    window.clearTimeout(timeoutId);
+    callerSignal?.removeEventListener("abort", abortRequest);
   }
   const responseBody = await readResponse(response, responseType);
 
@@ -114,4 +133,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw new ApiError(message, response.status, responseBody);
   }
   return responseBody as T;
+}
+
+export async function apiBlob(path: string): Promise<Blob> {
+  return apiRequest<Blob>(path, { responseType: "blob" });
 }

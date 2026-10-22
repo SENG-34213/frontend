@@ -10,16 +10,18 @@ import {
   Plus,
   Search,
   Send,
+  Settings,
   Square,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import type { Student } from "../types";
 import { useCommunicationRealtime } from "../api/communicationRealtime";
 import {
-  archiveCommunicationGroup,
   addStudentToCommunicationGroup,
+  archiveCommunicationGroup,
   createCommunicationGroup,
   deleteCommunicationMessage,
   getCommunicationGroupMembers,
@@ -29,6 +31,7 @@ import {
   sendCommunicationMessage,
   uploadCommunicationAttachment,
   unarchiveCommunicationGroup,
+  updateCommunicationGroup,
   updateCommunicationMessage,
   type CommunicationGroup,
   type CommunicationGroupMember,
@@ -41,6 +44,8 @@ interface TeacherMessagesViewProps {
   backendCourses: BackendCourse[];
   students?: Student[];
   teacherId?: string;
+  teacherName?: string;
+  teacherProfileId?: string;
 }
 
 function initials(name: string) {
@@ -53,10 +58,6 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function shortId(value: string) {
-  return value.length > 12 ? `${value.slice(0, 6)}…${value.slice(-4)}` : value;
-}
-
 function formatTime(value?: string) {
   return value ? new Date(value).toLocaleString() : "No messages";
 }
@@ -65,6 +66,8 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   backendCourses,
   students = [],
   teacherId,
+  teacherName = "Teacher",
+  teacherProfileId,
 }) => {
   const [groups, setGroups] = useState<CommunicationGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState("");
@@ -80,6 +83,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recordingChunksRef = useRef<Blob[]>([]);
+  const messageListRef = useRef<HTMLDivElement | null>(null);
   const [activeTab, setActiveTab] = useState<"direct" | "announcements">("direct");
   const [search, setSearch] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
@@ -100,9 +104,24 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingMessage, setEditingMessage] = useState<CommunicationMessage | null>(null);
   const [deletingMessage, setDeletingMessage] = useState<CommunicationMessage | null>(null);
+  const [showMembers, setShowMembers] = useState(false);
+  const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [groupSettingsName, setGroupSettingsName] = useState("");
+  const [groupSettingsDescription, setGroupSettingsDescription] = useState("");
+  const [isGroupSettingsSaving, setIsGroupSettingsSaving] = useState(false);
 
   const activeGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
   const activeMessages = messagesByGroup[selectedGroupId] ?? [];
+  const availableCourses = useMemo(() => {
+    const teacherIds = new Set([teacherId, teacherProfileId].filter(Boolean));
+    // The course list is already loaded from /course/my-courses, but keep an
+    // explicit ownership check here as a second guard. Never fall back to all
+    // courses when an assignment is missing; that could expose another
+    // teacher's course in group creation or announcements.
+    return backendCourses.filter(
+      (course) => Boolean(course.assignedTeacherId) && teacherIds.has(course.assignedTeacherId),
+    );
+  }, [backendCourses, teacherId, teacherProfileId]);
   const visibleGroups = useMemo(
     () => groups.filter((group) => group.name.toLowerCase().includes(search.toLowerCase())),
     [groups, search],
@@ -117,6 +136,15 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       });
     },
   );
+
+  useEffect(() => {
+    const messageList = messageListRef.current;
+    if (!messageList || isMessageLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      messageList.scrollTo({ top: messageList.scrollHeight, behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [selectedGroupId, activeMessages.length, isMessageLoading]);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -172,11 +200,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
 
   useEffect(() => {
     setCreateCourseId((current) =>
-      backendCourses.some((course) => course.id === current)
+      availableCourses.some((course) => course.id === current)
         ? current
-        : (backendCourses[0]?.id ?? ""),
+        : (availableCourses[0]?.id ?? ""),
     );
-  }, [backendCourses]);
+  }, [availableCourses]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -343,8 +371,78 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     }
   }
 
+  function memberName(member: CommunicationGroupMember) {
+    if (member.userId === teacherId) return teacherName;
+    return students.find((item) => item.id === member.userId)?.name || "Group member";
+  }
+
+  function messageSenderName(message: CommunicationMessage) {
+    if (teacherId && message.senderId === teacherId) return "You";
+    if (message.senderName?.trim()) return message.senderName;
+    return students.find((student) => student.id === message.senderId)?.name || "Group member";
+  }
+
+  function openGroupSettings() {
+    if (!activeGroup) return;
+    setShowMembers(false);
+    setGroupSettingsName(activeGroup.name);
+    setGroupSettingsDescription(activeGroup.description ?? "");
+    setShowGroupSettings((value) => !value);
+  }
+
+  async function saveGroupSettings() {
+    if (!activeGroup || !groupSettingsName.trim()) return;
+    setIsGroupSettingsSaving(true);
+    try {
+      const updated = await updateCommunicationGroup(activeGroup.id, {
+        name: groupSettingsName.trim(),
+        description: groupSettingsDescription.trim() || undefined,
+        studentMessagingEnabled: activeGroup.studentMessagingEnabled !== false,
+      });
+      if (!updated) throw new Error("Group settings could not be saved.");
+      setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
+    } catch (requestError) {
+      setActionError(requestError instanceof Error ? requestError.message : "Group settings could not be saved.");
+    } finally {
+      setIsGroupSettingsSaving(false);
+    }
+  }
+
+  async function toggleStudentMessaging() {
+    if (!activeGroup) return;
+    setIsGroupSettingsSaving(true);
+    try {
+      const updated = await updateCommunicationGroup(activeGroup.id, {
+        name: activeGroup.name,
+        description: activeGroup.description,
+        studentMessagingEnabled: activeGroup.studentMessagingEnabled === false,
+      });
+      if (!updated) throw new Error("Student messaging access could not be updated.");
+      setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
+    } catch (requestError) {
+      setActionError(requestError instanceof Error ? requestError.message : "Student messaging access could not be updated.");
+    } finally {
+      setIsGroupSettingsSaving(false);
+    }
+  }
+
+  async function toggleGroupArchive() {
+    if (!activeGroup) return;
+    setIsGroupSettingsSaving(true);
+    try {
+      const updated = activeGroup.status === "ARCHIVED"
+        ? await unarchiveCommunicationGroup(activeGroup.id)
+        : await archiveCommunicationGroup(activeGroup.id);
+      if (updated) setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
+    } catch (requestError) {
+      setActionError(requestError instanceof Error ? requestError.message : "Group status could not be updated.");
+    } finally {
+      setIsGroupSettingsSaving(false);
+    }
+  }
+
   async function handleCreateGroup() {
-    const course = backendCourses.find((item) => item.id === createCourseId) ?? backendCourses[0];
+    const course = availableCourses.find((item) => item.id === createCourseId) ?? availableCourses[0];
     if (!course) {
       setActionError("No courses are available to create a communication group.");
       return;
@@ -388,23 +486,6 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       );
     } finally {
       setIsAddingStudent(false);
-    }
-  }
-
-  async function handleArchiveToggle() {
-    if (!activeGroup) return;
-    try {
-      const updated =
-        activeGroup.status === "ARCHIVED"
-          ? await unarchiveCommunicationGroup(activeGroup.id)
-          : await archiveCommunicationGroup(activeGroup.id);
-      if (updated) {
-        setGroups((current) => current.map((group) => (group.id === updated.id ? updated : group)));
-      }
-    } catch (requestError) {
-      setActionError(
-        requestError instanceof Error ? requestError.message : "Group status could not be updated.",
-      );
     }
   }
 
@@ -491,8 +572,10 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
               </div>
               <button
                 onClick={() => setIsCreateGroupOpen(true)}
-                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
+                disabled={availableCourses.length === 0}
+                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Create group"
+                title={availableCourses.length === 0 ? "No courses assigned to you" : "Create group"}
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -512,9 +595,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                   className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
                 >
                   <option value="">Select course</option>
-                  {backendCourses.map((course) => (
+                  {availableCourses.map((course) => (
                     <option key={course.id} value={course.id}>
-                      {course.subject || course.courseName}
+                      {course.courseName}{course.courseCode ? ` · ${course.courseCode}` : ""}
                     </option>
                   ))}
                 </select>
@@ -589,7 +672,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
             </div>
           </aside>
 
-          <main className="flex-1 flex flex-col overflow-hidden bg-white">
+          <main
+            className={`relative flex min-w-0 flex-1 flex-col overflow-hidden bg-white transition-[padding] duration-200 ${showMembers || showGroupSettings ? "pr-64" : ""}`}
+          >
             {activeGroup ? (
               <>
                 <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/30">
@@ -607,14 +692,29 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => void handleArchiveToggle()}
-                    className="text-xs text-slate-500 hover:text-indigo-600"
-                  >
-                    {activeGroup.status === "ARCHIVED" ? "Unarchive" : "Archive"}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowGroupSettings(false);
+                        setShowMembers((value) => !value);
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-indigo-600"
+                    >
+                      <Users className="h-3.5 w-3.5" />
+                      View users
+                    </button>
+                    <button
+                      type="button"
+                      onClick={openGroupSettings}
+                      className={`inline-flex items-center gap-1 text-xs ${showGroupSettings ? "text-indigo-700" : "text-slate-500 hover:text-indigo-600"}`}
+                    >
+                      <Settings className="h-3.5 w-3.5" />
+                      Settings
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <div ref={messageListRef} className="flex-1 overflow-y-auto p-6 space-y-4">
                   {isMessageLoading ? (
                     <p className="text-center text-xs text-slate-500">Loading messages...</p>
                   ) : activeMessages.length === 0 ? (
@@ -630,7 +730,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                           className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                         >
                           <span className="text-[10px] text-slate-400 mb-1 px-1">
-                            {isMe ? "You" : `User ${shortId(message.senderId)}`} ·{" "}
+                            {isMe ? "You" : messageSenderName(message)} ·{" "}
                             {formatTime(message.sentAt)}
                             {message.edited ? " · edited" : ""}
                           </span>
@@ -660,19 +760,23 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                               </div>
                             )}
                           </div>
-                          {isMe && !message.deletedForEveryone && (
+                          {!message.deletedForEveryone && (
                             <div className="mt-1 flex gap-2">
+                              {isMe && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingMessage(message)}
+                                  className="text-[10px] text-slate-400 hover:text-indigo-600"
+                                >
+                                  Edit
+                                </button>
+                              )}
                               <button
-                                onClick={() => setEditingMessage(message)}
-                                className="text-[10px] text-slate-400 hover:text-indigo-600"
-                              >
-                                Edit
-                              </button>
-                              <button
+                                type="button"
                                 onClick={() => setDeletingMessage(message)}
                                 className="text-[10px] text-slate-400 hover:text-rose-600"
                               >
-                                Delete
+                                Delete for everyone
                               </button>
                             </div>
                           )}
@@ -763,6 +867,130 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     {uploadStatus}
                   </div>
                 )}
+                {showMembers && (
+                  <aside className="absolute inset-y-0 right-0 z-10 flex w-64 flex-col border-l border-slate-200 bg-white shadow-xl">
+                    <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">Group users</p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                          {membersByGroup[activeGroup.id]?.length ?? 0} people in this conversation
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowMembers(false)}
+                        aria-label="Close users panel"
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-slate-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 space-y-2 overflow-y-auto p-3">
+                      {(membersByGroup[activeGroup.id] ?? []).map((member) => {
+                        const name = memberName(member);
+                        const student = students.find((item) => item.id === member.userId);
+                        return (
+                          <div
+                            key={member.userId}
+                            className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/70 p-2.5"
+                          >
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                              {initials(name)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[11px] font-semibold text-slate-800">{name}</p>
+                              <p className="truncate text-[10px] text-slate-400">
+                                {student?.email || "Communication member"}
+                              </p>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-indigo-700">
+                              {member.role.toLowerCase()}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {!membersByGroup[activeGroup.id]?.length && (
+                        <p className="py-8 text-center text-xs text-slate-400">No users found.</p>
+                      )}
+                    </div>
+                    <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-[10px] text-slate-500">
+                      Members are managed through course enrollment.
+                    </div>
+                  </aside>
+                )}
+                {showGroupSettings && (
+                  <aside className="absolute inset-y-0 right-0 z-10 flex w-64 flex-col border-l border-indigo-100 bg-white shadow-xl">
+                    <div className="flex items-center justify-between border-b border-indigo-100 bg-indigo-50 px-4 py-3">
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">Group settings</p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">Manage this conversation</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowGroupSettings(false)}
+                        aria-label="Close group settings"
+                        className="rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-slate-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                      <label className="block text-[11px] font-semibold text-slate-700">
+                        Group name
+                        <input
+                          value={groupSettingsName}
+                          onChange={(event) => setGroupSettingsName(event.target.value)}
+                          maxLength={150}
+                          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 outline-none focus:border-indigo-500"
+                        />
+                      </label>
+                      <label className="block text-[11px] font-semibold text-slate-700">
+                        Description
+                        <textarea
+                          value={groupSettingsDescription}
+                          onChange={(event) => setGroupSettingsDescription(event.target.value)}
+                          rows={4}
+                          maxLength={2000}
+                          className="mt-1.5 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal text-slate-800 outline-none focus:border-indigo-500"
+                        />
+                      </label>
+                      <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <p className="text-[11px] font-semibold text-slate-800">Student messaging</p>
+                        <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
+                          {activeGroup.studentMessagingEnabled === false
+                            ? "Students are currently unable to send messages."
+                            : "Students can currently send messages in this group."}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void toggleStudentMessaging()}
+                          disabled={isGroupSettingsSaving}
+                          className={`mt-3 w-full rounded-lg px-3 py-2 text-[11px] font-semibold disabled:opacity-50 ${activeGroup.studentMessagingEnabled === false ? "bg-emerald-600 text-white" : "bg-rose-100 text-rose-700"}`}
+                        >
+                          {activeGroup.studentMessagingEnabled === false ? "Allow student messages" : "Pause student messages"}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-2 border-t border-slate-200 bg-slate-50 p-3">
+                      <button
+                        type="button"
+                        onClick={() => void saveGroupSettings()}
+                        disabled={isGroupSettingsSaving || !groupSettingsName.trim()}
+                        className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-semibold text-white disabled:opacity-50"
+                      >
+                        {isGroupSettingsSaving ? "Saving..." : "Save group settings"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void toggleGroupArchive()}
+                        disabled={isGroupSettingsSaving}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 disabled:opacity-50"
+                      >
+                        {activeGroup.status === "ARCHIVED" ? "Unarchive group" : "Archive group"}
+                      </button>
+                    </div>
+                  </aside>
+                )}
               </>
             ) : (
               <p className="m-auto text-xs text-slate-400">
@@ -795,12 +1023,12 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                 onChange={(event) => setAnnouncementTarget(event.target.value)}
                 className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
               >
-                {backendCourses.length === 0 ? (
+                {availableCourses.length === 0 ? (
                   <option value="">No courses available</option>
                 ) : (
-                  backendCourses.map((course) => (
+                availableCourses.map((course) => (
                     <option key={course.id} value={course.id}>
-                      {course.subject || course.courseName}
+                      {course.courseName}{course.courseCode ? ` · ${course.courseCode}` : ""}
                     </option>
                   ))
                 )}
@@ -846,7 +1074,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       <ConfirmModal
         isOpen={Boolean(deletingMessage)}
         title="Delete message?"
-        description="This deletes the message for everyone in the communication group."
+        description="This removes the message for everyone in this communication group. This action cannot be undone."
         onClose={() => setDeletingMessage(null)}
         onConfirm={handleDeleteMessage}
       />

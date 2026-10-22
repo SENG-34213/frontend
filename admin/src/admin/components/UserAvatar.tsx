@@ -1,12 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { apiBlob } from "../api/client";
 
 interface UserAvatarProps {
   name: string;
+  avatarUrl?: string;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
-export const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = "md", className = "" }) => {
+export const UserAvatar: React.FC<UserAvatarProps> = ({ name, avatarUrl, size = "md", className = "" }) => {
+  const [resolvedAvatar, setResolvedAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!avatarUrl) { setResolvedAvatar(null); return; }
+    if (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) {
+      setResolvedAvatar(avatarUrl); return;
+    }
+    let active = true;
+    let objectUrl: string | undefined;
+    void apiBlob(`/api/v1/profile-images?key=${encodeURIComponent(avatarUrl)}`)
+      .then((blob) => { if (active) { objectUrl = URL.createObjectURL(blob); setResolvedAvatar(objectUrl); } })
+      .catch(() => { if (active) setResolvedAvatar(null); });
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [avatarUrl]);
   const getInitials = (n: string) => {
     const parts = n.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
@@ -37,7 +53,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ name, size = "md", class
       className={`relative inline-flex items-center justify-center rounded-full bg-gradient-to-br font-medium shrink-0 select-none shadow-xs ${sizeClasses[size]} ${getGradient(name)} ${className}`}
       aria-label={name}
     >
-      <span>{getInitials(name)}</span>
+      {resolvedAvatar ? <img src={resolvedAvatar} alt={name} className="w-full h-full rounded-full object-cover" /> : <span>{getInitials(name)}</span>}
     </div>
   );
 };

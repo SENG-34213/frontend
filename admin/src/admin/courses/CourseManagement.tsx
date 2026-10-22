@@ -376,6 +376,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   // Selected grade and faculty in real time
   const formSelectedGrade = grades.find((g) => g.id === formData.gradeId);
+  const subjectDomainOptions =
+    formSelectedGrade?.subjectDomains?.length ? formSelectedGrade.subjectDomains : COMMON_SUBJECTS;
   const formSelectedTeacher = teachers.find(
     (teacher) => teacherAssignmentId(teacher) === formData.assignedTeacherId,
   );
@@ -997,7 +999,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       )}
                     </div>
 
-                    {/* Subject Classification with quick chips */}
+                    {/* Subject Domain maintained by the selected grade */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="font-semibold text-slate-800 dark:text-slate-200">
@@ -1008,18 +1010,24 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </span>
                       </div>
                       <div className="relative">
-                        <input
-                          type="text"
-                          maxLength={100}
+                        <select
                           value={formData.subject}
-                          onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                          placeholder="e.g. Mathematics"
+                          onChange={(e) =>
+                            setFormData((previous) => ({ ...previous, subject: e.target.value }))
+                          }
                           className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
                             formErrors.subject
                               ? "border-rose-400 focus:ring-rose-400/20"
                               : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
                           }`}
-                        />
+                        >
+                          <option value="">Select a subject domain...</option>
+                          {subjectDomainOptions.map((subjectDomain) => (
+                            <option key={subjectDomain} value={subjectDomain}>
+                              {subjectDomain}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       {formErrors.subject && (
                         <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
@@ -1028,24 +1036,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </p>
                       )}
 
-                      {/* Quick Subject Suggestion Chips */}
-                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        <span className="text-[10px] text-slate-400">Suggestions:</span>
-                        {COMMON_SUBJECTS.map((sub) => (
-                          <button
-                            key={sub}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, subject: sub })}
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                              formData.subject === sub
-                                ? "bg-indigo-600 text-white"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                            }`}
-                          >
-                            {sub}
-                          </button>
-                        ))}
-                      </div>
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Subject domains are maintained for the selected grade.
+                      </span>
                     </div>
 
                     {/* Thumbnail URL with Inline Preview and Presets */}
@@ -1215,7 +1208,23 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </div>
                         <select
                           value={formData.gradeId}
-                          onChange={(e) => setFormData({ ...formData, gradeId: e.target.value })}
+                          onChange={(e) => {
+                            const gradeId = e.target.value;
+                            const selectedGrade = grades.find((grade) => grade.id === gradeId);
+                            const domains = selectedGrade?.subjectDomains || [];
+                            setFormData((previous) => ({
+                              ...previous,
+                              gradeId,
+                              subject: domains.includes(previous.subject)
+                                ? previous.subject
+                                : domains[0] || "",
+                            }));
+                            setFormErrors((previous) => ({
+                              ...previous,
+                              gradeId: "",
+                              subject: "",
+                            }));
+                          }}
                           className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
                             formErrors.gradeId
                               ? "border-rose-400 focus:ring-rose-400/20"

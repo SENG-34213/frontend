@@ -34,6 +34,7 @@ interface BackendUser {
     guardianName?: string;
     guardianPhone?: string;
     attendanceMode?: StudentProfile["attendanceMode"] | "PHYSICAL";
+    avatarUrl?: string;
   } | null;
   teacherProfile?: {
     teacherCode?: string;
@@ -41,6 +42,7 @@ interface BackendUser {
     nic?: string;
     specializations?: string[];
     hireDate?: string;
+    avatarUrl?: string;
   } | null;
   adminProfile?: {
     adminCode?: string;
@@ -119,6 +121,7 @@ function commonUser(user: BackendUser) {
     status: accountStatus(user.accountStatus),
     createdAt: user.createdAt || "",
     lastLogin: user.lastLogin || undefined,
+    avatarUrl: user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl,
     addressLine1: user.address?.addressLine1 || "",
     addressLine2: user.address?.addressLine2 || "",
     city: user.address?.city || "",

@@ -150,6 +150,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
         createdQuestions.push(
           await createQuizQuestion(created.id, {
             questionText: question.questionText.trim(),
+            explanation: question.explanation?.trim() || undefined,
             questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
             marks: Number(question.marks) || 1,
             questionOrder: index + 1,

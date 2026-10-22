@@ -165,6 +165,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
         try {
           await createQuizQuestion(quiz.id, {
             questionText: question.questionText.trim(),
+            explanation: question.explanation.trim() || undefined,
             questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
             marks: question.marks,
             questionOrder: index + 1,

@@ -25,6 +25,7 @@ export interface StudentProfile {
   studentId: string;
   name: string;
   email: string;
+  emailVerified?: boolean;
   avatar: string;
   role: "STUDENT";
   institution: string;
@@ -167,6 +168,19 @@ export interface QuizQuestion {
   points: number;
 }
 
+export interface QuizAnswerReview {
+  questionId: string;
+  questionText: string;
+  explanation?: string;
+  selectedOptionId?: string;
+  selectedAnswer?: string;
+  correctOptionId?: string;
+  correctAnswer?: string;
+  correct: boolean;
+  awardedMarks: number;
+  questionMarks: number;
+}
+
 export interface Quiz {
   id: string;
   courseId: string;
@@ -178,11 +192,13 @@ export interface Quiz {
   questionsCount: number;
   totalPoints: number;
   status: "AVAILABLE" | "UPCOMING" | "COMPLETED" | "IN_PROGRESS" | "UNKNOWN";
+  startTime?: string;
   dueDate: string;
   attemptsAllowed?: number;
   attemptsUsed?: number;
   lastScore?: number;
   lastScorePercentage?: number;
+  showResultImmediately?: boolean;
   questions: QuizQuestion[];
 }
 
@@ -259,6 +275,7 @@ export interface Conversation {
   participantName: string;
   participantTitle: string;
   participantAvatar: string;
+  studentMessagingEnabled?: boolean;
   courseCode?: string;
   unreadCount?: number;
   lastMessage: string;

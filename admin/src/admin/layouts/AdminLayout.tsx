@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AdminSidebar, AdminRoute } from "../components/AdminSidebar";
 import { AdminNavbar } from "../components/AdminNavbar";
+import { getCurrentAdminProfile, type CurrentAdminProfile } from "../api/profileApi";
 import { ToastContainer, ToastMessage } from "../components/ToastContainer";
 import {
   AdminRole,
@@ -65,6 +66,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [adminProfile, setAdminProfile] = useState<CurrentAdminProfile | null>(null);
+
+  useEffect(() => {
+    void getCurrentAdminProfile().then(setAdminProfile).catch(() => setAdminProfile(null));
+  }, []);
 
   // Keyboard shortcut listener for cmd+k
   useEffect(() => {
@@ -166,6 +172,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           isDarkMode={isDarkMode}
           onToggleTheme={onToggleTheme}
           onLogout={onLogout}
+          profile={adminProfile}
         />
 
         {/* Viewport Content */}

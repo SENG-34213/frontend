@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { NavigationTab, TeacherProfile } from "../types";
+import { TeacherAvatar } from "./TeacherAvatar";
 
 interface TeacherSidebarProps {
   currentTab: NavigationTab;
@@ -261,9 +262,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
             isCollapsed ? "justify-center" : ""
           }`}
         >
-          <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-xs">
-            {teacherInitials}
-          </div>
+          <TeacherAvatar name={teacher.name} avatarUrl={teacher.avatarUrl} className="w-8 h-8" />
           {!isCollapsed && (
             <div className="truncate flex-1">
               <p className="text-xs font-semibold text-slate-900 truncate">{teacher.name}</p>

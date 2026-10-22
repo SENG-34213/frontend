@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { AdminRole, NotificationItem } from "../types";
 import { AdminRoute } from "./AdminSidebar";
+import { UserAvatar } from "./UserAvatar";
+import type { CurrentAdminProfile } from "../api/profileApi";
 
 interface AdminNavbarProps {
   currentRoute: AdminRoute;
@@ -37,6 +39,7 @@ interface AdminNavbarProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onLogout: () => void;
+  profile: CurrentAdminProfile | null;
 }
 
 export const AdminNavbar: React.FC<AdminNavbarProps> = ({
@@ -53,6 +56,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   isDarkMode,
   onToggleTheme,
   onLogout,
+  profile,
 }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -352,12 +356,10 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
             onClick={() => setShowUserMenu((p) => !p)}
             className="flex items-center gap-2 p-1 pl-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-xs flex items-center justify-center shrink-0">
-              AM
-            </div>
+            <UserAvatar name={profile ? `${profile.firstName} ${profile.lastName}` : "Admin"} avatarUrl={profile?.avatarUrl} size="sm" />
             <div className="hidden xl:block text-left">
               <span className="text-xs font-semibold text-slate-900 dark:text-white block leading-tight">
-                Alex Mercer
+                {profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}
               </span>
               <span className="text-[10px] text-slate-400 block leading-tight">
                 {role === "SUPER_ADMIN" ? "Super Administrator" : "Administrator"}
@@ -369,8 +371,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-52 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-xs font-semibold text-slate-900 dark:text-white">Alex Mercer</p>
-                <p className="text-[11px] text-slate-400 truncate">alex.mercer@mentify.edu</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white">{profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}</p>
+                <p className="text-[11px] text-slate-400 truncate">{profile?.email || ""}</p>
               </div>
 
               <button

@@ -34,6 +34,12 @@ export async function updateEnrollment(enrollmentId: string, courseIds: string[]
   return response.data;
 }
 
+export async function deleteEnrollment(enrollmentId: string) {
+  await apiRequest<ApiResponse<unknown>>(`/api/v1/enrollments/${enrollmentId}`, {
+    method: "DELETE",
+  });
+}
+
 export function mapEnrollmentRecords(
   enrollments: EnrollmentApiResponse[],
   students: StudentProfile[],

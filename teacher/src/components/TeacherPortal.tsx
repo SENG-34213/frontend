@@ -58,6 +58,8 @@ export default function App() {
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [assignmentRefreshToken, setAssignmentRefreshToken] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
@@ -103,7 +105,7 @@ export default function App() {
         if (!controller.signal.aborted) setDashboardData(null);
       });
     return () => controller.abort();
-  }, [session]);
+  }, [session, workspaceRefreshKey]);
   useEffect(() => {
     if (restoreStartedRef.current) return;
     restoreStartedRef.current = true;
@@ -163,7 +165,18 @@ export default function App() {
         if (!controller.signal.aborted) setSearchAssignments([]);
       });
     return () => controller.abort();
-  }, [isSearchOpen, teacherCourses.courses]);
+  }, [isSearchOpen, teacherCourses.courses, workspaceRefreshKey]);
+
+  const handleRefreshWorkspace = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    shellData.retry();
+    teacherCourses.retry();
+    teacherStudents.retry();
+    recentNotifications.retry();
+    setWorkspaceRefreshKey((current) => current + 1);
+    window.setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   // Navigation handler
   const handleNavigate = (tab: NavigationTab, param?: string) => {
@@ -243,10 +256,6 @@ export default function App() {
     );
   }
 
-  if (shellData.isLoading || !shellData.teacherProfile) {
-    return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher workspace" />;
-  }
-
   if (shellData.error) {
     return (
       <main className="grid min-h-screen place-items-center bg-slate-50 px-6">
@@ -277,6 +286,17 @@ export default function App() {
           </div>
         </section>
       </main>
+    );
+  }
+
+  if (shellData.isLoading || !shellData.teacherProfile) {
+    return (
+      <div
+        className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-500"
+        aria-label="Loading teacher workspace"
+      >
+        Loading teacher workspace…
+      </div>
     );
   }
 
@@ -314,6 +334,8 @@ export default function App() {
           onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode((current) => !current)}
+          onRefresh={handleRefreshWorkspace}
+          isRefreshing={isRefreshing}
           teacher={teacherProfile}
           onLogout={async () => {
             await logoutTeacher();
@@ -323,7 +345,7 @@ export default function App() {
         />
 
         {/* View Routing */}
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+        <main key={workspaceRefreshKey} className="flex-1 p-4 lg:p-6 overflow-y-auto">
           {shellData.notificationError && (
             <div
               role="status"
@@ -453,6 +475,8 @@ export default function App() {
               backendCourses={teacherCourses.courses}
               students={teacherStudents.students}
               teacherId={session.user.keycloakUserId ?? teacherProfile.id}
+              teacherName={teacherProfile.name}
+              teacherProfileId={teacherProfile.id}
             />
           )}
 

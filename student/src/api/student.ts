@@ -1,4 +1,4 @@
-import { apiRequest, apiUpload } from "./client";
+import { apiBlob, apiRequest, apiUpload } from "./client";
 import type {
   Assignment,
   AttendanceSummary,
@@ -41,19 +41,35 @@ function listOf<T>(response: unknown): T[] {
 
 const idOf = (value: unknown) => String(value ?? "");
 
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+const readableName = (value: unknown, fallback = "") => {
+  const name = idOf(value).trim();
+  return name && !isUuid(name) ? name : fallback;
+};
+
 function toProfile(user: StudentUserSummary): StudentProfile {
   const record = user as JsonRecord;
+  const studentProfile = (record.studentProfile || record.profile || {}) as JsonRecord;
   return {
     id: idOf(user.keycloakUserId || user.id),
-    studentId: idOf(record.studentId || user.keycloakUserId || user.id),
+    studentId: idOf(
+      studentProfile.studentId ||
+        record.studentId ||
+        record.studentNumber ||
+        record.studentCode ||
+        "",
+    ),
     name: [user.firstName, user.lastName].filter(Boolean).join(" "),
     email: user.email,
-    avatar: idOf(record.avatar || record.profileImage),
+    emailVerified: user.emailVerified !== false,
+    avatar: idOf(studentProfile.avatarUrl || record.avatar || record.profileImage),
     role: "STUDENT",
-    institution: idOf(record.institution),
-    department: idOf(record.department),
-    degreeProgram: idOf(record.degreeProgram),
-    semester: idOf(record.semester),
+    institution: idOf(studentProfile.schoolName || record.institution || record.schoolName),
+    department: idOf(record.department || studentProfile.department),
+    degreeProgram: idOf(record.degreeProgram || studentProfile.degreeProgram),
+    semester: idOf(record.semester || studentProfile.semester),
     currentGpa: Number(record.currentGpa ?? 0),
     creditsCompleted: Number(record.creditsCompleted ?? 0),
     totalCreditsRequired: Number(record.totalCreditsRequired ?? 0),
@@ -62,16 +78,33 @@ function toProfile(user: StudentUserSummary): StudentProfile {
       email: idOf(record.academicAdvisorEmail),
       office: idOf(record.academicAdvisorOffice),
     },
-    phone: idOf(record.phone),
-    bio: idOf(record.bio),
+    phone: idOf(record.phoneNumber || record.phone || studentProfile.phoneNumber || studentProfile.phone),
+    bio: idOf(studentProfile.bio || studentProfile.biography || record.bio),
     joinedDate: idOf(record.joinedDate || record.createdAt),
   };
+}
+
+const profileImageUrls = new Map<string, string>();
+
+async function resolveProfileAvatar(profile: StudentProfile): Promise<StudentProfile> {
+  const storageKey = profile.avatar;
+  if (!storageKey || !storageKey.startsWith("materials/profile-images/")) return profile;
+  const cachedUrl = profileImageUrls.get(storageKey);
+  if (cachedUrl) return { ...profile, avatar: cachedUrl };
+  try {
+    const blob = await apiBlob(`/api/v1/profile-images?key=${encodeURIComponent(storageKey)}`);
+    const objectUrl = URL.createObjectURL(blob);
+    profileImageUrls.set(storageKey, objectUrl);
+    return { ...profile, avatar: objectUrl };
+  } catch {
+    return { ...profile, avatar: "" };
+  }
 }
 
 function toTeacher(value: JsonRecord | undefined): Teacher {
   return {
     id: idOf(value?.id || value?.teacherId || value?.assignedTeacherId),
-    name: idOf(value?.name || value?.fullName),
+    name: readableName(value?.name || value?.fullName),
     title: idOf(value?.title),
     avatar: idOf(value?.avatar),
     department: idOf(value?.department),
@@ -88,7 +121,13 @@ function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
     title: idOf(value.courseName || value.title),
     category: idOf(value.subject || value.category),
     description: idOf(value.courseDescription || value.description),
-    instructor: toTeacher(value.instructor || value.teacher),
+    instructor: toTeacher(
+      value.instructor ||
+        value.teacher ||
+        (value.assignedTeacherId
+          ? { id: value.assignedTeacherId, fullName: value.teacherName }
+          : undefined),
+    ),
     bannerColor: idOf(value.bannerColor),
     coverImage: idOf(value.courseThumbnail || value.coverImage),
     enrolled: enrolledIds.has(id) || Boolean(value.enrolled),
@@ -209,6 +248,8 @@ function toQuizQuestion(value: JsonRecord): Quiz["questions"][number] {
 function toQuiz(value: JsonRecord, course?: Course): Quiz {
   const questions = Array.isArray(value.questions) ? value.questions.map(toQuizQuestion) : [];
   const endTime = idOf(value.endTime);
+  const rawStatus = String(value.status ?? "").toUpperCase();
+  const status = rawStatus === "PUBLISHED" ? "AVAILABLE" : rawStatus === "CLOSED" ? "COMPLETED" : rawStatus;
   return {
     id: idOf(value.id),
     courseId: idOf(value.courseId || course?.id),
@@ -219,13 +260,18 @@ function toQuiz(value: JsonRecord, course?: Course): Quiz {
     durationMinutes: Number(value.durationMinutes ?? 0),
     questionsCount: questions.length,
     totalPoints: Number(value.totalMarks ?? 0),
-    status: ["AVAILABLE", "UPCOMING", "COMPLETED", "IN_PROGRESS"].includes(
-      String(value.status).toUpperCase(),
-    )
-      ? (String(value.status).toUpperCase() as Quiz["status"])
+    startTime: idOf(value.startTime),
+    status: ["AVAILABLE", "UPCOMING", "COMPLETED", "IN_PROGRESS"].includes(status)
+      ? (status as Quiz["status"])
       : "UNKNOWN",
     dueDate: endTime,
     attemptsAllowed: Number(value.maxAttempts ?? 0),
+    attemptsUsed: Number(value.attemptsUsed ?? 0),
+    lastScore: value.lastScore == null ? undefined : Number(value.lastScore),
+    lastScorePercentage:
+      value.lastScorePercentage == null ? undefined : Number(value.lastScorePercentage),
+    showResultImmediately:
+      value.showResultImmediately ?? value.showResultsImmediately ?? true,
     questions,
   };
 }
@@ -367,7 +413,11 @@ function timeToMinutes(value: string) {
   return Number.isFinite(hours) && Number.isFinite(minutes) ? hours * 60 + minutes : 0;
 }
 
-export function toCommunicationMessage(value: JsonRecord, studentId: string): Message {
+export function toCommunicationMessage(
+  value: JsonRecord,
+  studentId: string,
+  senderNames?: Map<string, string>,
+): Message {
   const attachments = Array.isArray(value.attachments)
     ? value.attachments.map((attachment) => {
         const item = attachment as JsonRecord;
@@ -379,12 +429,17 @@ export function toCommunicationMessage(value: JsonRecord, studentId: string): Me
         };
       })
     : [];
+  const senderId = idOf(value.senderId);
+  const senderName =
+    readableName(value.senderName || value.senderFullName || value.sender?.fullName || value.sender?.name) ||
+    readableName(senderNames?.get(senderId)) ||
+    (senderId === studentId ? "You" : "Course participant");
   return {
     id: idOf(value.id),
-    senderId: idOf(value.senderId),
-    senderName: idOf(value.senderId),
+    senderId,
+    senderName,
     senderAvatar: "",
-    isSenderStudent: idOf(value.senderId) === studentId,
+    isSenderStudent: senderId === studentId,
     timestamp: idOf(value.sentAt),
     text: value.deletedForEveryone ? "Message deleted" : idOf(value.content),
     attachments,
@@ -397,17 +452,25 @@ function toConversation(
   messages: JsonRecord[],
   members: JsonRecord[],
   studentId: string,
+  studentName: string,
 ): Conversation {
+  const senderNames = new Map<string, string>([[studentId, studentName || "You"]]);
+  const instructorId = course?.instructor.id;
+  if (instructorId && course.instructor.name) senderNames.set(instructorId, course.instructor.name);
   const mappedMessages = messages
-    .map((message) => toCommunicationMessage(message, studentId))
+    .map((message) => toCommunicationMessage(message, studentId, senderNames))
     .reverse();
   const lastMessage = mappedMessages[mappedMessages.length - 1];
   return {
     id: idOf(value.id),
     participantId: idOf(value.id),
-    participantName: idOf(value.name || course?.title),
-    participantTitle: idOf(value.description),
+    participantName:
+      readableName(course?.instructor.name) ||
+      readableName(value.name) ||
+      readableName(course?.title, "Course instructor"),
+    participantTitle: course?.title || idOf(value.description),
     participantAvatar: "",
+    studentMessagingEnabled: value.studentMessagingEnabled !== false,
     courseCode: course?.code,
     unreadCount: undefined,
     lastMessage: lastMessage?.text || "",
@@ -423,8 +486,8 @@ function toConversation(
 
 export async function loadStudentWorkspace(user: StudentUserSummary) {
   const studentId = idOf(user.keycloakUserId || user.id);
-  const profile = toProfile(user);
   const [
+    currentUserResponse,
     courseResponse,
     enrollmentResponse,
     materialResponse,
@@ -434,6 +497,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     examResponse,
     upcomingExamResponse,
   ] = await Promise.allSettled([
+    apiRequest<ApiEnvelope<JsonRecord>>("/api/v1/users/me"),
     apiRequest<unknown>("/api/v1/course"),
     apiRequest<unknown>(`/api/v1/enrollments/students/${studentId}/courses`),
     apiRequest<unknown>("/api/v1/materials"),
@@ -443,6 +507,22 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     apiRequest<unknown>("/api/v1/exams/me"),
     apiRequest<unknown>("/api/v1/exams/me/upcoming"),
   ]);
+
+  const currentUser =
+    currentUserResponse.status === "fulfilled"
+      ? dataOf<JsonRecord>(currentUserResponse.value)
+      : null;
+  const profile = await resolveProfileAvatar(toProfile(
+    (currentUser
+      ? {
+          ...user,
+          ...currentUser,
+          // Keep the authenticated identity used by course/enrollment APIs.
+          id: user.id,
+          keycloakUserId: user.keycloakUserId || currentUser.authUserId,
+        }
+      : user) as StudentUserSummary,
+  ));
 
   const enrollmentValues =
     enrollmentResponse.status === "fulfilled" ? listOf<unknown>(enrollmentResponse.value) : [];
@@ -567,6 +647,31 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
         );
       } catch {
         /* preserve the course shell when content is unavailable */
+      }
+    }),
+  );
+
+  // Course responses store the assigned teacher as an ID. Resolve the
+  // display name once so communication messages never expose that UUID.
+  const teacherIds = Array.from(
+    new Set(courses.map((course) => course.instructor.id).filter(Boolean)),
+  );
+  await Promise.all(
+    teacherIds.map(async (teacherId) => {
+      try {
+        const response = dataOf<JsonRecord>(
+          await apiRequest<JsonRecord>(`/api/v1/users/teachers/${teacherId}/lookup`),
+        );
+        const teacherName = idOf(
+          response.fullName ||
+            [response.firstName, response.lastName].filter(Boolean).join(" "),
+        );
+        if (!teacherName) return;
+        courses.forEach((course) => {
+          if (course.instructor.id === teacherId) course.instructor.name = teacherName;
+        });
+      } catch {
+        // Keep the course available if profile lookup is temporarily unavailable.
       }
     }),
   );
@@ -697,10 +802,46 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
           messagesResponse.status === "fulfilled" ? listOf<JsonRecord>(messagesResponse.value) : [],
           membersResponse.status === "fulfilled" ? listOf<JsonRecord>(membersResponse.value) : [],
           studentId,
+          profile.name,
         );
       }),
     )
   ).filter((conversation): conversation is Conversation => conversation !== null);
+
+  // Some communication records contain only senderId, even when the course
+  // has teacher metadata. Resolve every sender ID found in the loaded history
+  // so old messages are displayed with names as well as new live messages.
+  const senderIds = Array.from(
+    new Set(
+      conversations
+        .flatMap((conversation) => conversation.messages.map((message) => message.senderId))
+        .filter((senderId) => senderId && senderId !== studentId),
+    ),
+  );
+  const senderNames = new Map<string, string>([[studentId, profile.name || "You"]]);
+  await Promise.all(
+    senderIds.map(async (senderId) => {
+      try {
+        const response = dataOf<JsonRecord>(
+          await apiRequest<JsonRecord>(`/api/v1/users/teachers/${senderId}/lookup`),
+        );
+        const name = idOf(
+          response.fullName || [response.firstName, response.lastName].filter(Boolean).join(" "),
+        );
+        if (name) senderNames.set(senderId, name);
+      } catch {
+        // The sender may be a student or the profile service may be unavailable.
+      }
+    }),
+  );
+  conversations.forEach((conversation) => {
+    conversation.messages = conversation.messages.map((message) => ({
+      ...message,
+      senderName:
+        senderNames.get(message.senderId) ||
+        (message.isSenderStudent ? profile.name || "You" : "Course participant"),
+    }));
+  });
 
   const quizzes = (
     await Promise.all(
@@ -949,8 +1090,18 @@ export async function updateCurrentStudentProfile(updates: {
   lastName?: string;
   phoneNumber?: string;
   bio?: string;
+  avatarUrl?: string;
 }) {
   return apiRequest<unknown>("/api/v1/users/me", { method: "PATCH", body: updates });
+}
+
+export async function uploadProfileImage(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return apiUpload<ApiEnvelope<{ storageKey: string; contentType: string }>>(
+    "/api/v1/profile-images",
+    form,
+  );
 }
 
 export async function markNotificationRead(id: string) {

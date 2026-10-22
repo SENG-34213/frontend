@@ -52,6 +52,14 @@ export function useTeacherStudents(
       return;
     }
 
+    // There is nothing to request until the teacher course list is available.
+    // Avoid making an empty roster request that can leave the directory in a
+    // misleading loading state while courses are still being fetched.
+    if (courses.length === 0) {
+      setState({ students: [], isLoading: false, error: null });
+      return;
+    }
+
     const controller = new AbortController();
     setState((current) => ({ ...current, isLoading: true, error: null }));
 

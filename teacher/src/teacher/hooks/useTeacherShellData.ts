@@ -51,7 +51,6 @@ function toTeacherProfile(user: TeacherUserSummary): TeacherProfile {
 export function useTeacherShellData(enabled: boolean): ShellState & { retry: () => void } {
   const [retryKey, setRetryKey] = useState(0);
   const requestStartedRef = useRef(false);
-  const abortTimerRef = useRef<number | null>(null);
   const [state, setState] = useState<ShellState>({
     teacherProfile: null,
     unreadNotificationsCount: 0,
@@ -61,11 +60,6 @@ export function useTeacherShellData(enabled: boolean): ShellState & { retry: () 
   });
 
   useEffect(() => {
-    if (abortTimerRef.current !== null) {
-      window.clearTimeout(abortTimerRef.current);
-      abortTimerRef.current = null;
-    }
-
     if (!enabled) {
       requestStartedRef.current = false;
       setState((current) => ({ ...current, isLoading: false }));
@@ -102,10 +96,10 @@ export function useTeacherShellData(enabled: boolean): ShellState & { retry: () 
       });
 
     return () => {
-      abortTimerRef.current = window.setTimeout(() => {
-        controller.abort();
-        abortTimerRef.current = null;
-      }, 0);
+      // Reset before aborting so React can safely re-run this effect during
+      // development refresh/Strict Mode and start a fresh request.
+      requestStartedRef.current = false;
+      controller.abort();
     };
   }, [enabled, retryKey]);
 

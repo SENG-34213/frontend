@@ -136,3 +136,18 @@ export async function apiUpload<T>(
     );
   return body as T;
 }
+
+export async function apiBlob(path: string, retryOnUnauthorized = true): Promise<Blob> {
+  const accessToken = getAccessToken();
+  const headers = new Headers({ Accept: "image/*" });
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const response = await fetch(`${API_BASE_URL}${path}`, { headers });
+  if (response.status === 401 && retryOnUnauthorized && (await refreshSession())) {
+    return apiBlob(path, false);
+  }
+  if (!response.ok) {
+    const body = await readJson(response);
+    throw new ApiError(safeErrorMessage(body, response.status), response.status, body);
+  }
+  return response.blob();
+}

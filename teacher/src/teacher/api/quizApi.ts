@@ -11,6 +11,7 @@ export type BackendQuizOption = {
 export type BackendQuizQuestion = {
   id: string;
   questionText: string;
+  explanation?: string;
   questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER";
   marks: number;
   questionOrder: number;
@@ -50,6 +51,7 @@ export type QuizDraft = {
 
 export type QuizQuestionDraft = {
   questionText: string;
+  explanation?: string;
   questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER";
   marks: number;
   questionOrder: number;
@@ -108,6 +110,14 @@ export type TeacherQuizResults = {
     percentage?: number | string | null;
     passed: boolean;
     submittedAt?: string | null;
+    answers?: Array<{
+      questionId: string;
+      questionText: string;
+      selectedAnswer: string;
+      correctAnswer: string;
+      correct: boolean;
+      awardedMarks?: number | string | null;
+    }>;
   }>;
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Clock,
   AlertTriangle,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { QuizResultModal } from "./QuizResultModal";
+import type { QuizAnswerReview } from "../../types";
 
 export const QuizTakingView: React.FC = () => {
   const {
@@ -20,6 +21,7 @@ export const QuizTakingView: React.FC = () => {
     submitQuizAnswers,
     setCurrentView,
     showToast,
+    refreshWorkspace,
   } = useStudent();
 
   const quiz = quizzes.find((q) => q.id === selectedQuizId) || quizzes[0];
@@ -35,10 +37,34 @@ export const QuizTakingView: React.FC = () => {
     maxScore: number;
     percentage: number;
     passed: boolean;
+    answers: QuizAnswerReview[];
   } | null>(null);
+  const startedQuizIdRef = useRef<string | null>(null);
+  const detailsRefreshAttemptedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!quiz) return;
+    if (!selectedQuizId) return;
+
+    // The workspace can briefly contain a quiz summary while its questions
+    // are being loaded. Refresh once before attempting to open the quiz so
+    // the first click does not leave the student on an endless loading state.
+    if (!quiz || quiz.questions.length === 0) {
+      if (detailsRefreshAttemptedRef.current === selectedQuizId) return;
+      detailsRefreshAttemptedRef.current = selectedQuizId;
+      let active = true;
+      refreshWorkspace().catch((error) => {
+        if (active) {
+          showToast(error instanceof Error ? error.message : "Could not load quiz questions.");
+          setIsLoading(false);
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }
+
+    if (startedQuizIdRef.current === quiz.id) return;
+    startedQuizIdRef.current = quiz.id;
     let active = true;
     startQuizAttempt(quiz.id)
       .then(({ attemptId: id, startedAt }) => {
@@ -59,18 +85,22 @@ export const QuizTakingView: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [quiz, startQuizAttempt, setCurrentView, showToast]);
+  }, [quiz?.id, quiz?.questions.length, refreshWorkspace, selectedQuizId, showToast]);
 
   const handleAutoSubmit = useCallback(async () => {
     if (!quiz || !attemptId) return;
     showToast("Time expired! Auto-submitting answers.");
     try {
       const res = await submitQuizAnswers(quiz.id, attemptId);
-      setResultsData(res);
+      if (quiz.showResultImmediately !== false) {
+        setResultsData(res);
+      } else {
+        setCurrentView("quizzes");
+      }
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Quiz submission failed.");
     }
-  }, [attemptId, quiz, showToast, submitQuizAnswers]);
+  }, [attemptId, quiz, setCurrentView, showToast, submitQuizAnswers]);
 
   // Timer countdown
   useEffect(() => {
@@ -112,7 +142,13 @@ export const QuizTakingView: React.FC = () => {
     setIsSubmitConfirmOpen(false);
     if (!attemptId) return;
     submitQuizAnswers(quiz.id, attemptId)
-      .then(setResultsData)
+      .then((result) => {
+        if (quiz.showResultImmediately !== false) {
+          setResultsData(result);
+        } else {
+          setCurrentView("quizzes");
+        }
+      })
       .catch((error) =>
         showToast(error instanceof Error ? error.message : "Quiz submission failed."),
       );
@@ -150,11 +186,8 @@ export const QuizTakingView: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Timer Display */}
           <div
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 font-mono text-xs font-bold ${
-              remainingSeconds < 300
-                ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 animate-pulse"
-                : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
-            }`}
+            aria-label={`Time remaining ${formatTimer(remainingSeconds)}`}
+            className="flex items-center gap-2 rounded-xl bg-red-50 px-3.5 py-1.5 font-mono text-xs font-bold text-red-600 dark:bg-red-950/60 dark:text-red-400"
           >
             <Clock className="h-4 w-4" />
             <span className="tabular-nums">{formatTimer(remainingSeconds)}</span>
@@ -370,6 +403,7 @@ export const QuizTakingView: React.FC = () => {
           maxScore={resultsData.maxScore}
           percentage={resultsData.percentage}
           passed={resultsData.passed}
+          answers={resultsData.answers}
           quizTitle={quiz.title}
           onClose={() => setCurrentView("quizzes")}
           onRetake={() => {

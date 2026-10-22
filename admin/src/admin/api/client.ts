@@ -24,6 +24,7 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   authenticated?: boolean;
   retryOnUnauthorized?: boolean;
+  responseType?: "json" | "blob";
 };
 
 function safeErrorMessage(body: any, status: number): string {
@@ -42,6 +43,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     body,
     authenticated = true,
     retryOnUnauthorized = true,
+    responseType = "json",
     headers,
     ...requestInit
   } = options;
@@ -86,7 +88,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw new ApiError("The service is temporarily unavailable. Please try again shortly.", 503, error);
   }
 
-  const responseBody = await response.json().catch(() => null);
+  const responseBody = responseType === "blob" ? await response.blob() : await response.json().catch(() => null);
   if (response.status === 401 && authenticated && retryOnUnauthorized) {
     const refreshed = await refreshStoredSession();
     if (refreshed) {
@@ -103,6 +105,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
 
   return responseBody as T;
+}
+
+export async function apiBlob(path: string): Promise<Blob> {
+  return apiRequest<Blob>(path, { responseType: "blob" });
 }
 
 function expireAdminSession() {

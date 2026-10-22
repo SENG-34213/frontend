@@ -69,6 +69,7 @@ export interface AdministratorProfile extends BaseUser {
 export interface Grade {
   id: string;
   name: string;
+  subjectDomains?: string[];
   description?: string;
   active: boolean;
   createdBy?: string;
@@ -98,6 +99,7 @@ export interface CreateCourseRequest {
 
 export interface CreateGradeRequest {
   name: string;
+  subjectDomains?: string[];
   description?: string;
   monthlyFee?: number;
   currencyCode?: string;

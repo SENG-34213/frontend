@@ -83,6 +83,7 @@ import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
 import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi";
 import {
   createEnrollment,
+  deleteEnrollment,
   fetchEnrollments,
   mapEnrollmentRecords,
   updateEnrollment,
@@ -597,11 +598,6 @@ export default function App() {
     }
   };
 
-  const handleUpdateEnrollmentStatus = (enrId: string, status: any) => {
-    setEnrollments((prev) => prev.map((e) => (e.id === enrId ? { ...e, status } : e)));
-    addToast("success", "Enrollment Approved", "Student course roster validated in PostgreSQL.");
-  };
-
   const handleCreateEnrollment = async (studentId: string, courseIds: string[]) => {
     const existing = enrollmentApiRecords?.find((item) => item.studentId === studentId);
     const created = existing
@@ -616,7 +612,25 @@ export default function App() {
         ? previous.map((item) => (item.id === existing.id ? created : item))
         : [created, ...previous];
     });
+    addToast("success", "Student Enrolled", "The selected course was added to the student’s learning plan.");
     return created;
+  };
+
+  const handleUpdateEnrollment = async (enrollmentId: string, courseIds: string[]) => {
+    const updated = await updateEnrollment(enrollmentId, courseIds);
+    setEnrollmentApiRecords((previous) =>
+      previous ? previous.map((item) => (item.id === enrollmentId ? updated : item)) : previous,
+    );
+    addToast("success", "Enrollment Updated", "The student’s course enrollment was updated.");
+    return updated;
+  };
+
+  const handleDeleteEnrollment = async (enrollmentId: string) => {
+    await deleteEnrollment(enrollmentId);
+    setEnrollmentApiRecords((previous) =>
+      previous ? previous.filter((item) => item.id !== enrollmentId) : previous,
+    );
+    addToast("success", "Course Unenrolled", "The course was removed from the student’s plan.");
   };
 
   const handleUploadMaterial = (newMat: LearningMaterial) => {
@@ -808,8 +822,10 @@ export default function App() {
           enrollments={enrollments}
           courses={courses}
           students={students}
+          grades={gradesList}
           onCreateEnrollment={handleCreateEnrollment}
-          onUpdateEnrollmentStatus={handleUpdateEnrollmentStatus}
+          onUpdateEnrollment={handleUpdateEnrollment}
+          onDeleteEnrollment={handleDeleteEnrollment}
         />
       )}
 

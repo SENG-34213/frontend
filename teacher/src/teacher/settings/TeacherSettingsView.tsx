@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Shield, Bell, LogOut, Check, KeyRound, ExternalLink } from "lucide-react";
+import { Shield, Bell, LogOut, Check, KeyRound, ExternalLink, MessageSquare } from "lucide-react";
 import type { TeacherProfile } from "../types";
 import { getCurrentTeacher } from "../api/auth";
 import { updateCurrentTeacher } from "../api/teacherApi";
@@ -9,6 +9,13 @@ import {
   type CommunicationSettings,
 } from "../api/settingsApi";
 import { NoticeModal } from "../components/ActionModal";
+import {
+  archiveCommunicationGroup,
+  getCommunicationGroups,
+  unarchiveCommunicationGroup,
+  updateCommunicationGroup,
+  type CommunicationGroup,
+} from "../api/communicationApi";
 
 interface TeacherSettingsViewProps {
   teacher: TeacherProfile;
@@ -32,6 +39,14 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
   const [communicationSaved, setCommunicationSaved] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [securityNoticeOpen, setSecurityNoticeOpen] = useState(false);
+  const [communicationGroups, setCommunicationGroups] = useState<CommunicationGroup[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [groupName, setGroupName] = useState("");
+  const [groupDescription, setGroupDescription] = useState("");
+  const [isGroupLoading, setIsGroupLoading] = useState(true);
+  const [isGroupSaving, setIsGroupSaving] = useState(false);
+
+  const selectedGroup = communicationGroups.find((group) => group.id === selectedGroupId);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -57,6 +72,35 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
       });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getCommunicationGroups(controller.signal)
+      .then((groups) => {
+        if (controller.signal.aborted) return;
+        setCommunicationGroups(groups);
+        setSelectedGroupId(groups[0]?.id ?? "");
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Unable to load communication groups.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsGroupLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedGroup) return;
+    setGroupName(selectedGroup.name);
+    setGroupDescription(selectedGroup.description ?? "");
+  }, [selectedGroup]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -130,6 +174,58 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
       );
     } finally {
       setIsCommunicationSaving(false);
+    }
+  };
+
+  const handleSaveGroupSettings = async () => {
+    if (!selectedGroup || !groupName.trim()) return;
+    setIsGroupSaving(true);
+    setError(null);
+    try {
+      const saved = await updateCommunicationGroup(selectedGroup.id, {
+        name: groupName.trim(),
+        description: groupDescription.trim() || undefined,
+        studentMessagingEnabled: selectedGroup.studentMessagingEnabled !== false,
+      });
+      if (saved) setCommunicationGroups((groups) => groups.map((group) => group.id === saved.id ? saved : group));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to save group settings.");
+    } finally {
+      setIsGroupSaving(false);
+    }
+  };
+
+  const handleToggleStudentMessaging = async () => {
+    if (!selectedGroup) return;
+    setIsGroupSaving(true);
+    setError(null);
+    try {
+      const saved = await updateCommunicationGroup(selectedGroup.id, {
+        name: selectedGroup.name,
+        description: selectedGroup.description,
+        studentMessagingEnabled: selectedGroup.studentMessagingEnabled === false,
+      });
+      if (saved) setCommunicationGroups((groups) => groups.map((group) => group.id === saved.id ? saved : group));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to update student access.");
+    } finally {
+      setIsGroupSaving(false);
+    }
+  };
+
+  const handleToggleGroupArchive = async () => {
+    if (!selectedGroup) return;
+    setIsGroupSaving(true);
+    setError(null);
+    try {
+      const saved = selectedGroup.status === "ARCHIVED"
+        ? await unarchiveCommunicationGroup(selectedGroup.id)
+        : await archiveCommunicationGroup(selectedGroup.id);
+      if (saved) setCommunicationGroups((groups) => groups.map((group) => group.id === saved.id ? saved : group));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to update group status.");
+    } finally {
+      setIsGroupSaving(false);
     }
   };
 
@@ -338,7 +434,98 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         </div>
       </div>
 
-      {/* 4. Sign Out */}
+      {/* 4. Group Communication Management */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-4">
+        <div className="flex items-center gap-2 text-indigo-700">
+          <MessageSquare className="w-4 h-4" />
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Course Communication Management</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Update group details, control student messaging, and manage group availability.
+            </p>
+          </div>
+        </div>
+
+        {isGroupLoading ? (
+          <p className="text-xs text-slate-500">Loading communication groups...</p>
+        ) : !communicationGroups.length ? (
+          <p className="rounded-lg border border-dashed border-slate-200 p-4 text-xs text-slate-500">
+            No course communication groups are available.
+          </p>
+        ) : selectedGroup ? (
+          <>
+            <select
+              value={selectedGroupId}
+              onChange={(event) => setSelectedGroupId(event.target.value)}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
+            >
+              {communicationGroups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.courseName || group.name}
+                </option>
+              ))}
+            </select>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-700">
+                Group name
+                <input
+                  value={groupName}
+                  onChange={(event) => setGroupName(event.target.value)}
+                  maxLength={150}
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 focus:border-indigo-500 focus:outline-none"
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-700">
+                Description
+                <input
+                  value={groupDescription}
+                  onChange={(event) => setGroupDescription(event.target.value)}
+                  maxLength={2000}
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 focus:border-indigo-500 focus:outline-none"
+                />
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+              <div>
+                <p className="text-xs font-semibold text-slate-800">Student messaging</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  {selectedGroup.studentMessagingEnabled === false
+                    ? "Students cannot send messages in this group."
+                    : "Students can send messages in this group."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleToggleStudentMessaging()}
+                disabled={isGroupSaving}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50 ${selectedGroup.studentMessagingEnabled === false ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}
+              >
+                {selectedGroup.studentMessagingEnabled === false ? "Allow students" : "Pause students"}
+              </button>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => void handleToggleGroupArchive()}
+                disabled={isGroupSaving}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50"
+              >
+                {selectedGroup.status === "ARCHIVED" ? "Unarchive group" : "Archive group"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveGroupSettings()}
+                disabled={isGroupSaving || !groupName.trim()}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {isGroupSaving ? "Saving..." : "Save group settings"}
+              </button>
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      {/* 5. Sign Out */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-3">
         <h2 className="text-sm font-bold text-slate-900">Sign Out</h2>
         <p className="text-xs text-slate-500">Sign out of the faculty workspace on this device.</p>

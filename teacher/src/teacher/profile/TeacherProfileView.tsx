@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Clock, Edit3, Save, Building, Check } from "lucide
 import { updateCurrentTeacher, updateTeacherProfile } from "../api/teacherApi";
 import type { TeacherUserSummary } from "../auth/authTypes";
 import { Course, TeacherProfile, NavigationTab } from "../types";
+import { TeacherAvatar } from "../components/TeacherAvatar";
 
 interface TeacherProfileViewProps {
   teacher: TeacherProfile;
@@ -167,23 +168,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         <div className="px-6 pb-6 pt-0 relative">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 mb-6">
             <div className="flex items-end gap-4">
-              <div className="w-20 h-20 rounded-2xl bg-indigo-600 text-white font-bold text-2xl flex items-center justify-center ring-4 ring-white shadow-md">
-                {profile.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
-                    alt={`${profile.name} profile`}
-                    className="h-full w-full rounded-2xl object-cover"
-                  />
-                ) : (
-                  profile.name
-                    .split(" ")
-                    .map((part) => part[0])
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()
-                )}
-              </div>
+              <TeacherAvatar name={profile.name} avatarUrl={profile.avatarUrl} className="w-20 h-20 rounded-2xl ring-4 ring-white shadow-md" initialsClassName="text-2xl" />
               <div className="mb-1">
                 <h2 className="text-lg font-bold text-slate-900">{profile.name}</h2>
                 <p className="text-xs text-slate-500">{profile.title}</p>

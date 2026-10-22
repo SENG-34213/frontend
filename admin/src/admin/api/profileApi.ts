@@ -9,6 +9,7 @@ export interface CurrentAdminProfile {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
+  avatarUrl?: string;
   role: AdminRole;
   accountStatus: AccountStatus | string;
   adminProfile?: {

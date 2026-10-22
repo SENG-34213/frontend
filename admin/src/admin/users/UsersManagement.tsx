@@ -277,7 +277,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
                   >
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <UserAvatar name={`${user.firstName} ${user.lastName}`} size="md" />
+                        <UserAvatar name={`${user.firstName} ${user.lastName}`} avatarUrl={user.avatarUrl} size="md" />
                         <div>
                           <span className="font-semibold text-slate-900 dark:text-white block">
                             {user.firstName} {user.lastName}
@@ -436,7 +436,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
           <div className="space-y-6">
             {/* Header profile block */}
             <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
-              <UserAvatar name={`${selectedUser.firstName} ${selectedUser.lastName}`} size="lg" />
+              <UserAvatar name={`${selectedUser.firstName} ${selectedUser.lastName}`} avatarUrl={selectedUser.avatarUrl} size="lg" />
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   {selectedUser.firstName} {selectedUser.lastName}

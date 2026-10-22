@@ -282,7 +282,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
 
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <UserAvatar name={`${stu.firstName} ${stu.lastName}`} size="md" />
+                        <UserAvatar name={`${stu.firstName} ${stu.lastName}`} avatarUrl={stu.avatarUrl} size="md" />
                         <div>
                           <span className="font-semibold text-slate-900 dark:text-white block">
                             {stu.firstName} {stu.lastName}
@@ -838,6 +838,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
                   <UserAvatar
                     name={`${selectedStudent.firstName} ${selectedStudent.lastName}`}
+                    avatarUrl={selectedStudent.avatarUrl}
                     size="lg"
                   />
                   <div>

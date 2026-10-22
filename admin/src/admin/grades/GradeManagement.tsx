@@ -45,6 +45,18 @@ const COMMON_CURRENCIES = [
 
 const STANDARD_GRADE_OPTIONS = Array.from({ length: 12 }, (_, index) => `Grade ${index + 1}`);
 const CUSTOM_GRADE_OPTION = "__custom__";
+const COMMON_SUBJECT_DOMAINS = [
+  "Mathematics",
+  "Science",
+  "Tamil",
+  "English",
+  "Social Studies",
+  "History",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Information Technology",
+];
 
 export const GradeManagement: React.FC<GradeManagementProps> = ({
   grades,
@@ -77,18 +89,21 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
   // Form State aligned with backend GradeRequest
   const [formData, setFormData] = useState<{
     name: string;
+    subjectDomains: string[];
     description: string;
     monthlyFee: string;
     currencyCode: string;
     active: boolean;
   }>({
     name: "",
+    subjectDomains: [],
     description: "",
     monthlyFee: "4500.00",
     currencyCode: "LKR",
     active: true,
   });
   const [gradeNameOption, setGradeNameOption] = useState("");
+  const [subjectDomainInput, setSubjectDomainInput] = useState("");
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,12 +125,14 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
   const resetForm = () => {
     setFormData({
       name: "",
+      subjectDomains: [],
       description: "",
       monthlyFee: "4500.00",
       currencyCode: "LKR",
       active: true,
     });
     setGradeNameOption("");
+    setSubjectDomainInput("");
     setFormErrors({});
     setApiError(null);
     setIsSubmitting(false);
@@ -130,12 +147,14 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
     const isStandardGrade = STANDARD_GRADE_OPTIONS.includes(grade.name);
     setFormData({
       name: grade.name,
+      subjectDomains: grade.subjectDomains || [],
       description: grade.description || "",
       monthlyFee: grade.monthlyFee !== undefined ? Number(grade.monthlyFee).toFixed(2) : "4500.00",
       currencyCode: grade.currencyCode || "LKR",
       active: grade.active,
     });
     setGradeNameOption(isStandardGrade ? grade.name : CUSTOM_GRADE_OPTION);
+    setSubjectDomainInput("");
     setFormErrors({});
     setApiError(null);
     setEditingGrade(grade);
@@ -147,6 +166,10 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
       errors.name = "Grade Name is required.";
     } else if (formData.name.length > 100) {
       errors.name = "Grade Name cannot exceed 100 characters.";
+    }
+
+    if (formData.subjectDomains.length === 0) {
+      errors.subjectDomains = "Add at least one subject domain for this grade.";
     }
 
     const duplicateGrade = grades.some(
@@ -194,6 +217,42 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
     }
   };
 
+  const addSubjectDomain = (value: string) => {
+    const subjectDomain = value.trim();
+    if (!subjectDomain) return;
+    if (subjectDomain.length > 100) {
+      setFormErrors((previous) => ({
+        ...previous,
+        subjectDomains: "Subject domain names cannot exceed 100 characters.",
+      }));
+      return;
+    }
+    if (
+      formData.subjectDomains.some(
+        (existing) => existing.toLowerCase() === subjectDomain.toLowerCase(),
+      )
+    ) {
+      setFormErrors((previous) => ({
+        ...previous,
+        subjectDomains: "This subject domain has already been added.",
+      }));
+      return;
+    }
+    setFormData((previous) => ({
+      ...previous,
+      subjectDomains: [...previous.subjectDomains, subjectDomain],
+    }));
+    setSubjectDomainInput("");
+    setFormErrors((previous) => ({ ...previous, subjectDomains: "" }));
+  };
+
+  const removeSubjectDomain = (subjectDomain: string) => {
+    setFormData((previous) => ({
+      ...previous,
+      subjectDomains: previous.subjectDomains.filter((item) => item !== subjectDomain),
+    }));
+  };
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
@@ -204,6 +263,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
     try {
       const payload: CreateGradeRequest = {
         name: formData.name.trim(),
+        subjectDomains: formData.subjectDomains,
         description: formData.description.trim() ? formData.description.trim() : undefined,
         monthlyFee: parseFloat(parseFloat(formData.monthlyFee).toFixed(2)),
         currencyCode: formData.currencyCode.toUpperCase(),
@@ -233,6 +293,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
     try {
       const payload: UpdateGradeRequest = {
         name: formData.name.trim(),
+        subjectDomains: formData.subjectDomains,
         description: formData.description.trim() ? formData.description.trim() : undefined,
         monthlyFee: parseFloat(parseFloat(formData.monthlyFee).toFixed(2)),
         currencyCode: formData.currencyCode.toUpperCase(),
@@ -262,8 +323,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
       setTimeout(() => setSuccessNotice(null), 4000);
     } else {
       setDeleteError(
-        result.error ||
-          `Backend error (HTTP 409 Conflict): Cannot delete ${deleteConfirmGrade.name} because it is referenced by existing course records.`,
+        `This grade could not be deleted. It may be linked to one or more courses. Remove those course links or deactivate the grade instead.`,
       );
     }
   };
@@ -539,6 +599,71 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                 </span>
               </div>
 
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">
+                    Subject Domains <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">Add all subjects available for this grade</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={subjectDomainInput}
+                    onChange={(e) => setSubjectDomainInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSubjectDomain(subjectDomainInput);
+                      }
+                    }}
+                    placeholder="e.g. Mathematics"
+                    className="min-w-0 flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addSubjectDomain(subjectDomainInput)}
+                    className="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white font-semibold hover:bg-slate-700 dark:hover:bg-slate-600"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {formData.subjectDomains.map((subjectDomain) => (
+                    <button
+                      key={subjectDomain}
+                      type="button"
+                      onClick={() => removeSubjectDomain(subjectDomain)}
+                      title={`Remove ${subjectDomain}`}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px]"
+                    >
+                      {subjectDomain}
+                      <X className="w-3 h-3" />
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {COMMON_SUBJECT_DOMAINS.filter(
+                    (subjectDomain) =>
+                      !formData.subjectDomains.some(
+                        (existing) => existing.toLowerCase() === subjectDomain.toLowerCase(),
+                      ),
+                  ).map((subjectDomain) => (
+                    <button
+                      key={subjectDomain}
+                      type="button"
+                      onClick={() => addSubjectDomain(subjectDomain)}
+                      className="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    >
+                      + {subjectDomain}
+                    </button>
+                  ))}
+                </div>
+                {formErrors.subjectDomains && (
+                  <p className="text-rose-500 text-[11px] mt-1">{formErrors.subjectDomains}</p>
+                )}
+              </div>
+
               {/* Field 2 & 3: monthlyFee and currencyCode */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
@@ -719,6 +844,71 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                 </span>
               </div>
 
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-700 dark:text-slate-300 font-semibold">
+                    Subject Domains <span className="text-rose-500">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">You can update these later</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={subjectDomainInput}
+                    onChange={(e) => setSubjectDomainInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSubjectDomain(subjectDomainInput);
+                      }
+                    }}
+                    placeholder="Add another subject domain"
+                    className="min-w-0 flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addSubjectDomain(subjectDomainInput)}
+                    className="px-3 py-2 rounded-lg bg-slate-800 dark:bg-slate-700 text-white font-semibold hover:bg-slate-700 dark:hover:bg-slate-600"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {formData.subjectDomains.map((subjectDomain) => (
+                    <button
+                      key={subjectDomain}
+                      type="button"
+                      onClick={() => removeSubjectDomain(subjectDomain)}
+                      title={`Remove ${subjectDomain}`}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px]"
+                    >
+                      {subjectDomain}
+                      <X className="w-3 h-3" />
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {COMMON_SUBJECT_DOMAINS.filter(
+                    (subjectDomain) =>
+                      !formData.subjectDomains.some(
+                        (existing) => existing.toLowerCase() === subjectDomain.toLowerCase(),
+                      ),
+                  ).map((subjectDomain) => (
+                    <button
+                      key={subjectDomain}
+                      type="button"
+                      onClick={() => addSubjectDomain(subjectDomain)}
+                      className="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    >
+                      + {subjectDomain}
+                    </button>
+                  ))}
+                </div>
+                {formErrors.subjectDomains && (
+                  <p className="text-rose-500 text-[11px] mt-1">{formErrors.subjectDomains}</p>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
                   <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1">
@@ -832,11 +1022,11 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
           title={`Delete Grade "${deleteConfirmGrade.name}"?`}
           description={
             deleteError ||
-            `Are you sure you want to delete this grade level? This calls DELETE /api/v1/course/grades/${deleteConfirmGrade.id}.`
+            `Are you sure you want to delete the grade level "${deleteConfirmGrade.name}"?`
           }
           consequences={[
-            "The grade level will be permanently removed from the course service database.",
-            "Backend validation will reject deletion if any existing courses are linked to this grade.",
+            "This grade will be removed from the grade list.",
+            "Grades linked to existing courses cannot be deleted. You can deactivate the grade instead.",
           ]}
           confirmText="Confirm Delete"
           variant="danger"

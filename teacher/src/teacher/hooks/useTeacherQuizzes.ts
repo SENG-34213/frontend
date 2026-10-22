@@ -29,24 +29,52 @@ export function useTeacherQuizzes(enabled: boolean): TeacherQuizzesState {
     requestStartedRef.current = true;
 
     const controller = new AbortController();
-    setState((current) => ({ ...current, isLoading: true, error: null }));
-    getTeacherQuizzes(controller.signal)
-      .then((quizzes) => {
-        if (!controller.signal.aborted) setState({ quizzes, isLoading: false, error: null });
-      })
-      .catch((requestError: unknown) => {
-        if (controller.signal.aborted) return;
-        setState({
-          quizzes: [],
-          isLoading: false,
-          error:
-            requestError instanceof Error
-              ? requestError
-              : new Error("Teacher quizzes failed to load."),
+    let disposed = false;
+
+    const loadQuizzes = (showLoading = false) => {
+      if (disposed || requestStartedRef.current) return;
+      requestStartedRef.current = true;
+      setState((current) => ({
+        ...current,
+        // Only the first request should block the page. Background polling
+        // must keep the existing quiz list visible while it refreshes.
+        isLoading: showLoading ? true : current.isLoading,
+        error: null,
+      }));
+      getTeacherQuizzes(controller.signal)
+        .then((quizzes) => {
+          if (!controller.signal.aborted) setState({ quizzes, isLoading: false, error: null });
+        })
+        .catch((requestError: unknown) => {
+          if (controller.signal.aborted) return;
+          setState((current) => ({
+            quizzes: current.quizzes,
+            isLoading: false,
+            error:
+              requestError instanceof Error
+                ? requestError
+                : new Error("Teacher quizzes failed to load."),
+          }));
+        })
+        .finally(() => {
+          requestStartedRef.current = false;
         });
-      });
+
+    };
+
+    loadQuizzes(true);
+    const refreshOnFocus = () => {
+      if (document.visibilityState === "visible") loadQuizzes();
+    };
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    window.addEventListener("focus", refreshOnFocus);
+    const intervalId = window.setInterval(() => loadQuizzes(), 15_000);
 
     return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+      window.removeEventListener("focus", refreshOnFocus);
       requestStartedRef.current = false;
       controller.abort();
     };

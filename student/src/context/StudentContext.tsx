@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   StudentView,
   StudentProfile,
@@ -6,6 +6,7 @@ import {
   Assignment,
   AttendanceSummary,
   Quiz,
+  QuizAnswerReview,
   Examination,
   LearningMaterial,
   CalendarEvent,
@@ -77,7 +78,13 @@ interface StudentContextType {
   submitQuizAnswers: (
     quizId: string,
     attemptId: string,
-  ) => Promise<{ score: number; maxScore: number; percentage: number; passed: boolean }>;
+  ) => Promise<{
+    score: number;
+    maxScore: number;
+    percentage: number;
+    passed: boolean;
+    answers: QuizAnswerReview[];
+  }>;
   examinations: Examination[];
   submitExam: (examId: string, answers: Record<string, string[]>) => void;
   materials: LearningMaterial[];
@@ -101,6 +108,7 @@ interface StudentContextType {
     end: string,
     filters?: { type?: string; courseId?: string },
   ) => Promise<void>;
+  refreshWorkspace: () => Promise<void>;
   theme: "light" | "dark";
   toggleTheme: () => void;
   isSidebarCollapsed: boolean;
@@ -260,13 +268,63 @@ export const StudentProvider: React.FC<{
     };
   }, [refreshWorkspace]);
 
+  // Keep the workspace current while the student portal is open. This covers
+  // content created by teachers/admins in another application tab or session.
+  // The visibility/focus refresh makes returning to the tab feel immediate,
+  // while polling handles changes made while the tab remains open.
+  useEffect(() => {
+    if (!authUser?.id) return;
+
+    let disposed = false;
+    let refreshInFlight = false;
+
+    const syncWorkspace = async () => {
+      if (disposed || refreshInFlight || document.visibilityState !== "visible") return;
+      refreshInFlight = true;
+      try {
+        await refreshWorkspace();
+      } catch {
+        // The initial load reports errors to the student. Background sync is
+        // intentionally silent and retries on the next cycle/focus event.
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") void syncWorkspace();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    const intervalId = window.setInterval(() => void syncWorkspace(), 15_000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
+  }, [authUser?.id, refreshWorkspace]);
+
   useStudentCommunicationRealtime(
     conversations.map((conversation) => conversation.id),
     (incoming) => {
-      const message = toCommunicationMessage(incoming, profile.id);
       setConversations((current) =>
         current.map((conversation) => {
           if (conversation.id !== incoming.groupId) return conversation;
+          const knownSender = conversation.messages.find(
+            (item) => item.senderId === incoming.senderId,
+          )?.senderName;
+          const senderName =
+            incoming.senderId === profile.id
+              ? profile.name
+              : knownSender || conversation.participantName || "Course instructor";
+          const message = toCommunicationMessage(
+            incoming,
+            profile.id,
+            new Map([[incoming.senderId, senderName]]),
+          );
           if (conversation.messages.some((item) => item.id === message.id)) return conversation;
           return {
             ...conversation,
@@ -286,6 +344,7 @@ export const StudentProvider: React.FC<{
         lastName: lastNameParts.join(" ") || undefined,
         phoneNumber: updates.phone || undefined,
         bio: updates.bio || undefined,
+        avatarUrl: updates.avatar || undefined,
       });
       await refreshWorkspace();
       showToast("Profile updated successfully.");
@@ -384,12 +443,41 @@ export const StudentProvider: React.FC<{
     const score = Number(result.score);
     const maxScore = Number(result.totalMarks);
     const percentage = Number(result.percentage);
+    const answers = Array.isArray(result.answers)
+      ? result.answers.map((answer: Record<string, unknown>) => ({
+          questionId: String(answer.questionId ?? ""),
+          questionText: String(answer.questionText ?? ""),
+          explanation: answer.explanation ? String(answer.explanation) : undefined,
+          selectedOptionId: answer.selectedOptionId ? String(answer.selectedOptionId) : undefined,
+          selectedAnswer: answer.selectedAnswer ? String(answer.selectedAnswer) : undefined,
+          correctOptionId: answer.correctOptionId ? String(answer.correctOptionId) : undefined,
+          correctAnswer: answer.correctAnswer ? String(answer.correctAnswer) : undefined,
+          correct: Boolean(answer.correct),
+          awardedMarks: Number(answer.awardedMarks ?? 0),
+          questionMarks: Number(answer.questionMarks ?? 0),
+        }))
+      : [];
+    const completedResult = { score, maxScore, percentage, passed: Boolean(result.passed), answers };
     const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
+    window.localStorage.setItem(`student:quiz-result:${profile.id}:${quizId}`, JSON.stringify(completedResult));
     window.localStorage.removeItem(storageKey);
     window.localStorage.removeItem(`student:quiz-answers:${attemptId}`);
     await refreshWorkspace();
+    setQuizzes((current) =>
+      current.map((quiz) =>
+        quiz.id === quizId
+          ? {
+              ...quiz,
+              status: "COMPLETED",
+              attemptsUsed: Math.max(quiz.attemptsUsed ?? 0, (quiz.attemptsUsed ?? 0) + 1),
+              lastScore: score,
+              lastScorePercentage: percentage,
+            }
+          : quiz,
+      ),
+    );
     showToast(`Quiz completed: ${score}/${maxScore} (${percentage}%).`);
-    return { score, maxScore, percentage, passed: Boolean(result.passed) };
+    return completedResult;
   };
   const refreshCalendarEvents = useCallback(
     async (start: string, end: string, filters: { type?: string; courseId?: string } = {}) => {
@@ -414,12 +502,17 @@ export const StudentProvider: React.FC<{
   };
   const sendMessage = async (conversationId: string, text: string) => {
     try {
+      const conversation = conversations.find((item) => item.id === conversationId);
+      if (conversation?.studentMessagingEnabled === false) {
+        showToast("Student messaging is paused for this course.");
+        return;
+      }
       const response = await sendCommunicationMessage(conversationId, text);
       const data = response.data || {};
       const message = {
         id: String(data.id || ""),
         senderId: String(data.senderId || profile.id),
-        senderName: String(data.senderId || profile.id),
+        senderName: profile.name || "You",
         senderAvatar: "",
         isSenderStudent: true,
         timestamp: String(data.sentAt || ""),
@@ -427,14 +520,16 @@ export const StudentProvider: React.FC<{
       };
       setConversations((current) =>
         current.map((conversation) =>
-          conversation.id === conversationId
-            ? {
-                ...conversation,
-                lastMessage: message.text,
-                lastMessageTime: message.timestamp,
-                messages: [...conversation.messages, message],
-              }
-            : conversation,
+          conversation.id !== conversationId
+            ? conversation
+            : conversation.messages.some((item) => item.id && item.id === message.id)
+              ? conversation
+              : {
+                  ...conversation,
+                  lastMessage: message.text,
+                  lastMessageTime: message.timestamp,
+                  messages: [...conversation.messages, message],
+                },
         ),
       );
     } catch (error) {
@@ -613,6 +708,7 @@ export const StudentProvider: React.FC<{
         materials,
         calendarEvents,
         refreshCalendarEvents,
+        refreshWorkspace,
         conversations,
         sendMessage,
         loadMoreMessages,

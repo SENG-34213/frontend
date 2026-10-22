@@ -8,6 +8,7 @@ export type CommunicationGroup = {
   name: string;
   description?: string;
   status: "ACTIVE" | "ARCHIVED" | string;
+  studentMessagingEnabled?: boolean;
 };
 
 export type CommunicationGroupMember = {
@@ -32,6 +33,7 @@ export type CommunicationMessage = {
   id: string;
   groupId: string;
   senderId: string;
+  senderName?: string;
   content?: string | null;
   type?: string;
   sentAt: string;
@@ -84,6 +86,17 @@ export async function createCommunicationGroup(payload: {
     method: "POST",
     body: payload,
   });
+  return response.data;
+}
+
+export async function updateCommunicationGroup(
+  groupId: string,
+  payload: { name: string; description?: string; studentMessagingEnabled?: boolean },
+) {
+  const response = await apiRequest<ApiResponse<CommunicationGroup>>(
+    `/api/communication/groups/${groupPath(groupId)}`,
+    { method: "PATCH", body: payload },
+  );
   return response.data;
 }
 
