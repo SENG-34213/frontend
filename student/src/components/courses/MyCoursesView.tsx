@@ -21,7 +21,9 @@ const getTeachingProgress = (course: Course): number => {
     return 0;
   }
 
-  return Math.round((lessons.filter((lesson) => lesson.teachingCompleted).length / lessons.length) * 100);
+  return Math.round(
+    (lessons.filter((lesson) => lesson.teachingCompleted).length / lessons.length) * 100,
+  );
 };
 
 export const MyCoursesView: React.FC = () => {
@@ -54,9 +56,7 @@ export const MyCoursesView: React.FC = () => {
 
       const matchesStatus =
         selectedStatus === "All" ||
-        (selectedStatus === "In Progress" &&
-          progress > 0 &&
-          progress < 100) ||
+        (selectedStatus === "In Progress" && progress > 0 && progress < 100) ||
         (selectedStatus === "Completed" && progress === 100) ||
         (selectedStatus === "Not Started" && progress === 0);
 
@@ -220,89 +220,89 @@ export const MyCoursesView: React.FC = () => {
             const progress = getTeachingProgress(course);
 
             return (
-            <div
-              key={course.id}
-              className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800"
-            >
-              <div>
-                {/* Course Banner Artwork */}
-                <div
-                  className={`h-28 w-full bg-gradient-to-r ${course.bannerColor} p-4 text-white relative flex flex-col justify-between`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="rounded bg-black/30 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider backdrop-blur-xs font-bold">
-                      {course.code}
-                    </span>
-                    <span className="rounded bg-black/30 px-2 py-0.5 text-[10px] font-semibold backdrop-blur-xs">
-                      {course.credits} Credits
-                    </span>
+              <div
+                key={course.id}
+                className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800"
+              >
+                <div>
+                  {/* Course Banner Artwork */}
+                  <div
+                    className={`h-28 w-full bg-gradient-to-r ${course.bannerColor} p-4 text-white relative flex flex-col justify-between`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="rounded bg-black/30 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider backdrop-blur-xs font-bold">
+                        {course.code}
+                      </span>
+                      <span className="rounded bg-black/30 px-2 py-0.5 text-[10px] font-semibold backdrop-blur-xs">
+                        {course.credits} Credits
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-white/80">{course.category}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[11px] text-white/80">{course.category}</span>
+
+                  {/* Course Content */}
+                  <div className="p-5 space-y-4">
+                    <div>
+                      <h3 className="font-display text-base font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        {course.title}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                        {course.description}
+                      </p>
+                    </div>
+
+                    {/* Instructor & Metadata */}
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{course.instructor.name}</span>
+                      </div>
+                      {course.currentGrade && (
+                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                          Grade: {course.currentGrade} ({course.currentScorePercentage}%)
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          Curriculum Progress
+                        </span>
+                        <span className="font-bold tabular-nums text-slate-900 dark:text-white">
+                          {progress}%
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                        <div
+                          className="h-full rounded-full bg-indigo-600 transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Course Content */}
-                <div className="p-5 space-y-4">
-                  <div>
-                    <h3 className="font-display text-base font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      {course.title}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                      {course.description}
-                    </p>
-                  </div>
-
-                  {/* Instructor & Metadata */}
-                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate">{course.instructor.name}</span>
-                    </div>
-                    {course.currentGrade && (
-                      <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                        Grade: {course.currentGrade} ({course.currentScorePercentage}%)
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500 dark:text-slate-400">
-                        Curriculum Progress
-                      </span>
-                      <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                        {progress}%
-                      </span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                      <div
-                        className="h-full rounded-full bg-indigo-600 transition-all duration-500"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
+                {/* Bottom Actions */}
+                <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+                  <button
+                    onClick={() => navigateToCourseDetails(course.id)}
+                    className="text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => navigateToCourseWorkspace(course.id)}
+                    className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-700 transition-colors"
+                  >
+                    <PlayCircle className="h-3.5 w-3.5" />
+                    <span>Continue</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Bottom Actions */}
-              <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
-                <button
-                  onClick={() => navigateToCourseDetails(course.id)}
-                  className="text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-                >
-                  View Details
-                </button>
-                <button
-                  onClick={() => navigateToCourseWorkspace(course.id)}
-                  className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-700 transition-colors"
-                >
-                  <PlayCircle className="h-3.5 w-3.5" />
-                  <span>Continue</span>
-                </button>
-              </div>
-            </div>
             );
           })}
         </div>
@@ -313,66 +313,66 @@ export const MyCoursesView: React.FC = () => {
             const progress = getTeachingProgress(course);
 
             return (
-            <div
-              key={course.id}
-              className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-            >
-              <div className="flex items-start gap-4 min-w-0 flex-1">
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${course.bannerColor} font-mono text-xs font-bold text-white`}
-                >
-                  {course.code.split(" ")[0]}
+              <div
+                key={course.id}
+                className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+              >
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                  <div
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr ${course.bannerColor} font-mono text-xs font-bold text-white`}
+                  >
+                    {course.code.split(" ")[0]}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                        {course.code}
+                      </span>
+                      <span className="text-slate-300 dark:text-slate-600">·</span>
+                      <span className="text-xs text-slate-500">{course.category}</span>
+                      <span className="text-slate-300 dark:text-slate-600">·</span>
+                      <span className="text-xs text-slate-500">{course.credits} Credits</span>
+                    </div>
+                    <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white truncate">
+                      {course.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Instructor: {course.instructor.name} · {course.schedule}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
+
+                <div className="flex items-center gap-6 shrink-0">
+                  <div className="w-32 hidden sm:block">
+                    <div className="flex justify-between text-[11px] mb-1">
+                      <span className="text-slate-400">Progress</span>
+                      <span className="font-bold tabular-nums">{progress}%</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-indigo-600"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                      {course.code}
-                    </span>
-                    <span className="text-slate-300 dark:text-slate-600">·</span>
-                    <span className="text-xs text-slate-500">{course.category}</span>
-                    <span className="text-slate-300 dark:text-slate-600">·</span>
-                    <span className="text-xs text-slate-500">{course.credits} Credits</span>
+                    <button
+                      onClick={() => navigateToCourseDetails(course.id)}
+                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                    >
+                      Details
+                    </button>
+                    <button
+                      onClick={() => navigateToCourseWorkspace(course.id)}
+                      className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                    >
+                      <PlayCircle className="h-3.5 w-3.5" />
+                      <span>Workspace</span>
+                    </button>
                   </div>
-                  <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white truncate">
-                    {course.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Instructor: {course.instructor.name} · {course.schedule}
-                  </p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-6 shrink-0">
-                <div className="w-32 hidden sm:block">
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-slate-400">Progress</span>
-                    <span className="font-bold tabular-nums">{progress}%</span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                    <div
-                      className="h-full rounded-full bg-indigo-600"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigateToCourseDetails(course.id)}
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-                  >
-                    Details
-                  </button>
-                  <button
-                    onClick={() => navigateToCourseWorkspace(course.id)}
-                    className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-                  >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    <span>Workspace</span>
-                  </button>
-                </div>
-              </div>
-            </div>
             );
           })}
         </div>

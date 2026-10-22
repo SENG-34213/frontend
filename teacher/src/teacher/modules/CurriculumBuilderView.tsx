@@ -83,7 +83,12 @@ const formatDate = (value?: string) => {
 };
 
 const isGeneratedMaterialName = (value?: string) =>
-  Boolean(value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?: \(\d+\))?$/i.test(value));
+  Boolean(
+    value &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?: \(\d+\))?$/i.test(
+        value,
+      ),
+  );
 
 const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   id: lesson.id,
@@ -362,11 +367,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
       // before reporting success so an association/persistence problem cannot
       // look like a successful upload in the teacher UI.
       const verifiedMaterials = pendingFiles.length
-        ? await getLessonMaterials(
-            selectedCourseId,
-            editingParentModule.id,
-            saved.id,
-          )
+        ? await getLessonMaterials(selectedCourseId, editingParentModule.id, saved.id)
         : savedMaterials;
       if (pendingFiles.length) {
         const verifiedIds = new Set(
@@ -918,7 +919,11 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                                 className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 border ${lesson.teachingCompleted ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-slate-200 text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"}`}
                               >
                                 <Check className="h-3.5 w-3.5" />
-                                <span>{lesson.teachingCompleted ? "Teaching completed" : "Mark completed"}</span>
+                                <span>
+                                  {lesson.teachingCompleted
+                                    ? "Teaching completed"
+                                    : "Mark completed"}
+                                </span>
                               </button>
                               <button
                                 onClick={() => handleEditLesson(lesson, mod)}

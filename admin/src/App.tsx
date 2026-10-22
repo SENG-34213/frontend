@@ -890,178 +890,178 @@ export default function App() {
       onLogout={handleLogout}
     >
       {/* Route Views */}
-        {currentRoute === "dashboard" && (
-          <AdminDashboard
-            kpis={kpis}
-            students={students}
-            teachers={teachers}
-            events={upcomingEvents}
-            recentLogs={auditLogs}
-            role={role}
-            onNavigate={setCurrentRoute}
-            onQuickAction={handleQuickAction}
-            onResendInvitation={handleResendInvitation}
-            registrationOverview={registrationOverview}
-            registrationOverviewLoading={registrationOverviewLoading}
-            registrationOverviewError={registrationOverviewError}
-            analytics={adminAnalytics}
-            analyticsLoading={adminAnalyticsLoading}
-            analyticsError={adminAnalyticsError}
-          />
-        )}
+      {currentRoute === "dashboard" && (
+        <AdminDashboard
+          kpis={kpis}
+          students={students}
+          teachers={teachers}
+          events={upcomingEvents}
+          recentLogs={auditLogs}
+          role={role}
+          onNavigate={setCurrentRoute}
+          onQuickAction={handleQuickAction}
+          onResendInvitation={handleResendInvitation}
+          registrationOverview={registrationOverview}
+          registrationOverviewLoading={registrationOverviewLoading}
+          registrationOverviewError={registrationOverviewError}
+          analytics={adminAnalytics}
+          analyticsLoading={adminAnalyticsLoading}
+          analyticsError={adminAnalyticsError}
+        />
+      )}
 
-        {currentRoute === "students" && (
-          <StudentManagement
-            students={students}
-            enrollments={enrollments}
-            grades={grades}
-            attendanceSessions={attendanceSessions}
-            onAddStudent={handleAddStudent}
-            onRegisterStudent={handleRegisterStudent}
-            onResendInvitation={handleResendInvitation}
-            showRegistrationWizardDirectly={openStudentWizard}
-          />
-        )}
+      {currentRoute === "students" && (
+        <StudentManagement
+          students={students}
+          enrollments={enrollments}
+          grades={grades}
+          attendanceSessions={attendanceSessions}
+          onAddStudent={handleAddStudent}
+          onRegisterStudent={handleRegisterStudent}
+          onResendInvitation={handleResendInvitation}
+          showRegistrationWizardDirectly={openStudentWizard}
+        />
+      )}
 
-        {currentRoute === "teachers" && (
-          <TeacherManagement
-            teachers={teachers}
-            courses={courses}
-            onAddTeacher={handleAddTeacher}
-            onRegisterTeacher={handleRegisterTeacher}
-            onResendInvitation={handleResendInvitation}
-            showRegistrationWizardDirectly={openTeacherWizard}
-          />
-        )}
+      {currentRoute === "teachers" && (
+        <TeacherManagement
+          teachers={teachers}
+          courses={courses}
+          onAddTeacher={handleAddTeacher}
+          onRegisterTeacher={handleRegisterTeacher}
+          onResendInvitation={handleResendInvitation}
+          showRegistrationWizardDirectly={openTeacherWizard}
+        />
+      )}
 
-        {currentRoute === "administrators" && (
-          <AdminManagement
-            administrators={administrators}
-            currentRole={role}
-            onAddAdministrator={handleAddAdministrator}
-            onRegisterAdministrator={handleRegisterAdministrator}
-            onResendInvitation={handleResendInvitation}
-            showRegistrationWizardDirectly={openAdminWizard}
-          />
-        )}
+      {currentRoute === "administrators" && (
+        <AdminManagement
+          administrators={administrators}
+          currentRole={role}
+          onAddAdministrator={handleAddAdministrator}
+          onRegisterAdministrator={handleRegisterAdministrator}
+          onResendInvitation={handleResendInvitation}
+          showRegistrationWizardDirectly={openAdminWizard}
+        />
+      )}
 
-        {currentRoute === "registrations" && (
-          <RegistrationsAndInvitations
-            students={students}
-            teachers={teachers}
-            administrators={administrators}
-            onResendInvitation={handleResendInvitation}
-          />
-        )}
+      {currentRoute === "registrations" && (
+        <RegistrationsAndInvitations
+          students={students}
+          teachers={teachers}
+          administrators={administrators}
+          onResendInvitation={handleResendInvitation}
+        />
+      )}
 
-        {currentRoute === "courses" && (
-          <CourseManagement
-            courses={courses}
-            grades={gradesList}
-            teachers={teachers}
-            enrollments={enrollments}
-            curriculum={curriculum}
-            materials={materials}
-            onAddCourse={handleAddCourse}
-            onUpdateCourse={handleUpdateCourse}
-            onDeleteCourse={handleDeleteCourse}
-            showCreateModalDirectly={openCourseModal}
-            preselectedGradeId={preselectedGradeId}
-            onNavigateToGrades={() => setCurrentRoute("grades")}
-          />
-        )}
+      {currentRoute === "courses" && (
+        <CourseManagement
+          courses={courses}
+          grades={gradesList}
+          teachers={teachers}
+          enrollments={enrollments}
+          curriculum={curriculum}
+          materials={materials}
+          onAddCourse={handleAddCourse}
+          onUpdateCourse={handleUpdateCourse}
+          onDeleteCourse={handleDeleteCourse}
+          showCreateModalDirectly={openCourseModal}
+          preselectedGradeId={preselectedGradeId}
+          onNavigateToGrades={() => setCurrentRoute("grades")}
+        />
+      )}
 
-        {currentRoute === "grades" && (
-          <GradeManagement
-            grades={gradesList}
-            administrators={administrators}
-            onCreateGrade={handleCreateGrade}
-            onUpdateGrade={handleUpdateGrade}
-            onDeleteGrade={handleDeleteGrade}
-            onProceedToCourseCreation={(gradeId) => {
-              setPreselectedGradeId(gradeId || null);
-              setCurrentRoute("courses");
-              setOpenCourseModal(true);
-            }}
-          />
-        )}
+      {currentRoute === "grades" && (
+        <GradeManagement
+          grades={gradesList}
+          administrators={administrators}
+          onCreateGrade={handleCreateGrade}
+          onUpdateGrade={handleUpdateGrade}
+          onDeleteGrade={handleDeleteGrade}
+          onProceedToCourseCreation={(gradeId) => {
+            setPreselectedGradeId(gradeId || null);
+            setCurrentRoute("courses");
+            setOpenCourseModal(true);
+          }}
+        />
+      )}
 
-        {currentRoute === "enrollments" && (
-          <EnrollmentManagement
-            enrollments={enrollments}
-            courses={courses}
-            students={students}
-            grades={gradesList}
-            onCreateEnrollment={handleCreateEnrollment}
-            onUpdateEnrollment={handleUpdateEnrollment}
-            onDeleteEnrollment={handleDeleteEnrollment}
-          />
-        )}
+      {currentRoute === "enrollments" && (
+        <EnrollmentManagement
+          enrollments={enrollments}
+          courses={courses}
+          students={students}
+          grades={gradesList}
+          onCreateEnrollment={handleCreateEnrollment}
+          onUpdateEnrollment={handleUpdateEnrollment}
+          onDeleteEnrollment={handleDeleteEnrollment}
+        />
+      )}
 
-        {currentRoute === "academic" && (
-          <CurriculumManagement curriculum={curriculum} courses={courses} />
-        )}
+      {currentRoute === "academic" && (
+        <CurriculumManagement curriculum={curriculum} courses={courses} />
+      )}
 
-        {currentRoute === "assignments" && <AssignmentOversight assignments={assignments} />}
+      {currentRoute === "assignments" && <AssignmentOversight assignments={assignments} />}
 
-        {currentRoute === "quizzes" && <QuizManagement quizzes={quizzes} />}
+      {currentRoute === "quizzes" && <QuizManagement quizzes={quizzes} />}
 
-        {currentRoute === "examinations" && <ExaminationManagement examinations={examinations} />}
+      {currentRoute === "examinations" && <ExaminationManagement examinations={examinations} />}
 
-        {currentRoute === "results" && <GradesAndResults grades={grades} />}
+      {currentRoute === "results" && <GradesAndResults grades={grades} />}
 
-        {currentRoute === "attendance" && <AttendanceManagement sessions={attendanceSessions} />}
+      {currentRoute === "attendance" && <AttendanceManagement sessions={attendanceSessions} />}
 
-        {currentRoute === "materials" && (
-          <LearningMaterialManagement
-            materials={materials}
-            courses={courses}
-            onUploadMaterial={handleUploadMaterial}
-          />
-        )}
+      {currentRoute === "materials" && (
+        <LearningMaterialManagement
+          materials={materials}
+          courses={courses}
+          onUploadMaterial={handleUploadMaterial}
+        />
+      )}
 
-        {currentRoute === "marketplace" && <MarketplaceManagement onToast={addToast} />}
+      {currentRoute === "marketplace" && <MarketplaceManagement onToast={addToast} />}
 
-        {currentRoute === "calendar" && (
-          <AdminCalendar
-            events={events}
-            courses={courses}
-            onAddEvent={handleAddEvent}
-            onUpdateEvent={handleUpdateEvent}
-            onCancelEvent={handleCancelEvent}
-            onFilterEvents={handleFilterCalendarEvents}
-          />
-        )}
+      {currentRoute === "calendar" && (
+        <AdminCalendar
+          events={events}
+          courses={courses}
+          onAddEvent={handleAddEvent}
+          onUpdateEvent={handleUpdateEvent}
+          onCancelEvent={handleCancelEvent}
+          onFilterEvents={handleFilterCalendarEvents}
+        />
+      )}
 
-        {currentRoute === "communication" && <CommunicationManagement />}
+      {currentRoute === "communication" && <CommunicationManagement />}
 
-        {currentRoute === "notifications" && (
-          <NotificationCenter
-            notifications={notifications}
-            onMarkRead={handleMarkNotificationRead}
-            onMarkAllRead={handleMarkAllNotificationsRead}
-            onDelete={handleDeleteNotification}
-            onNavigate={setCurrentRoute}
-          />
-        )}
+      {currentRoute === "notifications" && (
+        <NotificationCenter
+          notifications={notifications}
+          onMarkRead={handleMarkNotificationRead}
+          onMarkAllRead={handleMarkAllNotificationsRead}
+          onDelete={handleDeleteNotification}
+          onNavigate={setCurrentRoute}
+        />
+      )}
 
-        {currentRoute === "ai-assistant" && <MentifyAIAssistant />}
+      {currentRoute === "ai-assistant" && <MentifyAIAssistant />}
 
-        {currentRoute === "analytics" && <AnalyticsDashboard />}
+      {currentRoute === "analytics" && <AnalyticsDashboard />}
 
-        {currentRoute === "reports" && <ReportsManagement />}
+      {currentRoute === "reports" && <ReportsManagement />}
 
-        {currentRoute === "audit" && <AuditAndActivity logs={auditLogs} />}
+      {currentRoute === "audit" && <AuditAndActivity logs={auditLogs} />}
 
-        {currentRoute === "profile" && <AdminProfile role={role} />}
+      {currentRoute === "profile" && <AdminProfile role={role} />}
 
-        {currentRoute === "settings" && (
-          <AdminSettings
-            role={role}
-            isDarkMode={isDarkMode}
-            onToggleTheme={() => setIsDarkMode((p) => !p)}
-          />
-        )}
+      {currentRoute === "settings" && (
+        <AdminSettings
+          role={role}
+          isDarkMode={isDarkMode}
+          onToggleTheme={() => setIsDarkMode((p) => !p)}
+        />
+      )}
     </AdminLayout>
   );
 }

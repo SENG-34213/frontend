@@ -153,7 +153,9 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
     const generatedName = material.title?.match(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?: \(\d+\))?$/i,
     );
-    return generatedName ? lesson?.title || "Lesson material" : material.title || material.originalFilename || "Learning material";
+    return generatedName
+      ? lesson?.title || "Lesson material"
+      : material.title || material.originalFilename || "Learning material";
   };
   const formatBytes = (bytes?: number) => {
     if (!bytes) return "Size unavailable";
@@ -378,8 +380,8 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                 )}
                 {uploadFailed && (
                   <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                    Upload was not completed. Your files are still here—remove the failed file or retry
-                    Save Lesson.
+                    Upload was not completed. Your files are still here—remove the failed file or
+                    retry Save Lesson.
                   </p>
                 )}
                 {materials.length === 0 && pendingFiles.length === 0 && (
@@ -485,7 +487,8 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                       <span>
                         {uploadProgress.status === "complete"
                           ? 100
-                          : Math.round((uploadProgress.current / uploadProgress.total) * 100)}%
+                          : Math.round((uploadProgress.current / uploadProgress.total) * 100)}
+                        %
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-indigo-100">
