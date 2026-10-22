@@ -100,6 +100,65 @@ export type QuizAnalytics = {
   }>;
 };
 
+const finiteNumber = (value: unknown): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+function normalizeQuizAnalytics(value: unknown): QuizAnalytics | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const source = value as Record<string, unknown>;
+  if (typeof source.date !== "string" || typeof source.resultType !== "string") return null;
+  if (!Array.isArray(source.quizzes))
+    return { date: source.date, resultType: source.resultType, quizzes: [] };
+
+  const quizzes = source.quizzes.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const quiz = entry as Record<string, unknown>;
+    const quizId = typeof quiz.quizId === "string" ? quiz.quizId : undefined;
+    const courseId = typeof quiz.courseId === "string" ? quiz.courseId : undefined;
+    const quizTitle = typeof quiz.quizTitle === "string" ? quiz.quizTitle : undefined;
+    const totalMarks = finiteNumber(quiz.totalMarks);
+    const passMark = finiteNumber(quiz.passMark);
+    const submittedAttempts = finiteNumber(quiz.submittedAttempts);
+    const participants = finiteNumber(quiz.participants);
+    const passedAttempts = finiteNumber(quiz.passedAttempts);
+    const belowPassThresholdAttempts = finiteNumber(quiz.belowPassThresholdAttempts);
+    if (
+      !quizId ||
+      !courseId ||
+      !quizTitle ||
+      [
+        totalMarks,
+        passMark,
+        submittedAttempts,
+        participants,
+        passedAttempts,
+        belowPassThresholdAttempts,
+      ].some((metric) => metric === undefined)
+    ) {
+      return [];
+    }
+    return [
+      {
+        quizId,
+        courseId,
+        quizTitle,
+        startTime: typeof quiz.startTime === "string" ? quiz.startTime : undefined,
+        totalMarks: totalMarks as number,
+        passMark: passMark as number,
+        submittedAttempts: submittedAttempts as number,
+        participants: participants as number,
+        averagePercentage: finiteNumber(quiz.averagePercentage),
+        highestPercentage: finiteNumber(quiz.highestPercentage),
+        lowestPercentage: finiteNumber(quiz.lowestPercentage),
+        passedAttempts: passedAttempts as number,
+        belowPassThresholdAttempts: belowPassThresholdAttempts as number,
+      },
+    ];
+  });
+
+  return { date: source.date, resultType: source.resultType, quizzes };
+}
+
 export type TeacherQuizResults = {
   quizId: string;
   totalMarks?: number | string | null;
@@ -208,7 +267,7 @@ export async function getTodayQuizAnalytics(signal?: AbortSignal) {
     "/api/internal/quizzes/analytics/today/performance",
     { signal },
   );
-  return response.data as QuizAnalytics;
+  return normalizeQuizAnalytics(response.data);
 }
 
 export async function getTeacherQuizResults(quizId: string, signal?: AbortSignal) {
