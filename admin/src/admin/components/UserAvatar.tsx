@@ -18,10 +18,12 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
   useEffect(() => {
     if (!avatarUrl) {
-      return;
+      const resetAvatar = window.setTimeout(() => setResolvedAvatar(null), 0);
+      return () => window.clearTimeout(resetAvatar);
     }
     if (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) {
-      return;
+      const setDirectAvatar = window.setTimeout(() => setResolvedAvatar(avatarUrl), 0);
+      return () => window.clearTimeout(setDirectAvatar);
     }
     let active = true;
     let objectUrl: string | undefined;
@@ -70,22 +72,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       className={`relative inline-flex items-center justify-center rounded-full bg-gradient-to-br font-medium shrink-0 select-none shadow-xs ${sizeClasses[size]} ${getGradient(name)} ${className}`}
       aria-label={name}
     >
-      {(
-        avatarUrl?.startsWith("http") || avatarUrl?.startsWith("data:")
-          ? avatarUrl
-          : avatarUrl
-            ? resolvedAvatar
-            : null
-      ) ? (
-        <img
-          src={
-            avatarUrl?.startsWith("http") || avatarUrl?.startsWith("data:")
-              ? avatarUrl
-              : (resolvedAvatar ?? "")
-          }
-          alt={name}
-          className="w-full h-full rounded-full object-cover"
-        />
+      {resolvedAvatar ? (
+        <img src={resolvedAvatar} alt={name} className="w-full h-full rounded-full object-cover" />
       ) : (
         <span>{getInitials(name)}</span>
       )}

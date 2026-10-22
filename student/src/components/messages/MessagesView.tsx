@@ -58,6 +58,14 @@ export const MessagesView: React.FC = () => {
     return () => window.cancelAnimationFrame(frame);
   }, [activeConv?.id, activeConv?.lastMessage, activeConv?.lastMessageTime]);
 
+  useEffect(() => {
+    if (!conversations.length) return;
+    if (!conversations.some((conversation) => conversation.id === selectedConvId)) {
+      const firstConversation = window.setTimeout(() => setSelectedConvId(conversations[0].id), 0);
+      return () => window.clearTimeout(firstConversation);
+    }
+  }, [conversations, selectedConvId]);
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     const message = inputText.trim();

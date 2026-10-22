@@ -85,6 +85,7 @@ import {
   resendUserInvitation,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
+import { fetchAdminAnalyticsOverview, type AdminAnalyticsOverview } from "./admin/api/analyticsApi";
 import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi";
 import {
   createEnrollment,
@@ -181,6 +182,9 @@ export default function App() {
   > | null>(null);
   const [registrationOverviewLoading, setRegistrationOverviewLoading] = useState(false);
   const [registrationOverviewError, setRegistrationOverviewError] = useState("");
+  const [adminAnalytics, setAdminAnalytics] = useState<AdminAnalyticsOverview | null>(null);
+  const [adminAnalyticsLoading, setAdminAnalyticsLoading] = useState(false);
+  const [adminAnalyticsError, setAdminAnalyticsError] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -234,10 +238,12 @@ export default function App() {
 
     const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);
     // The route is restored from browser storage after hydration.
-    if (storedRoute === "users") {
-      startTransition(() => setCurrentRoute("dashboard"));
-    } else if (storedRoute) {
-      startTransition(() => setCurrentRoute(storedRoute as AdminRoute));
+    const restoredRoute = storedRoute === "users" ? "dashboard" : storedRoute;
+    if (restoredRoute) {
+      const routeRestore = window.setTimeout(() => {
+        setCurrentRoute(restoredRoute as AdminRoute);
+      }, 0);
+      return () => window.clearTimeout(routeRestore);
     }
   }, [isAuthReady]);
 
@@ -275,6 +281,33 @@ export default function App() {
       .catch(() => {
         // Keep the dashboard available when the calendar service is unavailable.
       });
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let mounted = true;
+    const loadAdminAnalytics = async () => {
+      setAdminAnalyticsLoading(true);
+      setAdminAnalyticsError("");
+      try {
+        const overview = await fetchAdminAnalyticsOverview();
+        if (mounted) setAdminAnalytics(overview);
+      } catch (error) {
+        if (mounted) {
+          setAdminAnalyticsError(
+            error instanceof Error ? error.message : "Unable to load platform analytics.",
+          );
+        }
+      } finally {
+        if (mounted) setAdminAnalyticsLoading(false);
+      }
+    };
+
+    void loadAdminAnalytics();
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -363,34 +396,6 @@ export default function App() {
       setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
     }, 4500);
   }
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const loadNotifications = async () => {
-      try {
-        const items = await getAdminNotifications();
-        setNotifications(
-          items.map((item) => ({
-            id: item.id,
-            title: item.title,
-            message: item.message,
-            category: notificationCategory(item.type),
-            timestamp: item.occurredAt || item.createdAt || new Date().toISOString(),
-            read: Boolean(item.readAt),
-          })),
-        );
-      } catch (error) {
-        addToast(
-          "error",
-          "Notifications unavailable",
-          error instanceof Error ? error.message : "Unable to load notifications.",
-        );
-      }
-    };
-
-    void loadNotifications();
-  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -825,6 +830,9 @@ export default function App() {
           registrationOverview={registrationOverview}
           registrationOverviewLoading={registrationOverviewLoading}
           registrationOverviewError={registrationOverviewError}
+          analytics={adminAnalytics}
+          analyticsLoading={adminAnalyticsLoading}
+          analyticsError={adminAnalyticsError}
         />
       )}
 
@@ -963,7 +971,7 @@ export default function App() {
 
       {currentRoute === "ai-assistant" && <MentifyAIAssistant />}
 
-      {currentRoute === "analytics" && <AnalyticsDashboard kpis={kpis} />}
+      {currentRoute === "analytics" && <AnalyticsDashboard />}
 
       {currentRoute === "reports" && <ReportsManagement />}
 

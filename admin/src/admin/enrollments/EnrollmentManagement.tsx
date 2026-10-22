@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
@@ -52,8 +52,14 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
-  const effectiveSelectedGradeId = selectedGradeId || grades[0]?.id || "";
-  const selectedGrade = grades.find((grade) => grade.id === effectiveSelectedGradeId);
+  useEffect(() => {
+    if (!selectedGradeId && grades.length > 0) {
+      const firstGradeId = window.setTimeout(() => setSelectedGradeId(grades[0].id), 0);
+      return () => window.clearTimeout(firstGradeId);
+    }
+  }, [grades, selectedGradeId]);
+
+  const selectedGrade = grades.find((grade) => grade.id === selectedGradeId);
 
   const gradeStudents = useMemo(
     () =>
@@ -290,7 +296,7 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                 const count = students.filter(
                   (student) => normalizedGrade(student.grade) === normalizedGrade(grade.name),
                 ).length;
-                const selected = grade.id === effectiveSelectedGradeId;
+                const selected = grade.id === selectedGradeId;
                 return (
                   <button
                     key={grade.id}

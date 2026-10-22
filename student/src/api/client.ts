@@ -24,12 +24,12 @@ type RequestOptions = Omit<RequestInit, "body"> & {
 };
 
 function safeErrorMessage(body: unknown, status: number): string {
-  const record = typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
+  const errorBody = body as { message?: unknown; error?: unknown } | null;
   const raw =
-    typeof record.message === "string"
-      ? record.message
-      : typeof record.error === "string"
-        ? record.error
+    typeof errorBody?.message === "string"
+      ? errorBody.message
+      : typeof errorBody?.error === "string"
+        ? errorBody.error
         : "";
   const technical =
     /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(
