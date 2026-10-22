@@ -1,5 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { HelpCircle, Search, BarChart3, Clock, CheckCircle2, Award } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  HelpCircle,
+  Search,
+  BarChart3,
+  Clock,
+  CheckCircle2,
+  Award,
+  RefreshCcw,
+} from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { DetailDrawer } from "../components/DetailDrawer";
@@ -18,24 +26,26 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [analyticsError, setAnalyticsError] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    fetchTodayAdminQuizAnalytics()
-      .then((response) => {
-        if (!active) return;
-        setTodayAnalytics(response?.quizzes ?? []);
-        setAnalyticsDate(response?.date ?? "");
-      })
-      .catch(() => {
-        if (active) setAnalyticsError("Live quiz analytics are temporarily unavailable.");
-      })
-      .finally(() => {
-        if (active) setAnalyticsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+  const loadAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    setAnalyticsError("");
+    try {
+      const response = await fetchTodayAdminQuizAnalytics();
+      setTodayAnalytics(response?.quizzes ?? []);
+      setAnalyticsDate(response?.date ?? "");
+    } catch {
+      setAnalyticsError("Live quiz analytics are temporarily unavailable.");
+    } finally {
+      setAnalyticsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    const initialLoad = window.setTimeout(() => {
+      void loadAnalytics();
+    }, 0);
+    return () => window.clearTimeout(initialLoad);
+  }, [loadAnalytics]);
 
   const aggregateAnalytics = useMemo(() => {
     const totals = todayAnalytics.reduce(
@@ -75,8 +85,17 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
       />
 
       {analyticsError && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
-          {analyticsError} Existing quiz records remain available below.
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200 sm:flex-row sm:items-center sm:justify-between">
+          <span>{analyticsError} Existing quiz records remain available below.</span>
+          <button
+            type="button"
+            onClick={() => void loadAnalytics()}
+            disabled={analyticsLoading}
+            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-semibold text-amber-800 transition hover:bg-amber-100 disabled:cursor-wait disabled:opacity-60 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
+          >
+            <RefreshCcw className={`h-3.5 w-3.5 ${analyticsLoading ? "animate-spin" : ""}`} />
+            Retry
+          </button>
         </div>
       )}
 
