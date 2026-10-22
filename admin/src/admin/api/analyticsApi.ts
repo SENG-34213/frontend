@@ -138,9 +138,7 @@ function normalizeOverview(value: unknown): AdminAnalyticsOverview {
 }
 
 export async function fetchAdminAnalyticsOverview(): Promise<AdminAnalyticsOverview> {
-  const response = await apiRequest<
-    AdminAnalyticsOverview | ApiResponse<AdminAnalyticsOverview>
-  >(
+  const response = await apiRequest<AdminAnalyticsOverview | ApiResponse<AdminAnalyticsOverview>>(
     "/api/v1/analytics/admin/overview",
   );
 

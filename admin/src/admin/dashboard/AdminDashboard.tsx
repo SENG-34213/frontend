@@ -133,12 +133,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           TEACHER: analyticsUsers.teachers,
           ADMIN: analyticsUsers.admins,
         }
-      : registrationOverview?.usersByRole ?? {
+      : (registrationOverview?.usersByRole ?? {
           STUDENT: kpis.totalStudents,
           TEACHER: kpis.totalTeachers,
-        };
+        });
     const totalUsers =
-      analyticsUsers?.totalUsers ?? registrationOverview?.totalUsers ?? kpis.totalStudents + kpis.totalTeachers;
+      analyticsUsers?.totalUsers ??
+      registrationOverview?.totalUsers ??
+      kpis.totalStudents + kpis.totalTeachers;
     if (!source || !totalUsers) return [];
 
     return Object.entries(source)
@@ -182,15 +184,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (activeEnrollments === undefined && newThisMonth === undefined) return [];
 
     return [
-      ...(activeEnrollments !== undefined
-        ? [{ label: "Active", value: activeEnrollments }]
-        : []),
+      ...(activeEnrollments !== undefined ? [{ label: "Active", value: activeEnrollments }] : []),
       ...(newThisMonth !== undefined ? [{ label: "This month", value: newThisMonth }] : []),
     ];
   }, [analytics]);
-  const hasHistoricalEnrollmentTrend = Object.keys(
-    analytics?.enrollment?.enrollmentTrend ?? {},
-  ).length > 0;
+  const hasHistoricalEnrollmentTrend =
+    Object.keys(analytics?.enrollment?.enrollmentTrend ?? {}).length > 0;
   const maxEnrollmentTrend = Math.max(...enrollmentTrend.map((point) => point.value), 1);
   const calendarCells = useMemo(() => {
     const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
@@ -213,7 +212,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
   const liveStudents = analytics?.users?.students ?? kpis.totalStudents;
   const liveTeachers = analytics?.users?.teachers ?? kpis.totalTeachers;
-  const liveCourses = analytics?.courses?.activeCourses ?? analytics?.courses?.totalCourses ?? kpis.totalCourses;
+  const liveCourses =
+    analytics?.courses?.activeCourses ?? analytics?.courses?.totalCourses ?? kpis.totalCourses;
   const liveActiveUsers = analytics?.users?.accountStatusMix?.ACTIVE ?? kpis.activeUsers;
   const liveEnrollments = analytics?.enrollment?.activeEnrollments ?? kpis.activeEnrollments;
   const liveAttendance = analytics?.attendance?.averageAttendance;
@@ -292,7 +292,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm">
               <UserRoundCheck className="mb-5 h-4 w-4 text-emerald-300" />
               <p className="text-2xl font-semibold tabular-nums">
-                {analyticsLoading ? "…" : analyticsError ? "—" : analyticsIsPartial ? "Partial" : "Live"}
+                {analyticsLoading
+                  ? "…"
+                  : analyticsError
+                    ? "—"
+                    : analyticsIsPartial
+                      ? "Partial"
+                      : "Live"}
               </p>
               <p className="mt-1 text-[11px] text-slate-400">Analytics status</p>
             </div>
@@ -406,7 +412,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {enrollmentTrend.map((point, index) => {
                   const height = Math.max(10, (point.value / maxEnrollmentTrend) * 100);
                   return (
-                    <div key={`${point.label}-${index}`} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                    <div
+                      key={`${point.label}-${index}`}
+                      className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2"
+                    >
                       <span className="text-[10px] font-semibold text-indigo-600 opacity-0 transition group-hover:opacity-100 dark:text-indigo-300">
                         {point.value.toLocaleString()}
                       </span>
@@ -474,7 +483,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {analyticsLoading && <span className="text-indigo-500">Refreshing analytics…</span>}
             {analyticsError && <span className="text-rose-500">Analytics unavailable</span>}
             {analyticsIsPartial && !analyticsError && (
-              <span className="text-amber-600 dark:text-amber-400">Some analytics sections unavailable</span>
+              <span className="text-amber-600 dark:text-amber-400">
+                Some analytics sections unavailable
+              </span>
             )}
           </div>
         </div>
@@ -500,7 +511,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
               <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-900">
                 <span className="text-3xl font-semibold text-slate-950 dark:text-white">
-                  {(analytics?.users?.totalUsers ?? registrationOverview?.totalUsers)?.toLocaleString() ?? "—"}
+                  {(
+                    analytics?.users?.totalUsers ?? registrationOverview?.totalUsers
+                  )?.toLocaleString() ?? "—"}
                 </span>
                 <span className="mt-1 text-[11px] text-slate-500">registered users</span>
               </div>
