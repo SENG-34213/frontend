@@ -47,7 +47,7 @@ const mapCourseAssignment = (item: BackendAssignment): Assignment => {
     totalStudents: 0,
     rubricItems: (item.rubricItems || []).map((rubric) => ({
       criterion: rubric.criterion,
-      marks: rubric.marks,
+      percentageWeight: rubric.percentageWeight,
     })),
   };
 };

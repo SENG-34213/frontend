@@ -3,6 +3,37 @@ import type { ApiResponse } from "../auth/authTypes";
 
 export type BackendAssignmentStatus = "DRAFT" | "PUBLISHED" | "CLOSED";
 
+export type AssignmentRubricInput = { criterion: string; percentageWeight: string };
+export type AssignmentRubricItemDraft = { criterion: string; percentageWeight: number };
+
+export function serializeRubricItems(items: AssignmentRubricInput[]): AssignmentRubricItemDraft[] {
+  if (!items.length) return [];
+
+  let totalHundredths = 0;
+  const rubricItems = items.map((item) => {
+    const criterion = item.criterion.trim();
+    const rawWeight = item.percentageWeight.trim();
+    if (!criterion) throw new Error("Enter a criterion for every rubric percentage.");
+    if (!/^(?:\d+(?:\.\d{1,2})?|\.\d{1,2})$/.test(rawWeight)) {
+      throw new Error("Enter a percentage weight with up to 2 decimal places.");
+    }
+
+    const percentageWeight = Number(rawWeight);
+    if (percentageWeight < 0 || percentageWeight > 100) {
+      throw new Error("Rubric percentage weights must be between 0 and 100.");
+    }
+
+    const [whole = "0", fraction = ""] = rawWeight.split(".");
+    totalHundredths += Number(whole) * 100 + Number(fraction.padEnd(2, "0"));
+    return { criterion, percentageWeight };
+  });
+
+  if (totalHundredths !== 10000) {
+    throw new Error("Rubric percentage weights must total 100%.");
+  }
+  return rubricItems;
+}
+
 export type BackendAssignment = {
   id: string;
   courseId: string;
@@ -22,7 +53,7 @@ export type BackendAssignment = {
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
-  rubricItems?: { id?: string; criterion: string; marks: number; displayOrder?: number }[];
+  rubricItems?: { id?: string; criterion: string; percentageWeight: number; displayOrder?: number }[];
   totalSubmissions?: number;
   gradedCount?: number;
 };
@@ -57,7 +88,7 @@ export type AssignmentDraft = {
   allowedAttempts: number;
   allowLateSubmission: boolean;
   latePenaltyPercentage?: number;
-  rubricItems?: { criterion: string; marks: number }[];
+  rubricItems?: AssignmentRubricItemDraft[];
 };
 
 export type AssignmentUpdateDraft = Omit<AssignmentDraft, "courseId" | "moduleId" | "lessonId">;

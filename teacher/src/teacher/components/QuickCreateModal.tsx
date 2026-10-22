@@ -16,7 +16,11 @@ import {
 import type { BackendCourse } from "../api/courseApi";
 import { createCourse } from "../api/courseApi";
 import type { QuizDraft } from "../api/quizApi";
-import { createAssignment, uploadAssignmentAttachment } from "../api/assignmentApi";
+import {
+  createAssignment,
+  serializeRubricItems,
+  uploadAssignmentAttachment,
+} from "../api/assignmentApi";
 import {
   createCourseModule,
   createModuleLesson,
@@ -91,7 +95,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [allowedAttempts, setAllowedAttempts] = useState("1");
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
-  const [rubricItems, setRubricItems] = useState<Array<{ criterion: string; marks: string }>>([]);
+  const [rubricItems, setRubricItems] = useState<Array<{ criterion: string; percentageWeight: string }>>([]);
   const [assignmentFiles, setAssignmentFiles] = useState<File[]>([]);
   const [lessonContentType, setLessonContentType] = useState("Lecture");
   const [lessonContentMarkdown, setLessonContentMarkdown] = useState("");
@@ -433,9 +437,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           allowedAttempts: Number(allowedAttempts),
           allowLateSubmission,
           latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
-          rubricItems: rubricItems
-            .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
-            .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
+          rubricItems: serializeRubricItems(rubricItems),
         });
         const uploadResults = await Promise.allSettled(
           assignmentFiles.map((file) => uploadAssignmentAttachment(created.id, file)),
@@ -825,18 +827,19 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       <button
                         type="button"
                         onClick={() =>
-                          setRubricItems((items) => [...items, { criterion: "", marks: "" }])
+                          setRubricItems((items) => [
+                            ...items,
+                            { criterion: "", percentageWeight: "" },
+                          ])
                         }
                         className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
                       >
                         + Add criterion
                       </button>
                     </div>
-                    {rubricItems.length === 0 && (
-                      <p className="text-[11px] text-slate-400">
-                        Optional: add criteria and marks for grading.
-                      </p>
-                    )}
+                    <p className="text-[11px] text-slate-400">
+                      Optional: add criteria with percentage weights that total 100%.
+                    </p>
                     {rubricItems.map((item, index) => (
                       <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input
@@ -854,13 +857,15 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                         />
                         <input
                           type="number"
-                          min="1"
-                          placeholder="Marks"
-                          value={item.marks}
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="Weight (%)"
+                          value={item.percentageWeight}
                           onChange={(e) =>
                             setRubricItems((items) =>
                               items.map((row, rowIndex) =>
-                                rowIndex === index ? { ...row, marks: e.target.value } : row,
+                                rowIndex === index ? { ...row, percentageWeight: e.target.value } : row,
                               ),
                             )
                           }

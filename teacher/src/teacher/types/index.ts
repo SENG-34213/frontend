@@ -130,7 +130,7 @@ export interface Assignment {
   totalSubmissions: number;
   gradedCount: number;
   totalStudents: number;
-  rubricItems: { criterion: string; marks: number }[];
+  rubricItems: { criterion: string; percentageWeight: number }[];
 }
 
 export interface StudentSubmission {

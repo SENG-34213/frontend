@@ -29,6 +29,7 @@ import {
   deleteAssignmentAttachment,
   getAssignmentAttachmentDownload,
   listAssignmentAttachments,
+  serializeRubricItems,
   uploadAssignmentAttachment,
   type BackendAssignment,
   type AssignmentAttachment,
@@ -46,7 +47,7 @@ interface AssignmentDashboardViewProps {
   refreshToken?: number;
 }
 
-type EditRubric = { criterion: string; marks: string };
+type EditRubric = { criterion: string; percentageWeight: string };
 
 const AssignmentStudentPreview: React.FC<{
   title: string;
@@ -206,7 +207,7 @@ const AssignmentStudentPreview: React.FC<{
                   >
                     <span className="text-slate-700">{item.criterion || "Untitled criterion"}</span>
                     <span className="font-mono font-semibold text-indigo-600">
-                      {item.marks || "0"} pts
+                      {item.percentageWeight || "0"}%
                     </span>
                   </div>
                 ))}
@@ -258,7 +259,7 @@ const AssignmentEditModal: React.FC<{
     setRubricItems(
       (assignment.rubricItems || []).map((item) => ({
         criterion: item.criterion,
-        marks: String(item.marks),
+        percentageWeight: String(item.percentageWeight),
       })),
     );
     setAttachments([]);
@@ -302,9 +303,7 @@ const AssignmentEditModal: React.FC<{
         allowedAttempts: Number(allowedAttempts),
         allowLateSubmission,
         latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
-        rubricItems: rubricItems
-          .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
-          .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
+        rubricItems: serializeRubricItems(rubricItems),
       });
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Assignment could not be updated.");
@@ -585,12 +584,20 @@ const AssignmentEditModal: React.FC<{
               <span className="text-xs font-semibold text-slate-700">Rubric criteria</span>
               <button
                 type="button"
-                onClick={() => setRubricItems((items) => [...items, { criterion: "", marks: "" }])}
+                onClick={() =>
+                  setRubricItems((items) => [
+                    ...items,
+                    { criterion: "", percentageWeight: "" },
+                  ])
+                }
                 className="text-xs font-semibold text-indigo-600"
               >
                 + Add criterion
               </button>
             </div>
+            <p className="text-[11px] text-slate-500">
+              Optional: add criteria with percentage weights that total 100%.
+            </p>
             {rubricItems.map((item, index) => (
               <div key={index} className="flex flex-col gap-2 sm:flex-row">
                 <input
@@ -607,13 +614,15 @@ const AssignmentEditModal: React.FC<{
                 />
                 <input
                   type="number"
-                  min="1"
-                  placeholder="Marks"
-                  value={item.marks}
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  placeholder="Weight (%)"
+                  value={item.percentageWeight}
                   onChange={(e) =>
                     setRubricItems((items) =>
                       items.map((row, i) =>
-                        i === index ? { ...row, marks: e.target.value } : row,
+                        i === index ? { ...row, percentageWeight: e.target.value } : row,
                       ),
                     )
                   }
@@ -699,7 +708,7 @@ const toAssignment = (item: BackendAssignment, courses: BackendCourse[]): Assign
     totalStudents: course?.numberOfStudents ?? 0,
     rubricItems: (item.rubricItems || []).map((rubric) => ({
       criterion: rubric.criterion,
-      marks: rubric.marks,
+      percentageWeight: rubric.percentageWeight,
     })),
   };
 };

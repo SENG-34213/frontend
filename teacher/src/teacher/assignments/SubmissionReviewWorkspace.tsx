@@ -54,7 +54,7 @@ const mapBackendAssignment = (item: BackendAssignment): Assignment => {
     totalStudents: 0,
     rubricItems: (item.rubricItems || []).map((rubric) => ({
       criterion: rubric.criterion,
-      marks: rubric.marks,
+      percentageWeight: rubric.percentageWeight,
     })),
   };
 };
@@ -470,7 +470,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   >
                     <span className="text-slate-700 leading-snug">{r.criterion}</span>
                     <span className="font-mono font-bold text-slate-900 tabular-nums shrink-0">
-                      {r.marks}m
+                      {r.percentageWeight}%
                     </span>
                   </div>
                 ))}
