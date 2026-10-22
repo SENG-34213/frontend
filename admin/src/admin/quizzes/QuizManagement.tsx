@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { HelpCircle, Search, BarChart3, Clock, CheckCircle2, Award } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { DetailDrawer } from "../components/DetailDrawer";
 import { Quiz } from "../types";
+import { fetchTodayAdminQuizAnalytics, type AdminQuizAnalyticsItem } from "../api/quizAnalyticsApi";
 
 interface QuizManagementProps {
   quizzes: Quiz[];
@@ -12,6 +13,51 @@ interface QuizManagementProps {
 export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [todayAnalytics, setTodayAnalytics] = useState<AdminQuizAnalyticsItem[]>([]);
+  const [analyticsDate, setAnalyticsDate] = useState("");
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetchTodayAdminQuizAnalytics()
+      .then((response) => {
+        if (!active) return;
+        setTodayAnalytics(response?.quizzes ?? []);
+        setAnalyticsDate(response?.date ?? "");
+      })
+      .catch(() => {
+        if (active) setAnalyticsError("Live quiz analytics are temporarily unavailable.");
+      })
+      .finally(() => {
+        if (active) setAnalyticsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const aggregateAnalytics = useMemo(() => {
+    const totals = todayAnalytics.reduce(
+      (result, quiz) => ({
+        submitted: result.submitted + quiz.submittedAttempts,
+        participants: result.participants + quiz.participants,
+        passed: result.passed + quiz.passedAttempts,
+        scoreTotal: result.scoreTotal + (quiz.averagePercentage ?? 0),
+      }),
+      { submitted: 0, participants: 0, passed: 0, scoreTotal: 0 },
+    );
+    return {
+      averageScore: todayAnalytics.length ? totals.scoreTotal / todayAnalytics.length : null,
+      attempts: totals.submitted,
+      passingRate: totals.submitted ? (totals.passed / totals.submitted) * 100 : null,
+      courseCount: new Set(todayAnalytics.map((quiz) => quiz.courseId)).size,
+    };
+  }, [todayAnalytics]);
+
+  const selectedAnalytics = selectedQuiz
+    ? todayAnalytics.find((quiz) => quiz.quizId === selectedQuiz.id)
+    : undefined;
 
   const filteredQuizzes = quizzes.filter(
     (q) =>
@@ -28,6 +74,12 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
         breadcrumbs={[{ label: "Admin" }, { label: "Academic Management" }, { label: "Quizzes" }]}
       />
 
+      {analyticsError && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          {analyticsError} Existing quiz records remain available below.
+        </div>
+      )}
+
       {/* Analytics Highlights */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
@@ -35,23 +87,33 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
             Average Institutional Quiz Score
           </span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-            83.6%
+            {analyticsLoading || aggregateAnalytics.averageScore === null
+              ? "—"
+              : `${aggregateAnalytics.averageScore.toFixed(1)}%`}
           </span>
-          <span className="text-[11px] text-emerald-600 block mt-1">
-            +2.4% vs midterm benchmark
+          <span className="text-[11px] text-slate-400 block mt-1">
+            {analyticsDate ? `Live results for ${analyticsDate}` : "No live results loaded"}
           </span>
         </div>
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500 block mb-1">Total Quiz Attempts Recorded</span>
           <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-            183 Attempts
+            {analyticsLoading ? "—" : `${aggregateAnalytics.attempts} Attempts`}
           </span>
-          <span className="text-[11px] text-slate-400 block mt-1">Across 3 active courses</span>
+          <span className="text-[11px] text-slate-400 block mt-1">
+            Across {aggregateAnalytics.courseCount} courses
+          </span>
         </div>
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <span className="text-xs text-slate-500 block mb-1">Average Passing Rate</span>
-          <span className="text-2xl font-bold text-emerald-600 tabular-nums">91.0%</span>
-          <span className="text-[11px] text-slate-400 block mt-1">Threshold: 70% passing</span>
+          <span className="text-2xl font-bold text-emerald-600 tabular-nums">
+            {analyticsLoading || aggregateAnalytics.passingRate === null
+              ? "—"
+              : `${aggregateAnalytics.passingRate.toFixed(1)}%`}
+          </span>
+          <span className="text-[11px] text-slate-400 block mt-1">
+            Calculated from submitted attempts
+          </span>
         </div>
       </div>
 
@@ -169,27 +231,38 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
                 Score Distribution Breakdown
               </h5>
               <div className="space-y-2">
-                {[
-                  { range: "90 - 100% (High Distinction)", count: 28, pct: 42 },
-                  { range: "80 - 89% (Distinction)", count: 24, pct: 36 },
-                  { range: "70 - 79% (Credit)", count: 9, pct: 14 },
-                  { range: "< 70% (Below Threshold)", count: 5, pct: 8 },
-                ].map((item, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex justify-between text-[11px]">
-                      <span className="text-slate-600 dark:text-slate-300">{item.range}</span>
-                      <span className="font-mono text-slate-500 tabular-nums">
-                        {item.count} students ({item.pct}%)
-                      </span>
+                {selectedAnalytics ? (
+                  <>
+                    <div className="space-y-2 text-[11px] text-slate-600 dark:text-slate-300">
+                      <p>
+                        {selectedAnalytics.submittedAttempts} submitted attempts from{" "}
+                        {selectedAnalytics.participants} participants.
+                      </p>
+                      <p>
+                        {selectedAnalytics.passedAttempts} passed and{" "}
+                        {selectedAnalytics.belowPassThresholdAttempts} below the{" "}
+                        {selectedAnalytics.passMark}% threshold.
+                      </p>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                       <div
-                        className="h-full bg-indigo-600 rounded-full"
-                        style={{ width: `${item.pct}%` }}
+                        className="h-full rounded-full bg-indigo-600"
+                        style={{
+                          width: `${selectedAnalytics.submittedAttempts ? (selectedAnalytics.passedAttempts / selectedAnalytics.submittedAttempts) * 100 : 0}%`,
+                        }}
                       />
                     </div>
-                  </div>
-                ))}
+                    <div className="grid grid-cols-3 gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                      <span>Average: {selectedAnalytics.averagePercentage ?? "—"}%</span>
+                      <span>Highest: {selectedAnalytics.highestPercentage ?? "—"}%</span>
+                      <span>Lowest: {selectedAnalytics.lowestPercentage ?? "—"}%</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Live analytics are not available for this quiz today.
+                  </p>
+                )}
               </div>
             </div>
           </div>
