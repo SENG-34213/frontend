@@ -23,6 +23,10 @@ const value = (input: number | string | null | undefined) => {
   const parsed = Number(input);
   return Number.isFinite(parsed) ? parsed : null;
 };
+const percentage = (input: number | string | null | undefined) => {
+  const parsed = value(input);
+  return parsed == null ? null : Math.min(100, Math.max(0, parsed));
+};
 
 export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
   onNavigate,
@@ -65,11 +69,11 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
   }, [courseId, retryToken, timeRange]);
 
   const summary = analytics?.summary;
-  const attendanceAverage = value(
+  const attendanceAverage = percentage(
     summary?.attendanceAverage ?? analytics?.attendance?.attendanceRate,
   );
-  const submissionRate = value(summary?.submissionRate);
-  const averagePercentage = value(summary?.averagePercentage);
+  const submissionRate = percentage(summary?.submissionRate);
+  const averagePercentage = percentage(summary?.averagePercentage);
   const gradeDistribution = analytics?.gradeDistribution ?? [];
   const correlation = analytics?.attendanceCorrelation ?? [];
   const atRisk = analytics?.atRiskStudents ?? [];
@@ -203,13 +207,13 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-800">Grade {item.grade}</span>
                   <span className="font-mono text-slate-600">
-                    {item.count} students ({value(item.percentage) ?? 0}%)
+                    {item.count} students ({percentage(item.percentage) ?? 0}%)
                   </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-indigo-600"
-                    style={{ width: `${Math.min(100, value(item.percentage) ?? 0)}%` }}
+                    style={{ width: `${percentage(item.percentage) ?? 0}%` }}
                   />
                 </div>
               </div>
@@ -233,7 +237,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
           </div>
           <div className="space-y-3 pt-2">
             {correlation.map((item) => {
-              const score = value(item.averageAssessmentPercentage) ?? 0;
+              const score = percentage(item.averageAssessmentPercentage) ?? 0;
               return (
                 <div key={item.attendanceRange} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
@@ -292,24 +296,24 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
                       </p>
                     </td>
                     <td className="px-2 py-3 text-right font-mono tabular-nums">
-                      {value(course.attendanceRate) == null
+                      {percentage(course.attendanceRate) == null
                         ? "—"
-                        : `${Number(value(course.attendanceRate)).toFixed(1)}%`}
+                        : `${Number(percentage(course.attendanceRate)).toFixed(1)}%`}
                     </td>
                     <td className="px-2 py-3 text-right font-mono tabular-nums">
-                      {value(course.assignmentAverage) == null
+                      {percentage(course.assignmentAverage) == null
                         ? "—"
-                        : `${Number(value(course.assignmentAverage)).toFixed(1)}%`}
+                        : `${Number(percentage(course.assignmentAverage)).toFixed(1)}%`}
                     </td>
                     <td className="px-2 py-3 text-right font-mono tabular-nums">
-                      {value(course.quizAverage) == null
+                      {percentage(course.quizAverage) == null
                         ? "—"
-                        : `${Number(value(course.quizAverage)).toFixed(1)}%`}
+                        : `${Number(percentage(course.quizAverage)).toFixed(1)}%`}
                     </td>
                     <td className="pl-2 py-3 text-right font-mono tabular-nums">
-                      {value(course.examAverage) == null
+                      {percentage(course.examAverage) == null
                         ? "—"
-                        : `${Number(value(course.examAverage)).toFixed(1)}%`}
+                        : `${Number(percentage(course.examAverage)).toFixed(1)}%`}
                     </td>
                   </tr>
                 ))}
