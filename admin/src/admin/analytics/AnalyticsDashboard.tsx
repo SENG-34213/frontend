@@ -1,166 +1,257 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  BarChart3,
-  TrendingUp,
-  Users,
-  GraduationCap,
-  CalendarCheck2,
-  BookOpen,
+  AlertTriangle,
   Award,
-  Filter,
+  BookOpen,
+  CalendarCheck2,
+  CircleDollarSign,
+  GraduationCap,
+  Loader2,
+  RefreshCcw,
+  Users,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatCard } from "../components/StatCard";
-import { PlatformKPIs } from "../types";
+import { ApiError } from "../api/client";
+import { fetchAdminAnalyticsOverview, type AdminAnalyticsOverview } from "../api/analyticsApi";
 
-interface AnalyticsDashboardProps {
-  kpis: PlatformKPIs;
+const numberFormatter = new Intl.NumberFormat("en-US");
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "LKR",
+  maximumFractionDigits: 0,
+});
+
+function formatNumber(value: number | undefined): string {
+  return value === undefined ? "—" : numberFormatter.format(value);
 }
 
-export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ kpis }) => {
-  const [timeFilter, setTimeFilter] = useState<"30d" | "90d" | "1y">("30d");
+function formatPercentage(value: number | undefined): string {
+  return value === undefined ? "—" : `${value.toFixed(1)}%`;
+}
 
-  // Distribution chart data
-  const departmentEnrollments = [
-    { name: "Mathematics", count: 1240, percentage: 38 },
-    { name: "Computer Science", count: 980, percentage: 30 },
-    { name: "Natural Sciences", count: 650, percentage: 20 },
-    { name: "Humanities & Social", count: 420, percentage: 12 },
-  ];
+function formatCurrency(value: number | undefined): string {
+  return value === undefined ? "—" : currencyFormatter.format(value);
+}
 
-  const attendanceWeekly = [
-    { day: "Mon", rate: 96.4 },
-    { day: "Tue", rate: 95.8 },
-    { day: "Wed", rate: 97.2 },
-    { day: "Thu", rate: 94.1 },
-    { day: "Fri", rate: 92.5 },
-  ];
+function getErrorMessage(error: unknown): string {
+  if (error instanceof ApiError && error.status === 403) {
+    return "You do not have permission to view platform analytics.";
+  }
+
+  if (error instanceof ApiError && error.status === 401) {
+    return "Your admin session has expired. Please sign in again.";
+  }
+
+  return "Analytics could not be loaded right now. Please try again.";
+}
+
+function MetricUnavailable({ label }: { label: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+      {label} is not available yet.
+    </div>
+  );
+}
+
+export const AnalyticsDashboard: React.FC = () => {
+  const [analytics, setAnalytics] = useState<AdminAnalyticsOverview | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadAnalytics = useCallback(async (refresh = false) => {
+    setError("");
+    if (refresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+
+    try {
+      const nextAnalytics = await fetchAdminAnalyticsOverview();
+      setAnalytics(nextAnalytics);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const initialLoad = window.setTimeout(() => {
+      void loadAnalytics();
+    }, 0);
+
+    return () => window.clearTimeout(initialLoad);
+  }, [loadAnalytics]);
+
+  const users = analytics?.users;
+  const courses = analytics?.courses;
+  const enrollment = analytics?.enrollment;
+  const attendance = analytics?.attendance;
+  const assessment = analytics?.assessment;
+  const payments = analytics?.payments;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Institutional Analytics & Reporting"
-        description="Cross-service operational intelligence, longitudinal registration velocity, and cohort performance distributions."
+        description="Cross-service operational intelligence from the live Analytics Service."
         breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Analytics" }]}
         actions={
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs">
-            {(["30d", "90d", "1y"] as const).map((r) => (
-              <button
-                key={r}
-                onClick={() => setTimeFilter(r)}
-                className={`px-3 py-1 font-medium rounded-md capitalize transition-colors ${
-                  timeFilter === r
-                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {r === "30d" ? "30 Days" : r === "90d" ? "90 Days" : "Past Year"}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={() => void loadAnalytics(true)}
+            disabled={isLoading || isRefreshing}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-wait disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-indigo-700 dark:hover:text-indigo-300"
+          >
+            <RefreshCcw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            {isRefreshing ? "Refreshing" : "Refresh"}
+          </button>
         }
       />
 
-      {/* Primary KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Student Population"
-          value={kpis.totalStudents}
-          subtitle="Enrolled active learners"
-          change="+8.4% YoY"
-          icon={GraduationCap}
-        />
-        <StatCard
-          title="Active Course Enrollments"
-          value={kpis.activeEnrollments}
-          subtitle="2.3 per student avg"
-          change="+14.2% YoY"
-          icon={BookOpen}
-        />
-        <StatCard
-          title="Attendance Compliance"
-          value="95.1%"
-          subtitle="Roll call verified"
-          change="+1.1% vs term target"
-          icon={CalendarCheck2}
-        />
-        <StatCard
-          title="Formative Pass Median"
-          value="88.2%"
-          subtitle="Across 48 courses"
-          change="+3.4% vs benchmark"
-          icon={Award}
-        />
-      </div>
+      {isLoading ? (
+        <div
+          role="status"
+          className="flex min-h-48 items-center justify-center rounded-xl border border-slate-200 bg-white text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+        >
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Loading live platform analytics…
+        </div>
+      ) : error ? (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200"
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadAnalytics(true)}
+            className="shrink-0 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-700"
+          >
+            Try again
+          </button>
+        </div>
+      ) : (
+        <>
+          {analytics?.partial && (
+            <div
+              role="status"
+              className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200"
+            >
+              <AlertTriangle className="h-5 w-5 shrink-0" />
+              Some analytics sections are temporarily incomplete. Available values are shown below.
+            </div>
+          )}
 
-      {/* 2-Column Visual Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Department Enrollment Distribution Bar Chart */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Enrollment Distribution by Academic Faculty
-            </h3>
-            <p className="text-xs text-slate-500">
-              Active student enrollments partitioned by subject department
-            </p>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard
+              title="Total Users"
+              value={formatNumber(users?.totalUsers)}
+              subtitle={`${formatNumber(users?.students)} students`}
+              icon={Users}
+            />
+            <StatCard
+              title="Active Courses"
+              value={formatNumber(courses?.activeCourses)}
+              subtitle={`${formatNumber(courses?.totalCourses)} total courses`}
+              icon={BookOpen}
+            />
+            <StatCard
+              title="Average Attendance"
+              value={formatPercentage(attendance?.averageAttendance)}
+              subtitle={`${formatNumber(enrollment?.activeEnrollments)} active enrollments`}
+              icon={CalendarCheck2}
+            />
+            <StatCard
+              title="Successful Payments"
+              value={formatNumber(payments?.successfulPayments)}
+              subtitle={formatCurrency(payments?.revenue)}
+              icon={CircleDollarSign}
+            />
           </div>
 
-          <div className="space-y-3 pt-2">
-            {departmentEnrollments.map((dept, idx) => (
-              <div key={idx} className="space-y-1 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-slate-800 dark:text-slate-200">
-                    {dept.name}
-                  </span>
-                  <span className="font-mono text-slate-500 tabular-nums">
-                    {dept.count.toLocaleString()} seats ({dept.percentage}%)
-                  </span>
-                </div>
-                <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-indigo-600 rounded-full transition-all duration-500"
-                    style={{ width: `${dept.percentage * 2.5}%` }}
-                  />
-                </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Platform user distribution
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Current role totals returned by the Analytics Service.
+                </p>
               </div>
-            ))}
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard
+                  title="Students"
+                  value={formatNumber(users?.students)}
+                  icon={GraduationCap}
+                />
+                <StatCard title="Teachers" value={formatNumber(users?.teachers)} icon={Users} />
+                <StatCard title="Admins" value={formatNumber(users?.admins)} icon={Award} />
+              </div>
+            </section>
+
+            <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  Assessment performance
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Current completion and average scores returned by the Analytics Service.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <StatCard
+                  title="Assignment Completion"
+                  value={formatPercentage(assessment?.assignmentCompletionRate)}
+                />
+                <StatCard
+                  title="Average Quiz Score"
+                  value={formatPercentage(assessment?.averageQuizScore)}
+                />
+                <StatCard
+                  title="Average Exam Score"
+                  value={formatPercentage(assessment?.averageExamScore)}
+                />
+              </div>
+            </section>
           </div>
-        </div>
 
-        {/* Weekly Attendance Trend Card */}
-        <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Weekly Attendance Compliance Trends
-            </h3>
-            <p className="text-xs text-slate-500">
-              Daily percentage of confirmed present roll calls across all sessions
-            </p>
-          </div>
-
-          <div className="h-44 flex items-end justify-between gap-4 pt-6 pb-2 px-2">
-            {attendanceWeekly.map((item, idx) => {
-              const heightPct = (item.rate - 85) * 6.5; // Scale from 85% to 100%
-
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 tabular-nums">
-                    {item.rate}%
-                  </span>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-t-lg h-28 flex items-end">
-                    <div
-                      className="w-full bg-emerald-500 rounded-t-lg transition-all"
-                      style={{ height: `${heightPct}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-semibold text-slate-500">{item.day}</span>
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div>
+              <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+                Enrolment activity
+              </h2>
+              {enrollment ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <StatCard
+                    title="Active Enrolments"
+                    value={formatNumber(enrollment.activeEnrollments)}
+                  />
+                  <StatCard title="New This Month" value={formatNumber(enrollment.newThisMonth)} />
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+              ) : (
+                <MetricUnavailable label="Enrolment activity" />
+              )}
+            </div>
+            <div>
+              <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+                Historical trends
+              </h2>
+              <MetricUnavailable label="Historical trend charts" />
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 };

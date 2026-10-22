@@ -875,7 +875,7 @@ export default function App() {
 
       {currentRoute === "ai-assistant" && <MentifyAIAssistant />}
 
-      {currentRoute === "analytics" && <AnalyticsDashboard kpis={kpis} />}
+      {currentRoute === "analytics" && <AnalyticsDashboard />}
 
       {currentRoute === "reports" && <ReportsManagement />}
 
