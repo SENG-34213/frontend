@@ -12,8 +12,13 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({ name, avatarUrl, size = 
   const [resolvedAvatar, setResolvedAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!avatarUrl) { setResolvedAvatar(null); return; }
+    if (!avatarUrl) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResolvedAvatar(null);
+      return;
+    }
     if (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:")) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResolvedAvatar(avatarUrl); return;
     }
     let active = true;

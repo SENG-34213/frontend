@@ -50,7 +50,10 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!selectedGradeId && grades.length > 0) setSelectedGradeId(grades[0].id);
+    if (!selectedGradeId && grades.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedGradeId(grades[0].id);
+    }
   }, [grades, selectedGradeId]);
 
   const selectedGrade = grades.find((grade) => grade.id === selectedGradeId);

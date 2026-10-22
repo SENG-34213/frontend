@@ -39,9 +39,13 @@ import {
   MOCK_ATTENDANCE_SESSIONS,
   MOCK_MATERIALS,
   MOCK_EVENTS,
-  MOCK_NOTIFICATIONS,
   MOCK_AUDIT_LOGS,
 } from "./admin/mockData";
+import {
+  getAdminNotifications,
+  markAdminNotificationRead,
+  markAllAdminNotificationsRead,
+} from "./admin/api/notificationApi";
 
 // Screens
 import { AdminDashboard } from "./admin/dashboard/AdminDashboard";
@@ -139,7 +143,7 @@ export default function App() {
   const [materials, setMaterials] = useState<LearningMaterial[]>(MOCK_MATERIALS);
   const [events, setEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
   const [upcomingEvents, setUpcomingEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEvent[]>(MOCK_AUDIT_LOGS);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -154,6 +158,43 @@ export default function App() {
   > | null>(null);
   const [registrationOverviewLoading, setRegistrationOverviewLoading] = useState(false);
   const [registrationOverviewError, setRegistrationOverviewError] = useState("");
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNotifications([]);
+      return;
+    }
+
+    let active = true;
+    void getAdminNotifications()
+      .then((page) => {
+        if (!active) return;
+        setNotifications(page.notifications.map((notification) => ({
+          id: notification.id,
+          title: notification.title,
+          message: notification.message,
+          category: notification.type?.includes("SECURITY")
+            ? "SECURITY"
+            : notification.type?.includes("REGISTRATION")
+              ? "REGISTRATION"
+              : notification.type?.includes("ACADEMIC") || notification.type?.includes("EXAM")
+                ? "ACADEMIC"
+                : "SYSTEM",
+          timestamp: new Date(
+            notification.occurredAt || notification.createdAt || Date.now(),
+          ).toLocaleString(),
+          read: Boolean(notification.readAt),
+        })));
+      })
+      .catch(() => {
+        if (active) setNotifications([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     let mounted = true;
@@ -324,7 +365,7 @@ export default function App() {
     void loadRegistrationOverview();
   }, [isAuthenticated]);
 
-  const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
+  function addToast(type: "success" | "error" | "info", title: string, description?: string) {
     const newToast: ToastMessage = {
       id: `toast-${Date.now()}-${Math.random()}`,
       type,
@@ -335,7 +376,7 @@ export default function App() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
     }, 4500);
-  };
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -665,10 +706,14 @@ export default function App() {
 
   const handleMarkNotificationRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    void markAdminNotificationRead(id).catch(() => {
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)));
+    });
   };
 
   const handleMarkAllNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    void markAllAdminNotificationsRead();
     addToast("info", "All notifications marked as read");
   };
 
