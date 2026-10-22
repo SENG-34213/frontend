@@ -23,9 +23,18 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   retryOnUnauthorized?: boolean;
 };
 
-function safeErrorMessage(body: any, status: number): string {
-  const raw = typeof body?.message === "string" ? body.message : typeof body?.error === "string" ? body.error : "";
-  const technical = /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(raw);
+function safeErrorMessage(body: unknown, status: number): string {
+  const errorBody = body as { message?: unknown; error?: unknown } | null;
+  const raw =
+    typeof errorBody?.message === "string"
+      ? errorBody.message
+      : typeof errorBody?.error === "string"
+        ? errorBody.error
+        : "";
+  const technical =
+    /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(
+      raw,
+    );
   if (status >= 500 || technical) {
     return status === 502 || status === 503 || status === 504
       ? "The service is temporarily unavailable. Please try again shortly."
@@ -95,7 +104,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch (error) {
-    throw new ApiError("The service is temporarily unavailable. Please try again shortly.", 503, error);
+    throw new ApiError(
+      "The service is temporarily unavailable. Please try again shortly.",
+      503,
+      error,
+    );
   }
   const responseBody = await readJson(response);
 

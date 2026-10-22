@@ -376,8 +376,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   // Selected grade and faculty in real time
   const formSelectedGrade = grades.find((g) => g.id === formData.gradeId);
-  const subjectDomainOptions =
-    formSelectedGrade?.subjectDomains?.length ? formSelectedGrade.subjectDomains : COMMON_SUBJECTS;
+  const subjectDomainOptions = formSelectedGrade?.subjectDomains?.length
+    ? formSelectedGrade.subjectDomains
+    : COMMON_SUBJECTS;
   const formSelectedTeacher = teachers.find(
     (teacher) => teacherAssignmentId(teacher) === formData.assignedTeacherId,
   );

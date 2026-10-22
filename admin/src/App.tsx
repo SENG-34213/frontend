@@ -206,11 +206,12 @@ export default function App() {
 
     const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);
     // The route is restored from browser storage after hydration.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (storedRoute === "users") {
-      setCurrentRoute("dashboard");
-    } else if (storedRoute) {
-      setCurrentRoute(storedRoute as AdminRoute);
+    const restoredRoute = storedRoute === "users" ? "dashboard" : storedRoute;
+    if (restoredRoute) {
+      const routeRestore = window.setTimeout(() => {
+        setCurrentRoute(restoredRoute as AdminRoute);
+      }, 0);
+      return () => window.clearTimeout(routeRestore);
     }
   }, [isAuthReady]);
 
@@ -324,7 +325,7 @@ export default function App() {
     void loadRegistrationOverview();
   }, [isAuthenticated]);
 
-  const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
+  function addToast(type: "success" | "error" | "info", title: string, description?: string) {
     const newToast: ToastMessage = {
       id: `toast-${Date.now()}-${Math.random()}`,
       type,
@@ -335,7 +336,7 @@ export default function App() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
     }, 4500);
-  };
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -430,11 +431,7 @@ export default function App() {
 
     try {
       await resendUserInvitation(user.id);
-      addToast(
-        "success",
-        "Invitation sent",
-        `A new activation email was sent to ${email}.`,
-      );
+      addToast("success", "Invitation sent", `A new activation email was sent to ${email}.`);
 
       // Record the action only after the backend confirms delivery/dispatch.
       const newLog: AuditEvent = {
@@ -612,7 +609,11 @@ export default function App() {
         ? previous.map((item) => (item.id === existing.id ? created : item))
         : [created, ...previous];
     });
-    addToast("success", "Student Enrolled", "The selected course was added to the student’s learning plan.");
+    addToast(
+      "success",
+      "Student Enrolled",
+      "The selected course was added to the student’s learning plan.",
+    );
     return created;
   };
 

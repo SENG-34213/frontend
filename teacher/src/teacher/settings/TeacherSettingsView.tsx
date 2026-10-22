@@ -187,9 +187,14 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         description: groupDescription.trim() || undefined,
         studentMessagingEnabled: selectedGroup.studentMessagingEnabled !== false,
       });
-      if (saved) setCommunicationGroups((groups) => groups.map((group) => group.id === saved.id ? saved : group));
+      if (saved)
+        setCommunicationGroups((groups) =>
+          groups.map((group) => (group.id === saved.id ? saved : group)),
+        );
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to save group settings.");
+      setError(
+        requestError instanceof Error ? requestError.message : "Unable to save group settings.",
+      );
     } finally {
       setIsGroupSaving(false);
     }
@@ -205,9 +210,14 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
         description: selectedGroup.description,
         studentMessagingEnabled: selectedGroup.studentMessagingEnabled === false,
       });
-      if (saved) setCommunicationGroups((groups) => groups.map((group) => group.id === saved.id ? saved : group));
+      if (saved)
+        setCommunicationGroups((groups) =>
+          groups.map((group) => (group.id === saved.id ? saved : group)),
+        );
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to update student access.");
+      setError(
+        requestError instanceof Error ? requestError.message : "Unable to update student access.",
+      );
     } finally {
       setIsGroupSaving(false);
     }
@@ -218,12 +228,18 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
     setIsGroupSaving(true);
     setError(null);
     try {
-      const saved = selectedGroup.status === "ARCHIVED"
-        ? await unarchiveCommunicationGroup(selectedGroup.id)
-        : await archiveCommunicationGroup(selectedGroup.id);
-      if (saved) setCommunicationGroups((groups) => groups.map((group) => group.id === saved.id ? saved : group));
+      const saved =
+        selectedGroup.status === "ARCHIVED"
+          ? await unarchiveCommunicationGroup(selectedGroup.id)
+          : await archiveCommunicationGroup(selectedGroup.id);
+      if (saved)
+        setCommunicationGroups((groups) =>
+          groups.map((group) => (group.id === saved.id ? saved : group)),
+        );
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to update group status.");
+      setError(
+        requestError instanceof Error ? requestError.message : "Unable to update group status.",
+      );
     } finally {
       setIsGroupSaving(false);
     }
@@ -500,7 +516,9 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({ teache
                 disabled={isGroupSaving}
                 className={`rounded-full px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50 ${selectedGroup.studentMessagingEnabled === false ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}
               >
-                {selectedGroup.studentMessagingEnabled === false ? "Allow students" : "Pause students"}
+                {selectedGroup.studentMessagingEnabled === false
+                  ? "Allow students"
+                  : "Pause students"}
               </button>
             </div>
             <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">

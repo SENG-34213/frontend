@@ -31,8 +31,16 @@ async function readResponse(response: Response, responseType: "json" | "blob" = 
 }
 
 function safeErrorMessage(body: any, status: number): string {
-  const raw = typeof body?.message === "string" ? body.message : typeof body?.error === "string" ? body.error : "";
-  const technical = /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(raw);
+  const raw =
+    typeof body?.message === "string"
+      ? body.message
+      : typeof body?.error === "string"
+        ? body.error
+        : "";
+  const technical =
+    /entitymanager|hibernate|jdbc|sql|postgres|datasource|connection timed out|connecttimeout|timeout|exception|stack trace|org\.springframework|java\.|failed to execute/i.test(
+      raw,
+    );
   if (status >= 500 || technical) {
     return status === 502 || status === 503 || status === 504
       ? "The service is temporarily unavailable. Please try again shortly."
@@ -114,9 +122,17 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     });
   } catch (error) {
     if (timedOut) {
-      throw new ApiError("The service is taking too long to respond. Please try again shortly.", 504, error);
+      throw new ApiError(
+        "The service is taking too long to respond. Please try again shortly.",
+        504,
+        error,
+      );
     }
-    throw new ApiError("The service is temporarily unavailable. Please try again shortly.", 503, error);
+    throw new ApiError(
+      "The service is temporarily unavailable. Please try again shortly.",
+      503,
+      error,
+    );
   } finally {
     window.clearTimeout(timeoutId);
     callerSignal?.removeEventListener("abort", abortRequest);

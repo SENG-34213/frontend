@@ -264,7 +264,14 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
             className="flex items-center gap-2 rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-xs font-semibold text-white shadow-2xs">
-              {profile.avatar ? <img src={profile.avatar} alt="" className="h-full w-full object-cover" /> : profile.name.split(" ").map((n) => n[0]).join("")}
+              {profile.avatar ? (
+                <img src={profile.avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                profile.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+              )}
             </div>
             <span className="hidden lg:inline text-xs font-semibold text-slate-700 dark:text-slate-200">
               {profile.name}

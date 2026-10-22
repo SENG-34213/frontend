@@ -69,7 +69,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [adminProfile, setAdminProfile] = useState<CurrentAdminProfile | null>(null);
 
   useEffect(() => {
-    void getCurrentAdminProfile().then(setAdminProfile).catch(() => setAdminProfile(null));
+    void getCurrentAdminProfile()
+      .then(setAdminProfile)
+      .catch(() => setAdminProfile(null));
   }, []);
 
   // Keyboard shortcut listener for cmd+k

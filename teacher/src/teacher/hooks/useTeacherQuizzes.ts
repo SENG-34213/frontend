@@ -59,7 +59,6 @@ export function useTeacherQuizzes(enabled: boolean): TeacherQuizzesState {
         .finally(() => {
           requestStartedRef.current = false;
         });
-
     };
 
     loadQuizzes(true);

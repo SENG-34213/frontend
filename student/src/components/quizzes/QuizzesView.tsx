@@ -67,12 +67,14 @@ export const QuizzesView: React.FC = () => {
     return { label: state === "upcoming" ? "Starts in" : "Closes in", value };
   };
 
-  const displayedQuizzes = quizzes.filter((q) => {
-    if (activeTab === "ALL") return true;
-    return activeTab === "AVAILABLE"
-      ? quizState(q) === "available" || quizState(q) === "upcoming"
-      : quizState(q) === "completed";
-  }).filter((q) => courseFilter === "ALL" || q.courseId === courseFilter);
+  const displayedQuizzes = quizzes
+    .filter((q) => {
+      if (activeTab === "ALL") return true;
+      return activeTab === "AVAILABLE"
+        ? quizState(q) === "available" || quizState(q) === "upcoming"
+        : quizState(q) === "completed";
+    })
+    .filter((q) => courseFilter === "ALL" || q.courseId === courseFilter);
 
   const handleStartQuiz = (quiz: Quiz) => {
     if (quizState(quiz) !== "available") return;
@@ -110,20 +112,20 @@ export const QuizzesView: React.FC = () => {
       {/* Tabs */}
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-3 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-1 text-xs font-semibold">
-        {(["ALL", "AVAILABLE", "COMPLETED"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`border-b-2 px-4 py-2.5 capitalize transition-colors ${
-              activeTab === tab
-                ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400"
-            }`}
-          >
-            {tab.toLowerCase()} (
-            {tab === "ALL" ? quizzes.length : quizzes.filter((q) => q.status === tab).length})
-          </button>
-        ))}
+          {(["ALL", "AVAILABLE", "COMPLETED"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`border-b-2 px-4 py-2.5 capitalize transition-colors ${
+                activeTab === tab
+                  ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                  : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400"
+              }`}
+            >
+              {tab.toLowerCase()} (
+              {tab === "ALL" ? quizzes.length : quizzes.filter((q) => q.status === tab).length})
+            </button>
+          ))}
         </div>
         <label className="relative flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
           <Filter className="h-3.5 w-3.5" />
@@ -135,7 +137,9 @@ export const QuizzesView: React.FC = () => {
           >
             <option value="ALL">All courses</option>
             {courses.map((course) => (
-              <option key={course.id} value={course.id}>{course.code} · {course.title}</option>
+              <option key={course.id} value={course.id}>
+                {course.code} · {course.title}
+              </option>
             ))}
           </select>
         </label>
@@ -160,7 +164,11 @@ export const QuizzesView: React.FC = () => {
       </div>
 
       {/* Quiz Cards */}
-      <div className={viewMode === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-3"}>
+      <div
+        className={
+          viewMode === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-3"
+        }
+      >
         {viewMode === "list" && (
           <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full min-w-[760px] border-collapse text-left text-xs">
@@ -182,33 +190,80 @@ export const QuizzesView: React.FC = () => {
                   const isClosed = state === "closed";
                   const timer = countdown(quiz);
                   return (
-                    <tr key={quiz.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                    <tr
+                      key={quiz.id}
+                      className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                    >
                       <td className="px-5 py-4">
                         <div className="max-w-[260px]">
                           <p className="font-bold text-slate-900 dark:text-white">{quiz.title}</p>
-                          <p className="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">{quiz.description}</p>
+                          <p className="mt-1 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                            {quiz.description}
+                          </p>
                         </div>
                       </td>
-                      <td className="px-4 py-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">{quiz.courseCode}</td>
+                      <td className="px-4 py-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        {quiz.courseCode}
+                      </td>
                       <td className="px-4 py-4">
-                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${isCompleted ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" : isClosed ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"}`}>
-                          {isCompleted ? "Completed" : isClosed ? "Closed" : state === "upcoming" ? "Upcoming" : "Available"}
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${isCompleted ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" : isClosed ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"}`}
+                        >
+                          {isCompleted
+                            ? "Completed"
+                            : isClosed
+                              ? "Closed"
+                              : state === "upcoming"
+                                ? "Upcoming"
+                                : "Available"}
                         </span>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300">{quiz.durationMinutes} min</td>
-                      <td className="px-4 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300">{quiz.attemptsUsed ?? 0} / {quiz.attemptsAllowed ?? "—"}</td>
-                      <td className={`px-4 py-4 whitespace-nowrap text-[11px] font-semibold ${timer && state === "available" ? "text-red-600 dark:text-red-400" : "text-slate-500 dark:text-slate-400"}`}>
-                        {isClosed ? "Closed" : isCompleted ? "Finished" : timer ? `${timer.label}: ${timer.value}` : "—"}
+                      <td className="px-4 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                        {quiz.durationMinutes} min
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                        {quiz.attemptsUsed ?? 0} / {quiz.attemptsAllowed ?? "—"}
+                      </td>
+                      <td
+                        className={`px-4 py-4 whitespace-nowrap text-[11px] font-semibold ${timer && state === "available" ? "text-red-600 dark:text-red-400" : "text-slate-500 dark:text-slate-400"}`}
+                      >
+                        {isClosed
+                          ? "Closed"
+                          : isCompleted
+                            ? "Finished"
+                            : timer
+                              ? `${timer.label}: ${timer.value}`
+                              : "—"}
                       </td>
                       <td className="px-5 py-4 text-right">
                         {isCompleted ? (
-                          <button onClick={() => handleViewResult(quiz)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"><Eye className="h-3.5 w-3.5" /> Results</button>
+                          <button
+                            onClick={() => handleViewResult(quiz)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> Results
+                          </button>
                         ) : isClosed ? (
-                          <button disabled className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 font-semibold text-slate-400 dark:bg-slate-800 dark:text-slate-500"><LockKeyhole className="h-3.5 w-3.5" /> Closed</button>
+                          <button
+                            disabled
+                            className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 font-semibold text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+                          >
+                            <LockKeyhole className="h-3.5 w-3.5" /> Closed
+                          </button>
                         ) : state === "upcoming" ? (
-                          <button onClick={() => setInstructionModalQuiz(quiz)} className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 px-3 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-300"><Eye className="h-3.5 w-3.5" /> Details</button>
+                          <button
+                            onClick={() => setInstructionModalQuiz(quiz)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 px-3 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-300"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> Details
+                          </button>
                         ) : (
-                          <button onClick={() => setInstructionModalQuiz(quiz)} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white hover:bg-indigo-700"><PlayCircle className="h-3.5 w-3.5" /> Start</button>
+                          <button
+                            onClick={() => setInstructionModalQuiz(quiz)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white hover:bg-indigo-700"
+                          >
+                            <PlayCircle className="h-3.5 w-3.5" /> Start
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -218,111 +273,128 @@ export const QuizzesView: React.FC = () => {
             </table>
           </div>
         )}
-        {viewMode === "grid" && displayedQuizzes.map((quiz) => {
-          const state = quizState(quiz);
-          const isCompleted = state === "completed";
-          const isClosed = state === "closed";
-          const timer = countdown(quiz);
+        {viewMode === "grid" &&
+          displayedQuizzes.map((quiz) => {
+            const state = quizState(quiz);
+            const isCompleted = state === "completed";
+            const isClosed = state === "closed";
+            const timer = countdown(quiz);
 
-          return (
-            <div
-              key={quiz.id}
-              className={`flex ${viewMode === "grid" ? "flex-col" : "flex-col md:flex-row md:items-center md:gap-6"} justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-2xs transition-all hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700`}
-            >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                    {quiz.courseCode}
-                  </span>
-                  <span
-                    className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
-                      isCompleted
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                        : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
-                    }`}
-                  >
-                    {isCompleted ? "Completed" : isClosed ? "Closed" : state === "upcoming" ? "Upcoming" : "Available"}
-                  </span>
-                </div>
-
-                <div className="mt-3 space-y-1">
-                  <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
-                    {quiz.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                    {quiz.description}
-                  </p>
-                </div>
-
-                <div className="mt-4 space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center justify-between">
-                    <span>Duration:</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                      {quiz.durationMinutes} minutes
+            return (
+              <div
+                key={quiz.id}
+                className={`flex ${viewMode === "grid" ? "flex-col" : "flex-col md:flex-row md:items-center md:gap-6"} justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-2xs transition-all hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700`}
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                      {quiz.courseCode}
                     </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Questions:</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                      {quiz.questionsCount || quiz.questions.length} items
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Attempts:</span>
-                    <span className="font-medium text-slate-700 dark:text-slate-300">
-                      {quiz.attemptsUsed ?? "—"} of {quiz.attemptsAllowed ?? "—"} used
+                    <span
+                      className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
+                        isCompleted
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                          : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                      }`}
+                    >
+                      {isCompleted
+                        ? "Completed"
+                        : isClosed
+                          ? "Closed"
+                          : state === "upcoming"
+                            ? "Upcoming"
+                            : "Available"}
                     </span>
                   </div>
 
-                  {isCompleted && quiz.lastScore !== undefined && (
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 font-semibold text-emerald-600 dark:text-emerald-400">
-                      <span>Highest Score:</span>
-                      <span className="font-mono tabular-nums">
-                        {quiz.lastScore}/{quiz.totalPoints} ({quiz.lastScorePercentage}%)
+                  <div className="mt-3 space-y-1">
+                    <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
+                      {quiz.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                      {quiz.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center justify-between">
+                      <span>Duration:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {quiz.durationMinutes} minutes
                       </span>
                     </div>
-                  )}
-                  {!isCompleted && !isClosed && timer && (
-                    <div className={`mt-2 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[11px] font-semibold ${state === "available" ? "bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"}`}>
-                      <TimerReset className="h-3.5 w-3.5" />
-                      <span>{timer.label}: {timer.value}</span>
+                    <div className="flex items-center justify-between">
+                      <span>Questions:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {quiz.questionsCount || quiz.questions.length} items
+                      </span>
                     </div>
+                    <div className="flex items-center justify-between">
+                      <span>Attempts:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {quiz.attemptsUsed ?? "—"} of {quiz.attemptsAllowed ?? "—"} used
+                      </span>
+                    </div>
+
+                    {isCompleted && quiz.lastScore !== undefined && (
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 font-semibold text-emerald-600 dark:text-emerald-400">
+                        <span>Highest Score:</span>
+                        <span className="font-mono tabular-nums">
+                          {quiz.lastScore}/{quiz.totalPoints} ({quiz.lastScorePercentage}%)
+                        </span>
+                      </div>
+                    )}
+                    {!isCompleted && !isClosed && timer && (
+                      <div
+                        className={`mt-2 flex items-center gap-2 rounded-lg px-2.5 py-2 text-[11px] font-semibold ${state === "available" ? "bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400" : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"}`}
+                      >
+                        <TimerReset className="h-3.5 w-3.5" />
+                        <span>
+                          {timer.label}: {timer.value}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  {isCompleted ? (
+                    <button
+                      onClick={() => handleViewResult(quiz)}
+                      className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>View Results</span>
+                    </button>
+                  ) : isClosed ? (
+                    <button
+                      disabled
+                      className="flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-xs font-semibold text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+                    >
+                      <LockKeyhole className="h-3.5 w-3.5" />
+                      <span>Quiz Closed</span>
+                    </button>
+                  ) : state === "upcoming" ? (
+                    <button
+                      onClick={() => setInstructionModalQuiz(quiz)}
+                      className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-indigo-200 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>View Quiz Details</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setInstructionModalQuiz(quiz)}
+                      className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs"
+                    >
+                      <PlayCircle className="h-3.5 w-3.5" />
+                      <span>Start Quiz</span>
+                    </button>
                   )}
                 </div>
               </div>
-
-              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800">
-                {isCompleted ? (
-                  <button
-                    onClick={() => handleViewResult(quiz)}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    <span>View Results</span>
-                  </button>
-                ) : isClosed ? (
-                  <button disabled className="flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-lg bg-slate-100 py-2 text-xs font-semibold text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-                    <LockKeyhole className="h-3.5 w-3.5" />
-                    <span>Quiz Closed</span>
-                  </button>
-                ) : state === "upcoming" ? (
-                  <button onClick={() => setInstructionModalQuiz(quiz)} className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-indigo-200 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40">
-                    <Eye className="h-3.5 w-3.5" />
-                    <span>View Quiz Details</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setInstructionModalQuiz(quiz)}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs"
-                  >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    <span>Start Quiz</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
       {/* Quiz Instructions Modal */}
@@ -390,7 +462,11 @@ export const QuizzesView: React.FC = () => {
                 disabled={quizState(instructionModalQuiz) !== "available"}
                 className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
               >
-                {quizState(instructionModalQuiz) === "available" ? "Begin Quiz" : quizState(instructionModalQuiz) === "closed" ? "Quiz Closed" : "Not Started Yet"}
+                {quizState(instructionModalQuiz) === "available"
+                  ? "Begin Quiz"
+                  : quizState(instructionModalQuiz) === "closed"
+                    ? "Quiz Closed"
+                    : "Not Started Yet"}
               </button>
             </div>
           </div>

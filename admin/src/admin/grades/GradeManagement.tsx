@@ -604,7 +604,9 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                   <label className="text-slate-700 dark:text-slate-300 font-semibold">
                     Subject Domains <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-[11px] text-slate-400">Add all subjects available for this grade</span>
+                  <span className="text-[11px] text-slate-400">
+                    Add all subjects available for this grade
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <input
