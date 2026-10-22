@@ -163,7 +163,17 @@ export const AnalyticsDashboard: React.FC = () => {
               className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200"
             >
               <AlertTriangle className="h-5 w-5 shrink-0" />
-              Some analytics sections are temporarily incomplete. Available values are shown below.
+              <div>
+                <p>
+                  Some analytics sections are temporarily incomplete. Available values are shown
+                  below.
+                </p>
+                {analytics.unavailableSections?.length ? (
+                  <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-200/80">
+                    Unavailable: {analytics.unavailableSections.map(formatLabel).join(", ")}.
+                  </p>
+                ) : null}
+              </div>
             </div>
           )}
 
