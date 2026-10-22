@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   HelpCircle,
   Plus,
@@ -20,6 +20,7 @@ import {
   ClipboardCheck,
   Award,
   ChevronDown,
+  RefreshCw,
 } from "lucide-react";
 import { Course, Quiz, QuizQuestion, NavigationTab } from "../types";
 import {
@@ -68,6 +69,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   const [sliderPreviewQuiz, setSliderPreviewQuiz] = useState<Quiz | null>(null);
   const [todayAnalytics, setTodayAnalytics] = useState<QuizAnalytics | null>(null);
   const [analyticsUnavailable, setAnalyticsUnavailable] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
@@ -81,21 +84,35 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   const [questionPage, setQuestionPage] = useState(0);
   const questionsPerPage = 5;
 
+  const loadTodayAnalytics = useCallback(async (signal?: AbortSignal) => {
+    setAnalyticsLoading(true);
+    setAnalyticsError(false);
+    try {
+      const analytics = await getTodayQuizAnalytics(signal);
+      if (!signal?.aborted) {
+        setTodayAnalytics(analytics ?? null);
+        setAnalyticsUnavailable(!analytics);
+      }
+    } catch {
+      if (!signal?.aborted) {
+        setAnalyticsUnavailable(true);
+        setAnalyticsError(true);
+      }
+    } finally {
+      if (!signal?.aborted) setAnalyticsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
-    getTodayQuizAnalytics(controller.signal)
-      .then((analytics) => {
-        if (!controller.signal.aborted) {
-          setTodayAnalytics(analytics ?? null);
-          setAnalyticsUnavailable(!analytics);
-        }
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setAnalyticsUnavailable(true);
-      });
-
-    return () => controller.abort();
-  }, []);
+    const initialLoad = window.setTimeout(() => {
+      void loadTodayAnalytics(controller.signal);
+    }, 0);
+    return () => {
+      window.clearTimeout(initialLoad);
+      controller.abort();
+    };
+  }, [loadTodayAnalytics]);
 
   const averageTodayScore = todayAnalytics?.quizzes.length
     ? Math.round(
@@ -491,7 +508,20 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 : "No daily results loaded"}
             </p>
           </div>
-          <BarChart3 className="h-5 w-5 shrink-0 text-indigo-600" />
+          <div className="flex items-center gap-2">
+            {(analyticsUnavailable || analyticsError) && (
+              <button
+                type="button"
+                onClick={() => void loadTodayAnalytics()}
+                disabled={analyticsLoading}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-wait disabled:opacity-60"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${analyticsLoading ? "animate-spin" : ""}`} />
+                Retry
+              </button>
+            )}
+            <BarChart3 className="h-5 w-5 shrink-0 text-indigo-600" />
+          </div>
         </div>
         {todayAnalytics?.quizzes.length ? (
           <div className="space-y-3">
@@ -557,9 +587,11 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           </div>
         ) : (
           <p className="py-8 text-center text-xs text-slate-400">
-            {analyticsUnavailable
-              ? "Live quiz analytics are unavailable."
-              : "No quiz results are available for today."}
+            {analyticsLoading
+              ? "Loading live quiz analytics…"
+              : analyticsUnavailable
+                ? "Live quiz analytics are unavailable."
+                : "No quiz results are available for today."}
           </p>
         )}
       </section>
