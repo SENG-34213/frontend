@@ -114,12 +114,21 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
     };
   }, [loadTodayAnalytics]);
 
-  const averageTodayScore = todayAnalytics?.quizzes.length
-    ? Math.round(
-        todayAnalytics.quizzes.reduce((total, quiz) => total + (quiz.averagePercentage ?? 0), 0) /
-          todayAnalytics.quizzes.length,
-      )
-    : null;
+  const averageTodayScore = (() => {
+    const scores =
+      todayAnalytics?.quizzes.flatMap((quiz) => {
+        const score = quiz.averagePercentage;
+        return score == null || !Number.isFinite(score) ? [] : [score];
+      }) ?? [];
+    return scores.length
+      ? Math.round(
+          Math.min(
+            100,
+            Math.max(0, scores.reduce((total, score) => total + score, 0) / scores.length),
+          ),
+        )
+      : null;
+  })();
   const todayAttemptTotals = todayAnalytics?.quizzes.reduce(
     (totals, quiz) => ({
       submitted: totals.submitted + quiz.submittedAttempts,
