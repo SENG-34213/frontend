@@ -41,7 +41,13 @@ export const MessagesView: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const messageListRef = useRef<HTMLDivElement | null>(null);
 
-  const activeConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
+  const effectiveSelectedConvId = conversations.some(
+    (conversation) => conversation.id === selectedConvId,
+  )
+    ? selectedConvId
+    : conversations[0]?.id || "";
+  const activeConv =
+    conversations.find((c) => c.id === effectiveSelectedConvId) || conversations[0];
 
   useEffect(() => {
     const messageList = messageListRef.current;

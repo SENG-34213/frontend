@@ -8,6 +8,7 @@ import {
   Award,
   UserPlus,
   CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { NotificationItem } from "../types";
@@ -17,6 +18,7 @@ interface NotificationCenterProps {
   notifications: NotificationItem[];
   onMarkRead: (id: string) => void;
   onMarkAllRead: () => void;
+  onDelete: (id: string) => void;
   onNavigate: (route: AdminRoute) => void;
 }
 
@@ -24,6 +26,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   notifications,
   onMarkRead,
   onMarkAllRead,
+  onDelete,
   onNavigate,
 }) => {
   const [tab, setTab] = useState<"all" | "unread" | "read">("all");
@@ -160,6 +163,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       Mark as read
                     </button>
                   )}
+                  <button
+                    onClick={() => onDelete(notif.id)}
+                    className="flex items-center gap-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 text-[11px]"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
