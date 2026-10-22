@@ -92,6 +92,7 @@ export type AssignmentDraft = {
 };
 
 export type AssignmentUpdateDraft = Omit<AssignmentDraft, "courseId" | "moduleId" | "lessonId">;
+export type AssignmentMetadataPatchDraft = Pick<AssignmentUpdateDraft, "title" | "description">;
 
 export type BackendSubmissionStatus =
   | "DRAFT"
@@ -151,6 +152,18 @@ export async function updateAssignment(assignmentId: string, draft: AssignmentUp
     await apiRequest<ApiResponse<BackendAssignment>>(
       `/api/v1/assignments/${encodeURIComponent(assignmentId)}`,
       { method: "PUT", body: draft },
+    ),
+  );
+}
+
+export async function patchAssignment(
+  assignmentId: string,
+  draft: AssignmentMetadataPatchDraft,
+) {
+  return unwrap(
+    await apiRequest<ApiResponse<BackendAssignment>>(
+      `/api/v1/assignments/${encodeURIComponent(assignmentId)}`,
+      { method: "PATCH", body: draft },
     ),
   );
 }
