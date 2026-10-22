@@ -16,6 +16,7 @@ export interface AdminUserSummary {
   accountStatus: string;
   emailVerified: boolean;
   profileComplete: boolean;
+  mustChangePassword?: boolean;
 }
 
 export interface LoginResponse {
@@ -26,7 +27,10 @@ export interface LoginResponse {
   refreshExpiresIn: number;
   scope?: string;
   issuedAt?: string;
-  user: AdminUserSummary;
+  mustChangePassword?: boolean;
+  profile: AdminUserSummary;
+  /** Backward-compatible response shape for older auth-service builds. */
+  user?: AdminUserSummary;
 }
 
 export interface TokenRefreshResponse {
@@ -44,4 +48,5 @@ export interface AuthSession {
   refreshToken: string;
   user: AdminUserSummary;
   expiresAt: number;
+  mustChangePassword?: boolean;
 }

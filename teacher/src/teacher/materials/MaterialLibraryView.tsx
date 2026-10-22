@@ -167,9 +167,17 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16">
       {notice && (
-        <div className="fixed bottom-6 right-6 z-[70] flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-xs text-white shadow-xl">
-          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-          {notice}
+        <div className="pointer-events-auto fixed bottom-5 right-5 z-[70] flex w-[min(calc(100vw-2.5rem),24rem)] items-start gap-3 rounded-xl border border-slate-800 bg-slate-900 p-4 text-xs text-white shadow-xl animate-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+          <p className="min-w-0 flex-1 font-semibold leading-5">{notice}</p>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="shrink-0 p-0.5 text-slate-400 hover:text-white"
+            aria-label="Dismiss notification"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

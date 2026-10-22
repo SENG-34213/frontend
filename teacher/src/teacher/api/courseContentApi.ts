@@ -6,7 +6,8 @@ export type CourseContentModule = {
   title: string;
   description?: string;
   sequenceOrder: number;
-  dateDuration: number;
+  startDate?: string;
+  endDate?: string;
   visible?: boolean;
   moduleImage?: string;
 };
@@ -17,9 +18,11 @@ export type CourseContentLesson = {
   title: string;
   description?: string;
   durationMinutes: number;
+  contentType?: string;
   contentMarkdown?: string;
   materials?: CourseContentMaterial[];
   visible?: boolean;
+  teachingCompleted?: boolean;
   releaseDate?: string;
 };
 
@@ -71,8 +74,10 @@ export function createCourseModule(
   payload: {
     title: string;
     description?: string;
+    moduleImage?: string;
     sequenceOrder: number;
-    dateDuration: number;
+    startDate: string;
+    endDate: string;
     isVisible?: boolean;
   },
 ) {
@@ -88,8 +93,10 @@ export function updateCourseModule(
   payload: {
     title: string;
     description?: string;
+    moduleImage?: string;
     sequenceOrder: number;
-    dateDuration: number;
+    startDate: string;
+    endDate: string;
     isVisible?: boolean;
   },
 ) {
@@ -117,9 +124,11 @@ export function createModuleLesson(
     title: string;
     description?: string;
     durationMinutes: number;
+    contentType?: string;
     contentMarkdown?: string;
     isVisible?: boolean;
     releaseDate?: string;
+    teachingCompleted?: boolean;
   },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(
@@ -136,9 +145,11 @@ export function updateModuleLesson(
     title: string;
     description?: string;
     durationMinutes: number;
+    contentType?: string;
     contentMarkdown?: string;
     isVisible?: boolean;
     releaseDate?: string;
+    teachingCompleted?: boolean;
   },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(

@@ -22,11 +22,12 @@ import {
 } from "lucide-react";
 import { AdminRole, NotificationItem } from "../types";
 import { AdminRoute } from "./AdminSidebar";
+import { UserAvatar } from "./UserAvatar";
+import type { CurrentAdminProfile } from "../api/profileApi";
 
 interface AdminNavbarProps {
   currentRoute: AdminRoute;
   role: AdminRole;
-  onRoleChange: (newRole: AdminRole) => void;
   onNavigate: (route: AdminRoute) => void;
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
@@ -38,12 +39,12 @@ interface AdminNavbarProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onLogout: () => void;
+  profile: CurrentAdminProfile | null;
 }
 
 export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   currentRoute,
   role,
-  onRoleChange,
   onNavigate,
   notifications,
   onMarkNotificationRead,
@@ -55,6 +56,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   isDarkMode,
   onToggleTheme,
   onLogout,
+  profile,
 }) => {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -87,7 +89,6 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
     dashboard: "Platform Overview",
     analytics: "Analytics & Insights",
     notifications: "Notification Center",
-    users: "All Users Directory",
     students: "Student Management",
     teachers: "Teacher Management",
     administrators: "Administrator Oversight",
@@ -102,6 +103,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
     results: "Grades & Results",
     attendance: "Attendance Management",
     materials: "Learning Materials (AWS S3)",
+    marketplace: "Digital Material Marketplace",
     calendar: "Academic Operations Calendar",
     communication: "Communication & Announcements",
     "ai-assistant": "Mentify AI Assistant",
@@ -156,33 +158,6 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
             ⌘K
           </kbd>
         </button>
-
-        {/* Role Switcher (Simulation Toggle) */}
-        <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs">
-          <span className="px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-            Role:
-          </span>
-          <button
-            onClick={() => onRoleChange("ADMIN")}
-            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              role === "ADMIN"
-                ? "bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-xs"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            ADMIN
-          </button>
-          <button
-            onClick={() => onRoleChange("SUPER_ADMIN")}
-            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              role === "SUPER_ADMIN"
-                ? "bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-300 shadow-xs"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-            }`}
-          >
-            SUPER_ADMIN
-          </button>
-        </div>
 
         {/* Quick Actions Dropdown */}
         <div className="relative" ref={quickActionsRef}>
@@ -382,12 +357,14 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
             onClick={() => setShowUserMenu((p) => !p)}
             className="flex items-center gap-2 p-1 pl-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-xs flex items-center justify-center shrink-0">
-              AM
-            </div>
+            <UserAvatar
+              name={profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}
+              avatarUrl={profile?.avatarUrl}
+              size="sm"
+            />
             <div className="hidden xl:block text-left">
               <span className="text-xs font-semibold text-slate-900 dark:text-white block leading-tight">
-                Alex Mercer
+                {profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}
               </span>
               <span className="text-[10px] text-slate-400 block leading-tight">
                 {role === "SUPER_ADMIN" ? "Super Administrator" : "Administrator"}
@@ -399,8 +376,10 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-52 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
               <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-xs font-semibold text-slate-900 dark:text-white">Alex Mercer</p>
-                <p className="text-[11px] text-slate-400 truncate">alex.mercer@mentify.edu</p>
+                <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                  {profile ? `${profile.firstName} ${profile.lastName}` : "Admin"}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate">{profile?.email || ""}</p>
               </div>
 
               <button
@@ -430,7 +409,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
               <button
                 onClick={() => {
                   setShowUserMenu(false);
-                  onNavigate("settings");
+                  onLogout();
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left"
               >

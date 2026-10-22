@@ -8,6 +8,26 @@ import type {
 
 type ApiEnvelope<T> = { data?: T; message?: string; error?: string };
 
+function safeErrorMessage(payload: ApiEnvelope<unknown>, status: number) {
+  const raw =
+    typeof payload?.message === "string"
+      ? payload.message
+      : typeof payload?.error === "string"
+        ? payload.error
+        : "";
+  if (
+    status >= 500 ||
+    /entitymanager|hibernate|jdbc|sql|postgres|datasource|timeout|exception|stack trace|org\.springframework|java\./i.test(
+      raw,
+    )
+  ) {
+    return status === 502 || status === 503 || status === 504
+      ? "The service is temporarily unavailable. Please try again shortly."
+      : "Something went wrong. Please try again later.";
+  }
+  return raw || `Material service request failed (${status}).`;
+}
+
 function read<T>(payload: ApiEnvelope<T> | T): T {
   return payload && typeof payload === "object" && "data" in payload && payload.data !== undefined
     ? (payload.data as T)
@@ -31,23 +51,44 @@ function getBaseUrl(configuredBaseUrl?: string) {
 }
 
 function token() {
-  return typeof window === "undefined" ? "" : sessionStorage.getItem("mentify_access_token") || "";
+  if (typeof window === "undefined") return "";
+
+  // Each portal keeps its session as a JSON object. The old standalone key is
+  // still supported for compatibility with the shared materials workspace.
+  for (const key of [
+    "mentify_admin_auth_session",
+    "mentify_teacher_auth_session",
+    "mentify_student_auth_session",
+  ]) {
+    const stored = sessionStorage.getItem(key);
+    if (!stored) continue;
+    try {
+      const accessToken = (JSON.parse(stored) as { accessToken?: string }).accessToken;
+      if (accessToken) return accessToken;
+    } catch {
+      // Ignore malformed portal sessions and check the next supported session key.
+    }
+  }
+
+  return sessionStorage.getItem("mentify_access_token") || "";
 }
 
 async function request<T>(baseUrl: string, path: string, init: RequestInit = {}) {
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
-      ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
-      ...(init.headers || {}),
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: {
+        ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+        ...(token() ? { Authorization: `Bearer ${token()}` } : {}),
+        ...(init.headers || {}),
+      },
+    });
+  } catch {
+    throw new Error("The service is temporarily unavailable. Please try again shortly.");
+  }
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok)
-    throw new Error(
-      payload.message || payload.error || `Material service request failed (${response.status}).`,
-    );
+  if (!response.ok) throw new Error(safeErrorMessage(payload, response.status));
   return read<T>(payload);
 }
 
@@ -73,9 +114,17 @@ function uploadWithProgress(
     xhr.onload = () => {
       const payload = JSON.parse(xhr.responseText || "{}");
       if (xhr.status < 200 || xhr.status >= 300) {
-        reject(
-          new Error(payload.message || payload.error || `Material upload failed (${xhr.status}).`),
-        );
+        const serverMessage = String(payload.message || payload.error || "");
+        if (
+          xhr.status === 413 ||
+          /maximum upload size|maxuploadsize|request entity too large|payload too large/i.test(
+            serverMessage,
+          )
+        ) {
+          reject(new Error("Image is too large. Please choose an image smaller than 5 MB."));
+          return;
+        }
+        reject(new Error(safeErrorMessage(payload, xhr.status)));
         return;
       }
       resolve(read<Material>(payload));

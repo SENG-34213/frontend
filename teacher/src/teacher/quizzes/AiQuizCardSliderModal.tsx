@@ -121,6 +121,7 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
         savedQuestions.push(
           await createQuizQuestion(created.id, {
             questionText: item.questionText.trim(),
+            explanation: item.explanation?.trim() || undefined,
             questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
             marks: Number(item.marks) || 1,
             questionOrder: index + 1,

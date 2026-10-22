@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   StudentView,
   StudentProfile,
   Course,
   Assignment,
+  AttendanceSummary,
   Quiz,
+  QuizAnswerReview,
   Examination,
   LearningMaterial,
   CalendarEvent,
@@ -13,25 +15,40 @@ import {
   NotificationItem,
   ChatMessage,
 } from "../types";
+import type { StudentUserSummary } from "../auth/authTypes";
 import {
-  INITIAL_STUDENT_PROFILE,
-  INITIAL_COURSES,
-  INITIAL_ASSIGNMENTS,
-  INITIAL_QUIZZES,
-  INITIAL_EXAMINATIONS,
-  INITIAL_MATERIALS,
-  INITIAL_CALENDAR_EVENTS,
-  INITIAL_CONVERSATIONS,
-  INITIAL_ANNOUNCEMENTS,
-  INITIAL_NOTIFICATIONS,
-  INITIAL_AI_CHATS,
-} from "../data/mockData";
+  createAssignmentSubmission,
+  enrollStudent,
+  finalizeAssignmentSubmission,
+  loadEnrollmentState,
+  loadStudentWorkspace,
+  listCalendarEvents,
+  markAllNotificationsRead as markAllNotificationsReadApi,
+  markLesson,
+  markNotificationRead,
+  deleteNotification as deleteNotificationApi,
+  getUnreadNotificationCount,
+  createAiConversation,
+  listCommunicationMessages,
+  saveQuizAnswer as saveQuizAnswerApi,
+  sendAiMessage,
+  sendCommunicationMessage,
+  toCommunicationMessage,
+  startCoursePayment,
+  startQuizAttempt as startQuizAttemptApi,
+  finalizeQuizAttempt,
+  getMaterialDownload,
+  toProfile,
+  uploadSubmissionFile,
+  updateCurrentStudentProfile,
+} from "../api/student";
+import { useStudentCommunicationRealtime } from "../api/communicationRealtime";
 
 interface StudentContextType {
   currentView: StudentView;
   setCurrentView: (view: StudentView) => void;
   profile: StudentProfile;
-  updateProfile: (updates: Partial<StudentProfile>) => void;
+  updateProfile: (updates: Partial<StudentProfile>) => Promise<void>;
   courses: Course[];
   selectedCourseId: string;
   setSelectedCourseId: (id: string) => void;
@@ -49,26 +66,52 @@ interface StudentContextType {
   submitAssignment: (
     assignmentId: string,
     submissionText: string,
-    files: { name: string; size: string; uploadedAt: string }[],
+    files: { name: string; size: string; uploadedAt: string; file?: File }[],
   ) => void;
   quizzes: Quiz[];
+  startQuizAttempt: (quizId: string) => Promise<{ attemptId: string; startedAt?: string }>;
+  saveQuizAnswer: (
+    attemptId: string,
+    questionId: string,
+    selectedOptionId: string,
+  ) => Promise<void>;
   submitQuizAnswers: (
     quizId: string,
-    answers: Record<string, string[]>,
-  ) => { score: number; maxScore: number; percentage: number };
+    attemptId: string,
+  ) => Promise<{
+    score: number;
+    maxScore: number;
+    percentage: number;
+    passed: boolean;
+    answers: QuizAnswerReview[];
+  }>;
   examinations: Examination[];
   submitExam: (examId: string, answers: Record<string, string[]>) => void;
   materials: LearningMaterial[];
   calendarEvents: CalendarEvent[];
   conversations: Conversation[];
-  sendMessage: (conversationId: string, text: string) => void;
+  sendMessage: (conversationId: string, text: string) => Promise<void>;
+  loadMoreMessages: (conversationId: string) => Promise<void>;
   announcements: Announcement[];
   notifications: NotificationItem[];
+  unreadNotificationCount: number;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
+  deleteNotification: (id: string) => Promise<void>;
+  attendanceSummaries: AttendanceSummary[];
+  attendanceOverall: AttendanceSummary | null;
   aiChats: ChatMessage[];
   isAiLoading: boolean;
   sendAiQuery: (query: string) => Promise<void>;
+  refreshCalendarEvents: (
+    start: string,
+    end: string,
+    filters?: { type?: string; courseId?: string },
+  ) => Promise<void>;
+  refreshWorkspace: () => Promise<void>;
+  workspaceLoading: boolean;
+  workspaceError: string | null;
+  retryWorkspace: () => Promise<void>;
   theme: "light" | "dark";
   toggleTheme: () => void;
   isSidebarCollapsed: boolean;
@@ -78,389 +121,587 @@ interface StudentContextType {
   setIsCommandPaletteOpen: (open: boolean) => void;
   selectedMaterialForPreview: LearningMaterial | null;
   setSelectedMaterialForPreview: (material: LearningMaterial | null) => void;
+  downloadMaterial: (materialId: string) => Promise<void>;
   toastMessage: string | null;
   showToast: (msg: string) => void;
+  clearToast: () => void;
   navigateToCourseWorkspace: (courseId: string, lessonId?: string) => void;
   navigateToCourseDetails: (courseId: string) => void;
 }
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
-export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentView, setCurrentView] = useState<StudentView>("dashboard");
-  const [profile, setProfile] = useState<StudentProfile>(INITIAL_STUDENT_PROFILE);
-  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>("course-cs301");
-  const [selectedLessonId, setSelectedLessonId] = useState<string>("les-cs301-3-2");
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>("asg-1");
-  const [selectedQuizId, setSelectedQuizId] = useState<string>("quiz-cs301-1");
-  const [selectedExamId, setSelectedExamId] = useState<string>("exam-1");
-  const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS);
-  const [quizzes, setQuizzes] = useState<Quiz[]>(INITIAL_QUIZZES);
-  const [examinations, setExaminations] = useState<Examination[]>(INITIAL_EXAMINATIONS);
-  const [materials] = useState<LearningMaterial[]>(INITIAL_MATERIALS);
-  const [calendarEvents] = useState<CalendarEvent[]>(INITIAL_CALENDAR_EVENTS);
-  const [conversations, setConversations] = useState<Conversation[]>(INITIAL_CONVERSATIONS);
-  const [announcements] = useState<Announcement[]>(INITIAL_ANNOUNCEMENTS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  const [aiChats, setAiChats] = useState<ChatMessage[]>(INITIAL_AI_CHATS);
-  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+const STUDENT_VIEWS: StudentView[] = [
+  "dashboard",
+  "my-courses",
+  "explore-courses",
+  "course-details",
+  "course-workspace",
+  "enrollments",
+  "materials",
+  "assignments",
+  "assignment-details",
+  "quizzes",
+  "quiz-taking",
+  "examinations",
+  "exam-taking",
+  "grades",
+  "calendar",
+  "messages",
+  "mentify-ai",
+  "notifications",
+  "profile",
+  "settings",
+];
+
+function getSavedView(userId?: string): StudentView {
+  if (typeof window === "undefined" || !userId) return "dashboard";
+  const savedView = window.localStorage.getItem(`student-current-view:${userId}`);
+  return savedView && STUDENT_VIEWS.includes(savedView as StudentView)
+    ? (savedView as StudentView)
+    : "dashboard";
+}
+
+function getSavedValue(userId: string | undefined, name: string): string {
+  if (typeof window === "undefined" || !userId) return "";
+  return window.localStorage.getItem(`student-${name}:${userId}`) || "";
+}
+
+export const StudentProvider: React.FC<{
+  children: React.ReactNode;
+  authUser?: StudentUserSummary;
+}> = ({ children, authUser }) => {
+  const [currentView, setCurrentView] = useState<StudentView>(() => getSavedView(authUser?.id));
+  const [profile, setProfile] = useState<StudentProfile>(() =>
+    authUser ? toProfile(authUser) : ({} as StudentProfile),
+  );
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState(() =>
+    getSavedValue(authUser?.id, "course"),
+  );
+  const [selectedLessonId, setSelectedLessonId] = useState(() =>
+    getSavedValue(authUser?.id, "lesson"),
+  );
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(() =>
+    getSavedValue(authUser?.id, "assignment"),
+  );
+  const [selectedQuizId, setSelectedQuizId] = useState(() => getSavedValue(authUser?.id, "quiz"));
+  const [selectedExamId, setSelectedExamId] = useState(() => getSavedValue(authUser?.id, "exam"));
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [examinations, setExaminations] = useState<Examination[]>([]);
+  const [materials, setMaterials] = useState<LearningMaterial[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messagePages, setMessagePages] = useState<Record<string, number>>({});
+  const announcements: Announcement[] = [];
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [attendanceSummaries, setAttendanceSummaries] = useState<AttendanceSummary[]>([]);
+  const [aiConversationId, setAiConversationId] = useState<string | null>(null);
+  const [aiChats, setAiChats] = useState<ChatMessage[]>([]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window === "undefined") return "light";
+    return window.localStorage.getItem("student-theme") === "dark" ? "dark" : "light";
+  });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [selectedMaterialForPreview, setSelectedMaterialForPreview] =
     useState<LearningMaterial | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    window.setTimeout(
+      () => setToastMessage((current) => (current === message ? null : current)),
+      4000,
+    );
+  };
+  const clearToast = () => setToastMessage(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
+    window.localStorage.setItem("student-theme", theme);
+  }, [theme]);
+  useEffect(() => {
+    if (!authUser?.id) return;
+    window.localStorage.setItem(`student-current-view:${authUser.id}`, currentView);
+  }, [authUser?.id, currentView]);
+  useEffect(() => {
+    if (!authUser?.id) return;
+    window.localStorage.setItem(`student-course:${authUser.id}`, selectedCourseId);
+    window.localStorage.setItem(`student-lesson:${authUser.id}`, selectedLessonId);
+    window.localStorage.setItem(`student-assignment:${authUser.id}`, selectedAssignmentId);
+    window.localStorage.setItem(`student-quiz:${authUser.id}`, selectedQuizId);
+    window.localStorage.setItem(`student-exam:${authUser.id}`, selectedExamId);
+  }, [
+    authUser?.id,
+    selectedAssignmentId,
+    selectedCourseId,
+    selectedExamId,
+    selectedLessonId,
+    selectedQuizId,
+  ]);
+  const refreshWorkspace = useCallback(async () => {
+    if (!authUser) return;
+    setWorkspaceLoading(true);
+    setWorkspaceError(null);
+    try {
+      const workspace = await loadStudentWorkspace(authUser);
+      setProfile(workspace.profile);
+      setCourses(workspace.courses);
+      setAssignments(workspace.assignments);
+      setQuizzes(workspace.quizzes);
+      setExaminations(workspace.examinations);
+      setMaterials(workspace.materials);
+      setCalendarEvents(workspace.calendarEvents);
+      setNotifications(workspace.notifications);
+      setUnreadNotificationCount(workspace.unreadNotificationCount);
+      setAttendanceSummaries(workspace.attendanceSummaries);
+      setConversations(workspace.conversations);
+      setMessagePages({});
+    } catch (error) {
+      setWorkspaceError(error instanceof Error ? error.message : "Could not load student data.");
+      throw error;
+    } finally {
+      setWorkspaceLoading(false);
+    }
+  }, [authUser]);
 
   useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [theme]);
+    let active = true;
+    Promise.resolve()
+      .then(() => refreshWorkspace())
+      .catch((error) => {
+        if (active)
+          showToast(error instanceof Error ? error.message : "Could not load student data.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [refreshWorkspace]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
+  // Keep the workspace current while the student portal is open. This covers
+  // content created by teachers/admins in another application tab or session.
+  // The visibility/focus refresh makes returning to the tab feel immediate,
+  // while polling handles changes made while the tab remains open.
+  useEffect(() => {
+    if (!authUser?.id) return;
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed((prev) => !prev);
-  };
+    let disposed = false;
+    let refreshInFlight = false;
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage((prev) => (prev === msg ? null : prev));
-    }, 4000);
-  };
+    const syncWorkspace = async () => {
+      if (disposed || refreshInFlight || document.visibilityState !== "visible") return;
+      refreshInFlight = true;
+      try {
+        await refreshWorkspace();
+      } catch {
+        // The initial load reports errors to the student. Background sync is
+        // intentionally silent and retries on the next cycle/focus event.
+      } finally {
+        refreshInFlight = false;
+      }
+    };
 
-  const updateProfile = (updates: Partial<StudentProfile>) => {
-    setProfile((prev) => ({ ...prev, ...updates }));
-    showToast("Student profile updated successfully.");
-  };
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") void syncWorkspace();
+    };
 
-  const enrollInCourse = (courseId: string) => {
-    setCourses((prev) =>
-      prev.map((c) => {
-        if (c.id === courseId) {
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    const intervalId = window.setInterval(() => void syncWorkspace(), 15_000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
+  }, [authUser?.id, refreshWorkspace]);
+
+  useStudentCommunicationRealtime(
+    conversations.map((conversation) => conversation.id),
+    (incoming) => {
+      setConversations((current) =>
+        current.map((conversation) => {
+          if (conversation.id !== incoming.groupId) return conversation;
+          const knownSender = conversation.messages.find(
+            (item) => item.senderId === incoming.senderId,
+          )?.senderName;
+          const senderName =
+            incoming.senderId === profile.id
+              ? profile.name
+              : knownSender || conversation.participantName || "Course instructor";
+          const message = toCommunicationMessage(
+            incoming,
+            profile.id,
+            new Map([[incoming.senderId, senderName]]),
+          );
+          if (conversation.messages.some((item) => item.id === message.id)) return conversation;
           return {
-            ...c,
-            enrolled: true,
-            enrollmentStatus: "ACTIVE",
-            progressPercentage: 0,
-            enrolledStudentsCount: c.enrolledStudentsCount + 1,
+            ...conversation,
+            lastMessage: message.text,
+            lastMessageTime: message.timestamp,
+            messages: [...conversation.messages, message],
           };
-        }
-        return c;
-      }),
-    );
-    showToast("Successfully enrolled in course!");
+        }),
+      );
+    },
+  );
+  const updateProfile = async (updates: Partial<StudentProfile>) => {
+    try {
+      const [firstName, ...lastNameParts] = updates.name?.trim().split(/\s+/) || [];
+      await updateCurrentStudentProfile({
+        firstName,
+        lastName: lastNameParts.join(" ") || undefined,
+        phoneNumber: updates.phone || undefined,
+        bio: updates.bio || undefined,
+        avatarUrl: updates.avatar || undefined,
+      });
+      await refreshWorkspace();
+      showToast("Profile updated successfully.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Profile update failed.");
+    }
   };
-
-  const markLessonComplete = (courseId: string, lessonId: string, complete = true) => {
-    setCourses((prev) =>
-      prev.map((c) => {
-        if (c.id !== courseId) return c;
-
-        let totalLessons = 0;
-        let completedLessons = 0;
-
-        const updatedModules = c.modules.map((mod) => {
-          const updatedLessons = mod.lessons.map((les) => {
-            const isTarget = les.id === lessonId;
-            const isCompleted = isTarget ? complete : les.completed;
-            if (isCompleted) completedLessons++;
-            totalLessons++;
-            return isTarget ? { ...les, completed: complete } : les;
-          });
-          return { ...mod, lessons: updatedLessons };
-        });
-
-        const newPercentage =
-          totalLessons > 0
-            ? Math.round((completedLessons / totalLessons) * 100)
-            : c.progressPercentage;
-
-        return {
-          ...c,
-          modules: updatedModules,
-          progressPercentage: newPercentage,
-          lastAccessedLessonId: lessonId,
-        };
-      }),
-    );
-    showToast(complete ? "Lesson marked as complete!" : "Lesson status updated");
+  const enrollInCourse = async (courseId: string) => {
+    try {
+      await enrollStudent(courseId, profile.id);
+      const records = await loadEnrollmentState(profile.id);
+      const record = records.find((item) => item.courseIds.includes(courseId));
+      const status =
+        record?.status === "PAYMENT_REQUIRED"
+          ? "PAYMENT_REQUIRED"
+          : record?.status === "REJECTED"
+            ? "REJECTED"
+            : record?.status === "PENDING"
+              ? "PENDING"
+              : "ACTIVE";
+      if (status === "PAYMENT_REQUIRED") await startCoursePayment(courseId);
+      await refreshWorkspace();
+      showToast(
+        status === "PAYMENT_REQUIRED"
+          ? "Payment is required to complete enrollment."
+          : status === "PENDING"
+            ? "Enrollment request is pending approval."
+            : status === "REJECTED"
+              ? "Enrollment was rejected."
+              : "Successfully enrolled in course!",
+      );
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Enrollment failed.");
+    }
   };
-
-  const submitAssignment = (
+  const markLessonComplete = async (courseId: string, lessonId: string, complete = true) => {
+    try {
+      await markLesson(courseId, lessonId, complete);
+      await refreshWorkspace();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not update lesson progress.");
+      return;
+    }
+    showToast(complete ? "Lesson marked as complete!" : "Lesson status updated.");
+  };
+  const submitAssignment = async (
     assignmentId: string,
     submissionText: string,
-    files: { name: string; size: string; uploadedAt: string }[],
+    files: { name: string; size: string; uploadedAt: string; file?: File }[],
   ) => {
-    setAssignments((prev) =>
-      prev.map((asg) => {
-        if (asg.id === assignmentId) {
-          return {
-            ...asg,
-            status: "SUBMITTED",
-            submissionText,
-            submittedFiles: files,
-            submittedDate: new Date().toISOString(),
-          };
+    try {
+      const response = await createAssignmentSubmission(assignmentId, submissionText);
+      const submission = response.data || {};
+      const submissionId = String(submission.id || "");
+      if (!submissionId) throw new Error("The backend did not return a submission id.");
+      for (const item of files) if (item.file) await uploadSubmissionFile(submissionId, item.file);
+      await finalizeAssignmentSubmission(submissionId);
+      await refreshWorkspace();
+      showToast("Assignment submitted successfully.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Assignment submission failed.");
+    }
+  };
+  const startQuizAttempt = async (quizId: string) => {
+    const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
+    const storedAttempt = window.localStorage.getItem(storageKey);
+    if (storedAttempt) {
+      try {
+        const parsed = JSON.parse(storedAttempt);
+        if (parsed && typeof parsed === "object" && parsed.attemptId) {
+          return parsed as { attemptId: string; startedAt?: string };
         }
-        return asg;
-      }),
-    );
-    showToast("Assignment submitted successfully! Feedback will be published by your instructor.");
-  };
-
-  const submitQuizAnswers = (quizId: string, answers: Record<string, string[]>) => {
-    const quiz = quizzes.find((q) => q.id === quizId);
-    if (!quiz) return { score: 0, maxScore: 0, percentage: 0 };
-
-    let earnedPoints = 0;
-    quiz.questions.forEach((q) => {
-      const selected = answers[q.id] || [];
-      const correct = q.correctAnswerIds;
-      const isCorrect =
-        selected.length === correct.length && selected.every((val) => correct.includes(val));
-      if (isCorrect) {
-        earnedPoints += q.points;
-      }
-    });
-
-    const percentage = Math.round((earnedPoints / quiz.totalPoints) * 100);
-
-    setQuizzes((prev) =>
-      prev.map((q) => {
-        if (q.id === quizId) {
-          return {
-            ...q,
-            status: "COMPLETED",
-            attemptsUsed: q.attemptsUsed + 1,
-            lastScore: earnedPoints,
-            lastScorePercentage: percentage,
-          };
-        }
-        return q;
-      }),
-    );
-
-    showToast(`Quiz completed! You scored ${earnedPoints}/${quiz.totalPoints} (${percentage}%).`);
-    return { score: earnedPoints, maxScore: quiz.totalPoints, percentage };
-  };
-
-  const submitExam = (examId: string, _answers: Record<string, string[]>) => {
-    const simulatedScore = 92;
-    setExaminations((prev) =>
-      prev.map((ex) => {
-        if (ex.id === examId) {
-          return {
-            ...ex,
-            status: "COMPLETED",
-            score: simulatedScore,
-            scorePercentage: 92,
-            letterGrade: "A",
-          };
-        }
-        return ex;
-      }),
-    );
-    showToast("Examination submitted successfully to proctor service.");
-  };
-
-  const sendMessage = (conversationId: string, text: string) => {
-    if (!text.trim()) return;
-
-    const newMsg = {
-      id: `msg-${Date.now()}`,
-      senderId: profile.id,
-      senderName: profile.name,
-      senderAvatar: profile.avatar,
-      isSenderStudent: true,
-      timestamp: "Just now",
-      text,
-    };
-
-    setConversations((prev) =>
-      prev.map((conv) => {
-        if (conv.id === conversationId) {
-          return {
-            ...conv,
-            lastMessage: text,
-            lastMessageTime: "Just now",
-            messages: [...conv.messages, newMsg],
-          };
-        }
-        return conv;
-      }),
-    );
-
-    // Simulate realistic instructor reply after 2.5 seconds
-    setTimeout(() => {
-      const replies = [
-        "Thank you for following up, Alex. I have made a note in your records.",
-        "Great question. We will cover this specific proof in detail during next lecture!",
-        "Your logic looks accurate. Feel free to stop by office hours if you want to explore the edge cases further.",
-      ];
-      const randomReply = replies[Math.floor(Math.random() * replies.length)];
-      const instructorReply = {
-        id: `msg-${Date.now() + 1}`,
-        senderId: "instructor",
-        senderName: "Course Instructor",
-        senderAvatar: "",
-        isSenderStudent: false,
-        timestamp: "Just now",
-        text: randomReply,
-      };
-
-      setConversations((current) =>
-        current.map((c) =>
-          c.id === conversationId
-            ? {
-                ...c,
-                lastMessage: randomReply,
-                lastMessageTime: "Just now",
-                messages: [...c.messages, instructorReply],
-              }
-            : c,
-        ),
-      );
-    }, 2500);
-  };
-
-  const markNotificationAsRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  };
-
-  const markAllNotificationsAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    showToast("All notifications marked as read.");
-  };
-
-  const sendAiQuery = async (query: string) => {
-    if (!query.trim()) return;
-
-    const userMessage: ChatMessage = {
-      id: `ai-msg-${Date.now()}`,
-      sender: "user",
-      text: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setAiChats((prev) => [...prev, userMessage]);
-    setIsAiLoading(true);
-
-    // Generate high quality educational responses tailored to Mentify courses
-    setTimeout(() => {
-      let responseText = "";
-      let codeSnippet: { language: string; code: string } | undefined = undefined;
-
-      const lower = query.toLowerCase();
-      if (
-        lower.includes("transformer") ||
-        lower.includes("attention") ||
-        lower.includes("scaling")
-      ) {
-        responseText = `In Transformer multi-head attention, we calculate:
-$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V$$
-
-### Why scale by $\\frac{1}{\\sqrt{d_k}}$?
-1. **Variance Stabilizer**: For large dimensions $d_k$ (e.g., $d_k = 64$), the dot products grow large in magnitude.
-2. If components of $q$ and $k$ are independent random variables with mean 0 and variance 1, their dot product $q \\cdot k = \\sum_{i=1}^{d_k} q_i k_i$ has mean 0 and variance $d_k$.
-3. Without scaling, the softmax function receives large inputs, pushing softmax gradients into regions with tiny derivatives (vanishing gradients).
-4. Dividing by $\\sqrt{d_k}$ normalizes the variance back to 1, preserving healthy gradient flow during backpropagation.`;
-
-        codeSnippet = {
-          language: "python",
-          code: `# Safe scaled dot-product calculation
-import torch
-import math
-
-def scaled_attention(q, k, v, mask=None):
-    d_k = q.size(-1)
-    scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)
-    if mask is not None:
-        scores = scores.masked_fill(mask == 0, -1e9)
-    weights = torch.softmax(scores, dim=-1)
-    return torch.matmul(weights, v), weights`,
-        };
-      } else if (
-        lower.includes("dijkstra") ||
-        lower.includes("fibonacci") ||
-        lower.includes("heap")
-      ) {
-        responseText = `### Fibonacci Heap in Dijkstra's Algorithm
-Standard binary min-heaps take $\\mathcal{O}(\\log V)$ for \`decrease-key\` operations, leading to total Dijkstra runtime of:
-$$\\mathcal{O}((V + E) \\log V) = \\mathcal{O}(E \\log V)$$
-
-With a **Fibonacci Heap**:
-- \`extract-min\` runs in amortized $\\mathcal{O}(\\log V)$
-- \`decrease-key\` runs in amortized $\\mathcal{O}(1)$ via cascading cuts
-- **Total Runtime**: $\\mathcal{O}(E + V \\log V)$
-
-In dense graphs where $E \\approx V^2$, the $\\mathcal{O}(E)$ term dominates, making Fibonacci heaps asymptotically optimal!`;
-      } else if (
-        lower.includes("raft") ||
-        lower.includes("consensus") ||
-        lower.includes("split vote")
-      ) {
-        responseText = `### Raft Split Vote Resolution
-When two candidates simultaneously broadcast \`RequestVote\` RPCs and split the electorate equally (neither reaching a majority $\\lfloor N/2 \\rfloor + 1$ quorum):
-
-1. **Randomized Election Timeouts**: Each node chooses an election timeout uniformly at random from a range (e.g., 150ms–300ms).
-2. **First to Timeout**: The node with the shorter timeout will trigger a new election term before competitors, request votes, and collect the necessary majority while other nodes are still in their waiting window.
-3. This guarantees rapid convergence with negligible split-vote overhead.`;
-      } else {
-        responseText = `Great question on your coursework, Alex!
-
-To approach this systematically:
-1. **Define Core Invariants**: Break the problem into its foundational components and state dependencies.
-2. **Analyze Asymptotic Tradeoffs**: Evaluate memory overhead versus computational complexity.
-3. **Verify Boundary Conditions**: Check empty inputs, single-node configurations, and cyclic topologies.
-
-Would you like me to generate a practice quiz or step-by-step code proof for this concept?`;
-      }
-
-      const assistantMessage: ChatMessage = {
-        id: `ai-msg-${Date.now() + 1}`,
-        sender: "assistant",
-        text: responseText,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        codeBlock: codeSnippet,
-        suggestedQuestions: [
-          "Can you show an edge case test for this?",
-          "How does this appear on the upcoming midterm exam?",
-          "Generate a quick 2-question knowledge check",
-        ],
-      };
-
-      setAiChats((prev) => [...prev, assistantMessage]);
-      setIsAiLoading(false);
-    }, 1200);
-  };
-
-  const navigateToCourseWorkspace = (courseId: string, lessonId?: string) => {
-    setSelectedCourseId(courseId);
-    if (lessonId) {
-      setSelectedLessonId(lessonId);
-    } else {
-      const course = courses.find((c) => c.id === courseId);
-      if (course?.lastAccessedLessonId) {
-        setSelectedLessonId(course.lastAccessedLessonId);
-      } else if (course?.modules?.[0]?.lessons?.[0]) {
-        setSelectedLessonId(course.modules[0].lessons[0].id);
+        window.localStorage.removeItem(storageKey);
+      } catch {
+        window.localStorage.removeItem(storageKey);
       }
     }
+    const response = await startQuizAttemptApi(quizId);
+    const attemptId = String(response.data?.attemptId || "");
+    if (!attemptId) throw new Error("The backend did not return a quiz attempt id.");
+    const attempt = { attemptId, startedAt: response.data?.startedAt };
+    window.localStorage.setItem(storageKey, JSON.stringify(attempt));
+    await refreshWorkspace();
+    return attempt;
+  };
+  const saveQuizAnswer = async (
+    attemptId: string,
+    questionId: string,
+    selectedOptionId: string,
+  ) => {
+    await saveQuizAnswerApi(attemptId, questionId, selectedOptionId);
+  };
+  const submitQuizAnswers = async (quizId: string, attemptId: string) => {
+    const response = await finalizeQuizAttempt(attemptId);
+    const result = response.data || {};
+    const score = Number(result.score);
+    const maxScore = Number(result.totalMarks);
+    const percentage = Number(result.percentage);
+    const answers = Array.isArray(result.answers)
+      ? result.answers.map((answer: Record<string, unknown>) => ({
+          questionId: String(answer.questionId ?? ""),
+          questionText: String(answer.questionText ?? ""),
+          explanation: answer.explanation ? String(answer.explanation) : undefined,
+          selectedOptionId: answer.selectedOptionId ? String(answer.selectedOptionId) : undefined,
+          selectedAnswer: answer.selectedAnswer ? String(answer.selectedAnswer) : undefined,
+          correctOptionId: answer.correctOptionId ? String(answer.correctOptionId) : undefined,
+          correctAnswer: answer.correctAnswer ? String(answer.correctAnswer) : undefined,
+          correct: Boolean(answer.correct),
+          awardedMarks: Number(answer.awardedMarks ?? 0),
+          questionMarks: Number(answer.questionMarks ?? 0),
+        }))
+      : [];
+    const completedResult = {
+      score,
+      maxScore,
+      percentage,
+      passed: Boolean(result.passed),
+      answers,
+    };
+    const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
+    window.localStorage.setItem(
+      `student:quiz-result:${profile.id}:${quizId}`,
+      JSON.stringify(completedResult),
+    );
+    window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(`student:quiz-answers:${attemptId}`);
+    await refreshWorkspace();
+    setQuizzes((current) =>
+      current.map((quiz) =>
+        quiz.id === quizId
+          ? {
+              ...quiz,
+              status: "COMPLETED",
+              attemptsUsed: Math.max(quiz.attemptsUsed ?? 0, (quiz.attemptsUsed ?? 0) + 1),
+              lastScore: score,
+              lastScorePercentage: percentage,
+            }
+          : quiz,
+      ),
+    );
+    showToast(`Quiz completed: ${score}/${maxScore} (${percentage}%).`);
+    return completedResult;
+  };
+  const refreshCalendarEvents = useCallback(
+    async (start: string, end: string, filters: { type?: string; courseId?: string } = {}) => {
+      const events = await listCalendarEvents(start, end, filters);
+      setCalendarEvents(
+        events.map((event) => {
+          const course = courses.find((item) => item.id === event.courseId);
+          return { ...event, courseCode: course?.code || "", courseTitle: course?.title || "" };
+        }),
+      );
+    },
+    [courses],
+  );
+  const downloadMaterial = async (materialId: string) => {
+    const response = await getMaterialDownload(materialId);
+    const url = String(response.data?.downloadUrl || "");
+    if (!url) throw new Error("The backend did not return a material download URL.");
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+  const submitExam = (examId: string) => {
+    showToast(`Exam ${examId} submission is not supported by the current backend contract.`);
+  };
+  const sendMessage = async (conversationId: string, text: string) => {
+    try {
+      const conversation = conversations.find((item) => item.id === conversationId);
+      if (conversation?.studentMessagingEnabled === false) {
+        showToast("Student messaging is paused for this course.");
+        return;
+      }
+      const response = await sendCommunicationMessage(conversationId, text);
+      const data = response.data || {};
+      const message = {
+        id: String(data.id || ""),
+        senderId: String(data.senderId || profile.id),
+        senderName: profile.name || "You",
+        senderAvatar: "",
+        isSenderStudent: true,
+        timestamp: String(data.sentAt || ""),
+        text: String(data.content || text),
+      };
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id !== conversationId
+            ? conversation
+            : conversation.messages.some((item) => item.id && item.id === message.id)
+              ? conversation
+              : {
+                  ...conversation,
+                  lastMessage: message.text,
+                  lastMessageTime: message.timestamp,
+                  messages: [...conversation.messages, message],
+                },
+        ),
+      );
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Message could not be sent.");
+      throw error;
+    }
+  };
+  const loadMoreMessages = async (conversationId: string) => {
+    const page = (messagePages[conversationId] ?? 0) + 1;
+    try {
+      const response = await listCommunicationMessages(conversationId, page, 30);
+      const raw = Array.isArray(response) ? response : (response as { data?: unknown }).data || [];
+      const studentId = profile.id;
+      const olderMessages = (Array.isArray(raw) ? raw : [])
+        .map((item) => toCommunicationMessage(item as Record<string, unknown>, studentId))
+        .reverse();
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                messages: [
+                  ...olderMessages,
+                  ...conversation.messages.filter(
+                    (message) => !olderMessages.some((older) => older.id === message.id),
+                  ),
+                ],
+              }
+            : conversation,
+        ),
+      );
+      setMessagePages((current) => ({ ...current, [conversationId]: page }));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not load older messages.");
+    }
+  };
+  const markNotificationAsRead = async (id: string) => {
+    try {
+      await markNotificationRead(id);
+      setNotifications((current) =>
+        current.map((item) => (item.id === id ? { ...item, read: true } : item)),
+      );
+      const count = await getUnreadNotificationCount();
+      setUnreadNotificationCount(Number(count.data ?? 0));
+    } catch {
+      showToast("Could not mark notification as read.");
+    }
+  };
+  const markAllNotificationsAsRead = async () => {
+    try {
+      await markAllNotificationsReadApi();
+      setNotifications((current) => current.map((item) => ({ ...item, read: true })));
+      setUnreadNotificationCount(0);
+    } catch {
+      showToast("Could not mark notifications as read.");
+    }
+  };
+  const deleteNotification = async (id: string) => {
+    try {
+      await deleteNotificationApi(id);
+      setNotifications((current) => current.filter((item) => item.id !== id));
+      const count = await getUnreadNotificationCount();
+      setUnreadNotificationCount(Number(count.data ?? 0));
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not delete notification.");
+    }
+  };
+  const sendAiQuery = async (query: string) => {
+    if (!query.trim()) return;
+    let conversationId = aiConversationId;
+    if (!conversationId) {
+      const response = await createAiConversation("Student study assistant");
+      conversationId = String(response.data?.id || "");
+      setAiConversationId(conversationId);
+    }
+    if (!conversationId) {
+      showToast("The AI service did not return a conversation id.");
+      return;
+    }
+    setAiChats((current) => [
+      ...current,
+      {
+        id: `user-${Date.now()}`,
+        sender: "user",
+        text: query,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+    setIsAiLoading(true);
+    try {
+      const response = await sendAiMessage(conversationId, query, `student-${Date.now()}`);
+      const data = response.data || {};
+      setAiChats((current) => [
+        ...current,
+        {
+          id: String(data.messageId || Date.now()),
+          sender: "assistant",
+          text: String(data.message || ""),
+          timestamp: String(data.timestamp || ""),
+        },
+      ]);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "AI assistant is unavailable.");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+  const navigateToCourseWorkspace = (courseId: string, lessonId?: string) => {
+    const course = courses.find((item) => item.id === courseId);
+    setSelectedCourseId(courseId);
+    setSelectedLessonId(
+      lessonId || course?.lastAccessedLessonId || course?.modules[0]?.lessons[0]?.id || "",
+    );
     setCurrentView("course-workspace");
   };
-
   const navigateToCourseDetails = (courseId: string) => {
     setSelectedCourseId(courseId);
     setCurrentView("course-details");
   };
-
+  const attendanceOverall = attendanceSummaries.length
+    ? (() => {
+        const completedSessions = attendanceSummaries.reduce(
+          (total, summary) => total + summary.completedSessions,
+          0,
+        );
+        const attendedCount = attendanceSummaries.reduce(
+          (total, summary) => total + summary.attendedCount,
+          0,
+        );
+        return {
+          studentId: profile.id,
+          courseId: "",
+          completedSessions,
+          presentCount: attendanceSummaries.reduce(
+            (total, summary) => total + summary.presentCount,
+            0,
+          ),
+          lateCount: attendanceSummaries.reduce((total, summary) => total + summary.lateCount, 0),
+          absentCount: attendanceSummaries.reduce(
+            (total, summary) => total + summary.absentCount,
+            0,
+          ),
+          attendedCount,
+          attendancePercentage: completedSessions ? (attendedCount / completedSessions) * 100 : 0,
+        };
+      })()
+    : null;
   return (
     <StudentContext.Provider
       value={{
@@ -484,31 +725,45 @@ Would you like me to generate a practice quiz or step-by-step code proof for thi
         assignments,
         submitAssignment,
         quizzes,
+        startQuizAttempt,
+        saveQuizAnswer,
         submitQuizAnswers,
         examinations,
         submitExam,
         materials,
         calendarEvents,
+        refreshCalendarEvents,
+        refreshWorkspace,
+        workspaceLoading,
+        workspaceError,
+        retryWorkspace: refreshWorkspace,
         conversations,
         sendMessage,
+        loadMoreMessages,
         announcements,
         notifications,
+        unreadNotificationCount,
         markNotificationAsRead,
         markAllNotificationsAsRead,
+        deleteNotification,
+        attendanceSummaries,
+        attendanceOverall,
         aiChats,
         isAiLoading,
         sendAiQuery,
         theme,
-        toggleTheme,
+        toggleTheme: () => setTheme((current) => (current === "light" ? "dark" : "light")),
         isSidebarCollapsed,
         setIsSidebarCollapsed,
-        toggleSidebar,
+        toggleSidebar: () => setIsSidebarCollapsed((current) => !current),
         isCommandPaletteOpen,
         setIsCommandPaletteOpen,
         selectedMaterialForPreview,
         setSelectedMaterialForPreview,
+        downloadMaterial,
         toastMessage,
         showToast,
+        clearToast,
         navigateToCourseWorkspace,
         navigateToCourseDetails,
       }}
@@ -517,11 +772,8 @@ Would you like me to generate a practice quiz or step-by-step code proof for thi
     </StudentContext.Provider>
   );
 };
-
 export const useStudent = () => {
   const context = useContext(StudentContext);
-  if (!context) {
-    throw new Error("useStudent must be used within a StudentProvider");
-  }
+  if (!context) throw new Error("useStudent must be used within a StudentProvider");
   return context;
 };

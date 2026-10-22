@@ -16,6 +16,7 @@ export interface TeacherUserSummary {
   dailyDigestEnabled?: boolean;
   dailyDigestTime?: string | null;
   role: string;
+  mustChangePassword?: boolean;
   teacherProfile?: {
     id?: string;
     teacherCode?: string;
@@ -41,6 +42,10 @@ export interface LoginResponse {
   refreshExpiresIn?: number;
   scope?: string;
   issuedAt?: string;
+  mustChangePassword?: boolean;
+  /** Current auth-service contract. */
+  profile?: TeacherUserSummary;
+  /** Legacy response shape kept for backwards compatibility. */
   user?: TeacherUserSummary;
 }
 
@@ -49,4 +54,5 @@ export interface AuthSession {
   refreshToken?: string;
   user: TeacherUserSummary;
   expiresAt: number;
+  mustChangePassword?: boolean;
 }

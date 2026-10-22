@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AdminSidebar, AdminRoute } from "../components/AdminSidebar";
 import { AdminNavbar } from "../components/AdminNavbar";
+import { getCurrentAdminProfile, type CurrentAdminProfile } from "../api/profileApi";
 import { ToastContainer, ToastMessage } from "../components/ToastContainer";
 import {
   AdminRole,
@@ -36,7 +37,6 @@ interface AdminLayoutProps {
   currentRoute: AdminRoute;
   onNavigate: (route: AdminRoute) => void;
   role: AdminRole;
-  onRoleChange: (newRole: AdminRole) => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
   notifications: NotificationItem[];
@@ -52,7 +52,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   currentRoute,
   onNavigate,
   role,
-  onRoleChange,
   isDarkMode,
   onToggleTheme,
   notifications,
@@ -67,6 +66,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [adminProfile, setAdminProfile] = useState<CurrentAdminProfile | null>(null);
+
+  useEffect(() => {
+    void getCurrentAdminProfile()
+      .then(setAdminProfile)
+      .catch(() => setAdminProfile(null));
+  }, []);
 
   // Keyboard shortcut listener for cmd+k
   useEffect(() => {
@@ -87,7 +93,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: "dashboard", title: "Platform Overview Dashboard", category: "Overview" },
     { id: "analytics", title: "Analytics & Trend Charts", category: "Overview" },
     { id: "notifications", title: "System Notifications & Webhooks", category: "Overview" },
-    { id: "users", title: "All Users Management Directory", category: "User Management" },
     {
       id: "students",
       title: "Student Management & Registration Wizard",
@@ -158,7 +163,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <AdminNavbar
           currentRoute={currentRoute}
           role={role}
-          onRoleChange={onRoleChange}
           onNavigate={onNavigate}
           notifications={notifications}
           onMarkNotificationRead={onMarkNotificationRead}
@@ -170,6 +174,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           isDarkMode={isDarkMode}
           onToggleTheme={onToggleTheme}
           onLogout={onLogout}
+          profile={adminProfile}
         />
 
         {/* Viewport Content */}

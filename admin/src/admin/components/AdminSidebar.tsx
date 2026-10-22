@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   BarChart3,
   Bell,
-  Users,
   GraduationCap,
   Briefcase,
   ShieldAlert,
@@ -28,6 +27,7 @@ import {
   Shield,
   X,
   ChevronLeft,
+  ShoppingBag,
 } from "lucide-react";
 import { AdminRole } from "../types";
 
@@ -35,7 +35,6 @@ export type AdminRoute =
   | "dashboard"
   | "analytics"
   | "notifications"
-  | "users"
   | "students"
   | "teachers"
   | "administrators"
@@ -50,6 +49,7 @@ export type AdminRoute =
   | "results"
   | "attendance"
   | "materials"
+  | "marketplace"
   | "calendar"
   | "communication"
   | "ai-assistant"
@@ -113,7 +113,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       key: "USER_MANAGEMENT",
       label: "User Management",
       items: [
-        { id: "users" as AdminRoute, label: "All Users", icon: Users },
         { id: "students" as AdminRoute, label: "Students", icon: GraduationCap },
         { id: "teachers" as AdminRoute, label: "Teachers", icon: Briefcase },
         {
@@ -150,6 +149,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       label: "Platform Operations",
       items: [
         { id: "materials" as AdminRoute, label: "Learning Materials", icon: FolderLock },
+        { id: "marketplace" as AdminRoute, label: "Marketplace", icon: ShoppingBag },
         { id: "calendar" as AdminRoute, label: "Calendar", icon: Calendar },
         { id: "communication" as AdminRoute, label: "Communication", icon: MessageSquare },
         { id: "ai-assistant" as AdminRoute, label: "Mentify AI", icon: Sparkles },

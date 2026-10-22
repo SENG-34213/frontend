@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  BookOpen,
-  Users,
-  FileCheck,
-  ClipboardList,
-  GraduationCap,
-  Calendar,
-  Clock,
+  Activity,
   ArrowRight,
-  Sparkles,
+  ArrowUpRight,
+  BarChart3,
+  BookOpen,
+  CheckCircle2,
   ChevronRight,
-  UserCheck,
+  ClipboardList,
+  Clock3,
+  FileCheck,
+  GraduationCap,
+  Layers3,
+  PieChart,
+  Sparkles,
 } from "lucide-react";
 import { NavigationTab, NotificationItem, TeacherProfile } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
@@ -25,6 +28,215 @@ interface DashboardViewProps {
   notificationsLoading: boolean;
 }
 
+const percent = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
+const formatTime = (value?: string | null) =>
+  value ? new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—";
+const formatDateTime = (value?: string | null) =>
+  value
+    ? new Date(value).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "Not available";
+
+const MetricTile = ({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  tone,
+  onClick,
+}: {
+  label: string;
+  value: number | string;
+  detail: string;
+  icon: React.ElementType;
+  tone: "indigo" | "cyan" | "amber" | "violet" | "emerald";
+  onClick: () => void;
+}) => {
+  const tones = {
+    indigo: "bg-indigo-50 text-indigo-600 ring-indigo-100",
+    cyan: "bg-cyan-50 text-cyan-600 ring-cyan-100",
+    amber: "bg-amber-50 text-amber-600 ring-amber-100",
+    violet: "bg-violet-50 text-violet-600 ring-violet-100",
+    emerald: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+  };
+  return (
+    <button
+      onClick={onClick}
+      className="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span
+          className={`flex h-9 w-9 items-center justify-center rounded-xl ring-4 ${tones[tone]}`}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <ArrowUpRight className="h-4 w-4 text-slate-300 transition group-hover:text-indigo-500" />
+      </div>
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+      <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-slate-900">{value}</p>
+      <p className="mt-1 text-[11px] text-slate-500">{detail}</p>
+    </button>
+  );
+};
+
+const CourseWorkloadChart = ({
+  courses,
+}: {
+  courses: TeacherDashboardData["coursePerformance"];
+}) => {
+  const visible = courses.slice(0, 6);
+  const max = Math.max(1, ...visible.map((course) => course.studentCount));
+  if (!visible.length)
+    return (
+      <div className="flex h-72 items-center justify-center text-xs text-slate-400">
+        No course data available yet.
+      </div>
+    );
+  const chartWidth = 720;
+  const baseline = 204;
+  const slot = chartWidth / visible.length;
+  const barWidth = Math.min(34, slot * 0.24);
+  return (
+    <div className="overflow-x-auto">
+      <svg
+        viewBox="0 0 720 260"
+        className="h-72 min-w-[620px] w-full"
+        role="img"
+        aria-label="Course student enrollment chart"
+      >
+        {[0, 25, 50, 75, 100].map((tick) => {
+          const y = baseline - (tick / 100) * 166;
+          return (
+            <g key={tick}>
+              <line x1="40" x2="700" y1={y} y2={y} stroke="#e2e8f0" strokeDasharray="3 5" />
+              <text x="4" y={y + 4} fill="#94a3b8" fontSize="10">
+                {tick}%
+              </text>
+            </g>
+          );
+        })}
+        {visible.map((course, index) => {
+          const center = 62 + index * slot;
+          const enrollmentHeight = Math.max(5, (course.studentCount / max) * 166);
+          const gradingHeight = Math.max(5, (percent(course.gradingRate) / 100) * 166);
+          const enrollmentY = baseline - enrollmentHeight;
+          const gradingY = baseline - gradingHeight;
+          return (
+            <g key={course.courseId}>
+              <rect
+                x={center - barWidth - 3}
+                y={enrollmentY}
+                width={barWidth}
+                height={enrollmentHeight}
+                rx="7"
+                fill="#6366f1"
+              />
+              <rect
+                x={center + 3}
+                y={gradingY}
+                width={barWidth}
+                height={gradingHeight}
+                rx="7"
+                fill="#10b981"
+              />
+              <text
+                x={center - 2}
+                y={Math.min(enrollmentY, gradingY) - 8}
+                textAnchor="middle"
+                fill="#334155"
+                fontSize="10"
+                fontWeight="700"
+              >
+                {course.studentCount}
+              </text>
+              <text
+                x={center}
+                y="224"
+                textAnchor="middle"
+                fill="#475569"
+                fontSize="10"
+                fontWeight="600"
+              >
+                {course.courseName.length > 13
+                  ? `${course.courseName.slice(0, 12)}…`
+                  : course.courseName}
+              </text>
+              <text x={center} y="242" textAnchor="middle" fill="#94a3b8" fontSize="9">
+                {course.gradingRate}% reviewed
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+};
+
+const ReviewDonut = ({ reviewed, waiting }: { reviewed: number; waiting: number }) => {
+  const total = reviewed + waiting;
+  const progress = total ? Math.round((reviewed / total) * 100) : 0;
+  return (
+    <div
+      className="relative h-40 w-40 shrink-0 rounded-full"
+      style={{ background: `conic-gradient(#10b981 0 ${progress}%, #f59e0b ${progress}% 100%)` }}
+    >
+      <div className="absolute inset-3 flex flex-col items-center justify-center rounded-full bg-white shadow-inner">
+        <span className="text-3xl font-bold tracking-tight text-slate-900">{progress}%</span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+          reviewed
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const SubmissionChart = ({ courses }: { courses: TeacherDashboardData["coursePerformance"] }) => {
+  const visible = courses.slice(0, 5);
+  const max = Math.max(1, ...visible.map((course) => course.submissionCount));
+  if (!visible.length)
+    return <p className="py-8 text-xs text-slate-400">No submission activity yet.</p>;
+  return (
+    <div className="space-y-4">
+      {visible.map((course) => {
+        const graded = Math.min(course.submissionCount, course.gradedSubmissionCount);
+        return (
+          <div key={course.courseId}>
+            <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+              <span className="max-w-[180px] truncate font-semibold text-slate-700">
+                {course.courseName}
+              </span>
+              <span className="font-mono text-[11px] text-slate-500">
+                {graded}/{course.submissionCount}
+              </span>
+            </div>
+            <div className="flex h-2.5 overflow-hidden rounded-full bg-slate-100">
+              <span className="bg-emerald-500" style={{ width: `${(graded / max) * 100}%` }} />
+              <span
+                className="bg-amber-400"
+                style={{ width: `${((course.submissionCount - graded) / max) * 100}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <div className="flex items-center gap-4 border-t border-slate-100 pt-3 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1.5">
+          <i className="h-2 w-2 rounded-full bg-emerald-500" />
+          Reviewed
+        </span>
+        <span className="flex items-center gap-1.5">
+          <i className="h-2 w-2 rounded-full bg-amber-400" />
+          Waiting
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export const DashboardView: React.FC<DashboardViewProps> = ({
   teacher,
   onNavigate,
@@ -37,12 +249,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const firstName = teacher.name.trim().split(/\s+/)[0] || "Professor";
-
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date()),
+    [],
+  );
   useEffect(() => {
     const controller = new AbortController();
     setIsLoading(true);
     setError(null);
-
     getTeacherDashboard(controller.signal)
       .then((data) => setDashboard(data ?? null))
       .catch((requestError) => {
@@ -56,516 +276,412 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       .finally(() => {
         if (!controller.signal.aborted) setIsLoading(false);
       });
-
     return () => controller.abort();
   }, []);
-
-  const formatDateTime = (value?: string | null) =>
-    value ? new Date(value).toLocaleString() : "Not available";
-  const formatTime = (value?: string | null) =>
-    value ? new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—";
-
-  const todayClasses = (dashboard?.todaySchedule ?? [])
-    .filter((event) => event.eventType.toUpperCase() === "CLASS")
-    .map((event) => ({
-      id: event.id,
-      title: event.title,
-      startTime: formatTime(event.startDateTime),
-      location: event.location || "Not specified",
-      description: formatDateTime(event.startDateTime),
-    }));
-  const pendingGradingAssignments = (dashboard?.pendingGrading ?? []).map((item) => ({
-    id: item.assignmentId,
-    submissionId: item.submissionId,
-    courseCode: item.courseId.slice(0, 8),
-    title: item.assignmentTitle,
-    dueDate: formatDateTime(item.submittedAt),
-    gradedCount: 0,
-    totalSubmissions: 1,
-  }));
-  const activeCourses = (dashboard?.coursePerformance ?? []).map((course) => ({
-    id: course.courseId,
-    code: course.courseId.slice(0, 8),
-    title: course.courseName,
-    description: `${course.activeAssignmentCount} active assignments · ${course.submissionCount} submissions`,
-    status: "Active",
-    enrolledCount: course.studentCount,
-    averageGrade: course.gradingRate,
-  }));
+  const performanceCourses = dashboard?.coursePerformance ?? [];
+  const todayClasses = (dashboard?.todaySchedule ?? []).filter(
+    (event) => event.eventType.toUpperCase() === "CLASS",
+  );
+  const pendingAssignments = dashboard?.pendingGrading ?? [];
+  const totalSubmissions = performanceCourses.reduce(
+    (sum, course) => sum + course.submissionCount,
+    0,
+  );
+  const gradedSubmissions = performanceCourses.reduce(
+    (sum, course) => sum + course.gradedSubmissionCount,
+    0,
+  );
+  const waitingSubmissions = Math.max(0, totalSubmissions - gradedSubmissions);
+  const averageReview = performanceCourses.length
+    ? Math.round(
+        performanceCourses.reduce((sum, course) => sum + course.gradingRate, 0) /
+          performanceCourses.length,
+      )
+    : 0;
+  const activeAssignmentTotal = performanceCourses.reduce(
+    (sum, course) => sum + course.activeAssignmentCount,
+    0,
+  );
+  const strongestCourse = useMemo(
+    () => [...performanceCourses].sort((a, b) => b.gradingRate - a.gradingRate)[0],
+    [performanceCourses],
+  );
 
   return (
-    <div className="space-y-6 pb-12 max-w-7xl mx-auto">
+    <main className="mx-auto max-w-[1480px] space-y-6 pb-12">
       {error && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+        <div className="flex items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
           <span>{error.message}</span>
           <button
             onClick={() => window.location.reload()}
-            className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
+            className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white"
           >
             Retry
           </button>
         </div>
       )}
-      {/* 1. Welcome Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200/80 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-              Fall Semester 2026
-            </span>
-            <span className="text-xs text-slate-400">·</span>
-            <span className="text-xs text-slate-500 font-medium">
-              {new Date().toLocaleDateString(undefined, {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
+      <section className="relative overflow-hidden rounded-[30px] bg-[#111827] px-6 py-7 text-white shadow-2xl shadow-slate-300/30 sm:px-9 sm:py-9">
+        <div className="absolute -right-24 -top-32 h-80 w-80 rounded-full bg-indigo-500/25 blur-3xl" />
+        <div className="absolute -bottom-40 left-1/3 h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="relative flex flex-col justify-between gap-8 xl:flex-row xl:items-end">
+          <div className="max-w-2xl">
+            <div className="mb-5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Teacher command center
+            </div>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
+              Good morning, {firstName}.
+            </h1>
+            <p className="mt-3 text-sm font-medium text-cyan-100">{todayLabel}</p>
+            <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300">
+              A clear view of your classes, review queue, and course activity. Focus on the areas
+              that need your attention today.
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Good morning, {firstName}!
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Here's what's happening across your classes today. You have{" "}
-            <span className="font-semibold text-slate-800">
-              {dashboard?.todayClassCount ?? 0} upcoming lectures
-            </span>{" "}
-            and{" "}
-            <span className="font-semibold text-indigo-700">
-              {dashboard?.pendingReviewCount ?? 0} submissions
-            </span>{" "}
-            awaiting review.
-          </p>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <button
+              onClick={() => onNavigate("attendance")}
+              className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-bold text-slate-900 transition hover:bg-cyan-50"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Attendance
+            </button>
+            <button
+              onClick={() => onNavigate("grading-workspace")}
+              className="flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold text-white transition hover:bg-white/15"
+            >
+              <ClipboardList className="h-4 w-4" />
+              Review queue
+            </button>
+          </div>
         </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            onClick={() => onNavigate("attendance")}
-            className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-slate-600" />
-            <span>Mark Attendance</span>
-          </button>
-          <button
-            onClick={() => onNavigate("grading-workspace")}
-            className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
-          >
-            <ClipboardList className="w-3.5 h-3.5" />
-            <span>Grading Queue</span>
-          </button>
+        <div className="relative mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-4">
+          <div className="bg-white/[0.06] p-4">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Today</p>
+            <p className="mt-1 text-2xl font-bold">{dashboard?.todayClassCount ?? 0}</p>
+            <p className="text-[11px] text-slate-400">classes scheduled</p>
+          </div>
+          <div className="bg-white/[0.06] p-4">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Students</p>
+            <p className="mt-1 text-2xl font-bold">{dashboard?.studentCount ?? 0}</p>
+            <p className="text-[11px] text-slate-400">currently enrolled</p>
+          </div>
+          <div className="bg-white/[0.06] p-4">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Review rate</p>
+            <p className="mt-1 text-2xl font-bold text-emerald-300">{averageReview}%</p>
+            <p className="text-[11px] text-slate-400">across courses</p>
+          </div>
+          <div className="bg-white/[0.06] p-4">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400">Needs action</p>
+            <p className="mt-1 text-2xl font-bold text-amber-300">
+              {dashboard?.pendingReviewCount ?? waitingSubmissions}
+            </p>
+            <p className="text-[11px] text-slate-400">submissions waiting</p>
+          </div>
         </div>
-      </div>
-
-      {/* 2. KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
-        {/* Card 1: My Courses */}
-        <div
+      </section>
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <MetricTile
+          label="My courses"
+          value={isLoading ? "—" : (dashboard?.courseCount ?? 0)}
+          detail="Assigned courses"
+          icon={BookOpen}
+          tone="indigo"
           onClick={() => onNavigate("courses")}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="text-xs font-medium text-slate-500">My Courses</span>
-            <BookOpen className="w-4 h-4" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {isLoading ? "—" : (dashboard?.courseCount ?? 0)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">Assigned teacher courses</p>
-        </div>
-
-        {/* Card 2: Total Students */}
-        <div
-          onClick={() => onNavigate("students")}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="text-xs font-medium text-slate-500">Total Students</span>
-            <Users className="w-4 h-4" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {isLoading ? "—" : (dashboard?.studentCount ?? 0)}
-          </div>
-          <p className="text-[11px] text-emerald-600 font-medium mt-1">Unique enrolled students</p>
-        </div>
-
-        {/* Card 3: Active Assignments */}
-        <div
+        />
+        <MetricTile
+          label="Active work"
+          value={isLoading ? "—" : activeAssignmentTotal}
+          detail="Published assignments"
+          icon={Layers3}
+          tone="cyan"
           onClick={() => onNavigate("assignments")}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="text-xs font-medium text-slate-500">Active Assignments</span>
-            <FileCheck className="w-4 h-4" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {isLoading ? "—" : (dashboard?.activeAssignmentCount ?? 0)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">Published and not overdue</p>
-        </div>
-
-        {/* Card 4: Pending Submissions */}
-        <div
-          onClick={() => onNavigate("grading-workspace")}
-          className="bg-white p-4 rounded-xl border border-indigo-200 shadow-xs bg-indigo-50/20 hover:border-indigo-300 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-indigo-600 mb-2">
-            <span className="text-xs font-medium text-indigo-900">Pending Review</span>
-            <ClipboardList className="w-4 h-4" />
-          </div>
-          <div className="text-2xl font-bold text-indigo-700 font-mono tabular-nums">
-            {isLoading ? "—" : (dashboard?.pendingReviewCount ?? 0)}
-          </div>
-          <p className="text-[11px] text-indigo-600 font-medium mt-1">Ready to grade</p>
-        </div>
-
-        {/* Card 5: Upcoming Exams */}
-        <div
+        />
+        <MetricTile
+          label="Exams"
+          value={isLoading ? "—" : (dashboard?.upcomingExamCount ?? 0)}
+          detail="Upcoming assessments"
+          icon={GraduationCap}
+          tone="violet"
           onClick={() => onNavigate("exams")}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="text-xs font-medium text-slate-500">Upcoming Exams</span>
-            <GraduationCap className="w-4 h-4" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {isLoading ? "—" : (dashboard?.upcomingExamCount ?? 0)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">Scheduled or marking</p>
-        </div>
-
-        {/* Card 6: Today's Classes */}
-        <div
-          onClick={() => onNavigate("calendar")}
-          className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-slate-400 group-hover:text-indigo-600 mb-2">
-            <span className="text-xs font-medium text-slate-500">Today's Classes</span>
-            <Calendar className="w-4 h-4" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums">
-            {isLoading ? "—" : (dashboard?.todayClassCount ?? 0)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">Classes scheduled today</p>
-        </div>
-      </div>
-
-      {/* Main 2-Column Split: Left (Schedule & Grading) + Right (Performance & AI Assistant) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 Cols on lg) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Today's Teaching Schedule */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-indigo-600" />
-                <h2 className="text-sm font-bold text-slate-900">Today's Teaching Schedule</h2>
-              </div>
-              <button
-                onClick={() => onNavigate("calendar")}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-              >
-                <span>Full Calendar</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {!isLoading && todayClasses.length === 0 && (
-                <p className="py-6 text-center text-xs text-slate-400">
-                  No classes scheduled today.
-                </p>
-              )}
-              {todayClasses.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border border-slate-200/80 hover:bg-slate-50 transition-colors gap-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="px-2.5 py-1.5 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-700 font-mono text-xs font-semibold shrink-0">
-                      {item.startTime}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs sm:text-sm text-slate-900">
-                          {item.title}
-                        </span>
-                        <StatusBadge status="Scheduled" variant="clean" />
-                      </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Room: <span className="text-slate-700 font-medium">{item.location}</span> ·{" "}
-                        <span>{item.description}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                    <button
-                      onClick={() => onNavigate("attendance")}
-                      className="px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors"
-                    >
-                      Take Attendance
-                    </button>
-                    <button
-                      onClick={() => onNavigate("curriculum")}
-                      className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
-                    >
-                      Lesson Notes
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Pending Grading Queue */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-bold text-slate-900">Pending Grading Queue</h2>
-              </div>
-              <button
-                onClick={() => onNavigate("grading-workspace")}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-              >
-                <span>Open Grading Workspace</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="mt-4 divide-y divide-slate-100">
-              {pendingGradingAssignments.map((asg) => {
-                const pending = asg.totalSubmissions - asg.gradedCount;
-                return (
-                  <div
-                    key={asg.submissionId}
-                    className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-semibold text-slate-600">
-                          [{asg.courseCode}]
-                        </span>
-                        <span className="text-xs sm:text-sm font-medium text-slate-900">
-                          {asg.title}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                        <span>Due {asg.dueDate}</span>
-                        <span>·</span>
-                        <span className="text-slate-700">
-                          <strong className="text-indigo-600 tabular-nums">
-                            {asg.gradedCount}
-                          </strong>{" "}
-                          / {asg.totalSubmissions} graded
-                        </span>
-                        <span>·</span>
-                        <span className="text-amber-700 font-medium">{pending} waiting review</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => onGradeAssignment(asg.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
-                      >
-                        <span>Grade Now</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Courses Grid */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900">My Active Courses</h2>
-              <button
-                onClick={() => onNavigate("courses")}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-              >
-                View All Courses
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {activeCourses.map((course) => (
-                <div
-                  key={course.id}
-                  className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 flex flex-col justify-between hover:border-slate-300 transition-all"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
-                        {course.code}
-                      </span>
-                      <StatusBadge status={course.status} />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900 line-clamp-1">
-                      {course.title}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{course.description}</p>
-                  </div>
-
-                  <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-3 text-slate-500">
-                      <span className="tabular-nums font-medium text-slate-700">
-                        {course.enrolledCount} students
-                      </span>
-                      <span>·</span>
-                      <span className="tabular-nums font-mono">Avg {course.averageGrade}%</span>
-                    </div>
-
-                    <button
-                      onClick={() => onNavigate("courses")}
-                      className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
-                    >
-                      Manage →
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column (1 Col on lg) */}
-        <div className="space-y-6">
-          {/* Mentify AI Assistant Quick Card */}
-          <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 rounded-xl p-5 text-white shadow-md relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-md bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
-                </div>
-                <span className="text-xs font-semibold tracking-wider uppercase text-indigo-300">
-                  Mentify AI Assistant
+        />
+        <MetricTile
+          label="Review queue"
+          value={isLoading ? "—" : (dashboard?.pendingReviewCount ?? 0)}
+          detail="Awaiting your review"
+          icon={ClipboardList}
+          tone="amber"
+          onClick={() => onNavigate("grading-workspace")}
+        />
+        <MetricTile
+          label="Total submissions"
+          value={isLoading ? "—" : totalSubmissions}
+          detail="Across your courses"
+          icon={FileCheck}
+          tone="emerald"
+          onClick={() => onNavigate("analytics")}
+        />
+      </section>
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(340px,0.75fr)]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-indigo-600">
+                <Activity className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em]">
+                  Course analytics
                 </span>
               </div>
-              <h3 className="text-sm font-bold text-white">Make teaching easier with AI</h3>
-              <p className="text-xs text-indigo-200/80 mt-1">
-                Draft exam rubrics, create quiz questions, or summarize lecture notes in seconds.
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-900">
+                Workload by course
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Enrollment scale and review progress in one view.
               </p>
-
-              {/* Quick AI Prompts */}
-              <div className="mt-4 space-y-1.5">
-                {[
-                  "Draft 5 quiz questions for CS-201 AVL Trees",
-                  "Generate rubric for Distributed Systems Milestone",
-                  "Summarize student performance for CS-420",
-                ].map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => onOpenAIWithPrompt(prompt)}
-                    className="w-full text-left text-xs p-2 rounded-lg bg-white/10 hover:bg-white/15 text-indigo-100 transition-colors flex items-center justify-between group"
-                  >
-                    <span className="truncate">{prompt}</span>
-                    <ArrowRight className="w-3 h-3 text-indigo-300 group-hover:translate-x-0.5 transition-transform shrink-0 ml-1" />
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-indigo-800/60 flex items-center justify-between">
-                <button
-                  onClick={() => onNavigate("ai-assistant")}
-                  className="text-xs font-medium text-indigo-300 hover:text-white flex items-center gap-1"
-                >
-                  <span>Open Full AI Studio</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-                <span className="text-[10px] text-indigo-400 font-mono">Gemini 2.5 Flash</span>
-              </div>
             </div>
+            <button
+              onClick={() => onNavigate("analytics")}
+              className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+            >
+              Details <ArrowRight className="ml-1 inline h-3 w-3" />
+            </button>
           </div>
-
-          {/* Student Performance Overview */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Course Performance Index
-              </h3>
-              <button
-                onClick={() => onNavigate("analytics")}
-                className="text-xs text-indigo-600 hover:underline"
-              >
-                Analytics
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {[
-                { code: "CS-201", name: "Algorithms", avg: 84.6, color: "bg-indigo-600" },
-                { code: "CS-350", name: "Web Systems", avg: 88.2, color: "bg-violet-600" },
-                { code: "CS-420", name: "AI & ML", avg: 81.4, color: "bg-emerald-600" },
-              ].map((c) => (
-                <div key={c.code} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-800">
-                      {c.code} <span className="text-slate-400 font-normal">· {c.name}</span>
-                    </span>
-                    <span className="font-mono tabular-nums font-bold text-slate-900">
-                      {c.avg.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${c.color}`}
-                      style={{ width: `${c.avg}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span>Overall Passing Rate:</span>
-              <span className="font-bold text-emerald-600 font-mono">92.4%</span>
-            </div>
+          <div className="mt-5 flex items-center gap-4 text-[10px] text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <i className="h-2 w-2 rounded-full bg-indigo-500" />
+              Students
+            </span>
+            <span className="flex items-center gap-1.5">
+              <i className="h-2 w-2 rounded-full bg-emerald-500" />
+              Reviewed
+            </span>
+            <span className="ml-auto text-slate-400">Top 6 courses</span>
           </div>
-
-          {/* Recent Activity Stream */}
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Recent Activity
-              </h3>
-              <button
-                onClick={() => onNavigate("notifications")}
-                className="text-xs text-slate-500 hover:text-slate-800"
-              >
-                All
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {notificationsLoading ? (
-                <p className="text-xs text-slate-400">Loading recent activity...</p>
-              ) : recentNotifications.length === 0 ? (
-                <p className="text-xs text-slate-400">No recent notifications.</p>
-              ) : (
-                recentNotifications.map((notif) => (
-                  <div
-                    key={notif.id}
-                    onClick={() => notif.actionUrl && onNavigate(notif.actionUrl)}
-                    className="flex cursor-pointer items-start gap-2.5 rounded-lg p-1.5 text-xs transition-colors hover:bg-slate-50"
-                  >
-                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" />
-                    <div>
-                      <p className="font-semibold text-slate-900">{notif.title}</p>
-                      <p className="line-clamp-1 text-[11px] text-slate-500">{notif.message}</p>
-                      <span className="text-[10px] text-slate-400">{notif.timestamp}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+          <div className="mt-2">
+            <CourseWorkloadChart courses={performanceCourses} />
           </div>
         </div>
-      </div>
-    </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-emerald-600">
+                <PieChart className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em]">
+                  Submission health
+                </span>
+              </div>
+              <h2 className="mt-2 text-xl font-bold tracking-tight text-slate-900">
+                Review progress
+              </h2>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+              Live
+            </span>
+          </div>
+          <div className="mt-7 flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+            <ReviewDonut reviewed={gradedSubmissions} waiting={waitingSubmissions} />
+            <div className="w-full space-y-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-400">Reviewed</p>
+                <p className="mt-1 text-2xl font-bold text-emerald-600">{gradedSubmissions}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-slate-400">Waiting</p>
+                <p className="mt-1 text-2xl font-bold text-amber-500">{waitingSubmissions}</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-7 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-slate-50 p-3">
+              <p className="text-[10px] text-slate-400">Best reviewed course</p>
+              <p className="mt-1 truncate text-xs font-bold text-slate-800">
+                {strongestCourse?.courseName ?? "—"}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-indigo-50 p-3">
+              <p className="text-[10px] text-indigo-500">Review rate</p>
+              <p className="mt-1 text-lg font-bold text-indigo-700">{averageReview}%</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate("grading-workspace")}
+            className="mt-4 flex w-full items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+          >
+            Open review workspace <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </section>
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Submission breakdown</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Reviewed and waiting submissions by course.
+              </p>
+            </div>
+            <BarChart3 className="h-5 w-5 text-slate-300" />
+          </div>
+          <div className="mt-5">
+            <SubmissionChart courses={performanceCourses} />
+          </div>
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Today’s rhythm</h2>
+              <p className="mt-1 text-xs text-slate-500">Your scheduled teaching blocks.</p>
+            </div>
+            <button
+              onClick={() => onNavigate("calendar")}
+              className="text-xs font-semibold text-indigo-600"
+            >
+              Calendar →
+            </button>
+          </div>
+          <div className="mt-5 space-y-3">
+            {todayClasses.length === 0 ? (
+              <p className="py-8 text-center text-xs text-slate-400">No classes scheduled today.</p>
+            ) : (
+              todayClasses.slice(0, 4).map((event) => (
+                <div key={event.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
+                    <Clock3 className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-slate-800">{event.title}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      {formatTime(event.startDateTime)} · {event.location || "Location not set"}
+                    </p>
+                  </div>
+                  <StatusBadge status="Scheduled" variant="clean" />
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Needs your attention</h2>
+              <p className="mt-1 text-xs text-slate-500">Submissions waiting for grading.</p>
+            </div>
+            <button
+              onClick={() => onNavigate("grading-workspace")}
+              className="text-xs font-semibold text-indigo-600"
+            >
+              View queue →
+            </button>
+          </div>
+          <div className="mt-3 divide-y divide-slate-100">
+            {pendingAssignments.length === 0 ? (
+              <p className="py-8 text-center text-xs text-slate-400">
+                Your grading queue is clear.
+              </p>
+            ) : (
+              pendingAssignments.slice(0, 4).map((item) => (
+                <div
+                  key={item.submissionId}
+                  className="flex items-center justify-between gap-4 py-4"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-slate-800">
+                      {item.assignmentTitle}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Submitted {formatDateTime(item.submittedAt)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onGradeAssignment(item.assignmentId)}
+                    className="shrink-0 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                  >
+                    Grade <ArrowRight className="ml-1 inline h-3 w-3" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-950 p-6 text-white shadow-xl">
+          <Sparkles className="absolute -right-4 -top-4 h-28 w-28 text-white/10" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-indigo-200">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Mentify AI</span>
+            </div>
+            <h2 className="mt-4 text-xl font-bold">Turn course data into your next move.</h2>
+            <p className="mt-2 text-xs leading-5 text-indigo-100/80">
+              Generate focused teaching actions using the performance data already on your
+              dashboard.
+            </p>
+            <div className="mt-5 space-y-2">
+              {performanceCourses.slice(0, 2).map((course) => (
+                <button
+                  key={course.courseId}
+                  onClick={() =>
+                    onOpenAIWithPrompt(
+                      `Review ${course.courseName} student performance and suggest next teaching actions`,
+                    )
+                  }
+                  className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2.5 text-left text-[11px] text-indigo-50 hover:bg-white/15"
+                >
+                  <span className="truncate">Analyze {course.courseName}</span>
+                  <ArrowRight className="h-3 w-3 shrink-0" />
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => onNavigate("ai-assistant")}
+              className="mt-5 text-xs font-semibold text-white"
+            >
+              Open AI studio <ArrowRight className="ml-1 inline h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      </section>
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Recent activity</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              The latest updates from your teaching workspace.
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate("notifications")}
+            className="text-xs font-semibold text-slate-500 hover:text-indigo-600"
+          >
+            View all →
+          </button>
+        </div>
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          {notificationsLoading ? (
+            <p className="text-xs text-slate-400">Loading recent activity…</p>
+          ) : recentNotifications.length === 0 ? (
+            <p className="text-xs text-slate-400">No recent notifications.</p>
+          ) : (
+            recentNotifications.slice(0, 6).map((notification) => (
+              <div
+                key={notification.id}
+                onClick={() => notification.actionUrl && onNavigate(notification.actionUrl)}
+                className="flex cursor-pointer items-start gap-3 rounded-2xl p-3 transition hover:bg-slate-50"
+              >
+                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold text-slate-800">
+                    {notification.title}
+                  </p>
+                  <p className="mt-1 truncate text-[11px] text-slate-500">{notification.message}</p>
+                  <p className="mt-1 text-[10px] text-slate-400">{notification.timestamp}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+    </main>
   );
 };

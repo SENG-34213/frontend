@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Clock, Edit3, Save, Building, Check } from "lucide
 import { updateCurrentTeacher, updateTeacherProfile } from "../api/teacherApi";
 import type { TeacherUserSummary } from "../auth/authTypes";
 import { Course, TeacherProfile, NavigationTab } from "../types";
+import { TeacherAvatar } from "../components/TeacherAvatar";
 
 interface TeacherProfileViewProps {
   teacher: TeacherProfile;
@@ -25,6 +26,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
   const [officeLocation, setOfficeLocation] = useState(profile.officeLocation);
   const [officeHours, setOfficeHours] = useState(profile.officeHours);
   const [bio, setBio] = useState(profile.bio);
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -39,6 +41,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
     setOfficeLocation(teacher.officeLocation);
     setOfficeHours(teacher.officeHours);
     setBio(teacher.bio);
+    setAvatarUrl(teacher.avatarUrl);
   }, [teacher]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -56,6 +59,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
       .split(/[\n,]/)
       .map((item) => item.trim())
       .filter(Boolean);
+    if (parsedSpecializations.length === 0) {
+      setSaveError("Add at least one research or teaching specialty.");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -73,6 +80,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
           officeLocation: officeLocation.trim() || undefined,
           officeHours: officeHours.trim() || undefined,
           bio: bio.trim() || undefined,
+          avatarUrl: avatarUrl.trim() || undefined,
         }),
       ]);
 
@@ -96,6 +104,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         officeLocation: mergedUser.teacherProfile?.officeLocation ?? current.officeLocation,
         officeHours: mergedUser.teacherProfile?.officeHours ?? current.officeHours,
         bio: mergedUser.teacherProfile?.bio ?? current.bio,
+        avatarUrl: mergedUser.teacherProfile?.avatarUrl ?? current.avatarUrl,
       }));
       setIsEditing(false);
       setSaveSuccess(true);
@@ -159,15 +168,12 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         <div className="px-6 pb-6 pt-0 relative">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 mb-6">
             <div className="flex items-end gap-4">
-              <div className="w-20 h-20 rounded-2xl bg-indigo-600 text-white font-bold text-2xl flex items-center justify-center ring-4 ring-white shadow-md">
-                {profile.name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase()}
-              </div>
+              <TeacherAvatar
+                name={profile.name}
+                avatarUrl={profile.avatarUrl}
+                className="w-20 h-20 rounded-2xl ring-4 ring-white shadow-md"
+                initialsClassName="text-2xl"
+              />
               <div className="mb-1">
                 <h2 className="text-lg font-bold text-slate-900">{profile.name}</h2>
                 <p className="text-xs text-slate-500">{profile.title}</p>
@@ -219,6 +225,18 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg bg-slate-50 text-slate-500 focus:outline-hidden"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="e.g. Computer Science"
+                    className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -260,6 +278,19 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Profile image URL <span className="font-normal text-slate-400">(optional)</span>
+                </label>
+                <input
+                  type="url"
+                  value={avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Research & Teaching Specialties
                 </label>
                 <input
@@ -283,6 +314,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                     setOfficeLocation(profile.officeLocation);
                     setOfficeHours(profile.officeHours);
                     setBio(profile.bio);
+                    setAvatarUrl(profile.avatarUrl);
                     setIsEditing(false);
                     setSaveError(null);
                   }}

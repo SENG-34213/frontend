@@ -42,7 +42,8 @@ import {
   CurriculumModule,
   LearningMaterial,
 } from "../types";
-import { createCourse, updateCourse } from "../api/coursesApi";
+import { createCourse, deleteCourse, updateCourse } from "../api/coursesApi";
+import { createMaterialApi } from "../../../../shared/materials/materialApi";
 
 const THUMBNAIL_PRESETS = [
   {
@@ -87,6 +88,66 @@ const COMMON_SUBJECTS = [
 // while the admin users endpoint also exposes the database user ID as `id`.
 function teacherAssignmentId(teacher: TeacherProfile) {
   return teacher.keycloakUserId || "";
+}
+
+function courseTeacherId(course: Course) {
+  return course.assignedTeacherId || course.teacherId || "";
+}
+
+function displayGradeName(name?: string) {
+  const value = name?.trim();
+  return value && /^\d+$/.test(value) ? `Grade ${value}` : value || "Unassigned";
+}
+
+function materialIdFromThumbnail(source?: string) {
+  return source?.startsWith("material:") ? source.slice("material:".length) : "";
+}
+
+function CourseThumbnailImage({
+  source,
+  alt,
+  className,
+}: {
+  source?: string;
+  alt: string;
+  className: string;
+}) {
+  const materialId = materialIdFromThumbnail(source);
+  const [materialSource, setMaterialSource] = useState("");
+  const [loadedMaterialId, setLoadedMaterialId] = useState("");
+
+  useEffect(() => {
+    if (!materialId) return;
+
+    let active = true;
+    void createMaterialApi()
+      .download(materialId)
+      .then((response) => {
+        if (active) {
+          setMaterialSource(response.downloadUrl || response.url || "");
+          setLoadedMaterialId(materialId);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setMaterialSource("");
+          setLoadedMaterialId(materialId);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [materialId, source]);
+
+  const resolvedSource = materialId
+    ? loadedMaterialId === materialId
+      ? materialSource
+      : ""
+    : source || "";
+
+  if (!resolvedSource) return null;
+  return <img src={resolvedSource} alt={alt} className={className} />;
 }
 
 interface CourseManagementProps {
@@ -153,6 +214,41 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   const [formData, setFormData] = useState<CreateCourseRequest>(initialFormState);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState("");
+  const [thumbnailUploadProgress, setThumbnailUploadProgress] = useState<number | null>(null);
+
+  const thumbnailImage = thumbnailPreview || formData.courseThumbnail || "";
+
+  const clearThumbnailFile = () => {
+    if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    setThumbnailFile(null);
+    setThumbnailPreview("");
+  };
+
+  const chooseThumbnail = (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setFormErrors((current) => ({ ...current, courseThumbnail: "Choose an image file." }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setFormErrors((current) => ({
+        ...current,
+        courseThumbnail: "Image must be 5 MB or smaller.",
+      }));
+      return;
+    }
+
+    if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    setThumbnailFile(file);
+    setThumbnailPreview(URL.createObjectURL(file));
+    setFormErrors((current) => {
+      const next = { ...current };
+      delete next.courseThumbnail;
+      return next;
+    });
+  };
 
   // Sync preselected grade if passed
   useEffect(() => {
@@ -183,6 +279,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   // Form Reset
   const resetForm = () => {
+    clearThumbnailFile();
     setFormData({
       courseName: "",
       courseDescription: "",
@@ -205,19 +302,30 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   };
 
   const openEditModal = (course: Course) => {
+    clearThumbnailFile();
+    const assignedTeacher = teachers.find(
+      (teacher) =>
+        teacherAssignmentId(teacher) === courseTeacherId(course) ||
+        teacher.id === courseTeacherId(course),
+    );
+
     setFormData({
       courseName: course.courseName || course.title || "",
       courseDescription: course.courseDescription || course.description || "",
       courseThumbnail: course.courseThumbnail || "",
       gradeId: course.gradeId || grades[0]?.id || "",
       assignedTeacherId:
-        course.assignedTeacherId ||
-        course.teacherId ||
+        assignedTeacher?.keycloakUserId ||
+        courseTeacherId(course) ||
         (teachers[0] ? teacherAssignmentId(teachers[0]) : ""),
       subject: course.subject || course.category || "Mathematics",
       isOnline: course.isOnline ?? course.online ?? true,
       isVisible: course.isVisible ?? course.visible ?? true,
-      isPublished: course.isPublished ?? true,
+      isPublished:
+        course.isPublished ??
+        (course.courseStatus === "PUBLISHED" ||
+          course.status === "ACTIVE" ||
+          course.status === "PUBLISHED"),
       courseEnrollmentId: course.courseEnrollmentId || null,
     });
     setFormErrors({});
@@ -268,9 +376,31 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
   // Selected grade and faculty in real time
   const formSelectedGrade = grades.find((g) => g.id === formData.gradeId);
+  const subjectDomainOptions = formSelectedGrade?.subjectDomains?.length
+    ? formSelectedGrade.subjectDomains
+    : COMMON_SUBJECTS;
   const formSelectedTeacher = teachers.find(
     (teacher) => teacherAssignmentId(teacher) === formData.assignedTeacherId,
   );
+
+  const gradeNameForCourse = (course: Course) =>
+    displayGradeName(
+      course.gradeName || grades.find((grade) => grade.id === course.gradeId)?.name || course.grade,
+    );
+
+  const teacherForCourse = (course: Course) =>
+    teachers.find(
+      (teacher) =>
+        teacherAssignmentId(teacher) === courseTeacherId(course) ||
+        teacher.id === courseTeacherId(course),
+    );
+
+  const teacherNameForCourse = (course: Course) => {
+    const teacher = teacherForCourse(course);
+    return teacher
+      ? `${teacher.firstName} ${teacher.lastName}`
+      : course.teacherName || "Unassigned faculty";
+  };
 
   // Submit the same form through the real Course Service API.
   const handleSubmit = async (e: React.FormEvent) => {
@@ -279,6 +409,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
     setIsSubmitting(true);
     setFormErrors({});
+
+    let newlyCreatedCourseId: string | null = null;
+    let uploadedThumbnailId: string | null = null;
+    const materialApi = createMaterialApi();
 
     try {
       const selectedGrade = grades.find((grade) => grade.id === formData.gradeId);
@@ -292,7 +426,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       const payload = {
         courseName: formData.courseName.trim(),
         courseDescription: formData.courseDescription.trim(),
-        courseThumbnail: formData.courseThumbnail?.trim() || undefined,
+        courseThumbnail: thumbnailFile ? undefined : formData.courseThumbnail?.trim() || undefined,
         courseFeeMonthly: selectedGrade?.monthlyFee || 1,
         gradeId: formData.gradeId,
         assignedTeacherId: formData.assignedTeacherId,
@@ -303,11 +437,46 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
         courseEnrollmentId: formData.courseEnrollmentId || null,
       };
 
-      const saved = editingCourse
-        ? onUpdateCourse
-          ? await onUpdateCourse(editingCourse.id, payload)
-          : await updateCourse(editingCourse.id, payload)
-        : await createCourse(payload);
+      let saved: Course;
+      if (thumbnailFile) {
+        // A new thumbnail must upload successfully before an existing course
+        // is changed. This keeps failed oversized uploads from partially
+        // updating the course.
+        saved = editingCourse ? editingCourse : await createCourse(payload);
+        if (!editingCourse) newlyCreatedCourseId = saved.id;
+
+        setThumbnailUploadProgress(0);
+        const uploadedMaterial = await materialApi.upload(
+          thumbnailFile,
+          {
+            title: `${payload.courseName} cover thumbnail`,
+            description: "Course cover thumbnail",
+            purpose: "OTHER",
+            type: "IMAGE",
+            courseId: saved.id,
+          },
+          setThumbnailUploadProgress,
+        );
+        uploadedThumbnailId = uploadedMaterial.id;
+        // Persist the stable material ID instead of a five-minute presigned
+        // URL. The UI requests a fresh S3 URL whenever it renders the image.
+        const thumbnailPayload = {
+          ...payload,
+          courseThumbnail: `material:${uploadedMaterial.id}`,
+        };
+        saved = editingCourse
+          ? onUpdateCourse
+            ? await onUpdateCourse(editingCourse.id, thumbnailPayload)
+            : await updateCourse(editingCourse.id, thumbnailPayload)
+          : await updateCourse(saved.id, thumbnailPayload);
+      } else {
+        saved = editingCourse
+          ? onUpdateCourse
+            ? await onUpdateCourse(editingCourse.id, payload)
+            : await updateCourse(editingCourse.id, payload)
+          : await createCourse(payload);
+        if (!editingCourse) newlyCreatedCourseId = saved.id;
+      }
 
       if (!editingCourse) {
         onAddCourse({
@@ -329,10 +498,20 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       setEditingCourse(null);
       resetForm();
     } catch (error) {
+      // Do not leave an empty course behind when its required thumbnail upload
+      // fails during creation. Best-effort cleanup keeps the form retryable.
+      if (uploadedThumbnailId) {
+        await materialApi.remove(uploadedThumbnailId).catch(() => undefined);
+      }
+      if (newlyCreatedCourseId) {
+        await deleteCourse(newlyCreatedCourseId).catch(() => undefined);
+      }
       setFormErrors({
-        api: error instanceof Error ? error.message : "Unable to create the course.",
+        api:
+          error instanceof Error ? error.message : "Unable to save the course. Please try again.",
       });
     } finally {
+      setThumbnailUploadProgress(null);
       setIsSubmitting(false);
     }
   };
@@ -371,7 +550,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     return courses.filter((c) => {
       const name = (c.courseName || c.title || "").toLowerCase();
       const subject = (c.subject || c.category || "").toLowerCase();
-      const teacher = (c.teacherName || "").toLowerCase();
+      const teacher = teacherNameForCourse(c).toLowerCase();
       const code = (c.code || "").toLowerCase();
       const query = searchQuery.toLowerCase();
 
@@ -581,8 +760,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       <td className="py-3.5 px-4 max-w-xs">
                         <div className="flex items-center gap-3">
                           {course.courseThumbnail ? (
-                            <img
-                              src={course.courseThumbnail}
+                            <CourseThumbnailImage
+                              source={course.courseThumbnail}
                               alt={course.courseName || course.title}
                               className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0"
                             />
@@ -613,7 +792,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px]">
                           <GraduationCap className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                          <span>{course.gradeName || course.grade || "Unassigned"}</span>
+                          <span>{gradeNameForCourse(course)}</span>
                         </span>
                       </td>
 
@@ -633,7 +812,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                             <span className="text-[10px] text-slate-400 font-normal">/ mo</span>
                           </div>
                           <span className="text-[10px] text-slate-400">
-                            Tier: {course.gradeName || "Standard Grade"}
+                            Tier: {gradeNameForCourse(course)}
                           </span>
                         </div>
                       </td>
@@ -641,10 +820,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       {/* Faculty */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <UserAvatar name={course.teacherName || "Faculty"} size="sm" />
+                          <UserAvatar name={teacherNameForCourse(course)} size="sm" />
                           <div>
                             <span className="font-medium text-slate-900 dark:text-white block">
-                              {course.teacherName || "Assigned Faculty"}
+                              {teacherNameForCourse(course)}
                             </span>
                             {course.teacherCode && (
                               <span className="font-mono text-[10px] text-slate-400 block">
@@ -821,7 +1000,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       )}
                     </div>
 
-                    {/* Subject Classification with quick chips */}
+                    {/* Subject Domain maintained by the selected grade */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="font-semibold text-slate-800 dark:text-slate-200">
@@ -832,18 +1011,24 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </span>
                       </div>
                       <div className="relative">
-                        <input
-                          type="text"
-                          maxLength={100}
+                        <select
                           value={formData.subject}
-                          onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                          placeholder="e.g. Mathematics"
+                          onChange={(e) =>
+                            setFormData((previous) => ({ ...previous, subject: e.target.value }))
+                          }
                           className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
                             formErrors.subject
                               ? "border-rose-400 focus:ring-rose-400/20"
                               : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
                           }`}
-                        />
+                        >
+                          <option value="">Select a subject domain...</option>
+                          {subjectDomainOptions.map((subjectDomain) => (
+                            <option key={subjectDomain} value={subjectDomain}>
+                              {subjectDomain}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       {formErrors.subject && (
                         <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
@@ -852,37 +1037,24 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </p>
                       )}
 
-                      {/* Quick Subject Suggestion Chips */}
-                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        <span className="text-[10px] text-slate-400">Suggestions:</span>
-                        {COMMON_SUBJECTS.map((sub) => (
-                          <button
-                            key={sub}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, subject: sub })}
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                              formData.subject === sub
-                                ? "bg-indigo-600 text-white"
-                                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                            }`}
-                          >
-                            {sub}
-                          </button>
-                        ))}
-                      </div>
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Subject domains are maintained for the selected grade.
+                      </span>
                     </div>
 
                     {/* Thumbnail URL with Inline Preview and Presets */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="font-semibold text-slate-800 dark:text-slate-200">
-                          Course Cover Thumbnail{" "}
-                          <span className="text-slate-400 font-normal">(Optional URL)</span>
+                          Course Cover Thumbnail
                         </label>
-                        {formData.courseThumbnail && (
+                        {thumbnailImage && (
                           <button
                             type="button"
-                            onClick={() => setFormData({ ...formData, courseThumbnail: "" })}
+                            onClick={() => {
+                              clearThumbnailFile();
+                              setFormData({ ...formData, courseThumbnail: "" });
+                            }}
                             className="text-[10px] text-rose-500 hover:underline"
                           >
                             Clear image
@@ -892,10 +1064,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
                       <div className="flex items-center gap-3">
                         {/* Thumbnail Square Box */}
-                        <div className="w-14 h-14 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
-                          {formData.courseThumbnail ? (
+                        <label className="group relative w-24 h-16 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-colors">
+                          {thumbnailImage ? (
                             <img
-                              src={formData.courseThumbnail}
+                              src={thumbnailImage}
                               alt="Thumbnail preview"
                               className="w-full h-full object-cover"
                               onError={(e) => {
@@ -903,9 +1075,24 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                               }}
                             />
                           ) : (
-                            <ImageIcon className="w-6 h-6 text-slate-400" />
+                            <div className="flex flex-col items-center gap-1 text-slate-400">
+                              <ImageIcon className="w-5 h-5" />
+                              <span className="text-[9px] font-medium">Upload image</span>
+                            </div>
                           )}
-                        </div>
+                          <span className="absolute inset-0 flex items-center justify-center bg-slate-950/65 text-white text-[10px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                            {thumbnailFile ? "Change image" : "Upload image"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            className="sr-only"
+                            onChange={(e) => {
+                              chooseThumbnail(e.target.files?.[0]);
+                              e.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
 
                         {/* URL text input */}
                         <div className="flex-1">
@@ -915,11 +1102,37 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                             onChange={(e) =>
                               setFormData({ ...formData, courseThumbnail: e.target.value })
                             }
-                            placeholder="https://images.unsplash.com/photo-..."
+                            placeholder="Paste an image link (optional)"
                             className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                           />
                         </div>
                       </div>
+
+                      {thumbnailFile && (
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5">
+                          {thumbnailFile.name} · uploads securely to S3 when you save the course
+                        </p>
+                      )}
+                      {thumbnailUploadProgress !== null && (
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-[10px] text-indigo-600 dark:text-indigo-400 mb-1">
+                            <span>Uploading cover image…</span>
+                            <span>{thumbnailUploadProgress}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-indigo-100 dark:bg-indigo-950 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-indigo-600 transition-[width]"
+                              style={{ width: `${thumbnailUploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {formErrors.courseThumbnail && (
+                        <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          <span>{formErrors.courseThumbnail}</span>
+                        </p>
+                      )}
 
                       {/* 1-Click Curated Presets */}
                       <div className="mt-2.5">
@@ -932,11 +1145,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                               key={p.name}
                               type="button"
                               onClick={() =>
-                                setFormData({
-                                  ...formData,
-                                  courseThumbnail: p.url,
-                                  subject: formData.subject || p.subject,
-                                })
+                                (() => {
+                                  clearThumbnailFile();
+                                  setFormData({
+                                    ...formData,
+                                    courseThumbnail: p.url,
+                                    subject: formData.subject || p.subject,
+                                  });
+                                })()
                               }
                               className={`group relative rounded-lg overflow-hidden border p-1 text-left transition-all ${
                                 formData.courseThumbnail === p.url
@@ -993,7 +1209,23 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </div>
                         <select
                           value={formData.gradeId}
-                          onChange={(e) => setFormData({ ...formData, gradeId: e.target.value })}
+                          onChange={(e) => {
+                            const gradeId = e.target.value;
+                            const selectedGrade = grades.find((grade) => grade.id === gradeId);
+                            const domains = selectedGrade?.subjectDomains || [];
+                            setFormData((previous) => ({
+                              ...previous,
+                              gradeId,
+                              subject: domains.includes(previous.subject)
+                                ? previous.subject
+                                : domains[0] || "",
+                            }));
+                            setFormErrors((previous) => ({
+                              ...previous,
+                              gradeId: "",
+                              subject: "",
+                            }));
+                          }}
                           className={`w-full px-3.5 py-2.5 rounded-lg border bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 ${
                             formErrors.gradeId
                               ? "border-rose-400 focus:ring-rose-400/20"
@@ -1003,7 +1235,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                           <option value="">Select target grade level...</option>
                           {grades.map((g) => (
                             <option key={g.id} value={g.id}>
-                              {g.name} {!g.active ? "(Inactive)" : ""}
+                              {displayGradeName(g.name)} {!g.active ? "(Inactive)" : ""}
                             </option>
                           ))}
                         </select>
@@ -1255,9 +1487,9 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     <div className="rounded-xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-800 overflow-hidden shadow-xs">
                       {/* Image header */}
                       <div className="relative h-36 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        {formData.courseThumbnail ? (
+                        {thumbnailImage ? (
                           <img
-                            src={formData.courseThumbnail}
+                            src={thumbnailImage}
                             alt="Preview"
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -1343,9 +1575,18 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
 
               {/* STICKY MODAL FOOTER */}
               <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>Course details are ready to save.</span>
+                <div className="min-w-0">
+                  {formErrors.api ? (
+                    <div className="flex items-start gap-2 text-rose-600 dark:text-rose-400">
+                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{formErrors.api}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>Course details are ready to save.</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-end gap-3 shrink-0">
@@ -1464,8 +1705,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                 {/* Thumbnail Header */}
                 {selectedCourse.courseThumbnail && (
                   <div className="relative h-44 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-                    <img
-                      src={selectedCourse.courseThumbnail}
+                    <CourseThumbnailImage
+                      source={selectedCourse.courseThumbnail}
                       alt="Thumbnail"
                       className="w-full h-full object-cover"
                     />
@@ -1495,7 +1736,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       <span className="text-xs text-slate-400">/ month</span>
                     </div>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
-                      Configured via Grade Level ({selectedCourse.gradeName || "Standard"})
+                      Configured via Grade Level ({gradeNameForCourse(selectedCourse)})
                     </span>
                   </div>
 
@@ -1522,7 +1763,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       Grade Level
                     </span>
                     <span className="font-bold text-slate-900 dark:text-white text-sm">
-                      {selectedCourse.gradeName || selectedCourse.grade || "Unassigned"}
+                      {gradeNameForCourse(selectedCourse)}
                     </span>
                   </div>
                   <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -1549,10 +1790,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     Assigned Lead Faculty
                   </span>
                   <div className="flex items-center gap-3">
-                    <UserAvatar name={selectedCourse.teacherName || "Faculty"} size="md" />
+                    <UserAvatar name={teacherNameForCourse(selectedCourse)} size="md" />
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white block">
-                        {selectedCourse.teacherName || "Assigned Faculty"}
+                        {teacherNameForCourse(selectedCourse)}
                       </span>
                       <span className="font-mono text-xs text-indigo-600 dark:text-indigo-400">
                         {selectedCourse.teacherCode}

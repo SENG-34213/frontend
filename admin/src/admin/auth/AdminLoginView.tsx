@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
-import { loginAdmin } from "../api/authApi";
+import {
+  loginAdmin,
+  requestAdminPasswordReset,
+  resetAdminPassword,
+  verifyAdminPasswordResetOtp,
+} from "../api/authApi";
+import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel";
 
 type Props = { onLogin: (session: Awaited<ReturnType<typeof loginAdmin>>) => void };
 
@@ -10,6 +16,7 @@ export function AdminLoginView({ onLogin }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +35,23 @@ export function AdminLoginView({ onLogin }: Props) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordPanel
+        roleLabel="Administration"
+        initialEmail={email}
+        requestReset={requestAdminPasswordReset}
+        verifyOtp={verifyAdminPasswordResetOtp}
+        resetPassword={resetAdminPassword}
+        onComplete={() => {
+          setShowForgotPassword(false);
+          setError("");
+        }}
+        onCancel={() => setShowForgotPassword(false)}
+      />
+    );
   }
 
   return (
@@ -144,9 +168,10 @@ export function AdminLoginView({ onLogin }: Props) {
                 </label>
                 <button
                   type="button"
-                  onClick={() =>
-                    setError("For this UI demo, use the sample credentials shown below.")
-                  }
+                  onClick={() => {
+                    setError("");
+                    setShowForgotPassword(true);
+                  }}
                   className="font-semibold text-indigo-600 hover:text-indigo-800"
                 >
                   Forgot password?

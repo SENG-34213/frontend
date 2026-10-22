@@ -4,6 +4,7 @@ import {
   Award,
   BarChart3,
   Calendar,
+  RefreshCw,
   TrendingUp,
   Users,
   type LucideIcon,
@@ -17,7 +18,15 @@ interface TeacherAnalyticsViewProps {
   courses: BackendCourse[];
 }
 
-const value = (input: number | string | null | undefined) => (input == null ? null : Number(input));
+const value = (input: number | string | null | undefined) => {
+  if (input == null || input === "") return null;
+  const parsed = Number(input);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+const percentage = (input: number | string | null | undefined) => {
+  const parsed = value(input);
+  return parsed == null ? null : Math.min(100, Math.max(0, parsed));
+};
 
 export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
   onNavigate,
@@ -28,6 +37,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
   const [analytics, setAnalytics] = useState<TeacherAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
     if (!courseId && courses[0]?.id) setCourseId(courses[0].id);
@@ -56,17 +66,18 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [courseId, timeRange]);
+  }, [courseId, retryToken, timeRange]);
 
   const summary = analytics?.summary;
-  const attendanceAverage = value(
+  const attendanceAverage = percentage(
     summary?.attendanceAverage ?? analytics?.attendance?.attendanceRate,
   );
-  const submissionRate = value(summary?.submissionRate);
-  const averagePercentage = value(summary?.averagePercentage);
+  const submissionRate = percentage(summary?.submissionRate);
+  const averagePercentage = percentage(summary?.averagePercentage);
   const gradeDistribution = analytics?.gradeDistribution ?? [];
   const correlation = analytics?.attendanceCorrelation ?? [];
   const atRisk = analytics?.atRiskStudents ?? [];
+  const courseTrends = analytics?.courseTrends ?? [];
   const cards: Array<{
     label: string;
     cardValue: number | string | null;
@@ -119,7 +130,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
             {courses.length === 0 && <option value="">No courses available</option>}
             {courses.map((course) => (
               <option key={course.id} value={course.id}>
-                {course.code || course.courseName} — {course.title || course.courseName}
+                {course.courseCode || course.courseName} — {course.courseName}
               </option>
             ))}
           </select>
@@ -138,8 +149,22 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800">
-          {error}
+        <div className="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800 sm:flex-row sm:items-center sm:justify-between">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setRetryToken((token) => token + 1)}
+            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        </div>
+      )}
+      {loading && (
+        <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-indigo-700">
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+          Loading live analytics for the selected course and period…
         </div>
       )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -182,13 +207,13 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-800">Grade {item.grade}</span>
                   <span className="font-mono text-slate-600">
-                    {item.count} students ({value(item.percentage) ?? 0}%)
+                    {item.count} students ({percentage(item.percentage) ?? 0}%)
                   </span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-indigo-600"
-                    style={{ width: `${Math.min(100, value(item.percentage) ?? 0)}%` }}
+                    style={{ width: `${percentage(item.percentage) ?? 0}%` }}
                   />
                 </div>
               </div>
@@ -212,7 +237,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
           </div>
           <div className="space-y-3 pt-2">
             {correlation.map((item) => {
-              const score = value(item.averageAssessmentPercentage) ?? 0;
+              const score = percentage(item.averageAssessmentPercentage) ?? 0;
               return (
                 <div key={item.attendanceRange} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
@@ -235,6 +260,71 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
             )}
           </div>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+              Course Performance Comparison
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Attendance and assessment averages for your available courses
+            </p>
+          </div>
+          <TrendingUp className="w-4 h-4 text-indigo-600" />
+        </div>
+        {courseTrends.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[620px] text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400">
+                  <th className="pb-3 pr-4 font-semibold">Course</th>
+                  <th className="pb-3 px-2 text-right font-semibold">Attendance</th>
+                  <th className="pb-3 px-2 text-right font-semibold">Assignments</th>
+                  <th className="pb-3 px-2 text-right font-semibold">Quizzes</th>
+                  <th className="pb-3 pl-2 text-right font-semibold">Exams</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {courseTrends.map((course) => (
+                  <tr key={course.courseId} className="text-slate-700">
+                    <td className="py-3 pr-4">
+                      <p className="font-semibold text-slate-900">{course.courseName}</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-400">
+                        {course.courseId}
+                      </p>
+                    </td>
+                    <td className="px-2 py-3 text-right font-mono tabular-nums">
+                      {percentage(course.attendanceRate) == null
+                        ? "—"
+                        : `${Number(percentage(course.attendanceRate)).toFixed(1)}%`}
+                    </td>
+                    <td className="px-2 py-3 text-right font-mono tabular-nums">
+                      {percentage(course.assignmentAverage) == null
+                        ? "—"
+                        : `${Number(percentage(course.assignmentAverage)).toFixed(1)}%`}
+                    </td>
+                    <td className="px-2 py-3 text-right font-mono tabular-nums">
+                      {percentage(course.quizAverage) == null
+                        ? "—"
+                        : `${Number(percentage(course.quizAverage)).toFixed(1)}%`}
+                    </td>
+                    <td className="pl-2 py-3 text-right font-mono tabular-nums">
+                      {percentage(course.examAverage) == null
+                        ? "—"
+                        : `${Number(percentage(course.examAverage)).toFixed(1)}%`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="py-6 text-center text-xs text-slate-400">
+            No cross-course comparison is available for this period.
+          </p>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">

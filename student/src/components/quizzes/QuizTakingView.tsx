@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Clock,
   AlertTriangle,
@@ -10,27 +10,97 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { QuizResultModal } from "./QuizResultModal";
+import type { QuizAnswerReview } from "../../types";
 
 export const QuizTakingView: React.FC = () => {
-  const { quizzes, selectedQuizId, submitQuizAnswers, setCurrentView, showToast } = useStudent();
+  const {
+    quizzes,
+    selectedQuizId,
+    startQuizAttempt,
+    saveQuizAnswer,
+    submitQuizAnswers,
+    setCurrentView,
+    showToast,
+    refreshWorkspace,
+  } = useStudent();
 
   const quiz = quizzes.find((q) => q.id === selectedQuizId) || quizzes[0];
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [flaggedQuestions, setFlaggedQuestions] = useState<Record<string, boolean>>({});
-  const [remainingSeconds, setRemainingSeconds] = useState(quiz.durationMinutes * 60);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
   const [resultsData, setResultsData] = useState<{
     score: number;
     maxScore: number;
     percentage: number;
+    passed: boolean;
+    answers: QuizAnswerReview[];
   } | null>(null);
+  const startedQuizIdRef = useRef<string | null>(null);
+  const detailsRefreshAttemptedRef = useRef<string | null>(null);
 
-  const handleAutoSubmit = useCallback(() => {
+  useEffect(() => {
+    if (!selectedQuizId) return;
+
+    // The workspace can briefly contain a quiz summary while its questions
+    // are being loaded. Refresh once before attempting to open the quiz so
+    // the first click does not leave the student on an endless loading state.
+    if (!quiz || quiz.questions.length === 0) {
+      if (detailsRefreshAttemptedRef.current === selectedQuizId) return;
+      detailsRefreshAttemptedRef.current = selectedQuizId;
+      let active = true;
+      refreshWorkspace().catch((error) => {
+        if (active) {
+          showToast(error instanceof Error ? error.message : "Could not load quiz questions.");
+          setIsLoading(false);
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }
+
+    if (startedQuizIdRef.current === quiz.id) return;
+    startedQuizIdRef.current = quiz.id;
+    let active = true;
+    startQuizAttempt(quiz.id)
+      .then(({ attemptId: id, startedAt }) => {
+        if (!active) return;
+        setAttemptId(id);
+        const storedAnswers = window.localStorage.getItem(`student:quiz-answers:${id}`);
+        setAnswers(storedAnswers ? JSON.parse(storedAnswers) : {});
+        const elapsedSeconds = startedAt
+          ? Math.max(0, Math.floor((Date.now() - Date.parse(startedAt)) / 1000))
+          : 0;
+        setRemainingSeconds(Math.max(0, quiz.durationMinutes * 60 - elapsedSeconds));
+      })
+      .catch((error) => {
+        showToast(error instanceof Error ? error.message : "Could not start quiz.");
+        setCurrentView("quizzes");
+      })
+      .finally(() => active && setIsLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [quiz?.id, quiz?.questions.length, refreshWorkspace, selectedQuizId, showToast]);
+
+  const handleAutoSubmit = useCallback(async () => {
+    if (!quiz || !attemptId) return;
     showToast("Time expired! Auto-submitting answers.");
-    const res = submitQuizAnswers(quiz.id, answers);
-    setResultsData(res);
-  }, [answers, quiz.id, showToast, submitQuizAnswers]);
+    try {
+      const res = await submitQuizAnswers(quiz.id, attemptId);
+      if (quiz.showResultImmediately !== false) {
+        setResultsData(res);
+      } else {
+        setCurrentView("quizzes");
+      }
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Quiz submission failed.");
+    }
+  }, [attemptId, quiz, setCurrentView, showToast, submitQuizAnswers]);
 
   // Timer countdown
   useEffect(() => {
@@ -46,20 +116,20 @@ export const QuizTakingView: React.FC = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [handleAutoSubmit, resultsData]);
+  }, [handleAutoSubmit, resultsData, isLoading]);
 
-  const currentQ = quiz.questions[currentQuestionIdx];
+  const currentQ = quiz?.questions[currentQuestionIdx];
 
-  const handleSelectOption = (optionId: string) => {
+  const handleSelectOption = async (optionId: string) => {
     if (!currentQ) return;
-    if (currentQ.type === "multi-select") {
-      const current = answers[currentQ.id] || [];
-      const updated = current.includes(optionId)
-        ? current.filter((id) => id !== optionId)
-        : [...current, optionId];
-      setAnswers({ ...answers, [currentQ.id]: updated });
-    } else {
-      setAnswers({ ...answers, [currentQ.id]: [optionId] });
+    if (!quiz || !attemptId) return;
+    const updated = { ...answers, [currentQ.id]: [optionId] };
+    setAnswers(updated);
+    window.localStorage.setItem(`student:quiz-answers:${attemptId}`, JSON.stringify(updated));
+    try {
+      await saveQuizAnswer(attemptId, currentQ.id, optionId);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not save answer.");
     }
   };
 
@@ -70,8 +140,18 @@ export const QuizTakingView: React.FC = () => {
 
   const handleConfirmSubmit = () => {
     setIsSubmitConfirmOpen(false);
-    const res = submitQuizAnswers(quiz.id, answers);
-    setResultsData(res);
+    if (!attemptId) return;
+    submitQuizAnswers(quiz.id, attemptId)
+      .then((result) => {
+        if (quiz.showResultImmediately !== false) {
+          setResultsData(result);
+        } else {
+          setCurrentView("quizzes");
+        }
+      })
+      .catch((error) =>
+        showToast(error instanceof Error ? error.message : "Quiz submission failed."),
+      );
   };
 
   const formatTimer = (totalSec: number) => {
@@ -81,6 +161,14 @@ export const QuizTakingView: React.FC = () => {
   };
 
   const answeredCount = Object.keys(answers).filter((k) => (answers[k]?.length ?? 0) > 0).length;
+
+  if (!quiz || isLoading || !currentQ) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-500">
+        Loading quiz…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12">
@@ -98,11 +186,8 @@ export const QuizTakingView: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Timer Display */}
           <div
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 font-mono text-xs font-bold ${
-              remainingSeconds < 300
-                ? "bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 animate-pulse"
-                : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
-            }`}
+            aria-label={`Time remaining ${formatTimer(remainingSeconds)}`}
+            className="flex items-center gap-2 rounded-xl bg-red-50 px-3.5 py-1.5 font-mono text-xs font-bold text-red-600 dark:bg-red-950/60 dark:text-red-400"
           >
             <Clock className="h-4 w-4" />
             <span className="tabular-nums">{formatTimer(remainingSeconds)}</span>
@@ -317,14 +402,29 @@ export const QuizTakingView: React.FC = () => {
           score={resultsData.score}
           maxScore={resultsData.maxScore}
           percentage={resultsData.percentage}
+          passed={resultsData.passed}
+          answers={resultsData.answers}
           quizTitle={quiz.title}
           onClose={() => setCurrentView("quizzes")}
           onRetake={() => {
             setAnswers({});
             setFlaggedQuestions({});
-            setRemainingSeconds(quiz.durationMinutes * 60);
+            if (attemptId) window.localStorage.removeItem(`student:quiz-answers:${attemptId}`);
             setCurrentQuestionIdx(0);
             setResultsData(null);
+            setIsLoading(true);
+            startQuizAttempt(quiz.id)
+              .then(({ attemptId: nextAttemptId, startedAt }) => {
+                setAttemptId(nextAttemptId);
+                const elapsedSeconds = startedAt
+                  ? Math.max(0, Math.floor((Date.now() - Date.parse(startedAt)) / 1000))
+                  : 0;
+                setRemainingSeconds(Math.max(0, quiz.durationMinutes * 60 - elapsedSeconds));
+              })
+              .catch((error) =>
+                showToast(error instanceof Error ? error.message : "Could not start retake."),
+              )
+              .finally(() => setIsLoading(false));
           }}
         />
       )}

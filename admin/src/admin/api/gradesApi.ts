@@ -5,6 +5,7 @@ import type { CreateGradeRequest, Grade, UpdateGradeRequest } from "../types";
 interface GradeApiResponse {
   id: string;
   name: string;
+  subjectDomains?: string[] | null;
   description?: string | null;
   active: boolean;
   createdBy?: string | null;
@@ -19,6 +20,7 @@ function mapGradeResponse(grade: GradeApiResponse): Grade {
   return {
     id: grade.id,
     name: grade.name,
+    subjectDomains: grade.subjectDomains || [],
     description: grade.description || undefined,
     active: grade.active,
     createdBy: grade.createdBy || undefined,
@@ -40,6 +42,7 @@ export async function createGrade(request: CreateGradeRequest): Promise<Grade> {
     method: "POST",
     body: {
       name: request.name,
+      subjectDomains: request.subjectDomains,
       description: request.description,
       monthlyFee: request.monthlyFee,
       currencyCode: request.currencyCode,
@@ -55,6 +58,7 @@ export async function updateGrade(gradeId: string, request: UpdateGradeRequest):
       method: "PUT",
       body: {
         name: request.name,
+        subjectDomains: request.subjectDomains,
         description: request.description,
         monthlyFee: request.monthlyFee,
         currencyCode: request.currencyCode,

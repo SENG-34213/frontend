@@ -38,7 +38,6 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
 }) => {
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
   const [file, setFile] = useState<File | null>(null);
-  const [sampleName, setSampleName] = useState("");
   const [count, setCount] = useState(5);
   const [difficulty, setDifficulty] = useState<"EASY" | "MEDIUM" | "HARD">("MEDIUM");
   const [prompt, setPrompt] = useState("");
@@ -61,14 +60,6 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
     setQuestions((current) =>
       current.map((question, item) => (item === index ? { ...question, ...next } : question)),
     );
-  const chooseSample = (name: string, focus: string) => {
-    setFile(
-      new File([`Course document: ${name}\nFocus: ${focus}`], name, { type: "application/pdf" }),
-    );
-    setSampleName(name);
-    setPrompt(focus);
-    setError("");
-  };
 
   const generate = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -159,6 +150,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
         createdQuestions.push(
           await createQuizQuestion(created.id, {
             questionText: question.questionText.trim(),
+            explanation: question.explanation?.trim() || undefined,
             questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
             marks: Number(question.marks) || 1,
             questionOrder: index + 1,
@@ -190,18 +182,11 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
     setDraft(null);
     setQuestions([]);
     setFile(null);
-    setSampleName("");
     setSuccess("");
     setError("");
     setProgress(0);
     setIsSliderOpen(false);
   };
-  const samples = [
-    "CS-201: AVL Trees & Rotations Syllabus.pdf",
-    "CS-350: Security & Access Control Spec.pdf",
-    "CS-420: Backprop & Matrix Calculus.pdf",
-  ];
-
   return (
     <div className="overflow-hidden rounded-2xl border border-indigo-200/80 bg-white shadow-md">
       {draft && isSliderOpen && (
@@ -316,7 +301,6 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                           onClick={(event) => {
                             event.stopPropagation();
                             setFile(null);
-                            setSampleName("");
                           }}
                           className="rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-rose-600"
                         >
@@ -336,31 +320,6 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                         </p>
                       </div>
                     )}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                      Or pick verified course material:
-                    </span>
-                    <span className="text-[10px] font-medium text-indigo-600">1-Click Test</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {samples.map((name) => (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() =>
-                          chooseSample(
-                            name,
-                            `Focus on the key concepts and learning objectives in ${name}`,
-                          )
-                        }
-                        className={`max-w-full truncate rounded-lg border px-2.5 py-1 text-left text-[11px] ${sampleName === name ? "border-indigo-600 bg-indigo-600 font-semibold text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-indigo-50"}`}
-                      >
-                        📄 {name.split(":")[1]?.trim() || name}
-                      </button>
-                    ))}
                   </div>
                 </div>
                 <div>
@@ -513,8 +472,8 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                       attempts
                     </p>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      Synthesized from &quot;{file?.name || sampleName}&quot;. Review the generated
-                      questions in the card slider above the page.
+                      Synthesized from &quot;{file?.name}&quot;. Review the generated questions in
+                      the card slider above the page.
                     </p>
                   </div>
                 </div>

@@ -18,7 +18,6 @@ function parseMessage(frame: IMessage): CommunicationMessage | null {
       typeof payload.id !== "string" ||
       typeof payload.groupId !== "string" ||
       typeof payload.senderId !== "string" ||
-      typeof payload.content !== "string" ||
       typeof payload.sentAt !== "string"
     ) {
       return null;
@@ -28,12 +27,13 @@ function parseMessage(frame: IMessage): CommunicationMessage | null {
       id: payload.id,
       groupId: payload.groupId,
       senderId: payload.senderId,
-      content: payload.content,
+      content: payload.content ?? "",
       type: payload.type,
       sentAt: payload.sentAt,
       editedAt: payload.editedAt,
       edited: Boolean(payload.edited),
       deletedForEveryone: Boolean(payload.deletedForEveryone),
+      attachments: Array.isArray(payload.attachments) ? payload.attachments : [],
     };
   } catch {
     return null;
@@ -48,6 +48,7 @@ export function useCommunicationRealtime(
   const [error, setError] = useState<string | null>(null);
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef(new Map<string, StompSubscription>());
+  const receivedMessageIdsRef = useRef(new Set<string>());
   const groupIdsRef = useRef(groupIds);
   const onMessageRef = useRef(onMessage);
 
@@ -95,7 +96,14 @@ export function useCommunicationRealtime(
           `/topic/groups/${encodeURIComponent(groupId)}`,
           (frame) => {
             const message = parseMessage(frame);
-            if (message && message.groupId === groupId) onMessageRef.current(message);
+            if (
+              message &&
+              message.groupId === groupId &&
+              !receivedMessageIdsRef.current.has(message.id)
+            ) {
+              receivedMessageIdsRef.current.add(message.id);
+              onMessageRef.current(message);
+            }
           },
         );
         subscriptionsRef.current.set(groupId, subscription);
@@ -146,19 +154,26 @@ export function useCommunicationRealtime(
         `/topic/groups/${encodeURIComponent(groupId)}`,
         (frame) => {
           const message = parseMessage(frame);
-          if (message && message.groupId === groupId) onMessageRef.current(message);
+          if (
+            message &&
+            message.groupId === groupId &&
+            !receivedMessageIdsRef.current.has(message.id)
+          ) {
+            receivedMessageIdsRef.current.add(message.id);
+            onMessageRef.current(message);
+          }
         },
       );
       if (subscription) subscriptionsRef.current.set(groupId, subscription);
     });
   }, [groupIds]);
 
-  function sendMessage(groupId: string, content: string) {
+  function sendMessage(groupId: string, content: string, attachmentIds: string[] = []) {
     const client = clientRef.current;
     if (!client?.connected) return false;
     client.publish({
       destination: `/app/groups/${encodeURIComponent(groupId)}/messages`,
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content: content.trim() || null, attachmentIds }),
     });
     return true;
   }

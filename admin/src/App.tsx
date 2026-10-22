@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { startTransition, useState, useEffect, useCallback, useRef } from "react";
 import { AdminLayout } from "./admin/layouts/AdminLayout";
 import { AdminRoute } from "./admin/components/AdminSidebar";
 import { ToastMessage } from "./admin/components/ToastContainer";
@@ -23,7 +23,6 @@ import {
   NotificationItem,
   AuditEvent,
   PlatformKPIs,
-  AccountStatus,
 } from "./admin/types";
 import {
   INITIAL_KPIS,
@@ -40,13 +39,11 @@ import {
   MOCK_ATTENDANCE_SESSIONS,
   MOCK_MATERIALS,
   MOCK_EVENTS,
-  MOCK_NOTIFICATIONS,
   MOCK_AUDIT_LOGS,
 } from "./admin/mockData";
 
 // Screens
 import { AdminDashboard } from "./admin/dashboard/AdminDashboard";
-import { UsersManagement } from "./admin/users/UsersManagement";
 import { StudentManagement } from "./admin/students/StudentManagement";
 import { TeacherManagement } from "./admin/teachers/TeacherManagement";
 import { AdminManagement } from "./admin/administrators/AdminManagement";
@@ -61,6 +58,7 @@ import { GradesAndResults } from "./admin/grades/GradesAndResults";
 import { GradeManagement } from "./admin/grades/GradeManagement";
 import { AttendanceManagement } from "./admin/attendance/AttendanceManagement";
 import { LearningMaterialManagement } from "./admin/materials/LearningMaterialManagement";
+import { MarketplaceManagement } from "./admin/marketplace/MarketplaceManagement";
 import { AdminCalendar } from "./admin/calendar/AdminCalendar";
 import { CommunicationManagement } from "./admin/communication/CommunicationManagement";
 import { NotificationCenter } from "./admin/notifications/NotificationCenter";
@@ -71,19 +69,28 @@ import { AuditAndActivity } from "./admin/audit/AuditAndActivity";
 import { AdminProfile } from "./admin/profile/AdminProfile";
 import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
-import { logoutAdmin } from "./admin/api/authApi";
+import { changeAdminPassword, logoutAdmin, refreshAdminSession } from "./admin/api/authApi";
+import {
+  deleteAdminNotification,
+  getAdminNotifications,
+  markAdminNotificationRead,
+  markAllAdminNotificationsRead,
+} from "./admin/api/notificationApi";
+import { clearSession, getSession } from "./admin/auth/authStorage";
+import { SetPasswordPanel } from "../../shared/auth/SetPasswordPanel";
 import {
   fetchAdminUsers,
   registerAdministrator,
   registerStudent,
   registerTeacher,
   resendUserInvitation,
-  updateUserStatus,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
-import { fetchCourses, updateCourse } from "./admin/api/coursesApi";
+import { fetchAdminAnalyticsOverview, type AdminAnalyticsOverview } from "./admin/api/analyticsApi";
+import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi";
 import {
   createEnrollment,
+  deleteEnrollment,
   fetchEnrollments,
   mapEnrollmentRecords,
   updateEnrollment,
@@ -99,11 +106,39 @@ import {
   type CalendarEventFilters,
 } from "./admin/api/calendarApi";
 
+const ADMIN_ROUTE_STORAGE_KEY = "mentify_admin_current_route";
+
+function notificationCategory(type?: string): NotificationItem["category"] {
+  const normalized = type?.toUpperCase() ?? "SYSTEM";
+  if (normalized.includes("SECURITY") || normalized.includes("AUTH")) return "SECURITY";
+  if (
+    normalized.includes("REGISTRATION") ||
+    normalized.includes("ENROLL") ||
+    normalized.includes("USER")
+  ) {
+    return "REGISTRATION";
+  }
+  if (
+    normalized.includes("ASSIGN") ||
+    normalized.includes("GRADE") ||
+    normalized.includes("EXAM") ||
+    normalized.includes("COURSE") ||
+    normalized.includes("ACADEMIC")
+  ) {
+    return "ACADEMIC";
+  }
+  return "SYSTEM";
+}
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
   const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
+  const routeHistoryReadyRef = useRef(false);
+  const routeBrowserBackRef = useRef(false);
 
   // Sync theme with HTML document
   useEffect(() => {
@@ -135,7 +170,7 @@ export default function App() {
   const [materials, setMaterials] = useState<LearningMaterial[]>(MOCK_MATERIALS);
   const [events, setEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
   const [upcomingEvents, setUpcomingEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEvent[]>(MOCK_AUDIT_LOGS);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -145,26 +180,164 @@ export default function App() {
   const [openAdminWizard, setOpenAdminWizard] = useState(false);
   const [openCourseModal, setOpenCourseModal] = useState(false);
   const [preselectedGradeId, setPreselectedGradeId] = useState<string | null>(null);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [usersError, setUsersError] = useState("");
   const [registrationOverview, setRegistrationOverview] = useState<Awaited<
     ReturnType<typeof fetchRegistrationOverview>
   > | null>(null);
   const [registrationOverviewLoading, setRegistrationOverviewLoading] = useState(false);
   const [registrationOverviewError, setRegistrationOverviewError] = useState("");
+  const [adminAnalytics, setAdminAnalytics] = useState<AdminAnalyticsOverview | null>(null);
+  const [adminAnalyticsLoading, setAdminAnalyticsLoading] = useState(false);
+  const [adminAnalyticsError, setAdminAnalyticsError] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreSession = async () => {
+      const storedSession = getSession();
+      if (!storedSession) {
+        if (mounted) setIsAuthReady(true);
+        return;
+      }
+
+      try {
+        if (storedSession.expiresAt <= Date.now() + 10_000) {
+          await refreshAdminSession();
+        }
+
+        const session = getSession();
+        if (mounted && session) {
+          setRole(session.user.role);
+          setRequiresPasswordChange(Boolean(session.mustChangePassword));
+          setIsAuthenticated(true);
+        }
+      } catch {
+        clearSession();
+      } finally {
+        if (mounted) setIsAuthReady(true);
+      }
+    };
+
+    void restoreSession();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleAuthExpired = () => {
+      setIsAuthenticated(false);
+      setCurrentRoute("dashboard");
+      setNotifications([]);
+    };
+
+    window.addEventListener("mentify:auth-expired", handleAuthExpired);
+    return () => window.removeEventListener("mentify:auth-expired", handleAuthExpired);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthReady || typeof window === "undefined") return;
+
+    const validRoutes = new Set<AdminRoute>([
+      "dashboard",
+      "analytics",
+      "notifications",
+      "students",
+      "teachers",
+      "administrators",
+      "registrations",
+      "courses",
+      "enrollments",
+      "academic",
+      "assignments",
+      "quizzes",
+      "examinations",
+      "grades",
+      "results",
+      "attendance",
+      "materials",
+      "marketplace",
+      "calendar",
+      "communication",
+      "ai-assistant",
+      "reports",
+      "audit",
+      "settings",
+      "profile",
+    ]);
+    const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);
+    const urlRoute = new URLSearchParams(window.location.search).get("route");
+    // The route is restored from browser storage after hydration.
+    const restoredRoute =
+      urlRoute && validRoutes.has(urlRoute as AdminRoute)
+        ? urlRoute
+        : storedRoute === "users"
+          ? "dashboard"
+          : storedRoute;
+    if (restoredRoute) {
+      const routeRestore = window.setTimeout(() => {
+        setCurrentRoute(restoredRoute as AdminRoute);
+      }, 0);
+      return () => window.clearTimeout(routeRestore);
+    }
+  }, [isAuthReady]);
+
+  useEffect(() => {
+    if (!isAuthReady || typeof window === "undefined") return;
+
+    if (!routeHistoryReadyRef.current) {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("route")) {
+        url.searchParams.set("route", currentRoute);
+        window.history.replaceState({ portal: "admin", route: currentRoute }, "", url);
+      }
+      routeHistoryReadyRef.current = true;
+      return;
+    }
+
+    if (routeBrowserBackRef.current) {
+      routeBrowserBackRef.current = false;
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("route") === currentRoute) return;
+    url.searchParams.set("route", currentRoute);
+    window.history.pushState({ portal: "admin", route: currentRoute }, "", url);
+  }, [currentRoute, isAuthReady]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const stateRoute = typeof event.state?.route === "string" ? event.state.route : null;
+      const urlRoute = new URLSearchParams(window.location.search).get("route");
+      const nextRoute = stateRoute || urlRoute;
+      if (!nextRoute) return;
+      routeBrowserBackRef.current = true;
+      setCurrentRoute(nextRoute as AdminRoute);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthReady || typeof window === "undefined") return;
+    window.sessionStorage.setItem(ADMIN_ROUTE_STORAGE_KEY, currentRoute);
+  }, [currentRoute, isAuthReady]);
 
   const loadAdminUsers = async () => {
-    setUsersLoading(true);
-    setUsersError("");
     try {
       const data = await fetchAdminUsers();
       setStudents(data.students);
       setTeachers(data.teachers);
       setAdministrators(data.administrators);
     } catch (error) {
-      setUsersError(error instanceof Error ? error.message : "Unable to load users.");
-    } finally {
-      setUsersLoading(false);
+      addToast(
+        "error",
+        "Users unavailable",
+        error instanceof Error ? error.message : "Unable to load user information.",
+      );
     }
   };
 
@@ -182,6 +355,33 @@ export default function App() {
       .catch(() => {
         // Keep the dashboard available when the calendar service is unavailable.
       });
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let mounted = true;
+    const loadAdminAnalytics = async () => {
+      setAdminAnalyticsLoading(true);
+      setAdminAnalyticsError("");
+      try {
+        const overview = await fetchAdminAnalyticsOverview();
+        if (mounted) setAdminAnalytics(overview);
+      } catch (error) {
+        if (mounted) {
+          setAdminAnalyticsError(
+            error instanceof Error ? error.message : "Unable to load platform analytics.",
+          );
+        }
+      } finally {
+        if (mounted) setAdminAnalyticsLoading(false);
+      }
+    };
+
+    void loadAdminAnalytics();
+    return () => {
+      mounted = false;
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -258,7 +458,7 @@ export default function App() {
     void loadRegistrationOverview();
   }, [isAuthenticated]);
 
-  const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
+  function addToast(type: "success" | "error" | "info", title: string, description?: string) {
     const newToast: ToastMessage = {
       id: `toast-${Date.now()}-${Math.random()}`,
       type,
@@ -269,7 +469,7 @@ export default function App() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
     }, 4500);
-  };
+  }
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -300,76 +500,93 @@ export default function App() {
     [],
   );
 
+  if (!isAuthReady) {
+    return null;
+  }
+
   if (!isAuthenticated) {
     return (
       <AdminLoginView
         onLogin={(session) => {
           setRole(session.user.role);
+          setRequiresPasswordChange(Boolean(session.mustChangePassword));
           setIsAuthenticated(true);
         }}
       />
     );
   }
 
+  if (requiresPasswordChange) {
+    const session = getSession();
+    if (session) {
+      return (
+        <SetPasswordPanel
+          email={session.user.email}
+          roleLabel="Administration"
+          onSubmit={async (currentPassword, newPassword) => {
+            await changeAdminPassword(currentPassword, newPassword);
+            clearSession();
+            setRequiresPasswordChange(false);
+            setIsAuthenticated(false);
+          }}
+          onCancel={() => {
+            clearSession();
+            setRequiresPasswordChange(false);
+            setIsAuthenticated(false);
+          }}
+        />
+      );
+    }
+  }
+
   const handleLogout = () => {
-    void logoutAdmin().finally(() => setIsAuthenticated(false));
+    // Start server-side logout, but do not make the user wait for the request
+    // before returning to the login screen.
+    void logoutAdmin();
+    clearSession();
+    setNotifications([]);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(ADMIN_ROUTE_STORAGE_KEY);
+    }
+    setCurrentRoute("dashboard");
+    setIsAuthenticated(false);
   };
 
   const handleDismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const handleResendInvitation = (email: string, targetRole: string) => {
+  const handleResendInvitation = async (email: string, targetRole: string) => {
     const user = [...students, ...teachers, ...administrators].find((item) => item.email === email);
     if (!user) {
       addToast("error", "Invitation Failed", "The selected user could not be found.");
       return;
     }
 
-    void resendUserInvitation(user.id)
-      .then(() => {
-        addToast(
-          "success",
-          "Invitation Dispatched",
-          `Keycloak temporary password activation link dispatched to ${email} (${targetRole}).`,
-        );
-      })
-      .catch((error) => {
-        addToast("error", "Invitation Failed", error instanceof Error ? error.message : undefined);
-      });
+    try {
+      await resendUserInvitation(user.id);
+      addToast("success", "Invitation sent", `A new activation email was sent to ${email}.`);
 
-    // Record audit event
-    const newLog: AuditEvent = {
-      id: `aud-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      actorEmail: "alex.mercer@mentify.edu",
-      actorRole: role,
-      category: "KEYCLOAK_AUTH",
-      action: "RESEND_INVITATION",
-      details: `Dispatched Keycloak credential email to ${email}`,
-      ipAddress: "192.168.10.45",
-      payloadJson: JSON.stringify({ email, targetRole, realm: "mentify-prod" }, null, 2),
-    };
-    setAuditLogs((prev) => [newLog, ...prev]);
-  };
-
-  const handleUpdateUserStatus = (userId: string, newStatus: AccountStatus) => {
-    void updateUserStatus(userId, newStatus === "ACTIVE")
-      .then(() => {
-        setStudents((prev) => prev.map((s) => (s.id === userId ? { ...s, status: newStatus } : s)));
-        setTeachers((prev) => prev.map((t) => (t.id === userId ? { ...t, status: newStatus } : t)));
-        setAdministrators((prev) =>
-          prev.map((a) => (a.id === userId ? { ...a, status: newStatus } : a)),
-        );
-        addToast("success", "Account Status Updated", `User account has been set to ${newStatus}.`);
-      })
-      .catch((error) => {
-        addToast(
-          "error",
-          "Status Update Failed",
-          error instanceof Error ? error.message : undefined,
-        );
-      });
+      // Record the action only after the backend confirms delivery/dispatch.
+      const newLog: AuditEvent = {
+        id: `aud-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        actorEmail: "alex.mercer@mentify.edu",
+        actorRole: role,
+        category: "KEYCLOAK_AUTH",
+        action: "RESEND_INVITATION",
+        details: `Dispatched Keycloak credential email to ${email}`,
+        ipAddress: "192.168.10.45",
+        payloadJson: JSON.stringify({ email, targetRole, realm: "mentify-prod" }, null, 2),
+      };
+      setAuditLogs((prev) => [newLog, ...prev]);
+    } catch (error) {
+      addToast(
+        "error",
+        "Invitation not sent",
+        error instanceof Error ? error.message : "Please try again shortly.",
+      );
+    }
   };
 
   const handleAddStudent = (newStudent: StudentProfile) => {
@@ -441,11 +658,47 @@ export default function App() {
     payload: Parameters<typeof updateCourse>[1],
   ) => {
     const updated = await updateCourse(courseId, payload);
-    setCourses((previous) =>
-      previous.map((course) => (course.id === courseId ? { ...course, ...updated } : course)),
+    const updatedGrade = gradesList.find((grade) => grade.id === updated.gradeId);
+    const updatedTeacher = teachers.find(
+      (teacher) =>
+        teacher.keycloakUserId === updated.assignedTeacherId ||
+        teacher.id === updated.assignedTeacherId,
     );
-    addToast("success", "Course Updated", `${updated.title} was updated successfully.`);
-    return updated;
+    const enrichedUpdated = {
+      ...updated,
+      gradeName: updatedGrade?.name || updated.gradeName,
+      grade: updatedGrade?.name || updated.grade,
+      teacherName: updatedTeacher
+        ? `${updatedTeacher.firstName} ${updatedTeacher.lastName}`
+        : updated.teacherName,
+      teacherCode: updatedTeacher?.teacherCode || updated.teacherCode,
+      teacherId: updated.assignedTeacherId || updated.teacherId,
+    };
+    setCourses((previous) =>
+      previous.map((course) =>
+        course.id === courseId ? { ...course, ...enrichedUpdated } : course,
+      ),
+    );
+    addToast("success", "Course Updated", `${enrichedUpdated.title} was updated successfully.`);
+    return enrichedUpdated;
+  };
+
+  const handleDeleteCourse = async (courseId: string) => {
+    try {
+      await deleteCourse(courseId);
+      setCourses((previous) => previous.filter((course) => course.id !== courseId));
+      setKpis((previous) => ({
+        ...previous,
+        totalCourses: Math.max(0, previous.totalCourses - 1),
+      }));
+      addToast("info", "Course Deleted", "The course was removed successfully.");
+      return { success: true as const };
+    } catch (error) {
+      return {
+        success: false as const,
+        error: error instanceof Error ? error.message : "Unable to delete the course.",
+      };
+    }
   };
 
   const handleCreateGrade = async (request: CreateGradeRequest) => {
@@ -476,11 +729,6 @@ export default function App() {
     }
   };
 
-  const handleUpdateEnrollmentStatus = (enrId: string, status: any) => {
-    setEnrollments((prev) => prev.map((e) => (e.id === enrId ? { ...e, status } : e)));
-    addToast("success", "Enrollment Approved", "Student course roster validated in PostgreSQL.");
-  };
-
   const handleCreateEnrollment = async (studentId: string, courseIds: string[]) => {
     const existing = enrollmentApiRecords?.find((item) => item.studentId === studentId);
     const created = existing
@@ -495,7 +743,29 @@ export default function App() {
         ? previous.map((item) => (item.id === existing.id ? created : item))
         : [created, ...previous];
     });
+    addToast(
+      "success",
+      "Student Enrolled",
+      "The selected course was added to the student’s learning plan.",
+    );
     return created;
+  };
+
+  const handleUpdateEnrollment = async (enrollmentId: string, courseIds: string[]) => {
+    const updated = await updateEnrollment(enrollmentId, courseIds);
+    setEnrollmentApiRecords((previous) =>
+      previous ? previous.map((item) => (item.id === enrollmentId ? updated : item)) : previous,
+    );
+    addToast("success", "Enrollment Updated", "The student’s course enrollment was updated.");
+    return updated;
+  };
+
+  const handleDeleteEnrollment = async (enrollmentId: string) => {
+    await deleteEnrollment(enrollmentId);
+    setEnrollmentApiRecords((previous) =>
+      previous ? previous.filter((item) => item.id !== enrollmentId) : previous,
+    );
+    addToast("success", "Course Unenrolled", "The course was removed from the student’s plan.");
   };
 
   const handleUploadMaterial = (newMat: LearningMaterial) => {
@@ -528,13 +798,44 @@ export default function App() {
     addToast("success", "Event Cancelled", `"${cancelled.title}" was cancelled.`);
   };
 
-  const handleMarkNotificationRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const handleMarkNotificationRead = async (id: string) => {
+    try {
+      await markAdminNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    } catch (error) {
+      addToast(
+        "error",
+        "Notification update failed",
+        error instanceof Error ? error.message : "Unable to mark the notification as read.",
+      );
+    }
   };
 
-  const handleMarkAllNotificationsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    addToast("info", "All notifications marked as read");
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await markAllAdminNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      addToast("info", "All notifications marked as read");
+    } catch (error) {
+      addToast(
+        "error",
+        "Notification update failed",
+        error instanceof Error ? error.message : "Unable to mark notifications as read.",
+      );
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await deleteAdminNotification(id);
+      setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+    } catch (error) {
+      addToast(
+        "error",
+        "Notification delete failed",
+        error instanceof Error ? error.message : "Unable to delete the notification.",
+      );
+    }
   };
 
   const handleQuickAction = (action: string) => {
@@ -579,7 +880,6 @@ export default function App() {
         setOpenCourseModal(false);
       }}
       role={role}
-      onRoleChange={setRole}
       isDarkMode={isDarkMode}
       onToggleTheme={() => setIsDarkMode((p) => !p)}
       notifications={notifications}
@@ -604,22 +904,9 @@ export default function App() {
           registrationOverview={registrationOverview}
           registrationOverviewLoading={registrationOverviewLoading}
           registrationOverviewError={registrationOverviewError}
-        />
-      )}
-
-      {currentRoute === "users" && (
-        <UsersManagement
-          students={students}
-          teachers={teachers}
-          administrators={administrators}
-          currentAdminRole={role}
-          onUpdateUserStatus={handleUpdateUserStatus}
-          onResendInvitation={handleResendInvitation}
-          onRegisterStudent={() => handleQuickAction("register-student")}
-          onRegisterTeacher={() => handleQuickAction("register-teacher")}
-          isLoading={usersLoading}
-          error={usersError}
-          onRetry={() => void loadAdminUsers()}
+          analytics={adminAnalytics}
+          analyticsLoading={adminAnalyticsLoading}
+          analyticsError={adminAnalyticsError}
         />
       )}
 
@@ -654,7 +941,6 @@ export default function App() {
           onAddAdministrator={handleAddAdministrator}
           onRegisterAdministrator={handleRegisterAdministrator}
           onResendInvitation={handleResendInvitation}
-          onSwitchToSuperAdmin={() => setRole("SUPER_ADMIN")}
           showRegistrationWizardDirectly={openAdminWizard}
         />
       )}
@@ -678,6 +964,7 @@ export default function App() {
           materials={materials}
           onAddCourse={handleAddCourse}
           onUpdateCourse={handleUpdateCourse}
+          onDeleteCourse={handleDeleteCourse}
           showCreateModalDirectly={openCourseModal}
           preselectedGradeId={preselectedGradeId}
           onNavigateToGrades={() => setCurrentRoute("grades")}
@@ -687,6 +974,7 @@ export default function App() {
       {currentRoute === "grades" && (
         <GradeManagement
           grades={gradesList}
+          administrators={administrators}
           onCreateGrade={handleCreateGrade}
           onUpdateGrade={handleUpdateGrade}
           onDeleteGrade={handleDeleteGrade}
@@ -703,8 +991,10 @@ export default function App() {
           enrollments={enrollments}
           courses={courses}
           students={students}
+          grades={gradesList}
           onCreateEnrollment={handleCreateEnrollment}
-          onUpdateEnrollmentStatus={handleUpdateEnrollmentStatus}
+          onUpdateEnrollment={handleUpdateEnrollment}
+          onDeleteEnrollment={handleDeleteEnrollment}
         />
       )}
 
@@ -730,6 +1020,8 @@ export default function App() {
         />
       )}
 
+      {currentRoute === "marketplace" && <MarketplaceManagement onToast={addToast} />}
+
       {currentRoute === "calendar" && (
         <AdminCalendar
           events={events}
@@ -748,13 +1040,14 @@ export default function App() {
           notifications={notifications}
           onMarkRead={handleMarkNotificationRead}
           onMarkAllRead={handleMarkAllNotificationsRead}
+          onDelete={handleDeleteNotification}
           onNavigate={setCurrentRoute}
         />
       )}
 
       {currentRoute === "ai-assistant" && <MentifyAIAssistant />}
 
-      {currentRoute === "analytics" && <AnalyticsDashboard kpis={kpis} />}
+      {currentRoute === "analytics" && <AnalyticsDashboard />}
 
       {currentRoute === "reports" && <ReportsManagement />}
 

@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { NavigationTab, TeacherProfile } from "../types";
+import { TeacherAvatar } from "./TeacherAvatar";
 
 interface TeacherSidebarProps {
   currentTab: NavigationTab;
@@ -32,8 +33,9 @@ interface TeacherSidebarProps {
   isMobileOpen: boolean;
   onCloseMobile: () => void;
   teacher: TeacherProfile;
+  courseCount: number;
+  studentCount: number;
   pendingSubmissionsCount: number;
-  unreadMessagesCount: number;
   unreadNotificationsCount: number;
   onLogout: () => void | Promise<void>;
 }
@@ -60,8 +62,9 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
   teacher,
+  courseCount,
+  studentCount,
   pendingSubmissionsCount,
-  unreadMessagesCount,
   unreadNotificationsCount,
   onLogout,
 }) => {
@@ -91,9 +94,9 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
     {
       groupName: "TEACHING",
       items: [
-        { id: "courses", label: "My Courses", icon: BookOpen, badge: 4 },
+        { id: "courses", label: "My Courses", icon: BookOpen, badge: courseCount },
         { id: "curriculum", label: "Course Content", icon: Layers },
-        { id: "students", label: "My Students", icon: Users, badge: 142 },
+        { id: "students", label: "My Students", icon: Users, badge: studentCount },
         { id: "attendance", label: "Attendance", icon: ClipboardCheck },
         { id: "materials", label: "Learning Materials", icon: FolderOpen },
       ],
@@ -121,7 +124,6 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           id: "messages",
           label: "Messages",
           icon: MessageSquare,
-          badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
           badgeColor: "bg-indigo-600 text-white",
         },
         {
@@ -260,9 +262,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
             isCollapsed ? "justify-center" : ""
           }`}
         >
-          <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold shrink-0 shadow-xs">
-            {teacherInitials}
-          </div>
+          <TeacherAvatar name={teacher.name} avatarUrl={teacher.avatarUrl} className="w-8 h-8" />
           {!isCollapsed && (
             <div className="truncate flex-1">
               <p className="text-xs font-semibold text-slate-900 truncate">{teacher.name}</p>

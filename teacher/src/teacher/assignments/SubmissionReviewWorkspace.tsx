@@ -64,7 +64,7 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
     id: item.id,
     assignmentId: item.assignmentId,
     studentId: item.studentId,
-    studentName: item.studentId,
+    studentName: item.studentName || "Student name unavailable",
     studentEmail: "",
     submissionDate: item.submittedAt
       ? new Date(item.submittedAt).toLocaleString()
@@ -87,7 +87,7 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
 };
 
 export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps> = ({
-  initialAssignmentId = "asg-01",
+  initialAssignmentId = "",
   onBack,
   onNavigate,
 }) => {

@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   X,
   Send,
+  RefreshCw,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { RoleBadge } from "../components/RoleBadge";
@@ -27,8 +28,7 @@ interface AdminManagementProps {
   currentRole: AdminRole;
   onAddAdministrator: (admin: AdministratorProfile) => void;
   onRegisterAdministrator: (request: RegisterAdministratorRequest) => Promise<AdministratorProfile>;
-  onResendInvitation: (email: string, role: string) => void;
-  onSwitchToSuperAdmin: () => void;
+  onResendInvitation: (email: string, role: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -38,7 +38,6 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   onAddAdministrator,
   onRegisterAdministrator,
   onResendInvitation,
-  onSwitchToSuperAdmin,
   showRegistrationWizardDirectly = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,6 +45,17 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [createdAdminCode, setCreatedAdminCode] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  const handleResend = async (email: string, role: string) => {
+    setResendingEmail(email);
+    try {
+      await onResendInvitation(email, role);
+    } finally {
+      setResendingEmail(null);
+    }
+  };
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -87,15 +97,6 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
               view administrator directories or provision new administrative credentials.
             </p>
           </div>
-
-          <div className="pt-2">
-            <button
-              onClick={onSwitchToSuperAdmin}
-              className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
-            >
-              Switch Role to SUPER_ADMIN (Preview Mode)
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -115,7 +116,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
     if (step === 1) {
       if (!formData.firstName.trim()) errors.firstName = "First name is required";
       if (!formData.lastName.trim()) errors.lastName = "Last name is required";
-      if (!formData.email.trim() || !formData.email.includes("@"))
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
         errors.email = "Valid institutional admin email is required";
     }
     if (step === 2) {
@@ -137,6 +138,9 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   };
 
   const handleFinalSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setFormErrors({});
     try {
       const createdAdmin = await onRegisterAdministrator(formData);
       onAddAdministrator(createdAdmin);
@@ -146,6 +150,8 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       setFormErrors({
         api: error instanceof Error ? error.message : "Unable to register administrator.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -164,6 +170,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       postalCode: "95112",
     });
     setFormErrors({});
+    setIsSubmitting(false);
     setCurrentStep(1);
     setIsWizardOpen(false);
   };
@@ -266,11 +273,16 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                       </button>
                       {admin.status === "INVITED" && (
                         <button
-                          onClick={() => onResendInvitation(admin.email, "ADMIN")}
-                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
+                          disabled={resendingEmail === admin.email}
+                          onClick={() => void handleResend(admin.email, "ADMIN")}
+                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
                         >
-                          <Send className="w-3 h-3" />
-                          Resend
+                          {resendingEmail === admin.email ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Send className="w-3 h-3" />
+                          )}
+                          {resendingEmail === admin.email ? "Sending..." : "Resend"}
                         </button>
                       )}
                     </div>
@@ -480,8 +492,12 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                  Administrator Registered!
+                  Administrator Registered
                 </h4>
+                <p className="text-xs text-slate-500">
+                  The administrator account was created successfully. The invitation email is being
+                  sent in the background.
+                </p>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 max-w-sm mx-auto text-left text-xs space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Generated Admin Code:</span>
@@ -521,10 +537,11 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                   </button>
                 ) : (
                   <button
+                    disabled={isSubmitting}
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white"
                   >
-                    Confirm & Register
+                    {isSubmitting ? "Registering..." : "Confirm & Register"}
                   </button>
                 )}
               </div>

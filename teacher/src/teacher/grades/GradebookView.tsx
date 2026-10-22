@@ -123,7 +123,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
             {courses.length === 0 && <option value="">No courses available</option>}
             {courses.map((course) => (
               <option key={course.id} value={course.id}>
-                {course.code || course.courseName} — {course.title || course.courseName}
+                {course.courseCode || course.courseName} — {course.courseName}
               </option>
             ))}
           </select>

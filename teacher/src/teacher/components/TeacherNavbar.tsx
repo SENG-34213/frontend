@@ -21,9 +21,11 @@ import {
   ExternalLink,
   Sun,
   Moon,
+  RefreshCw,
 } from "lucide-react";
 import { NavigationTab, TeacherProfile } from "../types";
 import { QuickCreateType } from "./QuickCreateModal";
+import { TeacherAvatar } from "./TeacherAvatar";
 
 interface TeacherNavbarProps {
   currentTab: NavigationTab;
@@ -35,6 +37,8 @@ interface TeacherNavbarProps {
   unreadNotificationsCount: number;
   isDarkMode: boolean;
   onToggleTheme: () => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
   onLogout: () => void | Promise<void>;
 }
 
@@ -69,6 +73,8 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   unreadNotificationsCount,
   isDarkMode,
   onToggleTheme,
+  onRefresh,
+  isRefreshing,
   onLogout,
 }) => {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
@@ -297,6 +303,19 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           )}
         </button>
 
+        {/* Refresh current workspace data */}
+        <button
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-700 shadow-xs transition-colors hover:bg-slate-100 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          title="Refresh current page data"
+          aria-label="Refresh current page data"
+        >
+          <RefreshCw
+            className={`h-4 w-4 text-indigo-600 dark:text-indigo-400 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+        </button>
+
         <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
         {/* Profile Avatar & Dropdown */}
@@ -305,9 +324,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
             className="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
-            <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold shadow-xs">
-              {teacherInitials}
-            </div>
+            <TeacherAvatar name={teacher.name} avatarUrl={teacher.avatarUrl} className="w-7 h-7" />
             <span className="hidden md:inline text-xs font-semibold text-slate-800">
               {teacher.name}
             </span>

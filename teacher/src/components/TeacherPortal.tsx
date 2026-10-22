@@ -6,7 +6,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { NavigationTab, Course } from "../teacher/types";
-import { mockAssignments, mockConversations } from "../teacher/data/mockData";
 import { TeacherSidebar } from "../teacher/components/TeacherSidebar";
 import { TeacherNavbar } from "../teacher/components/TeacherNavbar";
 import { GlobalSearchModal } from "../teacher/components/GlobalSearchModal";
@@ -33,20 +32,24 @@ import { NotificationCenterView } from "../teacher/notifications/NotificationCen
 import { TeacherProfileView } from "../teacher/profile/TeacherProfileView";
 import { TeacherSettingsView } from "../teacher/settings/TeacherSettingsView";
 import { TeacherLoginView } from "../teacher/auth/TeacherLoginView";
-import { getCurrentTeacher, logoutTeacher } from "../teacher/api/auth";
+import { changeTeacherPassword, getCurrentTeacher, logoutTeacher } from "../teacher/api/auth";
+import { SetPasswordPanel } from "../../../shared/auth/SetPasswordPanel";
+import { clearSession } from "../teacher/auth/authStorage";
 import { restoreTeacherSession } from "../teacher/api/client";
 import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
 import { createQuiz } from "../teacher/api/quizApi";
-import { mapBackendCourse } from "../teacher/api/courseApi";
+import { mapBackendCourse, type BackendCourse } from "../teacher/api/courseApi";
 import { useTeacherStudents } from "../teacher/hooks/useTeacherStudents";
 import { getCourseAssignments, type BackendAssignment } from "../teacher/api/assignmentApi";
+import { getTeacherDashboard, type TeacherDashboardData } from "../teacher/api/dashboardApi";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
   const restoreStartedRef = useRef(false);
   const [currentTab, setCurrentTab] = useState<NavigationTab>("dashboard");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -55,14 +58,80 @@ export default function App() {
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [assignmentRefreshToken, setAssignmentRefreshToken] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const historyReadyRef = useRef(false);
+  const browserBackRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
   useEffect(() => {
+    const validTabs = new Set<NavigationTab>([
+      "dashboard",
+      "calendar",
+      "notifications",
+      "courses",
+      "curriculum",
+      "students",
+      "attendance",
+      "materials",
+      "assignments",
+      "grading-workspace",
+      "quizzes",
+      "exams",
+      "grades",
+      "analytics",
+      "messages",
+      "ai-assistant",
+      "profile",
+      "settings",
+    ]);
+    const urlTab = new URLSearchParams(window.location.search).get("tab");
     const savedTab = window.localStorage.getItem("teacher-current-tab");
-    if (savedTab) setCurrentTab(savedTab as NavigationTab);
+    if (urlTab && validTabs.has(urlTab as NavigationTab)) {
+      setCurrentTab(urlTab as NavigationTab);
+    } else if (savedTab && validTabs.has(savedTab as NavigationTab)) {
+      setCurrentTab(savedTab as NavigationTab);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!historyReadyRef.current) {
+      const url = new URL(window.location.href);
+      const urlTab = url.searchParams.get("tab");
+      if (!urlTab) {
+        url.searchParams.set("tab", currentTab);
+        window.history.replaceState({ portal: "teacher", tab: currentTab }, "", url);
+      }
+      historyReadyRef.current = true;
+      return;
+    }
+
+    if (browserBackRef.current) {
+      browserBackRef.current = false;
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("tab") === currentTab) return;
+    url.searchParams.set("tab", currentTab);
+    window.history.pushState({ portal: "teacher", tab: currentTab }, "", url);
+  }, [currentTab]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const stateTab = typeof event.state?.tab === "string" ? event.state.tab : null;
+      const urlTab = new URLSearchParams(window.location.search).get("tab");
+      const nextTab = stateTab || urlTab;
+      if (!nextTab) return;
+      browserBackRef.current = true;
+      setCurrentTab(nextTab as NavigationTab);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   // Quick Create Modal state
@@ -71,23 +140,36 @@ export default function App() {
 
   // Deep view states
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<Course | null>(null);
-  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("asg-01");
+  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("");
   const [aiPreloadedPrompt, setAiPreloadedPrompt] = useState<string>("");
   const shellData = useTeacherShellData(Boolean(session));
   const teacherCourses = useTeacherCourses(Boolean(session));
   const teacherStudents = useTeacherStudents(Boolean(session), teacherCourses.courses);
   const [searchAssignments, setSearchAssignments] = useState<BackendAssignment[]>([]);
   const recentNotifications = useTeacherNotifications(Boolean(session), 4);
+  const [dashboardData, setDashboardData] = useState<TeacherDashboardData | null>(null);
 
   // Course state
   const [courses, setCourses] = useState<Course[]>([]);
 
   // Counts
-  const pendingSubmissionsCount = mockAssignments.reduce(
-    (acc, a) => acc + (a.totalSubmissions - a.gradedCount),
-    0,
-  );
-  const unreadMessagesCount = mockConversations.reduce((acc, c) => acc + c.unreadCount, 0);
+  const pendingSubmissionsCount = dashboardData?.pendingReviewCount ?? 0;
+
+  useEffect(() => {
+    if (!session) {
+      setDashboardData(null);
+      return;
+    }
+    const controller = new AbortController();
+    getTeacherDashboard(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) setDashboardData(data ?? null);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setDashboardData(null);
+      });
+    return () => controller.abort();
+  }, [session, workspaceRefreshKey]);
   useEffect(() => {
     if (restoreStartedRef.current) return;
     restoreStartedRef.current = true;
@@ -103,6 +185,7 @@ export default function App() {
         // This prevents a stale session for another role from reaching the shell.
         await getCurrentTeacher();
         setSession(restoredSession);
+        setRequiresPasswordChange(Boolean(restoredSession.mustChangePassword));
       })
       .catch(() => {
         setSession(null);
@@ -121,6 +204,15 @@ export default function App() {
       setCourses(teacherCourses.courses.map(mapBackendCourse));
     }
   }, [teacherCourses.courses, teacherCourses.error, teacherCourses.isLoading]);
+
+  useEffect(() => {
+    const handleExpiredSession = () => {
+      setSession(null);
+      setRequiresPasswordChange(false);
+    };
+    window.addEventListener("teacher:session-expired", handleExpiredSession);
+    return () => window.removeEventListener("teacher:session-expired", handleExpiredSession);
+  }, []);
 
   useEffect(() => {
     setNotificationUnreadCount(shellData.unreadNotificationsCount);
@@ -146,7 +238,18 @@ export default function App() {
         if (!controller.signal.aborted) setSearchAssignments([]);
       });
     return () => controller.abort();
-  }, [isSearchOpen, teacherCourses.courses]);
+  }, [isSearchOpen, teacherCourses.courses, workspaceRefreshKey]);
+
+  const handleRefreshWorkspace = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    shellData.retry();
+    teacherCourses.retry();
+    teacherStudents.retry();
+    recentNotifications.retry();
+    setWorkspaceRefreshKey((current) => current + 1);
+    window.setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   // Navigation handler
   const handleNavigate = (tab: NavigationTab, param?: string) => {
@@ -175,25 +278,7 @@ export default function App() {
 
   const handleItemCreated = (type: QuickCreateType, item: any) => {
     if (type === "course") {
-      const courseTitle = item.courseName || item.title || "Untitled course";
-      const newCourse: Course = {
-        id: item.id,
-        code: item.subject || courseTitle.split(" ")[0] || "COURSE",
-        title: courseTitle,
-        description:
-          item.courseDescription || item.description || "No course description available.",
-        category: "Computer Science",
-        level: "Undergraduate",
-        semester: "Fall Semester",
-        academicYear: "2026-2027",
-        enrolledCount: 0,
-        maxCapacity: 50,
-        status: "Active",
-        coverTheme: "indigo",
-        modulesCount: 0,
-        assignmentsCount: 0,
-        averageGrade: 0,
-      };
+      const newCourse: Course = mapBackendCourse(item as BackendCourse);
       setCourses([newCourse, ...courses]);
       setSelectedCourseForDetail(newCourse);
       setCurrentTab("courses");
@@ -213,10 +298,35 @@ export default function App() {
     return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher session" />;
   }
 
-  if (!session) return <TeacherLoginView onLogin={setSession} />;
+  if (!session) {
+    return (
+      <TeacherLoginView
+        onLogin={(nextSession) => {
+          setSession(nextSession);
+          setRequiresPasswordChange(Boolean(nextSession.mustChangePassword));
+        }}
+      />
+    );
+  }
 
-  if (shellData.isLoading || !shellData.teacherProfile) {
-    return <div className="min-h-screen bg-slate-50" aria-label="Loading teacher workspace" />;
+  if (requiresPasswordChange) {
+    return (
+      <SetPasswordPanel
+        email={session.user.email}
+        roleLabel="Teacher"
+        onSubmit={async (currentPassword, newPassword) => {
+          await changeTeacherPassword(currentPassword, newPassword);
+          clearSession();
+          setRequiresPasswordChange(false);
+          setSession(null);
+        }}
+        onCancel={() => {
+          clearSession();
+          setRequiresPasswordChange(false);
+          setSession(null);
+        }}
+      />
+    );
   }
 
   if (shellData.error) {
@@ -252,10 +362,21 @@ export default function App() {
     );
   }
 
+  if (shellData.isLoading || !shellData.teacherProfile) {
+    return (
+      <div
+        className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-500 dark:bg-slate-950 dark:text-slate-400"
+        aria-label="Loading teacher workspace"
+      >
+        Loading teacher workspace…
+      </div>
+    );
+  }
+
   const teacherProfile = shellData.teacherProfile;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100 flex">
       {/* 1. Global Teacher Sidebar */}
       <TeacherSidebar
         currentTab={currentTab}
@@ -265,12 +386,13 @@ export default function App() {
         isMobileOpen={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
         teacher={teacherProfile}
+        courseCount={teacherCourses.courses.length}
+        studentCount={teacherStudents.students.length}
         onLogout={async () => {
           await logoutTeacher();
           setSession(null);
         }}
         pendingSubmissionsCount={pendingSubmissionsCount}
-        unreadMessagesCount={unreadMessagesCount}
         unreadNotificationsCount={notificationUnreadCount}
       />
 
@@ -285,6 +407,8 @@ export default function App() {
           onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode((current) => !current)}
+          onRefresh={handleRefreshWorkspace}
+          isRefreshing={isRefreshing}
           teacher={teacherProfile}
           onLogout={async () => {
             await logoutTeacher();
@@ -294,7 +418,7 @@ export default function App() {
         />
 
         {/* View Routing */}
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+        <main key={workspaceRefreshKey} className="flex-1 p-4 lg:p-6 overflow-y-auto">
           {shellData.notificationError && (
             <div
               role="status"
@@ -416,7 +540,7 @@ export default function App() {
           )}
 
           {currentTab === "calendar" && (
-            <TeacherCalendarView backendCourses={teacherCourses.courses} />
+            <TeacherCalendarView backendCourses={teacherCourses.courses} teacher={teacherProfile} />
           )}
 
           {currentTab === "messages" && (
@@ -424,6 +548,8 @@ export default function App() {
               backendCourses={teacherCourses.courses}
               students={teacherStudents.students}
               teacherId={session.user.keycloakUserId ?? teacherProfile.id}
+              teacherName={teacherProfile.name}
+              teacherProfileId={teacherProfile.id}
             />
           )}
 

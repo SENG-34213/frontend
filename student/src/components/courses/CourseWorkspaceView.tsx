@@ -31,17 +31,25 @@ export const CourseWorkspaceView: React.FC = () => {
     setCurrentView,
     sendAiQuery,
     showToast,
+    downloadMaterial,
   } = useStudent();
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const [videoProgress, setVideoProgress] = useState<number>(38);
+  const [videoProgress, setVideoProgress] = useState<number>(0);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAiHelperOpen, setIsAiHelperOpen] = useState(false);
   const [quickAiQuestion, setQuickAiQuestion] = useState("");
 
   const course = courses.find((c) => c.id === selectedCourseId) || courses[0];
+  if (!course) {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
+        Course content is not available yet.
+      </div>
+    );
+  }
   const allLessons = course.modules.flatMap((m) => m.lessons);
   const currentLessonIndex = allLessons.findIndex((l) => l.id === selectedLessonId);
   const currentLesson = allLessons[currentLessonIndex] || allLessons[0];
@@ -220,6 +228,11 @@ export const CourseWorkspaceView: React.FC = () => {
                 <span className="capitalize">{currentLesson.type} Lecture</span>
                 <span>·</span>
                 <span>{currentLesson.durationMinutes} Minutes Expected</span>
+                {currentLesson.teachingCompleted && (
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                    Teaching completed
+                  </span>
+                )}
               </div>
               <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                 {currentLesson.title}
@@ -283,8 +296,17 @@ export const CourseWorkspaceView: React.FC = () => {
                           </div>
                         </div>
                         <button
-                          onClick={() => showToast(`Downloaded: ${res.name}`)}
-                          className="rounded p-1.5 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                          onClick={() => {
+                            if (!res.materialId) {
+                              showToast("This material is not available for download yet.");
+                              return;
+                            }
+                            void downloadMaterial(res.materialId).catch(() =>
+                              showToast("Material could not be downloaded. Please try again."),
+                            );
+                          }}
+                          className="rounded p-1.5 text-slate-500 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-indigo-400"
+                          disabled={!res.materialId}
                           title="Download file"
                         >
                           <Download className="h-4 w-4" />

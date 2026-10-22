@@ -5,17 +5,30 @@ import type { Course } from "../types";
 export type BackendCourse = {
   id: string;
   courseName: string;
-  code?: string;
+  courseCode?: string;
   title?: string;
   courseDescription?: string;
   courseThumbnail?: string;
   assignedTeacherId?: string;
+  gradeId?: string;
+  gradeName?: string;
   subject?: string;
+  level?: string | null;
+  semester?: string | null;
+  academicYear?: string | null;
   online?: boolean;
   visible?: boolean;
   isPublished?: boolean;
   courseStatus?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  publishedDate?: string;
   numberOfStudents?: number;
+  moduleCount?: number | null;
+  lessonCount?: number | null;
+  assignmentCount?: number | null;
+  quizCount?: number | null;
+  examCount?: number | null;
+  averageGrade?: number | string | null;
+  maxCapacity?: number | null;
 };
 
 export type CreateCoursePayload = {
@@ -65,24 +78,24 @@ export async function getCourseById(
 export function mapBackendCourse(course: BackendCourse): Course {
   return {
     id: course.id,
-    code: course.subject || "COURSE",
+    code: course.courseCode || "",
     title: course.courseName,
-    description: course.courseDescription || "No course description available.",
-    category: course.subject || "Academic Course",
-    level: "Undergraduate",
-    semester: "Current Semester",
-    academicYear: "",
+    description: course.courseDescription || "",
+    category: course.subject || "",
+    level: course.level || "",
+    semester: course.semester || "",
+    academicYear: course.academicYear || "",
     enrolledCount: course.numberOfStudents ?? 0,
-    maxCapacity: course.numberOfStudents ?? 0,
+    maxCapacity: course.maxCapacity ?? 0,
     status:
       course.courseStatus === "PUBLISHED"
         ? "Active"
         : course.courseStatus === "ARCHIVED"
           ? "Archived"
           : "Draft",
-    coverTheme: "indigo",
-    modulesCount: 0,
-    assignmentsCount: 0,
-    averageGrade: 0,
+    coverTheme: undefined,
+    modulesCount: Number(course.moduleCount ?? 0),
+    assignmentsCount: Number(course.assignmentCount ?? 0),
+    averageGrade: Number(course.averageGrade ?? 0),
   };
 }

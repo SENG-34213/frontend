@@ -53,7 +53,7 @@ export const ExaminationsView: React.FC = () => {
       {/* Examination Schedule Cards */}
       <div className="space-y-4">
         {examinations.map((exam) => {
-          const isUpcoming = exam.status === "UPCOMING";
+          const isUpcoming = exam.status === "UPCOMING" && Boolean(exam.questions?.length);
           const isCompleted = exam.status === "COMPLETED";
 
           return (
@@ -128,9 +128,13 @@ export const ExaminationsView: React.FC = () => {
                     <span>Enter Exam Session</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </button>
-                ) : (
+                ) : exam.status === "COMPLETED" ? (
                   <span className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                     Graded & Completed
+                  </span>
+                ) : (
+                  <span className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    Details unavailable
                   </span>
                 )}
               </div>

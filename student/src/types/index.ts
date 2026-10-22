@@ -25,6 +25,7 @@ export interface StudentProfile {
   studentId: string;
   name: string;
   email: string;
+  emailVerified?: boolean;
   avatar: string;
   role: "STUDENT";
   institution: string;
@@ -57,10 +58,15 @@ export interface Teacher {
 export interface Lesson {
   id: string;
   moduleId: string;
+  order?: number;
   title: string;
+  description?: string;
   durationMinutes: number;
   type: "video" | "reading" | "interactive" | "exercise";
+  contentType?: string;
+  releaseDate?: string;
   completed: boolean;
+  teachingCompleted?: boolean;
   videoUrl?: string;
   content: string;
   codeSnippet?: {
@@ -68,6 +74,7 @@ export interface Lesson {
     code: string;
   };
   downloadableResources?: {
+    materialId?: string;
     name: string;
     size: string;
     format: string;
@@ -76,8 +83,12 @@ export interface Lesson {
 
 export interface CourseModule {
   id: string;
+  order?: number;
   title: string;
   description: string;
+  status?: "Published" | "Draft";
+  startDate?: string;
+  endDate?: string;
   lessons: Lesson[];
 }
 
@@ -91,12 +102,18 @@ export interface Course {
   bannerColor: string;
   coverImage?: string;
   enrolled: boolean;
-  enrollmentStatus: "ACTIVE" | "PENDING" | "COMPLETED" | "AVAILABLE";
+  enrollmentStatus:
+    | "ACTIVE"
+    | "PENDING"
+    | "COMPLETED"
+    | "AVAILABLE"
+    | "REJECTED"
+    | "PAYMENT_REQUIRED";
   progressPercentage: number;
   lastAccessedLessonId?: string;
   lastAccessedLessonTitle?: string;
   credits: number;
-  level: "Beginner" | "Intermediate" | "Advanced";
+  level: string;
   modules: CourseModule[];
   schedule: string;
   room: string;
@@ -116,8 +133,8 @@ export interface Assignment {
   instructions: string;
   dueDate: string;
   maxScore: number;
-  status: "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE";
-  priority: "HIGH" | "MEDIUM" | "LOW";
+  status: "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE" | "UNKNOWN";
+  priority: "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
   submittedDate?: string;
   grade?: number;
   letterGrade?: string;
@@ -128,6 +145,7 @@ export interface Assignment {
     description: string;
   }[];
   attachments?: {
+    id?: string;
     name: string;
     size: string;
     url?: string;
@@ -143,14 +161,26 @@ export interface Assignment {
 export interface QuizQuestion {
   id: string;
   prompt: string;
-  type: "multiple-choice" | "multi-select" | "true-false";
+  type: "multiple-choice";
   options: {
     id: string;
     text: string;
   }[];
-  correctAnswerIds: string[];
-  explanation: string;
+  explanation?: string;
   points: number;
+}
+
+export interface QuizAnswerReview {
+  questionId: string;
+  questionText: string;
+  explanation?: string;
+  selectedOptionId?: string;
+  selectedAnswer?: string;
+  correctOptionId?: string;
+  correctAnswer?: string;
+  correct: boolean;
+  awardedMarks: number;
+  questionMarks: number;
 }
 
 export interface Quiz {
@@ -163,12 +193,14 @@ export interface Quiz {
   durationMinutes: number;
   questionsCount: number;
   totalPoints: number;
-  status: "AVAILABLE" | "UPCOMING" | "COMPLETED";
+  status: "AVAILABLE" | "UPCOMING" | "COMPLETED" | "IN_PROGRESS" | "UNKNOWN";
+  startTime?: string;
   dueDate: string;
-  attemptsAllowed: number;
-  attemptsUsed: number;
+  attemptsAllowed?: number;
+  attemptsUsed?: number;
   lastScore?: number;
   lastScorePercentage?: number;
+  showResultImmediately?: boolean;
   questions: QuizQuestion[];
 }
 
@@ -184,7 +216,7 @@ export interface Examination {
   durationMinutes: number;
   location: string;
   proctorName: string;
-  status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED";
+  status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED" | "UNKNOWN";
   totalMarks: number;
   weightPercentage: number;
   rules: string[];
@@ -204,17 +236,18 @@ export interface LearningMaterial {
   type: "PDF" | "VIDEO" | "CODE" | "SLIDES" | "DOCUMENT";
   fileSize: string;
   uploadedDate: string;
-  downloadsCount: number;
+  downloadsCount?: number;
   previewUrl?: string;
   contentSnippet?: string;
 }
 
 export interface CalendarEvent {
   id: string;
+  courseId?: string;
   title: string;
   courseCode?: string;
   courseTitle?: string;
-  type: "CLASS" | "ASSIGNMENT_DUE" | "QUIZ" | "EXAM" | "OFFICE_HOURS";
+  type: "CLASS" | "ASSIGNMENT_DUE" | "QUIZ" | "EXAM" | "OFFICE_HOURS" | "ATTENDANCE";
   date: string; // YYYY-MM-DD
   startTime: string;
   endTime: string;
@@ -231,8 +264,10 @@ export interface Message {
   timestamp: string;
   text: string;
   attachments?: {
+    id?: string;
     name: string;
     size: string;
+    contentType?: string;
   }[];
 }
 
@@ -242,11 +277,17 @@ export interface Conversation {
   participantName: string;
   participantTitle: string;
   participantAvatar: string;
+  studentMessagingEnabled?: boolean;
   courseCode?: string;
-  unreadCount: number;
+  unreadCount?: number;
   lastMessage: string;
   lastMessageTime: string;
   messages: Message[];
+  members?: {
+    userId: string;
+    role: string;
+    joinedAt: string;
+  }[];
 }
 
 export interface Announcement {
@@ -282,4 +323,15 @@ export interface ChatMessage {
     language: string;
     code: string;
   };
+}
+
+export interface AttendanceSummary {
+  studentId: string;
+  courseId: string;
+  completedSessions: number;
+  presentCount: number;
+  lateCount: number;
+  absentCount: number;
+  attendedCount: number;
+  attendancePercentage: number;
 }

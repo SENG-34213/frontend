@@ -1,16 +1,23 @@
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
-import { loginTeacher } from "../api/auth";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
+import {
+  loginTeacher,
+  requestTeacherPasswordReset,
+  resetTeacherPassword,
+  verifyTeacherPasswordResetOtp,
+} from "../api/auth";
 import type { AuthSession } from "./authTypes";
+import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel";
 
 type Props = { onLogin: (session: AuthSession) => void };
 
 export function TeacherLoginView({ onLogin }: Props) {
-  const [email, setEmail] = useState("teacher1@mentify.test");
-  const [password, setPassword] = useState("Sample@12345");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +35,23 @@ export function TeacherLoginView({ onLogin }: Props) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordPanel
+        roleLabel="Teacher"
+        initialEmail={email}
+        requestReset={requestTeacherPasswordReset}
+        verifyOtp={verifyTeacherPasswordResetOtp}
+        resetPassword={resetTeacherPassword}
+        onComplete={() => {
+          setShowForgotPassword(false);
+          setError("");
+        }}
+        onCancel={() => setShowForgotPassword(false)}
+      />
+    );
   }
 
   return (
@@ -144,9 +168,10 @@ export function TeacherLoginView({ onLogin }: Props) {
                 </label>
                 <button
                   type="button"
-                  onClick={() =>
-                    setError("Use the sample teacher credentials below for local verification.")
-                  }
+                  onClick={() => {
+                    setError("");
+                    setShowForgotPassword(true);
+                  }}
                   className="font-semibold text-indigo-600 hover:text-indigo-800"
                 >
                   Forgot password?
@@ -161,16 +186,8 @@ export function TeacherLoginView({ onLogin }: Props) {
                 <ArrowRight className="h-4 w-4" />
               </button>
             </form>
-            <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/70 p-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-800">
-                <Sparkles className="h-4 w-4" /> Demo teacher account
-              </div>
-              <p className="mt-1 text-[11px] leading-5 text-indigo-700/80">
-                alex.rivera@mentify.edu · teacher-demo
-              </p>
-            </div>
             <p className="mt-6 text-center text-[11px] text-slate-400">
-              Protected faculty workspace · Sample UI mode
+              Protected faculty workspace
             </p>
           </div>
         </div>

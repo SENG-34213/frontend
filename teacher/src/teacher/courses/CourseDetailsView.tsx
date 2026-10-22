@@ -396,8 +396,12 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <Clock className="w-4 h-4 text-indigo-600" />
                     <span className="text-xs font-semibold">Weekly Lecture Schedule</span>
                   </div>
-                  <p className="text-sm font-bold text-slate-900">Tuesdays & Thursdays</p>
-                  <p className="text-xs text-slate-500">10:00 AM - 11:30 AM (Turing 401)</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {courseEvents.length
+                      ? `${courseEvents.length} scheduled events`
+                      : "Not available"}
+                  </p>
+                  <p className="text-xs text-slate-500">Open the calendar for event details.</p>
                 </div>
 
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
@@ -405,19 +409,21 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <Award className="w-4 h-4 text-emerald-600" />
                     <span className="text-xs font-semibold">Grading Weight Distribution</span>
                   </div>
-                  <p className="text-sm font-bold text-slate-900">Weighted Scale</p>
-                  <p className="text-xs text-slate-500">
-                    30% Midterm · 40% Assignments · 30% Final
+                  <p className="text-sm font-bold text-slate-900">
+                    {displayCourse.averageGrade}% average grade
                   </p>
+                  <p className="text-xs text-slate-500">Calculated from course assessment data.</p>
                 </div>
 
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
                   <div className="flex items-center gap-2 text-slate-500 mb-1">
                     <Users className="w-4 h-4 text-violet-600" />
-                    <span className="text-xs font-semibold">Active Teaching Assistant</span>
+                    <span className="text-xs font-semibold">Course Enrollment</span>
                   </div>
-                  <p className="text-sm font-bold text-slate-900">Sarah Jenkins</p>
-                  <p className="text-xs text-slate-500">Lead TA · s.jenkins@mentify.edu</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {displayCourse.enrolledCount} students
+                  </p>
+                  <p className="text-xs text-slate-500">Roster data from the course service.</p>
                 </div>
               </div>
 

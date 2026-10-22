@@ -95,3 +95,11 @@ export async function cancelAttendanceSession(sessionId: string) {
   );
   return response.data;
 }
+
+export async function deleteAttendanceSession(sessionId: string) {
+  const response = await apiRequest<ApiResponse<void>>(
+    `/api/v1/attendance/sessions/${encodeURIComponent(sessionId)}`,
+    { method: "DELETE" },
+  );
+  return response;
+}

@@ -34,6 +34,12 @@ export async function updateEnrollment(enrollmentId: string, courseIds: string[]
   return response.data;
 }
 
+export async function deleteEnrollment(enrollmentId: string) {
+  await apiRequest<ApiResponse<unknown>>(`/api/v1/enrollments/${enrollmentId}`, {
+    method: "DELETE",
+  });
+}
+
 export function mapEnrollmentRecords(
   enrollments: EnrollmentApiResponse[],
   students: StudentProfile[],
@@ -49,7 +55,7 @@ export function mapEnrollmentRecords(
         studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown student",
         studentEmail: student?.email || "",
         courseId,
-        courseCode: course?.code || courseId,
+        courseCode: course?.code || "Course",
         courseTitle: course?.title || "Course unavailable",
         enrolledDate: enrollment.enrolledOn,
         status: "ACTIVE" as const,

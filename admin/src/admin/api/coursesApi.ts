@@ -11,11 +11,13 @@ interface CourseApiResponse {
   assignedTeacherId?: string | null;
   courseEnrollmentId?: string | null;
   gradeId?: string | null;
+  gradeName?: string | null;
   subject?: string | null;
   online?: boolean;
   discountOfferPercent?: number | null;
   visible?: boolean;
   isPublished?: boolean;
+  published?: boolean;
   courseStatus?: string | null;
   publishedDate?: string | null;
   numberOfStudents?: number;
@@ -54,8 +56,8 @@ export function mapCourseResponse(course: CourseApiResponse): Course {
   const enrollmentCount = Number.isFinite(course.numberOfStudents)
     ? course.numberOfStudents || 0
     : 0;
-  const isPublished = Boolean(course.isPublished);
   const status = course.courseStatus?.toUpperCase();
+  const isPublished = course.isPublished ?? course.published ?? status === "PUBLISHED";
 
   return {
     id: course.id,
@@ -65,8 +67,9 @@ export function mapCourseResponse(course: CourseApiResponse): Course {
     teacherId: course.assignedTeacherId || "",
     teacherName: course.assignedTeacherId ? "Assigned faculty" : "Unassigned faculty",
     assignedTeacherId: course.assignedTeacherId || undefined,
-    grade: course.gradeId || "Grade not specified",
+    grade: course.gradeName || "Grade not specified",
     gradeId: course.gradeId || undefined,
+    gradeName: course.gradeName || undefined,
     enrollmentCount,
     maxCapacity: Math.max(enrollmentCount, 1),
     status: statusMap[status || ""] || (isPublished ? "ACTIVE" : "UPCOMING"),
@@ -123,4 +126,10 @@ export async function updateCourse(
     throw new Error(response.message || "The course service returned an empty response.");
   }
   return mapCourseResponse(response.data);
+}
+
+export async function deleteCourse(courseId: string): Promise<void> {
+  await apiRequest<ApiResponse<unknown>>(`/api/v1/course/${encodeURIComponent(courseId)}`, {
+    method: "DELETE",
+  });
 }

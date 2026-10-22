@@ -16,6 +16,7 @@ import {
   X,
   UserCheck,
   Send,
+  RefreshCw,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
@@ -31,7 +32,7 @@ interface StudentManagementProps {
   attendanceSessions: AttendanceSession[];
   onAddStudent: (newStudent: StudentProfile) => void;
   onRegisterStudent: (request: RegisterStudentRequest) => Promise<StudentProfile>;
-  onResendInvitation: (email: string, role: string) => void;
+  onResendInvitation: (email: string, role: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -57,6 +58,17 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [createdStudentId, setCreatedStudentId] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  const handleResend = async (email: string, role: string) => {
+    setResendingEmail(email);
+    try {
+      await onResendInvitation(email, role);
+    } finally {
+      setResendingEmail(null);
+    }
+  };
 
   // Form Fields
   const [formData, setFormData] = useState({
@@ -97,7 +109,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
     if (step === 1) {
       if (!formData.firstName.trim()) errors.firstName = "First name is required";
       if (!formData.lastName.trim()) errors.lastName = "Last name is required";
-      if (!formData.email.trim() || !formData.email.includes("@"))
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
         errors.email = "Valid institutional or student email is required";
     }
     if (step === 2) {
@@ -124,6 +136,9 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   };
 
   const handleFinalSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setFormErrors({});
     try {
       const createdStudent = await onRegisterStudent(formData);
       onAddStudent(createdStudent);
@@ -133,6 +148,8 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       setFormErrors({
         api: error instanceof Error ? error.message : "Unable to register student.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -155,6 +172,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       postalCode: "95112",
     });
     setFormErrors({});
+    setIsSubmitting(false);
     setCurrentStep(1);
     setIsWizardOpen(false);
   };
@@ -264,7 +282,11 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
 
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <UserAvatar name={`${stu.firstName} ${stu.lastName}`} size="md" />
+                        <UserAvatar
+                          name={`${stu.firstName} ${stu.lastName}`}
+                          avatarUrl={stu.avatarUrl}
+                          size="md"
+                        />
                         <div>
                           <span className="font-semibold text-slate-900 dark:text-white block">
                             {stu.firstName} {stu.lastName}
@@ -308,11 +330,16 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                         </button>
                         {stu.status === "INVITED" && (
                           <button
-                            onClick={() => onResendInvitation(stu.email, "STUDENT")}
-                            className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1"
+                            disabled={resendingEmail === stu.email}
+                            onClick={() => void handleResend(stu.email, "STUDENT")}
+                            className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
                           >
-                            <Send className="w-3 h-3" />
-                            Resend
+                            {resendingEmail === stu.email ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Send className="w-3 h-3" />
+                            )}
+                            {resendingEmail === stu.email ? "Sending..." : "Resend"}
                           </button>
                         )}
                       </div>
@@ -681,10 +708,11 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                    Student Successfully Registered!
+                    Student Registered
                   </h4>
                   <p className="text-xs text-slate-500 mt-1">
-                    The student has been registered and an invitation is ready to be sent.
+                    The student account was created successfully. The invitation email is being sent
+                    in the background.
                   </p>
                 </div>
 
@@ -761,11 +789,18 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   </button>
                 ) : (
                   <button
+                    disabled={isSubmitting}
                     onClick={handleFinalSubmit}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5"
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white flex items-center gap-1.5"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Confirm & Register Student</span>
+                    {isSubmitting ? (
+                      <span>Registering...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Confirm & Register Student</span>
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -807,6 +842,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
                   <UserAvatar
                     name={`${selectedStudent.firstName} ${selectedStudent.lastName}`}
+                    avatarUrl={selectedStudent.avatarUrl}
                     size="lg"
                   />
                   <div>

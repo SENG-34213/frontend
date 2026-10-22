@@ -42,13 +42,13 @@ export interface Course {
   title: string;
   description: string;
   category: string;
-  level: "Undergraduate" | "Graduate" | "Foundational";
+  level: string;
   semester: string;
   academicYear: string;
   enrolledCount: number;
   maxCapacity: number;
   status: "Active" | "Draft" | "Archived";
-  coverTheme: "indigo" | "emerald" | "violet" | "amber";
+  coverTheme?: "indigo" | "emerald" | "violet" | "amber";
   modulesCount: number;
   assignmentsCount: number;
   nextSession?: string;
@@ -64,6 +64,7 @@ export interface Lesson {
   durationMinutes: number;
   order: number;
   status: "Published" | "Draft";
+  teachingCompleted?: boolean;
   contentType: "Lecture" | "Lab" | "Reading" | "Discussion";
   contentMarkdown?: string;
   resourcesCount: number;
@@ -86,7 +87,8 @@ export interface Module {
   title: string;
   description: string;
   order: number;
-  dateDuration: number;
+  startDate: string;
+  endDate: string;
   status: "Published" | "Draft";
   lessons: Lesson[];
 }
@@ -115,10 +117,15 @@ export interface Assignment {
   courseCode: string;
   title: string;
   description: string;
+  openedDate?: string;
+  openedTime?: string;
   dueDate: string;
   dueTime: string;
+  dueAt?: string;
   maxMarks: number;
   weightagePercent: number;
+  allowedAttempts?: number;
+  allowLateSubmission?: boolean;
   status: "Active" | "Grading" | "Closed" | "Draft";
   totalSubmissions: number;
   gradedCount: number;

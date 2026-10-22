@@ -4,9 +4,11 @@ import type { ApiResponse } from "../auth/authTypes";
 export type CommunicationGroup = {
   id: string;
   courseId: string;
+  courseName?: string;
   name: string;
   description?: string;
   status: "ACTIVE" | "ARCHIVED" | string;
+  studentMessagingEnabled?: boolean;
 };
 
 export type CommunicationGroupMember = {
@@ -15,16 +17,30 @@ export type CommunicationGroupMember = {
   joinedAt: string;
 };
 
+export type CommunicationAttachmentType = "IMAGE" | "DOCUMENT" | "VIDEO" | "AUDIO" | "OTHER";
+
+export type CommunicationAttachment = {
+  id: string;
+  materialId: string;
+  originalFilename: string;
+  contentType: string;
+  fileSize: number;
+  checksum?: string;
+  attachmentType: CommunicationAttachmentType;
+};
+
 export type CommunicationMessage = {
   id: string;
   groupId: string;
   senderId: string;
-  content: string;
+  senderName?: string;
+  content?: string | null;
   type?: string;
   sentAt: string;
   editedAt?: string;
   edited: boolean;
   deletedForEveryone: boolean;
+  attachments: CommunicationAttachment[];
 };
 
 export type CommunicationMessagePage = {
@@ -33,6 +49,14 @@ export type CommunicationMessagePage = {
   size: number;
   totalElements: number;
   totalPages: number;
+};
+
+export type CommunicationAttachmentDownload = {
+  originalFilename: string;
+  contentType: string;
+  fileSize: number;
+  downloadUrl: string;
+  expiresAt: string;
 };
 
 const groupPath = (groupId: string) => encodeURIComponent(groupId);
@@ -62,6 +86,17 @@ export async function createCommunicationGroup(payload: {
     method: "POST",
     body: payload,
   });
+  return response.data;
+}
+
+export async function updateCommunicationGroup(
+  groupId: string,
+  payload: { name: string; description?: string; studentMessagingEnabled?: boolean },
+) {
+  const response = await apiRequest<ApiResponse<CommunicationGroup>>(
+    `/api/communication/groups/${groupPath(groupId)}`,
+    { method: "PATCH", body: payload },
+  );
   return response.data;
 }
 
@@ -119,10 +154,38 @@ export async function getCommunicationMessages(
   return response.data ?? { content: [], page, size, totalElements: 0, totalPages: 0 };
 }
 
-export async function sendCommunicationMessage(groupId: string, content: string) {
+export async function uploadCommunicationAttachment(groupId: string, file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await apiRequest<ApiResponse<CommunicationAttachment>>(
+    `/api/communication/groups/${groupPath(groupId)}/messages/attachments`,
+    { method: "POST", body: formData },
+  );
+  return response.data;
+}
+
+export async function sendCommunicationMessage(
+  groupId: string,
+  content: string,
+  attachmentIds: string[] = [],
+) {
   const response = await apiRequest<ApiResponse<CommunicationMessage>>(
     `/api/communication/groups/${groupPath(groupId)}/messages`,
-    { method: "POST", body: { content } },
+    {
+      method: "POST",
+      body: { content: content.trim() || null, attachmentIds },
+    },
+  );
+  return response.data;
+}
+
+export async function getCommunicationAttachmentDownload(
+  groupId: string,
+  messageId: string,
+  attachmentId: string,
+) {
+  const response = await apiRequest<ApiResponse<CommunicationAttachmentDownload>>(
+    `/api/communication/groups/${groupPath(groupId)}/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}/download`,
   );
   return response.data;
 }

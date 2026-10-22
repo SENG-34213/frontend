@@ -19,6 +19,8 @@ import {
 } from "../api/examApi";
 import type { BackendCourse } from "../api/courseApi";
 import { TextInputModal } from "../components/ActionModal";
+import { ExamInstructionUpload } from "../components/ExamInstructionUpload";
+import { downloadExamAttachment, getExamAttachments, type ExamAttachment } from "../api/examApi";
 
 interface ExamManagementViewProps {
   onNavigate?: (tab: NavigationTab) => void;
@@ -70,7 +72,7 @@ const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examinatio
   return {
     id: exam.id,
     courseId: exam.courseId,
-    courseCode: course?.subject || course?.courseName || exam.courseId,
+    courseCode: course?.courseCode || course?.courseName || exam.courseId,
     title: exam.title,
     examType: examTypeLabel(exam.type),
     scheduledDate: exam.examDate,
@@ -101,11 +103,12 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   // Wizard state
   const [wizardCourseId, setWizardCourseId] = useState("");
   const [wizardTitle, setWizardTitle] = useState("");
+  const [wizardDescription, setWizardDescription] = useState("");
   const [wizardType, setWizardType] = useState<"Midterm" | "Final" | "Practical Exam">("Midterm");
-  const [wizardDate, setWizardDate] = useState("2026-11-15");
+  const [wizardDate, setWizardDate] = useState("");
   const [wizardTime, setWizardTime] = useState("10:00 AM");
   const [wizardDuration, setWizardDuration] = useState("120");
-  const [wizardRoom, setWizardRoom] = useState("Alan Turing Auditorium");
+  const [wizardRoom, setWizardRoom] = useState("");
   const [wizardWeight, setWizardWeight] = useState("30");
   const [resultsExam, setResultsExam] = useState<BackendExam | null>(null);
   const [resultSheet, setResultSheet] = useState<ExamResultSheet | null>(null);
@@ -114,6 +117,11 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsError, setResultsError] = useState<string | null>(null);
   const [editingExam, setEditingExam] = useState<BackendExam | null>(null);
+  const [instructionFile, setInstructionFile] = useState<File | null>(null);
+  const [editingInstructionFile, setEditingInstructionFile] = useState<File | null>(null);
+  const [editingAttachment, setEditingAttachment] = useState<ExamAttachment | null>(null);
+  const [studentVisible, setStudentVisible] = useState(true);
+  const [isSavingExam, setIsSavingExam] = useState(false);
 
   useEffect(() => {
     if (
@@ -192,25 +200,51 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const handleEditExam = async (title: string) => {
     const exam = editingExam;
     if (!exam || exam.status !== "DRAFT") return;
-    if (title === exam.title) {
+    if (title === exam.title && !editingInstructionFile) {
       setEditingExam(null);
       return;
     }
     try {
-      const updated = await updateExam(exam.id, {
-        title,
-        description: exam.description,
-        examDate: exam.examDate,
-        startTime: exam.startTime,
-        endTime: exam.endTime,
-        totalMarks: Number(exam.totalMarks),
-        passMarks: Number(exam.passMarks),
-        type: exam.type,
-      });
+      setIsSavingExam(true);
+      const updated = await updateExam(
+        exam.id,
+        {
+          title,
+          description: exam.description,
+          examDate: exam.examDate,
+          startTime: exam.startTime,
+          endTime: exam.endTime,
+          totalMarks: Number(exam.totalMarks),
+          passMarks: Number(exam.passMarks),
+          type: exam.type,
+        },
+        { instructionFile: editingInstructionFile, studentVisible },
+      );
       replaceExam(updated);
       setEditingExam(null);
+      setEditingInstructionFile(null);
+      setEditingAttachment(null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Exam could not be updated.");
+    } finally {
+      setIsSavingExam(false);
+    }
+  };
+
+  const openEditExam = async (exam: BackendExam) => {
+    setEditingExam(exam);
+    setEditingInstructionFile(null);
+    setEditingAttachment(null);
+    setStudentVisible(true);
+    try {
+      const attachments = await getExamAttachments(exam.id);
+      const activeAttachment = attachments.find((attachment) => attachment.active) ?? null;
+      setEditingAttachment(activeAttachment);
+      if (activeAttachment) setStudentVisible(activeAttachment.studentVisible);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Exam attachments failed to load.",
+      );
     }
   };
 
@@ -276,7 +310,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       setError("Select a course before creating an exam.");
       return;
     }
-    const courseCode = backendCourse.subject || backendCourse.courseName;
+    const courseCode = backendCourse.courseCode || backendCourse.courseName;
     const startTime = fromDisplayTime(wizardTime);
     const startDate = new Date(`1970-01-01T${startTime}`);
     const endDate = new Date(startDate.getTime() + (Number(wizardDuration) || 120) * 60_000);
@@ -286,27 +320,34 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
 
     if (backendCourse) {
       try {
-        const created = await createExam({
-          courseId: backendCourse.id,
-          title: wizardTitle || `${courseCode} ${wizardType} Examination`,
-          examDate: wizardDate,
-          startTime,
-          endTime,
-          totalMarks: 100,
-          passMarks: 40,
-          type:
-            wizardType === "Final"
-              ? "FINAL"
-              : wizardType === "Practical Exam"
-                ? "PRACTICAL"
-                : "MIDTERM",
-        });
+        setIsSavingExam(true);
+        const created = await createExam(
+          {
+            courseId: backendCourse.id,
+            title: wizardTitle || `${courseCode} ${wizardType} Examination`,
+            description: wizardDescription.trim() || undefined,
+            examDate: wizardDate,
+            startTime,
+            endTime,
+            totalMarks: 100,
+            passMarks: 40,
+            type:
+              wizardType === "Final"
+                ? "FINAL"
+                : wizardType === "Practical Exam"
+                  ? "PRACTICAL"
+                  : "MIDTERM",
+          },
+          { instructionFile, studentVisible },
+        );
         if (created) {
           setBackendExams((current) => [created, ...current]);
           setExams((current) => [mapBackendExam(created, backendCourses), ...current]);
           setIsWizardOpen(false);
           setWizardStep(1);
           setWizardTitle("");
+          setWizardDescription("");
+          setInstructionFile(null);
           return;
         }
       } catch (requestError) {
@@ -314,6 +355,8 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
           requestError instanceof Error ? requestError.message : "Exam could not be created.",
         );
         return;
+      } finally {
+        setIsSavingExam(false);
       }
     }
   };
@@ -440,6 +483,18 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                       className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={wizardDescription}
+                      onChange={(event) => setWizardDescription(event.target.value)}
+                      rows={3}
+                      placeholder="Optional exam description"
+                      className="w-full resize-y px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -536,10 +591,25 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                       type="text"
                       value={wizardRoom}
                       onChange={(e) => setWizardRoom(e.target.value)}
-                      placeholder="e.g. Turing Hall Theatre A"
+                      placeholder="Enter lecture hall or online venue"
                       className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
                     />
                   </div>
+                  <ExamInstructionUpload
+                    value={instructionFile}
+                    onChange={setInstructionFile}
+                    disabled={isSavingExam}
+                  />
+                  <label className="flex items-center gap-2 text-xs text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={studentVisible}
+                      onChange={(event) => setStudentVisible(event.target.checked)}
+                      disabled={isSavingExam}
+                      className="text-indigo-600"
+                    />
+                    Students can view the instruction PDF
+                  </label>
                 </div>
               )}
 
@@ -597,10 +667,11 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                 <button
                   type="button"
                   onClick={handleFinishWizard}
+                  disabled={isSavingExam}
                   className="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs flex items-center gap-1"
                 >
                   <CheckCircle className="w-3.5 h-3.5" />
-                  <span>Confirm & Publish Exam</span>
+                  <span>{isSavingExam ? "Saving..." : "Confirm & Publish Exam"}</span>
                 </button>
               )}
             </div>
@@ -674,7 +745,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     <button
                       onClick={() => {
                         const record = backendExams.find((item) => item.id === exam.id);
-                        if (record) setEditingExam(record);
+                        if (record) void openEditExam(record);
                       }}
                       className="px-2.5 py-1.5 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
                     >
@@ -811,6 +882,50 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         initialValue={editingExam?.title ?? ""}
         onClose={() => setEditingExam(null)}
         onSave={handleEditExam}
+        isSubmitting={isSavingExam}
+        extraContent={
+          editingExam ? (
+            <div className="space-y-3">
+              {editingAttachment && (
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+                  <span className="truncate text-slate-700">
+                    Current PDF: {editingAttachment.originalFilename}
+                  </span>
+                  <button
+                    type="button"
+                    className="shrink-0 font-semibold text-indigo-600"
+                    onClick={() =>
+                      void downloadExamAttachment(editingExam.id, editingAttachment.id).then(
+                        (blob) => {
+                          const url = URL.createObjectURL(blob);
+                          window.open(url, "_blank", "noopener,noreferrer");
+                          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                        },
+                      )
+                    }
+                  >
+                    Open
+                  </button>
+                </div>
+              )}
+              <ExamInstructionUpload
+                value={editingInstructionFile}
+                onChange={setEditingInstructionFile}
+                disabled={isSavingExam}
+              />
+              <label className="flex items-center gap-2 text-xs text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={studentVisible}
+                  onChange={(event) => setStudentVisible(event.target.checked)}
+                  disabled={isSavingExam}
+                  className="text-indigo-600"
+                />
+                Students can view the instruction PDF
+              </label>
+            </div>
+          ) : null
+        }
       />
     </div>
   );
