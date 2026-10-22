@@ -26,16 +26,23 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+function nonNegative(value: number | undefined): number | undefined {
+  return value !== undefined && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
 function formatNumber(value: number | undefined): string {
-  return value === undefined ? "—" : numberFormatter.format(value);
+  const normalized = nonNegative(value);
+  return normalized === undefined ? "—" : numberFormatter.format(normalized);
 }
 
 function formatPercentage(value: number | undefined): string {
-  return value === undefined ? "—" : `${value.toFixed(1)}%`;
+  if (value === undefined || !Number.isFinite(value)) return "—";
+  return `${Math.min(100, Math.max(0, value)).toFixed(1)}%`;
 }
 
 function formatCurrency(value: number | undefined): string {
-  return value === undefined ? "—" : currencyFormatter.format(value);
+  const normalized = nonNegative(value);
+  return normalized === undefined ? "—" : currencyFormatter.format(normalized);
 }
 
 function formatLabel(value: string): string {
@@ -108,7 +115,12 @@ export const AnalyticsDashboard: React.FC = () => {
   const exams = analytics?.exams;
   const payments = analytics?.payments;
   const accountStatusMix = Object.entries(users?.accountStatusMix ?? {});
-  const enrollmentTrend = Object.entries(enrollment?.enrollmentTrend ?? {});
+  const enrollmentTrend = Object.entries(enrollment?.enrollmentTrend ?? {}).flatMap(
+    ([period, count]) => {
+      const normalized = nonNegative(count);
+      return normalized === undefined ? [] : [[period, normalized] as const];
+    },
+  );
   const coursePopularity = enrollment?.coursePopularity ?? [];
 
   return (
