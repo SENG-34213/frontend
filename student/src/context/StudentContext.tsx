@@ -109,6 +109,9 @@ interface StudentContextType {
     filters?: { type?: string; courseId?: string },
   ) => Promise<void>;
   refreshWorkspace: () => Promise<void>;
+  workspaceLoading: boolean;
+  workspaceError: string | null;
+  retryWorkspace: () => Promise<void>;
   theme: "light" | "dark";
   toggleTheme: () => void;
   isSidebarCollapsed: boolean;
@@ -206,6 +209,8 @@ export const StudentProvider: React.FC<{
   const [selectedMaterialForPreview, setSelectedMaterialForPreview] =
     useState<LearningMaterial | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [workspaceLoading, setWorkspaceLoading] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const showToast = (message: string) => {
     setToastMessage(message);
     window.setTimeout(
@@ -240,19 +245,28 @@ export const StudentProvider: React.FC<{
   ]);
   const refreshWorkspace = useCallback(async () => {
     if (!authUser) return;
-    const workspace = await loadStudentWorkspace(authUser);
-    setProfile(workspace.profile);
-    setCourses(workspace.courses);
-    setAssignments(workspace.assignments);
-    setQuizzes(workspace.quizzes);
-    setExaminations(workspace.examinations);
-    setMaterials(workspace.materials);
-    setCalendarEvents(workspace.calendarEvents);
-    setNotifications(workspace.notifications);
-    setUnreadNotificationCount(workspace.unreadNotificationCount);
-    setAttendanceSummaries(workspace.attendanceSummaries);
-    setConversations(workspace.conversations);
-    setMessagePages({});
+    setWorkspaceLoading(true);
+    setWorkspaceError(null);
+    try {
+      const workspace = await loadStudentWorkspace(authUser);
+      setProfile(workspace.profile);
+      setCourses(workspace.courses);
+      setAssignments(workspace.assignments);
+      setQuizzes(workspace.quizzes);
+      setExaminations(workspace.examinations);
+      setMaterials(workspace.materials);
+      setCalendarEvents(workspace.calendarEvents);
+      setNotifications(workspace.notifications);
+      setUnreadNotificationCount(workspace.unreadNotificationCount);
+      setAttendanceSummaries(workspace.attendanceSummaries);
+      setConversations(workspace.conversations);
+      setMessagePages({});
+    } catch (error) {
+      setWorkspaceError(error instanceof Error ? error.message : "Could not load student data.");
+      throw error;
+    } finally {
+      setWorkspaceLoading(false);
+    }
   }, [authUser]);
 
   useEffect(() => {
@@ -718,6 +732,9 @@ export const StudentProvider: React.FC<{
         calendarEvents,
         refreshCalendarEvents,
         refreshWorkspace,
+        workspaceLoading,
+        workspaceError,
+        retryWorkspace: refreshWorkspace,
         conversations,
         sendMessage,
         loadMoreMessages,
