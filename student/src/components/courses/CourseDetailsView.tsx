@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import {
   BookOpen,
-  User,
-  Clock,
   PlayCircle,
-  FileCheck2,
-  FolderArchive,
+  FileText,
   Award,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Mail,
-  MapPin,
-  Calendar,
-  Sparkles,
+  Download,
+  ArrowLeft,
+  ArrowUpRight,
+  LayoutDashboard,
+  ListChecks,
+  Library,
+  ClipboardList,
+  GraduationCap,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
@@ -26,6 +27,7 @@ export const CourseDetailsView: React.FC = () => {
     setCurrentView,
     assignments,
     materials,
+    downloadMaterial,
   } = useStudent();
 
   const [activeTab, setActiveTab] = useState<
@@ -43,87 +45,133 @@ export const CourseDetailsView: React.FC = () => {
   }
   const courseAssignments = assignments.filter((a) => a.courseId === course.id);
   const courseMaterials = materials.filter((m) => m.courseId === course.id);
+  const curriculumLessons = course.modules.flatMap((module) => module.lessons);
+  const teachingCompletedLessons = curriculumLessons.filter(
+    (lesson) => lesson.teachingCompleted,
+  ).length;
+  const curriculumProgress = curriculumLessons.length
+    ? Math.round((teachingCompletedLessons / curriculumLessons.length) * 100)
+    : 0;
+  const courseStats = [
+    { label: "Modules", value: course.modules.length, icon: Library },
+    { label: "Lessons", value: curriculumLessons.length, icon: ListChecks },
+    { label: "Materials", value: courseMaterials.length, icon: FileText },
+    { label: "Assignments", value: courseAssignments.length, icon: ClipboardList },
+  ];
 
   const toggleModule = (id: string) => {
     setExpandedModules((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 text-slate-900 dark:text-slate-100">
       {/* Course Banner Header */}
-      <div
-        className={`overflow-hidden rounded-2xl bg-gradient-to-r ${course.bannerColor} p-6 sm:p-8 text-white shadow-md`}
+      <section
+        className={`relative overflow-hidden rounded-[28px] bg-gradient-to-br ${course.bannerColor} p-5 text-white shadow-xl sm:p-8`}
       >
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-              <span className="rounded bg-black/30 px-2.5 py-0.5 font-bold uppercase backdrop-blur-xs">
-                {course.code}
-              </span>
-              <span>·</span>
-              <span className="text-white/80">{course.category}</span>
-              <span>·</span>
-              <span className="text-white/80">{course.level} Level</span>
-              <span>·</span>
-              <span className="text-white/80">{course.credits} Credits</span>
+        <div className="pointer-events-none absolute inset-0 bg-slate-950/10 dark:bg-slate-950/30" />
+        <div className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-[-150px] left-1/3 h-72 w-72 rounded-full bg-black/10 blur-3xl" />
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setCurrentView("my-courses")}
+            className="mb-8 inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to My Courses
+          </button>
+          <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="max-w-3xl space-y-4">
+              <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-white/75">
+                <span className="rounded-lg bg-black/25 px-2.5 py-1 font-mono text-white backdrop-blur-sm">
+                  {course.code}
+                </span>
+                <span>{course.category}</span>
+                <span className="text-white/45">•</span>
+                <span>{course.level} level</span>
+                <span className="text-white/45">•</span>
+                <span>{course.credits} credits</span>
+              </div>
+              <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                {course.title}
+              </h1>
+              <p className="max-w-2xl text-sm leading-6 text-white/80">{course.description}</p>
             </div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              {course.title}
-            </h1>
-            <p className="text-xs sm:text-sm text-white/80 leading-relaxed max-w-xl">
-              {course.description}
-            </p>
-          </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <button
               onClick={() => navigateToCourseWorkspace(course.id)}
-              className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-indigo-900 shadow-sm hover:bg-indigo-50 transition-colors"
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-bold text-indigo-900 shadow-lg transition hover:bg-indigo-50 sm:w-auto"
             >
               <PlayCircle className="h-4 w-4 text-indigo-600" />
-              <span>Continue Learning</span>
+              Continue learning
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </button>
           </div>
-        </div>
-
-        {/* Progress Strip */}
-        <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-white/20 pt-4 text-xs">
-          <div className="flex items-center gap-2">
-            <span>Overall Curriculum Progress:</span>
-            <span className="font-bold tabular-nums">{course.progressPercentage}% Completed</span>
+          <div className="mt-8 grid gap-3 border-t border-white/15 pt-5 sm:grid-cols-2 lg:grid-cols-4">
+            {courseStats.map(({ label, value, icon: Icon }) => (
+              <div
+                key={label}
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/10 p-3 backdrop-blur-sm"
+              >
+                <Icon className="h-4 w-4 text-white/70" />
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-white/60">{label}</p>
+                  <p className="mt-0.5 text-lg font-bold tabular-nums">{value}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="h-2 w-full sm:w-48 overflow-hidden rounded-full bg-white/20">
-            <div
-              className="h-full rounded-full bg-white transition-all duration-500"
-              style={{ width: `${course.progressPercentage}%` }}
-            />
+          <div className="mt-5 rounded-2xl border border-white/15 bg-black/10 p-4 backdrop-blur-sm">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <GraduationCap className="h-4 w-4 text-white/75" />
+                <span className="text-white/75">Curriculum progress</span>
+              </div>
+              <span className="font-bold tabular-nums">{curriculumProgress}%</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20">
+              <div
+                className="h-full rounded-full bg-white transition-all duration-500"
+                style={{ width: `${curriculumProgress}%` }}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold">
-        {(["overview", "curriculum", "materials", "assignments", "grades"] as const).map((tab) => (
+      <nav className="sticky top-2 z-10 flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white/95 p-1.5 text-xs font-semibold shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
+        {(
+          [
+            ["overview", "Overview", LayoutDashboard],
+            ["curriculum", "Curriculum", BookOpen],
+            ["materials", "Materials", FileText],
+            ["assignments", "Assignments", ClipboardList],
+            ["grades", "Grades", Award],
+          ] as const
+        ).map(([tab, label, Icon]) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`border-b-2 px-4 py-3 capitalize transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 transition-all sm:flex-1 sm:justify-center ${
               activeTab === tab
-                ? "border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                ? "bg-indigo-600 text-white shadow-sm dark:bg-indigo-500"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
             }`}
           >
-            {tab}
+            <Icon className="h-3.5 w-3.5" />
+            {label}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* Tab 1: Overview */}
       {activeTab === "overview" && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6">
           {/* Main Info */}
-          <div className="space-y-6 lg:col-span-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-4">
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20 space-y-4">
               <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
                 Course Syllabus & Learning Outcomes
               </h2>
@@ -157,7 +205,7 @@ export const CourseDetailsView: React.FC = () => {
             </div>
 
             {/* Quick Curriculum Highlight */}
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
                   Curriculum Breakdown ({course.modules.length} Modules)
@@ -173,62 +221,21 @@ export const CourseDetailsView: React.FC = () => {
                 {course.modules.map((mod, idx) => (
                   <div
                     key={mod.id}
-                    className="flex items-center justify-between rounded-lg border border-slate-100 p-3 text-xs dark:border-slate-800"
+                    className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/50 p-3 text-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/30"
                   >
                     <div>
                       <span className="font-semibold text-slate-900 dark:text-white">
                         {mod.title}
                       </span>
-                      <p className="text-[11px] text-slate-500">{mod.description}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {mod.description}
+                      </p>
                     </div>
-                    <span className="text-slate-400 shrink-0">{mod.lessons.length} lessons</span>
+                    <span className="shrink-0 text-slate-500 dark:text-slate-400">
+                      {mod.lessons.length} lessons
+                    </span>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Instructor & Logistics Sidebar */}
-          <div className="space-y-6">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-4">
-              <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-                Course Faculty
-              </h2>
-              <div className="flex items-start gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
-                  {course.instructor.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </div>
-                <div>
-                  <h4 className="font-display text-sm font-bold text-slate-900 dark:text-white">
-                    {course.instructor.name}
-                  </h4>
-                  <p className="text-xs text-slate-500">{course.instructor.title}</p>
-                  <p className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-0.5">
-                    {course.instructor.department}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
-                <div className="flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5 text-slate-400" />
-                  <span>{course.instructor.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Office Hours: {course.instructor.officeHours}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Room: {course.room}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                  <span>{course.schedule}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -251,17 +258,17 @@ export const CourseDetailsView: React.FC = () => {
           ) : (
             course.modules.map((mod, moduleIndex) => {
               const isExpanded = expandedModules[mod.id] ?? false;
-              const completedCount = mod.lessons.filter((l) => l.completed).length;
+              const completedCount = mod.lessons.filter((l) => l.teachingCompleted).length;
               const moduleNumber = mod.order || moduleIndex + 1;
 
               return (
                 <div
                   key={mod.id}
-                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                  className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-shadow hover:border-indigo-200 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-900"
                 >
                   <button
                     onClick={() => toggleModule(mod.id)}
-                    className="flex w-full items-center justify-between gap-4 border-b border-slate-200 bg-slate-50/70 p-4 text-left transition-colors hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-800 sm:p-5"
+                    className="flex w-full items-center justify-between gap-4 border-b border-slate-200/80 bg-slate-50 p-4 text-left transition-colors hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:bg-slate-800 sm:p-5"
                   >
                     <div className="flex min-w-0 items-start gap-3">
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-indigo-50 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
@@ -283,7 +290,7 @@ export const CourseDetailsView: React.FC = () => {
                           <span>{mod.lessons.length} lessons</span>
                           <span>·</span>
                           <span>
-                            {completedCount}/{mod.lessons.length} completed
+                            {completedCount}/{mod.lessons.length} taught
                           </span>
                           {mod.startDate && mod.endDate && (
                             <>
@@ -315,7 +322,7 @@ export const CourseDetailsView: React.FC = () => {
                   </button>
 
                   {isExpanded && (
-                    <div className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900/60">
+                    <div className="divide-y divide-slate-200/70 bg-white dark:divide-slate-800 dark:bg-slate-900/60">
                       {mod.lessons.length === 0 && (
                         <p className="px-6 py-5 text-xs text-slate-400">
                           No lessons published yet.
@@ -324,7 +331,7 @@ export const CourseDetailsView: React.FC = () => {
                       {mod.lessons.map((lesson, lessonIndex) => (
                         <div
                           key={lesson.id}
-                          className="flex items-center justify-between gap-4 p-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 sm:px-6"
+                          className="flex items-center justify-between gap-4 p-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/70 sm:px-6"
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             {lesson.completed ? (
@@ -345,6 +352,48 @@ export const CourseDetailsView: React.FC = () => {
                                 {lesson.description ||
                                   `${lesson.contentType || lesson.type} lesson`}
                               </p>
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                <span>{lesson.durationMinutes} minutes</span>
+                                <span className="capitalize">
+                                  {lesson.contentType || lesson.type}
+                                </span>
+                                <span>{lesson.completed ? "Completed" : "Not completed"}</span>
+                                {lesson.teachingCompleted && (
+                                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                    Teaching completed
+                                  </span>
+                                )}
+                              </div>
+                              {lesson.downloadableResources?.length ? (
+                                <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-[10px] text-indigo-600 dark:text-indigo-300">
+                                  <FileText className="h-3 w-3 shrink-0" />
+                                  {lesson.downloadableResources.slice(0, 2).map((resource) => (
+                                    <button
+                                      key={resource.materialId || resource.name}
+                                      type="button"
+                                      disabled={!resource.materialId}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (resource.materialId) {
+                                          void downloadMaterial(resource.materialId).catch(
+                                            () => undefined,
+                                          );
+                                        }
+                                      }}
+                                      className="inline-flex max-w-[220px] items-center gap-1 truncate rounded-md bg-indigo-50 px-1.5 py-0.5 text-left font-medium hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60"
+                                      title={`Download ${resource.name}`}
+                                    >
+                                      <span className="truncate">{resource.name}</span>
+                                      <Download className="h-3 w-3 shrink-0" />
+                                    </button>
+                                  ))}
+                                  {lesson.downloadableResources.length > 2 && (
+                                    <span className="shrink-0 text-slate-400">
+                                      +{lesson.downloadableResources.length - 2} more
+                                    </span>
+                                  )}
+                                </div>
+                              ) : null}
                             </div>
                           </div>
 
@@ -381,7 +430,7 @@ export const CourseDetailsView: React.FC = () => {
             {courseMaterials.map((mat) => (
               <div
                 key={mat.id}
-                className="flex items-start justify-between rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-2xs"
+                className="flex items-start justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20"
               >
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
@@ -390,7 +439,9 @@ export const CourseDetailsView: React.FC = () => {
                   <h4 className="font-display text-xs font-bold text-slate-900 dark:text-white">
                     {mat.title}
                   </h4>
-                  <p className="text-[11px] text-slate-500">{mat.description}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {mat.description}
+                  </p>
                 </div>
                 <button
                   onClick={() => setCurrentView("materials")}
@@ -410,7 +461,7 @@ export const CourseDetailsView: React.FC = () => {
           {courseAssignments.map((asg) => (
             <div
               key={asg.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-2xs"
+              className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20"
             >
               <div>
                 <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">
@@ -419,7 +470,7 @@ export const CourseDetailsView: React.FC = () => {
                 <h4 className="font-display text-xs font-bold text-slate-900 dark:text-white">
                   {asg.title}
                 </h4>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Status: {asg.status} · Points: {asg.maxScore}
                 </p>
               </div>
@@ -439,7 +490,7 @@ export const CourseDetailsView: React.FC = () => {
 
       {/* Tab 5: Grades */}
       {activeTab === "grades" && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-4">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-base font-bold text-slate-900 dark:text-white">
               Academic Performance in {course.code}
@@ -450,7 +501,7 @@ export const CourseDetailsView: React.FC = () => {
                 ` (${course.currentScorePercentage}%)`}
             </span>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Based on completed homework problem sets, laboratory benchmarks, and quiz assessments.
           </p>
         </div>

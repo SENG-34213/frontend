@@ -60,14 +60,78 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const historyReadyRef = useRef(false);
+  const browserBackRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
 
   useEffect(() => {
+    const validTabs = new Set<NavigationTab>([
+      "dashboard",
+      "calendar",
+      "notifications",
+      "courses",
+      "curriculum",
+      "students",
+      "attendance",
+      "materials",
+      "assignments",
+      "grading-workspace",
+      "quizzes",
+      "exams",
+      "grades",
+      "analytics",
+      "messages",
+      "ai-assistant",
+      "profile",
+      "settings",
+    ]);
+    const urlTab = new URLSearchParams(window.location.search).get("tab");
     const savedTab = window.localStorage.getItem("teacher-current-tab");
-    if (savedTab) setCurrentTab(savedTab as NavigationTab);
+    if (urlTab && validTabs.has(urlTab as NavigationTab)) {
+      setCurrentTab(urlTab as NavigationTab);
+    } else if (savedTab && validTabs.has(savedTab as NavigationTab)) {
+      setCurrentTab(savedTab as NavigationTab);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!historyReadyRef.current) {
+      const url = new URL(window.location.href);
+      const urlTab = url.searchParams.get("tab");
+      if (!urlTab) {
+        url.searchParams.set("tab", currentTab);
+        window.history.replaceState({ portal: "teacher", tab: currentTab }, "", url);
+      }
+      historyReadyRef.current = true;
+      return;
+    }
+
+    if (browserBackRef.current) {
+      browserBackRef.current = false;
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("tab") === currentTab) return;
+    url.searchParams.set("tab", currentTab);
+    window.history.pushState({ portal: "teacher", tab: currentTab }, "", url);
+  }, [currentTab]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const stateTab = typeof event.state?.tab === "string" ? event.state.tab : null;
+      const urlTab = new URLSearchParams(window.location.search).get("tab");
+      const nextTab = stateTab || urlTab;
+      if (!nextTab) return;
+      browserBackRef.current = true;
+      setCurrentTab(nextTab as NavigationTab);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   // Quick Create Modal state
@@ -140,6 +204,15 @@ export default function App() {
       setCourses(teacherCourses.courses.map(mapBackendCourse));
     }
   }, [teacherCourses.courses, teacherCourses.error, teacherCourses.isLoading]);
+
+  useEffect(() => {
+    const handleExpiredSession = () => {
+      setSession(null);
+      setRequiresPasswordChange(false);
+    };
+    window.addEventListener("teacher:session-expired", handleExpiredSession);
+    return () => window.removeEventListener("teacher:session-expired", handleExpiredSession);
+  }, []);
 
   useEffect(() => {
     setNotificationUnreadCount(shellData.unreadNotificationsCount);
@@ -292,7 +365,7 @@ export default function App() {
   if (shellData.isLoading || !shellData.teacherProfile) {
     return (
       <div
-        className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-500"
+        className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-500 dark:bg-slate-950 dark:text-slate-400"
         aria-label="Loading teacher workspace"
       >
         Loading teacher workspace…
@@ -303,7 +376,7 @@ export default function App() {
   const teacherProfile = shellData.teacherProfile;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100 flex">
       {/* 1. Global Teacher Sidebar */}
       <TeacherSidebar
         currentTab={currentTab}

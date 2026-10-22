@@ -124,6 +124,7 @@ interface StudentContextType {
   downloadMaterial: (materialId: string) => Promise<void>;
   toastMessage: string | null;
   showToast: (msg: string) => void;
+  clearToast: () => void;
   navigateToCourseWorkspace: (courseId: string, lessonId?: string) => void;
   navigateToCourseDetails: (courseId: string) => void;
 }
@@ -218,6 +219,7 @@ export const StudentProvider: React.FC<{
       4000,
     );
   };
+  const clearToast = () => setToastMessage(null);
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
@@ -761,6 +763,7 @@ export const StudentProvider: React.FC<{
         downloadMaterial,
         toastMessage,
         showToast,
+        clearToast,
         navigateToCourseWorkspace,
         navigateToCourseDetails,
       }}

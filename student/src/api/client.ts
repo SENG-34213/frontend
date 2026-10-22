@@ -49,7 +49,10 @@ async function readJson(response: Response) {
 
 async function refreshSession(): Promise<AuthSession | null> {
   const current = getSession();
-  if (!current?.refreshToken) return null;
+  if (!current?.refreshToken) {
+    expireStudentSession();
+    return null;
+  }
 
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
     method: "POST",
@@ -58,8 +61,7 @@ async function refreshSession(): Promise<AuthSession | null> {
   });
   const body = (await readJson(response)) as ApiResponse<LoginResponse> | null;
   if (!response.ok || !body?.data?.accessToken) {
-    clearSession();
-    if (typeof window !== "undefined") window.dispatchEvent(new Event("student:session-expired"));
+    expireStudentSession();
     return null;
   }
 
@@ -71,6 +73,13 @@ async function refreshSession(): Promise<AuthSession | null> {
   };
   saveSession(nextSession);
   return nextSession;
+}
+
+function expireStudentSession() {
+  clearSession();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("student:session-expired"));
+  }
 }
 
 export async function restoreStudentSession() {

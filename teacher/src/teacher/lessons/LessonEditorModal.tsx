@@ -119,10 +119,44 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
     }
   };
 
+  const handleFileSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    event.currentTarget.value = "";
+    if (!selectedFiles.length || isSaving || isUploading) return;
+
+    const filesToUpload = [...pendingFiles, ...selectedFiles];
+    setPendingFiles(filesToUpload);
+
+    // Existing lessons already have a server id, so start the upload as soon
+    // as the teacher chooses a file. New lessons must be saved once first so
+    // Course Service can create the lesson/material association.
+    if (lesson && !lesson.id.startsWith("new-")) {
+      const updated: Lesson = {
+        ...lesson,
+        title,
+        description,
+        durationMinutes: Number(durationMinutes),
+        contentType,
+        status,
+        contentMarkdown,
+        materials: attachedMaterials,
+      };
+      setIsSaving(true);
+      void Promise.resolve(onSave(updated, filesToUpload)).finally(() => setIsSaving(false));
+    }
+  };
+
   const materials = attachedMaterials;
   const isUploading = uploadProgress?.status === "uploading";
-  const materialLabel = (material: (typeof materials)[number]) =>
-    material.originalFilename || material.title || "Learning material";
+  const uploadFailed = uploadProgress?.status === "error";
+  const materialLabel = (material: (typeof materials)[number]) => {
+    const generatedName = material.title?.match(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?: \(\d+\))?$/i,
+    );
+    return generatedName
+      ? lesson?.title || "Lesson material"
+      : material.title || material.originalFilename || "Learning material";
+  };
   const formatBytes = (bytes?: number) => {
     if (!bytes) return "Size unavailable";
     if (bytes < 1024) return `${bytes} B`;
@@ -319,13 +353,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                       multiple
                       className="sr-only"
                       disabled={isUploading}
-                      onChange={(event) => {
-                        setPendingFiles((current) => [
-                          ...current,
-                          ...Array.from(event.target.files || []),
-                        ]);
-                        event.currentTarget.value = "";
-                      }}
+                      onChange={handleFileSelection}
                     />
                   </label>
                 </div>
@@ -342,6 +370,19 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                     </span>
                     <span className="truncate pl-3 text-[11px]">{uploadProgress.fileName}</span>
                   </div>
+                )}
+                {pendingFiles.length > 0 && !isUploading && !uploadFailed && (
+                  <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    {lesson.id.startsWith("new-")
+                      ? `${pendingFiles.length} file${pendingFiles.length === 1 ? "" : "s"} queued. Save the lesson to upload securely.`
+                      : `${pendingFiles.length} file${pendingFiles.length === 1 ? "" : "s"} ready to upload.`}
+                  </p>
+                )}
+                {uploadFailed && (
+                  <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                    Upload was not completed. Your files are still here—remove the failed file or
+                    retry Save Lesson.
+                  </p>
                 )}
                 {materials.length === 0 && pendingFiles.length === 0 && (
                   <p className="text-xs text-slate-500">No materials are attached yet.</p>
@@ -444,14 +485,17 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                             : `Uploading file ${uploadProgress.current} of ${uploadProgress.total}`}
                       </span>
                       <span>
-                        {Math.round((uploadProgress.current / uploadProgress.total) * 100)}%
+                        {uploadProgress.status === "complete"
+                          ? 100
+                          : Math.round((uploadProgress.current / uploadProgress.total) * 100)}
+                        %
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-indigo-100">
                       <div
                         className={`h-full rounded-full transition-all ${uploadProgress.status === "error" ? "bg-rose-500" : "bg-indigo-600"}`}
                         style={{
-                          width: `${(uploadProgress.current / uploadProgress.total) * 100}%`,
+                          width: `${uploadProgress.status === "complete" ? 100 : (uploadProgress.current / uploadProgress.total) * 100}%`,
                         }}
                       />
                     </div>
@@ -514,7 +558,17 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
 
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between shrink-0">
-          <span className="text-xs text-slate-400">Changes are saved automatically</span>
+          <span className="text-xs text-slate-500">
+            {isUploading
+              ? "Uploading and linking materials…"
+              : uploadFailed
+                ? "Upload failed — retry when ready"
+                : pendingFiles.length
+                  ? "Files will be uploaded when you save"
+                  : isSaved
+                    ? "Lesson and materials saved"
+                    : "Save your lesson when you are ready"}
+          </span>
 
           <div className="flex items-center gap-2">
             <button
@@ -527,7 +581,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
             <button
               type="button"
               onClick={() => void handleSave()}
-              disabled={isSaving}
+              disabled={isSaving || isUploading}
               className="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
             >
               {isSaved ? (

@@ -367,25 +367,47 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {!selectedQuiz && (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            onClick={() => setIsAiGeneratorOpen((current) => !current)}
-            className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all ${isAiGeneratorOpen ? "border-violet-400 bg-violet-600 text-white shadow-lg" : "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"}`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>{isAiGeneratorOpen ? "Hide AI Generator" : "AI Quiz from Docs"}</span>
-          </button>
-          <button
-            onClick={() => setIsCreateQuizOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-indigo-700"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>New Quiz</span>
-          </button>
+    <div className="mx-auto min-h-full max-w-[1500px] space-y-6 pb-14">
+      <header className="relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950 px-5 py-6 text-white shadow-xl shadow-slate-950/10 sm:px-7 sm:py-7">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-[-100px] left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-300">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-indigo-200">
+                <ClipboardCheck className="h-4 w-4" />
+              </span>
+              Assessment workspace
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              {selectedQuiz ? selectedQuiz.title : "Quiz studio"}
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+              {selectedQuiz
+                ? "Review the assessment, refine its questions, and follow every student submission from one focused workspace."
+                : "Create thoughtful assessments, keep your question bank organised, and turn submissions into useful teaching insight."}
+            </p>
+          </div>
+          {!selectedQuiz && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setIsAiGeneratorOpen((current) => !current)}
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold transition-all ${isAiGeneratorOpen ? "border-violet-400 bg-violet-600 text-white shadow-lg" : "border-white/15 bg-white/10 text-violet-100 hover:bg-white/15"}`}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>{isAiGeneratorOpen ? "Hide AI builder" : "Build with AI"}</span>
+              </button>
+              <button
+                onClick={() => setIsCreateQuizOpen(true)}
+                className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-black/10 transition-colors hover:bg-indigo-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Create quiz</span>
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </header>
 
       {/* KPI Cards */}
       {actionError && (
@@ -406,10 +428,10 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       )}
       {!selectedQuiz && (
         <>
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
                   <BookOpen className="h-5 w-5" />
                 </div>
                 <div>
@@ -417,10 +439,10 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                     Course focus
                   </p>
                   <h2 className="mt-1 text-base font-bold text-slate-900">
-                    Choose a course to manage
+                    Set your teaching context
                   </h2>
                   <p className="mt-1 text-xs text-slate-500">
-                    Your quiz library and student results will update for the selected course.
+                    Filter the workspace by course when you want a tighter view of your assessments.
                   </p>
                 </div>
               </div>
@@ -435,7 +457,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   id="quiz-course-filter"
                   value={courseFilter}
                   onChange={(event) => setCourseFilter(event.target.value)}
-                  className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 pr-10 text-sm font-semibold text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                  className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3.5 pr-10 text-sm font-semibold text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
                   aria-label="Choose a course"
                 >
                   <option value="All">All courses</option>
@@ -502,108 +524,113 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
         </>
       )}
 
-      <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">
-              Live assessment analytics
-            </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
-              Today&apos;s quiz performance
-            </h2>
-            <p className="mt-1 text-xs text-slate-500">
-              {todayAnalytics?.date
-                ? `Results for ${todayAnalytics.date}`
-                : "No daily results loaded"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {(analyticsUnavailable || analyticsError) && (
-              <button
-                type="button"
-                onClick={() => void loadTodayAnalytics()}
-                disabled={analyticsLoading}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-wait disabled:opacity-60"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${analyticsLoading ? "animate-spin" : ""}`} />
-                Retry
-              </button>
-            )}
-            <BarChart3 className="h-5 w-5 shrink-0 text-indigo-600" />
-          </div>
-        </div>
-        {todayAnalytics?.quizzes.length ? (
-          <div className="space-y-3">
-            {todayAnalytics.quizzes.map((quiz) => {
-              const quizCompletion = quiz.participants
-                ? Math.round((quiz.submittedAttempts / quiz.participants) * 100)
-                : null;
-              const quizPassRate = quiz.submittedAttempts
-                ? Math.round((quiz.passedAttempts / quiz.submittedAttempts) * 100)
-                : null;
-              return (
-                <div
-                  key={quiz.quizId}
-                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+      {!selectedQuiz && (
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">
+                Live assessment analytics
+              </p>
+              <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+                Today&apos;s quiz performance
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                {todayAnalytics?.date
+                  ? `Results for ${todayAnalytics.date}`
+                  : "No daily results loaded"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {(analyticsUnavailable || analyticsError) && (
+                <button
+                  type="button"
+                  onClick={() => void loadTodayAnalytics()}
+                  disabled={analyticsLoading}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-wait disabled:opacity-60"
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-slate-900">{quiz.quizTitle}</p>
-                      <p className="mt-1 text-[11px] text-slate-500">
-                        {quiz.submittedAttempts} submitted of {quiz.participants} participants
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-right text-xs">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                          Average
-                        </p>
-                        <p className="mt-1 font-mono font-bold text-slate-900">
-                          {quiz.averagePercentage == null ? "—" : `${quiz.averagePercentage}%`}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                          Complete
-                        </p>
-                        <p className="mt-1 font-mono font-bold text-indigo-600">
-                          {quizCompletion == null ? "—" : `${quizCompletion}%`}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                          Passed
-                        </p>
-                        <p className="mt-1 font-mono font-bold text-emerald-600">
-                          {quizPassRate == null ? "—" : `${quizPassRate}%`}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
-                      style={{ width: `${Math.min(100, quizCompletion ?? 0)}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-[10px] text-slate-400">
-                    Score range: {quiz.lowestPercentage == null ? "—" : `${quiz.lowestPercentage}%`}{" "}
-                    – {quiz.highestPercentage == null ? "—" : `${quiz.highestPercentage}%`}
-                  </p>
-                </div>
-              );
-            })}
+                  <RefreshCw className={`h-3.5 w-3.5 ${analyticsLoading ? "animate-spin" : ""}`} />
+                  Retry
+                </button>
+              )}
+              <BarChart3 className="h-5 w-5 shrink-0 text-indigo-600" />
+            </div>
           </div>
-        ) : (
-          <p className="py-8 text-center text-xs text-slate-400">
-            {analyticsLoading
-              ? "Loading live quiz analytics…"
-              : analyticsUnavailable
-                ? "Live quiz analytics are unavailable."
-                : "No quiz results are available for today."}
-          </p>
-        )}
-      </section>
+          {todayAnalytics?.quizzes.length ? (
+            <div className="space-y-3">
+              {todayAnalytics.quizzes.map((quiz) => {
+                const quizCompletion = quiz.participants
+                  ? Math.round((quiz.submittedAttempts / quiz.participants) * 100)
+                  : null;
+                const quizPassRate = quiz.submittedAttempts
+                  ? Math.round((quiz.passedAttempts / quiz.submittedAttempts) * 100)
+                  : null;
+                return (
+                  <div
+                    key={quiz.quizId}
+                    className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-900">
+                          {quiz.quizTitle}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          {quiz.submittedAttempts} submitted of {quiz.participants} participants
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-right text-xs">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                            Average
+                          </p>
+                          <p className="mt-1 font-mono font-bold text-slate-900">
+                            {quiz.averagePercentage == null ? "—" : `${quiz.averagePercentage}%`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                            Complete
+                          </p>
+                          <p className="mt-1 font-mono font-bold text-indigo-600">
+                            {quizCompletion == null ? "—" : `${quizCompletion}%`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                            Passed
+                          </p>
+                          <p className="mt-1 font-mono font-bold text-emerald-600">
+                            {quizPassRate == null ? "—" : `${quizPassRate}%`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
+                        style={{ width: `${Math.min(100, quizCompletion ?? 0)}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-[10px] text-slate-400">
+                      Score range:{" "}
+                      {quiz.lowestPercentage == null ? "—" : `${quiz.lowestPercentage}%`} –{" "}
+                      {quiz.highestPercentage == null ? "—" : `${quiz.highestPercentage}%`}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-xs text-slate-400">
+              {analyticsLoading
+                ? "Loading live quiz analytics…"
+                : analyticsUnavailable
+                  ? "Live quiz analytics are unavailable."
+                  : "No quiz results are available for today."}
+            </p>
+          )}
+        </section>
+      )}
 
       {/* Main 2-Column Split: Quizzes List & Selected Quiz Question Details */}
       <div className="grid grid-cols-1 gap-6">
@@ -617,7 +644,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                     Assessment library
                   </p>
                   <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
-                    Your quizzes
+                    Your assessments
                   </h2>
                   <p className="mt-1 text-xs text-slate-500">
                     Open an assessment to manage its instructions, questions, and student
@@ -642,7 +669,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   )}
                 </div>
               </div>
-              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_180px]">
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_190px]">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -694,7 +721,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {filtered.map((quiz) => {
                 return (
                   <div
@@ -704,21 +731,67 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                       setQuizPanel(quiz.status === "Completed" ? "results" : "overview");
                       setQuestionPage(0);
                     }}
-                    className={`group rounded-2xl border p-4 text-left transition-all cursor-pointer ${"border-slate-200 bg-white shadow-sm hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"}`}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedQuiz(quiz);
+                        setQuizPanel(quiz.status === "Completed" ? "results" : "overview");
+                        setQuestionPage(0);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg"
                   >
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                    <div className="absolute right-0 top-0 h-20 w-20 rounded-bl-full bg-indigo-50/70 transition-colors group-hover:bg-indigo-100/70" />
+                    <div className="relative flex items-start justify-between gap-2">
+                      <span className="rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
                         {quiz.courseCode}
                       </span>
                       <StatusBadge status={quiz.status} />
                     </div>
-                    <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-sm font-bold text-slate-900 line-clamp-2">
+                    <div className="relative mt-4 flex items-start justify-between gap-3">
+                      <h3 className="text-base font-bold leading-5 text-slate-900 line-clamp-2">
                         {quiz.title}
                       </h3>
-                      <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-1 group-hover:text-indigo-500" />
+                      <ChevronRight className="mt-0.5 h-5 w-5 shrink-0 text-slate-300 transition-transform group-hover:translate-x-1 group-hover:text-indigo-500" />
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">{quiz.description}</p>
+                    <p className="relative mt-2 min-h-10 text-xs leading-5 text-slate-500 line-clamp-2">
+                      {quiz.description ||
+                        "No instructions added yet. Open this assessment to complete its setup."}
+                    </p>
+                    <div className="relative mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Questions
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-slate-800">
+                          {quiz.totalQuestions}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Duration
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-slate-800">
+                          {quiz.durationMinutes} min
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                          Attempts
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-slate-800">
+                          {quiz.attemptsCount}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative mt-4 flex items-center justify-between text-[11px] font-semibold text-slate-400">
+                      <span>{quiz.totalMarks} total marks</span>
+                      <span className="text-indigo-600 transition-colors group-hover:text-indigo-700">
+                        Open workspace →
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -729,8 +802,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
         {/* Right Column: Quiz Question Breakdown & Questions Builder */}
         {selectedQuiz && (
           <div className="w-full">
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg shadow-slate-900/5 lg:flex lg:max-h-[calc(100vh-6rem)] lg:flex-col">
-              <div className="flex shrink-0 flex-col justify-between gap-4 border-b border-slate-800 bg-slate-950 p-5 sm:flex-row sm:items-center">
+            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl shadow-slate-900/5 lg:flex lg:max-h-[calc(100vh-6rem)] lg:flex-col">
+              <div className="flex shrink-0 flex-col justify-between gap-5 border-b border-slate-800 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-5 sm:flex-row sm:items-center sm:p-6">
                 <div>
                   <button
                     type="button"
@@ -743,7 +816,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                     <span className="rounded-full border border-indigo-400/20 bg-indigo-400/10 px-2.5 py-1 text-xs font-mono font-bold text-indigo-300">
                       {selectedQuiz.courseCode}
                     </span>
-                    <h2 className="text-sm font-bold text-white">{selectedQuiz.title}</h2>
+                    <h2 className="text-base font-bold text-white">{selectedQuiz.title}</h2>
                     <StatusBadge status={selectedQuiz.status} />
                   </div>
                   <p className="mt-1 text-xs text-slate-400">
@@ -803,7 +876,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-1 border-b border-slate-100 bg-white px-4 pt-3">
+              <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-4 pt-3">
                 <button
                   type="button"
                   onClick={() => setQuizPanel("overview")}
@@ -833,7 +906,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 </button>
               </div>
 
-              <div className="min-h-0 overflow-y-auto">
+              <div className="min-h-0 overflow-y-auto bg-white">
                 {quizPanel === "results" && (
                   <QuizResultsPanel
                     quiz={selectedQuiz}

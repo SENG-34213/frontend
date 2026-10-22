@@ -27,6 +27,7 @@ import {
   Shield,
   X,
   ChevronLeft,
+  ShoppingBag,
 } from "lucide-react";
 import { AdminRole } from "../types";
 
@@ -48,6 +49,7 @@ export type AdminRoute =
   | "results"
   | "attendance"
   | "materials"
+  | "marketplace"
   | "calendar"
   | "communication"
   | "ai-assistant"
@@ -147,6 +149,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       label: "Platform Operations",
       items: [
         { id: "materials" as AdminRoute, label: "Learning Materials", icon: FolderLock },
+        { id: "marketplace" as AdminRoute, label: "Marketplace", icon: ShoppingBag },
         { id: "calendar" as AdminRoute, label: "Calendar", icon: Calendar },
         { id: "communication" as AdminRoute, label: "Communication", icon: MessageSquare },
         { id: "ai-assistant" as AdminRoute, label: "Mentify AI", icon: Sparkles },

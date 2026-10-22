@@ -64,6 +64,7 @@ export interface Lesson {
   durationMinutes: number;
   order: number;
   status: "Published" | "Draft";
+  teachingCompleted?: boolean;
   contentType: "Lecture" | "Lab" | "Reading" | "Discussion";
   contentMarkdown?: string;
   resourcesCount: number;

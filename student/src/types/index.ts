@@ -66,6 +66,7 @@ export interface Lesson {
   contentType?: string;
   releaseDate?: string;
   completed: boolean;
+  teachingCompleted?: boolean;
   videoUrl?: string;
   content: string;
   codeSnippet?: {
@@ -73,6 +74,7 @@ export interface Lesson {
     code: string;
   };
   downloadableResources?: {
+    materialId?: string;
     name: string;
     size: string;
     format: string;

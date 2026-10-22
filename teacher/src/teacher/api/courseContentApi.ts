@@ -22,6 +22,7 @@ export type CourseContentLesson = {
   contentMarkdown?: string;
   materials?: CourseContentMaterial[];
   visible?: boolean;
+  teachingCompleted?: boolean;
   releaseDate?: string;
 };
 
@@ -127,6 +128,7 @@ export function createModuleLesson(
     contentMarkdown?: string;
     isVisible?: boolean;
     releaseDate?: string;
+    teachingCompleted?: boolean;
   },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(
@@ -147,6 +149,7 @@ export function updateModuleLesson(
     contentMarkdown?: string;
     isVisible?: boolean;
     releaseDate?: string;
+    teachingCompleted?: boolean;
   },
 ) {
   return apiRequest<CourseContentLesson | ApiEnvelope<CourseContentLesson>>(

@@ -103,6 +103,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
     results: "Grades & Results",
     attendance: "Attendance Management",
     materials: "Learning Materials (AWS S3)",
+    marketplace: "Digital Material Marketplace",
     calendar: "Academic Operations Calendar",
     communication: "Communication & Announcements",
     "ai-assistant": "Mentify AI Assistant",

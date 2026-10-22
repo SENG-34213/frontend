@@ -82,6 +82,14 @@ const formatDate = (value?: string) => {
     : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 };
 
+const isGeneratedMaterialName = (value?: string) =>
+  Boolean(
+    value &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?: \(\d+\))?$/i.test(
+        value,
+      ),
+  );
+
 const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   id: lesson.id,
   moduleId: lesson.moduleId,
@@ -91,6 +99,7 @@ const toLesson = (lesson: CourseContentLesson, order: number): Lesson => ({
   durationMinutes: lesson.durationMinutes ?? 1,
   order,
   status: lesson.visible === false ? "Draft" : "Published",
+  teachingCompleted: lesson.teachingCompleted === true,
   contentType: (lesson.contentType as Lesson["contentType"]) || "Lecture",
   resourcesCount: lesson.materials?.length || 0,
   materials: lesson.materials,
@@ -246,6 +255,42 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     setIsEditorOpen(true);
   };
 
+  const handleToggleTeachingCompletion = async (lesson: Lesson, parentModule: Module) => {
+    if (!selectedCourseId || lesson.id.startsWith("new-")) return;
+    const teachingCompleted = !lesson.teachingCompleted;
+    try {
+      setError(null);
+      const updated = await updateModuleLesson(selectedCourseId, parentModule.id, lesson.id, {
+        title: lesson.title,
+        description: lesson.description,
+        durationMinutes: lesson.durationMinutes,
+        contentType: lesson.contentType,
+        contentMarkdown: lesson.contentMarkdown || "",
+        isVisible: lesson.status === "Published",
+        teachingCompleted,
+      });
+      setModules((current) =>
+        current.map((module) =>
+          module.id === parentModule.id
+            ? {
+                ...module,
+                lessons: module.lessons.map((item) =>
+                  item.id === lesson.id ? { ...item, teachingCompleted } : item,
+                ),
+              }
+            : module,
+        ),
+      );
+      void updated;
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Lesson teaching progress could not be updated.",
+      );
+    }
+  };
+
   const handleSaveLesson = async (updatedLesson: Lesson, pendingFiles: File[] = []) => {
     if (!selectedCourseId || !editingParentModule) return;
     setIsSaving(true);
@@ -264,6 +309,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
         contentType: updatedLesson.contentType,
         contentMarkdown: updatedLesson.contentMarkdown || "",
         isVisible: updatedLesson.status === "Published",
+        teachingCompleted: updatedLesson.teachingCompleted,
       };
       const saved = updatedLesson.id.startsWith("new-")
         ? await createModuleLesson(selectedCourseId, editingParentModule.id, payload)
@@ -274,6 +320,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             payload,
           );
       const savedMaterials = [...(saved.materials || updatedLesson.materials || [])];
+      const uploadedMaterialIds: string[] = [];
       if (pendingFiles.length) {
         setUploadProgress({
           current: 0,
@@ -289,13 +336,18 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
             status: "uploading",
           });
           try {
+            const fileTitle = file.name.replace(/\.[^.]+$/, "") || file.name;
+            const materialTitle = isGeneratedMaterialName(fileTitle)
+              ? updatedLesson.title.trim() || "Lesson material"
+              : fileTitle;
             const uploaded = await uploadLessonMaterial(
               selectedCourseId,
               editingParentModule.id,
               saved.id,
-              { title: file.name.replace(/\.[^.]+$/, "") || file.name, file },
+              { title: materialTitle, file },
             );
             savedMaterials.push(uploaded);
+            if (uploaded.materialId) uploadedMaterialIds.push(uploaded.materialId);
             setUploadProgress({
               current: index + 1,
               total: pendingFiles.length,
@@ -309,8 +361,31 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
           }
         }
       }
+
+      // The upload response confirms that Material Service accepted the file,
+      // but the lesson list is the source of truth for the course. Re-read it
+      // before reporting success so an association/persistence problem cannot
+      // look like a successful upload in the teacher UI.
+      const verifiedMaterials = pendingFiles.length
+        ? await getLessonMaterials(selectedCourseId, editingParentModule.id, saved.id)
+        : savedMaterials;
+      if (pendingFiles.length) {
+        const verifiedIds = new Set(
+          verifiedMaterials.map((material) => material.materialId).filter(Boolean),
+        );
+        const missingMaterial = uploadedMaterialIds.find((id) => !verifiedIds.has(id));
+        if (missingMaterial || verifiedMaterials.length < savedMaterials.length) {
+          throw new Error(
+            "The file was uploaded but could not be linked to this lesson. Please try again.",
+          );
+        }
+      }
       const nextLesson = toLesson(
-        { ...saved, contentType: updatedLesson.contentType, materials: savedMaterials },
+        {
+          ...saved,
+          contentType: updatedLesson.contentType,
+          materials: verifiedMaterials,
+        },
         updatedLesson.order,
       );
       setModules((prev) =>
@@ -758,6 +833,31 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                                 <p className="text-xs text-slate-500 mt-1">
                                   {lesson.description || "No overview added yet."}
                                 </p>
+                                {lesson.materials?.length ? (
+                                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600">
+                                    <FileText className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                    {lesson.materials.slice(0, 2).map((material) => (
+                                      <span
+                                        key={material.id}
+                                        className="max-w-[240px] truncate rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700"
+                                        title={
+                                          isGeneratedMaterialName(material.title)
+                                            ? lesson.title
+                                            : material.title || material.originalFilename
+                                        }
+                                      >
+                                        {isGeneratedMaterialName(material.title)
+                                          ? lesson.title
+                                          : material.title || material.originalFilename}
+                                      </span>
+                                    ))}
+                                    {lesson.materials.length > 2 && (
+                                      <span className="text-slate-400">
+                                        +{lesson.materials.length - 2} more
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : null}
                                 <div className="mt-3 grid grid-cols-1 gap-3 text-[11px] sm:grid-cols-3">
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 py-1 text-indigo-700">
                                     <span className="flex items-center gap-1">
@@ -813,6 +913,18 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
                               </div>
                             </div>
                             <div className="flex items-center gap-2 shrink-0 self-end lg:self-start">
+                              <button
+                                type="button"
+                                onClick={() => void handleToggleTeachingCompletion(lesson, mod)}
+                                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 border ${lesson.teachingCompleted ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-slate-200 text-slate-600 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"}`}
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                <span>
+                                  {lesson.teachingCompleted
+                                    ? "Teaching completed"
+                                    : "Mark completed"}
+                                </span>
+                              </button>
                               <button
                                 onClick={() => handleEditLesson(lesson, mod)}
                                 className="px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1.5 border border-slate-200"

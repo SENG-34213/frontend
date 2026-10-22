@@ -1,4 +1,4 @@
-import React, { startTransition, useState, useEffect, useCallback } from "react";
+import React, { startTransition, useState, useEffect, useCallback, useRef } from "react";
 import { AdminLayout } from "./admin/layouts/AdminLayout";
 import { AdminRoute } from "./admin/components/AdminSidebar";
 import { ToastMessage } from "./admin/components/ToastContainer";
@@ -58,6 +58,7 @@ import { GradesAndResults } from "./admin/grades/GradesAndResults";
 import { GradeManagement } from "./admin/grades/GradeManagement";
 import { AttendanceManagement } from "./admin/attendance/AttendanceManagement";
 import { LearningMaterialManagement } from "./admin/materials/LearningMaterialManagement";
+import { MarketplaceManagement } from "./admin/marketplace/MarketplaceManagement";
 import { AdminCalendar } from "./admin/calendar/AdminCalendar";
 import { CommunicationManagement } from "./admin/communication/CommunicationManagement";
 import { NotificationCenter } from "./admin/notifications/NotificationCenter";
@@ -136,6 +137,8 @@ export default function App() {
   const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
+  const routeHistoryReadyRef = useRef(false);
+  const routeBrowserBackRef = useRef(false);
 
   // Sync theme with HTML document
   useEffect(() => {
@@ -236,9 +239,42 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady || typeof window === "undefined") return;
 
+    const validRoutes = new Set<AdminRoute>([
+      "dashboard",
+      "analytics",
+      "notifications",
+      "students",
+      "teachers",
+      "administrators",
+      "registrations",
+      "courses",
+      "enrollments",
+      "academic",
+      "assignments",
+      "quizzes",
+      "examinations",
+      "grades",
+      "results",
+      "attendance",
+      "materials",
+      "marketplace",
+      "calendar",
+      "communication",
+      "ai-assistant",
+      "reports",
+      "audit",
+      "settings",
+      "profile",
+    ]);
     const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);
+    const urlRoute = new URLSearchParams(window.location.search).get("route");
     // The route is restored from browser storage after hydration.
-    const restoredRoute = storedRoute === "users" ? "dashboard" : storedRoute;
+    const restoredRoute =
+      urlRoute && validRoutes.has(urlRoute as AdminRoute)
+        ? urlRoute
+        : storedRoute === "users"
+          ? "dashboard"
+          : storedRoute;
     if (restoredRoute) {
       const routeRestore = window.setTimeout(() => {
         setCurrentRoute(restoredRoute as AdminRoute);
@@ -246,6 +282,44 @@ export default function App() {
       return () => window.clearTimeout(routeRestore);
     }
   }, [isAuthReady]);
+
+  useEffect(() => {
+    if (!isAuthReady || typeof window === "undefined") return;
+
+    if (!routeHistoryReadyRef.current) {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("route")) {
+        url.searchParams.set("route", currentRoute);
+        window.history.replaceState({ portal: "admin", route: currentRoute }, "", url);
+      }
+      routeHistoryReadyRef.current = true;
+      return;
+    }
+
+    if (routeBrowserBackRef.current) {
+      routeBrowserBackRef.current = false;
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("route") === currentRoute) return;
+    url.searchParams.set("route", currentRoute);
+    window.history.pushState({ portal: "admin", route: currentRoute }, "", url);
+  }, [currentRoute, isAuthReady]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const stateRoute = typeof event.state?.route === "string" ? event.state.route : null;
+      const urlRoute = new URLSearchParams(window.location.search).get("route");
+      const nextRoute = stateRoute || urlRoute;
+      if (!nextRoute) return;
+      routeBrowserBackRef.current = true;
+      setCurrentRoute(nextRoute as AdminRoute);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     if (!isAuthReady || typeof window === "undefined") return;
@@ -945,6 +1019,8 @@ export default function App() {
           onUploadMaterial={handleUploadMaterial}
         />
       )}
+
+      {currentRoute === "marketplace" && <MarketplaceManagement onToast={addToast} />}
 
       {currentRoute === "calendar" && (
         <AdminCalendar

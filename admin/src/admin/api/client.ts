@@ -59,6 +59,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   if (authenticated && retryOnUnauthorized) {
     const session = getSession();
     if (!session) {
+      expireAdminSession();
       throw new ApiError("Your session is no longer valid. Please sign in again.", 401);
     }
     if (session && session.expiresAt <= Date.now() + 10_000) {
