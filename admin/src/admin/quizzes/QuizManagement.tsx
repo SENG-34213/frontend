@@ -49,16 +49,28 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
 
   const aggregateAnalytics = useMemo(() => {
     const totals = todayAnalytics.reduce(
-      (result, quiz) => ({
-        submitted: result.submitted + quiz.submittedAttempts,
-        participants: result.participants + quiz.participants,
-        passed: result.passed + quiz.passedAttempts,
-        scoreTotal: result.scoreTotal + (quiz.averagePercentage ?? 0),
-      }),
-      { submitted: 0, participants: 0, passed: 0, scoreTotal: 0 },
+      (result, quiz) => {
+        const score = quiz.averagePercentage;
+        return {
+          submitted: result.submitted + quiz.submittedAttempts,
+          participants: result.participants + quiz.participants,
+          passed: result.passed + quiz.passedAttempts,
+          scoreTotal:
+            score == null || !Number.isFinite(score)
+              ? result.scoreTotal
+              : result.scoreTotal + score,
+          scoredQuizzes:
+            score == null || !Number.isFinite(score)
+              ? result.scoredQuizzes
+              : result.scoredQuizzes + 1,
+        };
+      },
+      { submitted: 0, participants: 0, passed: 0, scoreTotal: 0, scoredQuizzes: 0 },
     );
     return {
-      averageScore: todayAnalytics.length ? totals.scoreTotal / todayAnalytics.length : null,
+      averageScore: totals.scoredQuizzes
+        ? Math.min(100, Math.max(0, totals.scoreTotal / totals.scoredQuizzes))
+        : null,
       attempts: totals.submitted,
       passingRate: totals.submitted ? (totals.passed / totals.submitted) * 100 : null,
       courseCount: new Set(todayAnalytics.map((quiz) => quiz.courseId)).size,
