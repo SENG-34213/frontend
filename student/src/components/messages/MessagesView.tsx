@@ -55,7 +55,8 @@ export const MessagesView: React.FC = () => {
   useEffect(() => {
     if (!conversations.length) return;
     if (!conversations.some((conversation) => conversation.id === selectedConvId)) {
-      setSelectedConvId(conversations[0].id);
+      const firstConversation = window.setTimeout(() => setSelectedConvId(conversations[0].id), 0);
+      return () => window.clearTimeout(firstConversation);
     }
   }, [conversations, selectedConvId]);
 

@@ -126,13 +126,17 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
                       </div>
                       <dl className="mt-3 space-y-1.5 text-xs">
                         <div className="flex gap-2">
-                          <dt className="font-semibold text-slate-500 dark:text-slate-400">Your answer:</dt>
+                          <dt className="font-semibold text-slate-500 dark:text-slate-400">
+                            Your answer:
+                          </dt>
                           <dd className="font-medium text-slate-800 dark:text-slate-200">
                             {answer.selectedAnswer || "Not answered"}
                           </dd>
                         </div>
                         <div className="flex gap-2">
-                          <dt className="font-semibold text-emerald-700 dark:text-emerald-400">Correct answer:</dt>
+                          <dt className="font-semibold text-emerald-700 dark:text-emerald-400">
+                            Correct answer:
+                          </dt>
                           <dd className="font-medium text-emerald-800 dark:text-emerald-300">
                             {answer.correctAnswer || "Unavailable"}
                           </dd>
@@ -140,7 +144,9 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
                       </dl>
                       {answer.explanation && (
                         <div className="mt-3 rounded-lg bg-white/70 p-3 text-xs leading-relaxed text-slate-600 dark:bg-slate-900/50 dark:text-slate-300">
-                          <span className="font-bold text-slate-800 dark:text-slate-100">Explanation: </span>
+                          <span className="font-bold text-slate-800 dark:text-slate-100">
+                            Explanation:{" "}
+                          </span>
                           {answer.explanation}
                         </div>
                       )}

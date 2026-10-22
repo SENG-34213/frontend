@@ -97,7 +97,6 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
               view administrator directories or provision new administrative credentials.
             </p>
           </div>
-
         </div>
       </div>
     );
