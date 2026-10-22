@@ -39,7 +39,6 @@ import {
   MOCK_ATTENDANCE_SESSIONS,
   MOCK_MATERIALS,
   MOCK_EVENTS,
-  MOCK_NOTIFICATIONS,
   MOCK_AUDIT_LOGS,
 } from "./admin/mockData";
 
@@ -70,6 +69,12 @@ import { AdminProfile } from "./admin/profile/AdminProfile";
 import { AdminSettings } from "./admin/settings/AdminSettings";
 import { AdminLoginView } from "./admin/auth/AdminLoginView";
 import { changeAdminPassword, logoutAdmin, refreshAdminSession } from "./admin/api/authApi";
+import {
+  deleteAdminNotification,
+  getAdminNotifications,
+  markAdminNotificationRead,
+  markAllAdminNotificationsRead,
+} from "./admin/api/notificationApi";
 import { clearSession, getSession } from "./admin/auth/authStorage";
 import { SetPasswordPanel } from "../../shared/auth/SetPasswordPanel";
 import {
@@ -100,6 +105,28 @@ import {
 } from "./admin/api/calendarApi";
 
 const ADMIN_ROUTE_STORAGE_KEY = "mentify_admin_current_route";
+
+function notificationCategory(type?: string): NotificationItem["category"] {
+  const normalized = type?.toUpperCase() ?? "SYSTEM";
+  if (normalized.includes("SECURITY") || normalized.includes("AUTH")) return "SECURITY";
+  if (
+    normalized.includes("REGISTRATION") ||
+    normalized.includes("ENROLL") ||
+    normalized.includes("USER")
+  ) {
+    return "REGISTRATION";
+  }
+  if (
+    normalized.includes("ASSIGN") ||
+    normalized.includes("GRADE") ||
+    normalized.includes("EXAM") ||
+    normalized.includes("COURSE") ||
+    normalized.includes("ACADEMIC")
+  ) {
+    return "ACADEMIC";
+  }
+  return "SYSTEM";
+}
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -139,7 +166,7 @@ export default function App() {
   const [materials, setMaterials] = useState<LearningMaterial[]>(MOCK_MATERIALS);
   const [events, setEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
   const [upcomingEvents, setUpcomingEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditEvent[]>(MOCK_AUDIT_LOGS);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -195,6 +222,7 @@ export default function App() {
     const handleAuthExpired = () => {
       setIsAuthenticated(false);
       setCurrentRoute("dashboard");
+      setNotifications([]);
     };
 
     window.addEventListener("mentify:auth-expired", handleAuthExpired);
@@ -324,7 +352,11 @@ export default function App() {
     void loadRegistrationOverview();
   }, [isAuthenticated]);
 
-  const addToast = (type: "success" | "error" | "info", title: string, description?: string) => {
+  function addToast(
+    type: "success" | "error" | "info",
+    title: string,
+    description?: string,
+  ) {
     const newToast: ToastMessage = {
       id: `toast-${Date.now()}-${Math.random()}`,
       type,
@@ -335,7 +367,35 @@ export default function App() {
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
     }, 4500);
-  };
+  }
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const loadNotifications = async () => {
+      try {
+        const items = await getAdminNotifications();
+        setNotifications(
+          items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            message: item.message,
+            category: notificationCategory(item.type),
+            timestamp: item.occurredAt || item.createdAt || new Date().toISOString(),
+            read: Boolean(item.readAt),
+          })),
+        );
+      } catch (error) {
+        addToast(
+          "error",
+          "Notifications unavailable",
+          error instanceof Error ? error.message : "Unable to load notifications.",
+        );
+      }
+    };
+
+    void loadNotifications();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -410,6 +470,7 @@ export default function App() {
     // before returning to the login screen.
     void logoutAdmin();
     clearSession();
+    setNotifications([]);
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem(ADMIN_ROUTE_STORAGE_KEY);
     }
@@ -663,13 +724,44 @@ export default function App() {
     addToast("success", "Event Cancelled", `"${cancelled.title}" was cancelled.`);
   };
 
-  const handleMarkNotificationRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const handleMarkNotificationRead = async (id: string) => {
+    try {
+      await markAdminNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    } catch (error) {
+      addToast(
+        "error",
+        "Notification update failed",
+        error instanceof Error ? error.message : "Unable to mark the notification as read.",
+      );
+    }
   };
 
-  const handleMarkAllNotificationsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    addToast("info", "All notifications marked as read");
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      await markAllAdminNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      addToast("info", "All notifications marked as read");
+    } catch (error) {
+      addToast(
+        "error",
+        "Notification update failed",
+        error instanceof Error ? error.message : "Unable to mark notifications as read.",
+      );
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await deleteAdminNotification(id);
+      setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+    } catch (error) {
+      addToast(
+        "error",
+        "Notification delete failed",
+        error instanceof Error ? error.message : "Unable to delete the notification.",
+      );
+    }
   };
 
   const handleQuickAction = (action: string) => {
@@ -869,6 +961,7 @@ export default function App() {
           notifications={notifications}
           onMarkRead={handleMarkNotificationRead}
           onMarkAllRead={handleMarkAllNotificationsRead}
+          onDelete={handleDeleteNotification}
           onNavigate={setCurrentRoute}
         />
       )}
