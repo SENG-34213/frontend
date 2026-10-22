@@ -103,6 +103,20 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           todayAnalytics.quizzes.length,
       )
     : null;
+  const todayAttemptTotals = todayAnalytics?.quizzes.reduce(
+    (totals, quiz) => ({
+      submitted: totals.submitted + quiz.submittedAttempts,
+      participants: totals.participants + quiz.participants,
+      passed: totals.passed + quiz.passedAttempts,
+    }),
+    { submitted: 0, participants: 0, passed: 0 },
+  );
+  const completionRate = todayAttemptTotals?.participants
+    ? Math.round((todayAttemptTotals.submitted / todayAttemptTotals.participants) * 100)
+    : null;
+  const passRate = todayAttemptTotals?.submitted
+    ? Math.round((todayAttemptTotals.passed / todayAttemptTotals.submitted) * 100)
+    : null;
 
   useEffect(() => {
     const mappedQuizzes = teacherQuizState.quizzes.map((quiz) =>
@@ -440,12 +454,115 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
 
             <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4 shadow-sm">
               <span className="text-xs text-slate-500 font-medium">Completion Rate</span>
+              <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
+                {completionRate === null ? "—" : `${completionRate}%`}
+              </div>
+              <p className="text-[11px] text-violet-700 font-medium mt-0.5">
+                {passRate === null
+                  ? "No submitted attempts"
+                  : `${passRate}% passed submitted attempts`}
+              </p>
+            </div>
+            <div className="hidden">
+              <span className="text-xs text-slate-500 font-medium">Completion Rate</span>
               <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">—</div>
-              <p className="text-[11px] text-slate-400 mt-0.5">Attempt analytics coming later</p>
+              <p className="text-[11px] text-violet-700 font-medium mt-0.5">
+                {passRate === null
+                  ? "No submitted attempts"
+                  : `${passRate}% passed submitted attempts`}
+              </p>
             </div>
           </div>
         </>
       )}
+
+      <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">
+              Live assessment analytics
+            </p>
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+              Today&apos;s quiz performance
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              {todayAnalytics?.date
+                ? `Results for ${todayAnalytics.date}`
+                : "No daily results loaded"}
+            </p>
+          </div>
+          <BarChart3 className="h-5 w-5 shrink-0 text-indigo-600" />
+        </div>
+        {todayAnalytics?.quizzes.length ? (
+          <div className="space-y-3">
+            {todayAnalytics.quizzes.map((quiz) => {
+              const quizCompletion = quiz.participants
+                ? Math.round((quiz.submittedAttempts / quiz.participants) * 100)
+                : null;
+              const quizPassRate = quiz.submittedAttempts
+                ? Math.round((quiz.passedAttempts / quiz.submittedAttempts) * 100)
+                : null;
+              return (
+                <div
+                  key={quiz.quizId}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-slate-900">{quiz.quizTitle}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {quiz.submittedAttempts} submitted of {quiz.participants} participants
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-right text-xs">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                          Average
+                        </p>
+                        <p className="mt-1 font-mono font-bold text-slate-900">
+                          {quiz.averagePercentage == null ? "—" : `${quiz.averagePercentage}%`}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                          Complete
+                        </p>
+                        <p className="mt-1 font-mono font-bold text-indigo-600">
+                          {quizCompletion == null ? "—" : `${quizCompletion}%`}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                          Passed
+                        </p>
+                        <p className="mt-1 font-mono font-bold text-emerald-600">
+                          {quizPassRate == null ? "—" : `${quizPassRate}%`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
+                      style={{ width: `${Math.min(100, quizCompletion ?? 0)}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[10px] text-slate-400">
+                    Score range: {quiz.lowestPercentage == null ? "—" : `${quiz.lowestPercentage}%`}{" "}
+                    – {quiz.highestPercentage == null ? "—" : `${quiz.highestPercentage}%`}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="py-8 text-center text-xs text-slate-400">
+            {analyticsUnavailable
+              ? "Live quiz analytics are unavailable."
+              : "No quiz results are available for today."}
+          </p>
+        )}
+      </section>
 
       {/* Main 2-Column Split: Quizzes List & Selected Quiz Question Details */}
       <div className="grid grid-cols-1 gap-6">
