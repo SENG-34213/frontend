@@ -138,9 +138,19 @@ function normalizeOverview(value: unknown): AdminAnalyticsOverview {
 }
 
 export async function fetchAdminAnalyticsOverview(): Promise<AdminAnalyticsOverview> {
-  const response = await apiRequest<ApiResponse<AdminAnalyticsOverview>>(
+  const response = await apiRequest<
+    AdminAnalyticsOverview | ApiResponse<AdminAnalyticsOverview>
+  >(
     "/api/v1/analytics/admin/overview",
   );
 
-  return normalizeOverview(response.data);
+  // Analytics Service returns the record directly, while older deployments may
+  // still wrap it in the platform's standard `{ data }` response envelope.
+  // Accept both shapes so the dashboard remains compatible across environments.
+  const payload =
+    response && typeof response === "object" && "data" in response
+      ? (response as ApiResponse<AdminAnalyticsOverview>).data
+      : response;
+
+  return normalizeOverview(payload);
 }

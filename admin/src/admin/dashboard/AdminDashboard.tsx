@@ -31,6 +31,7 @@ import {
 } from "../types";
 import { AdminRoute } from "../components/AdminSidebar";
 import type { RegistrationOverview } from "../api/dashboardApi";
+import type { AdminAnalyticsOverview } from "../api/analyticsApi";
 
 interface AdminDashboardProps {
   kpis: PlatformKPIs;
@@ -45,6 +46,9 @@ interface AdminDashboardProps {
   registrationOverview?: RegistrationOverview | null;
   registrationOverviewLoading?: boolean;
   registrationOverviewError?: string;
+  analytics?: AdminAnalyticsOverview | null;
+  analyticsLoading?: boolean;
+  analyticsError?: string;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -57,6 +61,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   registrationOverview,
   registrationOverviewLoading = false,
   registrationOverviewError,
+  analytics,
+  analyticsLoading = false,
+  analyticsError,
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date(2026, 9, 1));
@@ -113,22 +120,78 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     },
   ];
   const accountMix = useMemo(() => {
-    if (!registrationOverview?.totalUsers) return [];
     const colors: Record<string, string> = {
       STUDENT: "bg-indigo-500",
       TEACHER: "bg-violet-500",
       ADMIN: "bg-sky-400",
       SUPER_ADMIN: "bg-slate-300",
     };
-    return Object.entries(registrationOverview.usersByRole)
-      .filter(([, value]) => value && value > 0)
+    const analyticsUsers = analytics?.users;
+    const source = analyticsUsers
+      ? {
+          STUDENT: analyticsUsers.students,
+          TEACHER: analyticsUsers.teachers,
+          ADMIN: analyticsUsers.admins,
+        }
+      : registrationOverview?.usersByRole ?? {
+          STUDENT: kpis.totalStudents,
+          TEACHER: kpis.totalTeachers,
+        };
+    const totalUsers =
+      analyticsUsers?.totalUsers ?? registrationOverview?.totalUsers ?? kpis.totalStudents + kpis.totalTeachers;
+    if (!source || !totalUsers) return [];
+
+    return Object.entries(source)
+      .filter(([, value]) => typeof value === "number" && value > 0)
       .map(([roleName, value]) => ({
         label: roleName.replaceAll("_", " "),
         value: value as number,
-        percentage: Math.round(((value as number) / registrationOverview.totalUsers) * 100),
+        percentage: Math.round(((value as number) / totalUsers) * 100),
         color: colors[roleName] ?? "bg-slate-300",
       }));
-  }, [registrationOverview]);
+  }, [analytics, kpis.totalStudents, kpis.totalTeachers, registrationOverview]);
+  const accountMixTotal = accountMix.reduce((sum, item) => sum + item.value, 0);
+  const accountMixGradient = useMemo(() => {
+    if (!accountMixTotal) return "conic-gradient(#cbd5e1 0 100%)";
+    let start = 0;
+    const colors: Record<string, string> = {
+      STUDENT: "#6366f1",
+      TEACHER: "#8b5cf6",
+      ADMIN: "#38bdf8",
+      SUPER_ADMIN: "#94a3b8",
+    };
+    const stops = accountMix.map((item) => {
+      const roleName = item.label.replaceAll(" ", "_");
+      const end = start + (item.value / accountMixTotal) * 100;
+      const stop = `${colors[roleName] ?? "#94a3b8"} ${start}% ${end}%`;
+      start = end;
+      return stop;
+    });
+    return `conic-gradient(${stops.join(", ")})`;
+  }, [accountMix, accountMixTotal]);
+  const enrollmentTrend = useMemo(() => {
+    const historicalPoints = Object.entries(analytics?.enrollment?.enrollmentTrend ?? {})
+      .filter(([, value]) => typeof value === "number" && Number.isFinite(value))
+      .map(([label, value]) => ({ label, value: value as number }))
+      .slice(-8);
+
+    if (historicalPoints.length > 0) return historicalPoints;
+
+    const activeEnrollments = analytics?.enrollment?.activeEnrollments;
+    const newThisMonth = analytics?.enrollment?.newThisMonth;
+    if (activeEnrollments === undefined && newThisMonth === undefined) return [];
+
+    return [
+      ...(activeEnrollments !== undefined
+        ? [{ label: "Active", value: activeEnrollments }]
+        : []),
+      ...(newThisMonth !== undefined ? [{ label: "This month", value: newThisMonth }] : []),
+    ];
+  }, [analytics]);
+  const hasHistoricalEnrollmentTrend = Object.keys(
+    analytics?.enrollment?.enrollmentTrend ?? {},
+  ).length > 0;
+  const maxEnrollmentTrend = Math.max(...enrollmentTrend.map((point) => point.value), 1);
   const calendarCells = useMemo(() => {
     const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
     const start = new Date(firstDay);
@@ -148,6 +211,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setShowActions(false);
     onQuickAction(action);
   };
+  const liveStudents = analytics?.users?.students ?? kpis.totalStudents;
+  const liveTeachers = analytics?.users?.teachers ?? kpis.totalTeachers;
+  const liveCourses = analytics?.courses?.activeCourses ?? analytics?.courses?.totalCourses ?? kpis.totalCourses;
+  const liveActiveUsers = analytics?.users?.accountStatusMix?.ACTIVE ?? kpis.activeUsers;
+  const liveEnrollments = analytics?.enrollment?.activeEnrollments ?? kpis.activeEnrollments;
+  const liveAttendance = analytics?.attendance?.averageAttendance;
+  const analyticsIsPartial = analytics?.partial === true;
 
   return (
     <div className="flex flex-col space-y-6 pb-8">
@@ -215,13 +285,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm">
               <Activity className="mb-5 h-4 w-4 text-indigo-300" />
               <p className="text-2xl font-semibold tabular-nums">
-                {kpis.activeUsers.toLocaleString()}
+                {liveActiveUsers.toLocaleString()}
               </p>
               <p className="mt-1 text-[11px] text-slate-400">Active this week</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm">
               <UserRoundCheck className="mb-5 h-4 w-4 text-emerald-300" />
-              <p className="text-2xl font-semibold tabular-nums">Live</p>
+              <p className="text-2xl font-semibold tabular-nums">
+                {analyticsLoading ? "…" : analyticsError ? "—" : analyticsIsPartial ? "Partial" : "Live"}
+              </p>
               <p className="mt-1 text-[11px] text-slate-400">Analytics status</p>
             </div>
             <div className="col-span-2 rounded-2xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-sm sm:col-span-1">
@@ -237,7 +309,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {[
           {
             title: "Total students",
-            value: kpis.totalStudents,
+            value: liveStudents,
             note: "Live platform total",
             icon: GraduationCap,
             color: "indigo",
@@ -246,7 +318,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           },
           {
             title: "Total teachers",
-            value: kpis.totalTeachers,
+            value: liveTeachers,
             note: "Live registered total",
             icon: Users,
             color: "violet",
@@ -255,7 +327,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           },
           {
             title: "Active courses",
-            value: kpis.totalCourses,
+            value: liveCourses,
             note: "Live course total",
             icon: BookOpen,
             color: "sky",
@@ -314,50 +386,95 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <h2 className="text-base font-semibold text-slate-950 dark:text-white">
                   Community growth
                 </h2>
-                <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
-                  Current totals
+                <span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300">
+                  {hasHistoricalEnrollmentTrend ? "Enrollment trend" : "Enrollment snapshot"}
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Historical series will appear when the analytics history endpoint is available
+                {hasHistoricalEnrollmentTrend
+                  ? "Live enrollment activity reported by the Analytics Service"
+                  : "Live enrollment totals reported by the Analytics Service"}
               </p>
             </div>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
-              Live totals
+            <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
+              {analyticsLoading ? "Refreshing" : analyticsError ? "Unavailable" : "Live"}
             </span>
           </div>
-          <div className="mt-6 flex h-[250px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 text-center dark:border-slate-800 dark:bg-slate-950/30">
-            <div>
-              <Activity className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+          {enrollmentTrend.length > 0 ? (
+            <div className="mt-6 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 dark:from-indigo-950/30 dark:via-slate-950/30 dark:to-violet-950/20 sm:p-5">
+              <div className="flex h-[205px] items-end gap-2 sm:gap-3">
+                {enrollmentTrend.map((point, index) => {
+                  const height = Math.max(10, (point.value / maxEnrollmentTrend) * 100);
+                  return (
+                    <div key={`${point.label}-${index}`} className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2">
+                      <span className="text-[10px] font-semibold text-indigo-600 opacity-0 transition group-hover:opacity-100 dark:text-indigo-300">
+                        {point.value.toLocaleString()}
+                      </span>
+                      <div
+                        className="w-full rounded-t-lg bg-gradient-to-t from-indigo-600 to-violet-400 shadow-sm transition-all duration-500 group-hover:from-indigo-500 group-hover:to-fuchsia-400"
+                        style={{ height: `${height}%` }}
+                        title={`${point.label}: ${point.value.toLocaleString()} enrollments`}
+                      />
+                      <span className="max-w-full truncate text-[10px] text-slate-400">
+                        {point.label.length > 9 ? point.label.slice(0, 9) : point.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 p-8 text-center dark:border-indigo-900/60 dark:bg-indigo-950/20">
+              <Activity className="mx-auto h-8 w-8 text-indigo-300 dark:text-indigo-500" />
               <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Historical growth data is unavailable
+                Enrollment activity is being collected
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                The dashboard is showing live totals until the analytics history endpoint is
-                available.
+                Current live enrollment totals are available below while trend history is prepared.
               </p>
             </div>
-          </div>
+          )}
           <div className="mt-5 flex flex-wrap items-center gap-5 border-t border-slate-100 pt-4 text-[11px] text-slate-500 dark:border-slate-800">
             <span className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-indigo-500" />
               Students{" "}
               <strong className="text-slate-900 dark:text-white">
-                {kpis.totalStudents.toLocaleString()}
+                {liveStudents.toLocaleString()}
               </strong>
             </span>
             <span className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-violet-400" />
               Teachers{" "}
               <strong className="text-slate-900 dark:text-white">
-                {kpis.totalTeachers.toLocaleString()}
+                {liveTeachers.toLocaleString()}
               </strong>
             </span>
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Active enrollments{" "}
+              <strong className="text-slate-900 dark:text-white">
+                {liveEnrollments.toLocaleString()}
+              </strong>
+            </span>
+            {liveAttendance !== undefined && (
+              <span className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                Attendance{" "}
+                <strong className="text-slate-900 dark:text-white">
+                  {liveAttendance.toFixed(1)}%
+                </strong>
+              </span>
+            )}
             {registrationOverviewLoading && (
               <span className="text-indigo-500">Refreshing data…</span>
             )}
             {registrationOverviewError && (
               <span className="text-rose-500">Live data unavailable</span>
+            )}
+            {analyticsLoading && <span className="text-indigo-500">Refreshing analytics…</span>}
+            {analyticsError && <span className="text-rose-500">Analytics unavailable</span>}
+            {analyticsIsPartial && !analyticsError && (
+              <span className="text-amber-600 dark:text-amber-400">Some analytics sections unavailable</span>
             )}
           </div>
         </div>
@@ -378,14 +495,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
           <div className="mt-8 flex items-center justify-center">
             <div
-              className="relative h-44 w-44 rounded-full"
-              style={{
-                background: "conic-gradient(#cbd5e1 0 100%)",
-              }}
+              className="relative h-44 w-44 rounded-full shadow-inner"
+              style={{ background: accountMixGradient }}
             >
               <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white dark:bg-slate-900">
                 <span className="text-3xl font-semibold text-slate-950 dark:text-white">
-                  {registrationOverview?.totalUsers?.toLocaleString() ?? "—"}
+                  {(analytics?.users?.totalUsers ?? registrationOverview?.totalUsers)?.toLocaleString() ?? "—"}
                 </span>
                 <span className="mt-1 text-[11px] text-slate-500">registered users</span>
               </div>
