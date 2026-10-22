@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
@@ -296,7 +296,7 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
                 const count = students.filter(
                   (student) => normalizedGrade(student.grade) === normalizedGrade(grade.name),
                 ).length;
-                const selected = grade.id === effectiveSelectedGradeId;
+                const selected = grade.id === selectedGradeId;
                 return (
                   <button
                     key={grade.id}
