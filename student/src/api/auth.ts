@@ -76,6 +76,9 @@ export async function requestPasswordReset(email: string) {
   return apiRequest<ApiResponse<null>>("/api/v1/auth/forgot-password", {
     method: "POST",
     authenticated: false,
+    retryOnUnauthorized: false,
+    credentials: "omit",
+    cache: "no-store",
     body: { email },
   });
 }
@@ -83,7 +86,14 @@ export async function requestPasswordReset(email: string) {
 export async function verifyPasswordResetOtp(email: string, otp: string) {
   const response = await apiRequest<ApiResponse<{ resetToken: string }>>(
     "/api/v1/auth/forgot-password/verify",
-    { method: "POST", authenticated: false, body: { email, otp } },
+    {
+      method: "POST",
+      authenticated: false,
+      retryOnUnauthorized: false,
+      credentials: "omit",
+      cache: "no-store",
+      body: { email, otp },
+    },
   );
   if (!response.data?.resetToken)
     throw new Error("The reset token was not returned by the server.");
@@ -94,6 +104,9 @@ export async function resetStudentPassword(resetToken: string, newPassword: stri
   return apiRequest<ApiResponse<null>>("/api/v1/auth/forgot-password/reset", {
     method: "POST",
     authenticated: false,
+    retryOnUnauthorized: false,
+    credentials: "omit",
+    cache: "no-store",
     body: { resetToken, newPassword },
   });
 }
