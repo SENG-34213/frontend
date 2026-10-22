@@ -12,6 +12,17 @@ import {
   Filter,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import type { Course } from "../../types";
+
+const getTeachingProgress = (course: Course): number => {
+  const lessons = course.modules.flatMap((module) => module.lessons);
+
+  if (lessons.length === 0) {
+    return 0;
+  }
+
+  return Math.round((lessons.filter((lesson) => lesson.teachingCompleted).length / lessons.length) * 100);
+};
 
 export const MyCoursesView: React.FC = () => {
   const { courses, navigateToCourseWorkspace, navigateToCourseDetails, setCurrentView } =
@@ -39,19 +50,20 @@ export const MyCoursesView: React.FC = () => {
         c.instructor.name.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCategory = activeCategory === "All" || c.category === activeCategory;
+      const progress = getTeachingProgress(c);
 
       const matchesStatus =
         selectedStatus === "All" ||
         (selectedStatus === "In Progress" &&
-          c.progressPercentage > 0 &&
-          c.progressPercentage < 100) ||
-        (selectedStatus === "Completed" && c.progressPercentage === 100) ||
-        (selectedStatus === "Not Started" && c.progressPercentage === 0);
+          progress > 0 &&
+          progress < 100) ||
+        (selectedStatus === "Completed" && progress === 100) ||
+        (selectedStatus === "Not Started" && progress === 0);
 
       return matchesSearch && matchesCategory && matchesStatus;
     })
     .sort((a, b) => {
-      if (sortBy === "progress") return b.progressPercentage - a.progressPercentage;
+      if (sortBy === "progress") return getTeachingProgress(b) - getTeachingProgress(a);
       if (sortBy === "title") return a.title.localeCompare(b.title);
       if (sortBy === "credits") return b.credits - a.credits;
       return 0;
@@ -204,7 +216,10 @@ export const MyCoursesView: React.FC = () => {
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredCourses.map((course) => (
+          {filteredCourses.map((course) => {
+            const progress = getTeachingProgress(course);
+
+            return (
             <div
               key={course.id}
               className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800"
@@ -258,13 +273,13 @@ export const MyCoursesView: React.FC = () => {
                         Curriculum Progress
                       </span>
                       <span className="font-bold tabular-nums text-slate-900 dark:text-white">
-                        {course.progressPercentage}%
+                        {progress}%
                       </span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                       <div
                         className="h-full rounded-full bg-indigo-600 transition-all duration-500"
-                        style={{ width: `${course.progressPercentage}%` }}
+                        style={{ width: `${progress}%` }}
                       />
                     </div>
                   </div>
@@ -288,12 +303,16 @@ export const MyCoursesView: React.FC = () => {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         /* List View */
         <div className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
-          {filteredCourses.map((course) => (
+          {filteredCourses.map((course) => {
+            const progress = getTeachingProgress(course);
+
+            return (
             <div
               key={course.id}
               className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
@@ -327,12 +346,12 @@ export const MyCoursesView: React.FC = () => {
                 <div className="w-32 hidden sm:block">
                   <div className="flex justify-between text-[11px] mb-1">
                     <span className="text-slate-400">Progress</span>
-                    <span className="font-bold tabular-nums">{course.progressPercentage}%</span>
+                    <span className="font-bold tabular-nums">{progress}%</span>
                   </div>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className="h-full rounded-full bg-indigo-600"
-                      style={{ width: `${course.progressPercentage}%` }}
+                      style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
@@ -354,7 +373,8 @@ export const MyCoursesView: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

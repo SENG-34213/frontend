@@ -25,9 +25,6 @@ export function useTeacherQuizzes(enabled: boolean): TeacherQuizzesState {
       setState({ quizzes: [], isLoading: false, error: null });
       return;
     }
-    if (requestStartedRef.current) return;
-    requestStartedRef.current = true;
-
     const controller = new AbortController();
     let disposed = false;
 

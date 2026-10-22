@@ -31,6 +31,7 @@ export const CourseWorkspaceView: React.FC = () => {
     setCurrentView,
     sendAiQuery,
     showToast,
+    downloadMaterial,
   } = useStudent();
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -227,6 +228,11 @@ export const CourseWorkspaceView: React.FC = () => {
                 <span className="capitalize">{currentLesson.type} Lecture</span>
                 <span>·</span>
                 <span>{currentLesson.durationMinutes} Minutes Expected</span>
+                {currentLesson.teachingCompleted && (
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                    Teaching completed
+                  </span>
+                )}
               </div>
               <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                 {currentLesson.title}
@@ -290,8 +296,17 @@ export const CourseWorkspaceView: React.FC = () => {
                           </div>
                         </div>
                         <button
-                          onClick={() => showToast(`Downloaded: ${res.name}`)}
-                          className="rounded p-1.5 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                          onClick={() => {
+                            if (!res.materialId) {
+                              showToast("This material is not available for download yet.");
+                              return;
+                            }
+                            void downloadMaterial(res.materialId).catch(() =>
+                              showToast("Material could not be downloaded. Please try again."),
+                            );
+                          }}
+                          className="rounded p-1.5 text-slate-500 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-indigo-400"
+                          disabled={!res.materialId}
                           title="Download file"
                         >
                           <Download className="h-4 w-4" />

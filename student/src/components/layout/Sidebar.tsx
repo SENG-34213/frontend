@@ -2,8 +2,6 @@ import React from "react";
 import {
   LayoutDashboard,
   BookOpen,
-  Compass,
-  GraduationCap,
   FolderArchive,
   FileCheck2,
   HelpCircle,
@@ -57,8 +55,6 @@ export const Sidebar: React.FC = () => {
       items: [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "my-courses", label: "My Courses", icon: BookOpen },
-        { id: "explore-courses", label: "Explore Courses", icon: Compass },
-        { id: "enrollments", label: "My Enrollments", icon: GraduationCap },
         { id: "materials", label: "Learning Materials", icon: FolderArchive },
       ],
     },

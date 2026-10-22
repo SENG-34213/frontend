@@ -32,7 +32,12 @@ const percent = (value: number) => Math.min(100, Math.max(0, Number.isFinite(val
 const formatTime = (value?: string | null) =>
   value ? new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "—";
 const formatDateTime = (value?: string | null) =>
-  value ? new Date(value).toLocaleString() : "Not available";
+  value
+    ? new Date(value).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "Not available";
 
 const MetricTile = ({
   label,
@@ -244,6 +249,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const firstName = teacher.name.trim().split(/\s+/)[0] || "Professor";
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }).format(new Date()),
+    [],
+  );
   useEffect(() => {
     const controller = new AbortController();
     setIsLoading(true);
@@ -317,6 +332,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
               Good morning, {firstName}.
             </h1>
+            <p className="mt-3 text-sm font-medium text-cyan-100">{todayLabel}</p>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300">
               A clear view of your classes, review queue, and course activity. Focus on the areas
               that need your attention today.

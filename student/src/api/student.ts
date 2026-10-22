@@ -41,6 +41,9 @@ function listOf<T>(response: unknown): T[] {
 
 const idOf = (value: unknown) => String(value ?? "");
 
+const isGeneratedMaterialName = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}(?: \(\d+\))?$/i.test(value);
+
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
@@ -298,9 +301,28 @@ function toLesson(value: JsonRecord, moduleId: string, order?: number) {
     contentType: idOf(value.contentType || value.type || "Reading"),
     releaseDate: idOf(value.releaseDate),
     completed: Boolean(value.completed),
+    teachingCompleted: Boolean(value.teachingCompleted),
     videoUrl: value.videoUrl,
     content: idOf(value.content || value.description),
+    downloadableResources: Array.isArray(value.materials)
+      ? value.materials.map((material: JsonRecord) => ({
+          materialId: idOf(material.materialId || material.id),
+          name: isGeneratedMaterialName(idOf(material.title))
+            ? idOf(value.title || "Lesson material")
+            : idOf(material.title || material.originalFilename || "Lesson material"),
+          size: formatMaterialSize(material.fileSize),
+          format: idOf(material.contentType || material.type || "FILE"),
+        }))
+      : [],
   } as Course["modules"][number]["lessons"][number];
+}
+
+function formatMaterialSize(value: unknown) {
+  const bytes = Number(value || 0);
+  if (!bytes) return "Size unavailable";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function toModuleRecord(value: JsonRecord, courseId: string) {
@@ -623,7 +645,18 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
                         `/api/v1/course/${course.id}/modules/${result.id}/lessons/${idOf(lesson.id)}`,
                       ),
                     );
-                    return toLesson({ ...lesson, ...detail }, result.id, lessonIndex + 1);
+                    const lessonRecord = { ...lesson, ...detail };
+                    try {
+                      const materials = listOf<JsonRecord>(
+                        await apiRequest<unknown>(
+                          `/api/v1/course/${course.id}/modules/${result.id}/lessons/${idOf(lesson.id)}/materials`,
+                        ),
+                      );
+                      lessonRecord.materials = materials;
+                    } catch {
+                      lessonRecord.materials = [];
+                    }
+                    return toLesson(lessonRecord, result.id, lessonIndex + 1);
                   } catch {
                     return toLesson(lesson, result.id, lessonIndex + 1);
                   }

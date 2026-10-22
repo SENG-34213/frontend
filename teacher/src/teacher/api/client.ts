@@ -51,7 +51,10 @@ function safeErrorMessage(body: any, status: number): string {
 
 async function refreshSession(): Promise<AuthSession | null> {
   const currentSession = getSession();
-  if (!currentSession?.refreshToken) return null;
+  if (!currentSession?.refreshToken) {
+    expireTeacherSession();
+    return null;
+  }
 
   const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
     method: "POST",
@@ -60,7 +63,7 @@ async function refreshSession(): Promise<AuthSession | null> {
   });
   const body = (await readResponse(response)) as ApiResponse<LoginResponse> | null;
   if (!response.ok || !body?.data?.accessToken) {
-    clearSession();
+    expireTeacherSession();
     return null;
   }
 
@@ -72,6 +75,13 @@ async function refreshSession(): Promise<AuthSession | null> {
   };
   saveSession(nextSession);
   return nextSession;
+}
+
+function expireTeacherSession() {
+  clearSession();
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("teacher:session-expired"));
+  }
 }
 
 export async function restoreTeacherSession() {
