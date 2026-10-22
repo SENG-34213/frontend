@@ -4,6 +4,7 @@ import {
   Award,
   BarChart3,
   Calendar,
+  RefreshCw,
   TrendingUp,
   Users,
   type LucideIcon,
@@ -17,7 +18,11 @@ interface TeacherAnalyticsViewProps {
   courses: BackendCourse[];
 }
 
-const value = (input: number | string | null | undefined) => (input == null ? null : Number(input));
+const value = (input: number | string | null | undefined) => {
+  if (input == null || input === "") return null;
+  const parsed = Number(input);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
   onNavigate,
@@ -28,6 +33,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
   const [analytics, setAnalytics] = useState<TeacherAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
     if (!courseId && courses[0]?.id) setCourseId(courses[0].id);
@@ -56,7 +62,7 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [courseId, timeRange]);
+  }, [courseId, retryToken, timeRange]);
 
   const summary = analytics?.summary;
   const attendanceAverage = value(
@@ -139,8 +145,22 @@ export const TeacherAnalyticsView: React.FC<TeacherAnalyticsViewProps> = ({
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800">
-          {error}
+        <div className="flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800 sm:flex-row sm:items-center sm:justify-between">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setRetryToken((token) => token + 1)}
+            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        </div>
+      )}
+      {loading && (
+        <div className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-indigo-700">
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+          Loading live analytics for the selected course and period…
         </div>
       )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
