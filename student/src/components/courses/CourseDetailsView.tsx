@@ -35,17 +35,32 @@ export const CourseDetailsView: React.FC = () => {
   >("overview");
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
-  const course = courses.find((c) => c.id === selectedCourseId) || courses[0];
+  const course = courses.find((c) => c.id === selectedCourseId);
   if (!course) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
-        Course details are not available yet.
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Course details are not available.
+        </p>
+        <button
+          type="button"
+          onClick={() => setCurrentView("my-courses")}
+          className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+        >
+          Back to My Courses
+        </button>
       </div>
     );
   }
+  const courseModules = (Array.isArray(course.modules) ? course.modules : [])
+    .filter((module) => module && Array.isArray(module.lessons))
+    .map((module) => ({
+      ...module,
+      lessons: module.lessons.filter((lesson) => lesson && typeof lesson.id === "string"),
+    }));
   const courseAssignments = assignments.filter((a) => a.courseId === course.id);
   const courseMaterials = materials.filter((m) => m.courseId === course.id);
-  const curriculumLessons = course.modules.flatMap((module) => module.lessons);
+  const curriculumLessons = courseModules.flatMap((module) => module.lessons);
   const teachingCompletedLessons = curriculumLessons.filter(
     (lesson) => lesson.teachingCompleted,
   ).length;
@@ -53,7 +68,7 @@ export const CourseDetailsView: React.FC = () => {
     ? Math.round((teachingCompletedLessons / curriculumLessons.length) * 100)
     : 0;
   const courseStats = [
-    { label: "Modules", value: course.modules.length, icon: Library },
+    { label: "Modules", value: courseModules.length, icon: Library },
     { label: "Lessons", value: curriculumLessons.length, icon: ListChecks },
     { label: "Materials", value: courseMaterials.length, icon: FileText },
     { label: "Assignments", value: courseAssignments.length, icon: ClipboardList },
@@ -69,7 +84,7 @@ export const CourseDetailsView: React.FC = () => {
       <section
         className={`relative overflow-hidden rounded-[28px] bg-gradient-to-br ${course.bannerColor} p-5 text-white shadow-xl sm:p-8`}
       >
-        <div className="pointer-events-none absolute inset-0 bg-slate-950/10 dark:bg-slate-950/30" />
+        <div className="pointer-events-none absolute inset-0 bg-slate-950/5" />
         <div className="pointer-events-none absolute -right-24 -top-28 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
         <div className="pointer-events-none absolute bottom-[-150px] left-1/3 h-72 w-72 rounded-full bg-black/10 blur-3xl" />
         <div className="relative">
@@ -208,7 +223,7 @@ export const CourseDetailsView: React.FC = () => {
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-                  Curriculum Breakdown ({course.modules.length} Modules)
+                  Curriculum Breakdown ({courseModules.length} Modules)
                 </h2>
                 <button
                   onClick={() => setActiveTab("curriculum")}
@@ -218,7 +233,7 @@ export const CourseDetailsView: React.FC = () => {
                 </button>
               </div>
               <div className="space-y-3">
-                {course.modules.map((mod, idx) => (
+                {courseModules.map((mod, idx) => (
                   <div
                     key={mod.id}
                     className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/50 p-3 text-xs transition-colors hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/30"
@@ -245,7 +260,7 @@ export const CourseDetailsView: React.FC = () => {
       {/* Tab 2: Curriculum Accordion */}
       {activeTab === "curriculum" && (
         <div className="space-y-4">
-          {course.modules.length === 0 ? (
+          {courseModules.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center dark:border-slate-700">
               <BookOpen className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
               <p className="mt-3 text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -256,7 +271,7 @@ export const CourseDetailsView: React.FC = () => {
               </p>
             </div>
           ) : (
-            course.modules.map((mod, moduleIndex) => {
+            courseModules.map((mod, moduleIndex) => {
               const isExpanded = expandedModules[mod.id] ?? false;
               const completedCount = mod.lessons.filter((l) => l.teachingCompleted).length;
               const moduleNumber = mod.order || moduleIndex + 1;

@@ -13,7 +13,6 @@ import {
   Conversation,
   Announcement,
   NotificationItem,
-  ChatMessage,
 } from "../types";
 import type { StudentUserSummary } from "../auth/authTypes";
 import {
@@ -28,10 +27,8 @@ import {
   markNotificationRead,
   deleteNotification as deleteNotificationApi,
   getUnreadNotificationCount,
-  createAiConversation,
   listCommunicationMessages,
   saveQuizAnswer as saveQuizAnswerApi,
-  sendAiMessage,
   sendCommunicationMessage,
   toCommunicationMessage,
   startCoursePayment,
@@ -100,9 +97,6 @@ interface StudentContextType {
   deleteNotification: (id: string) => Promise<void>;
   attendanceSummaries: AttendanceSummary[];
   attendanceOverall: AttendanceSummary | null;
-  aiChats: ChatMessage[];
-  isAiLoading: boolean;
-  sendAiQuery: (query: string) => Promise<void>;
   refreshCalendarEvents: (
     start: string,
     end: string,
@@ -148,7 +142,6 @@ const STUDENT_VIEWS: StudentView[] = [
   "grades",
   "calendar",
   "messages",
-  "mentify-ai",
   "notifications",
   "profile",
   "settings",
@@ -198,9 +191,6 @@ export const StudentProvider: React.FC<{
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [attendanceSummaries, setAttendanceSummaries] = useState<AttendanceSummary[]>([]);
-  const [aiConversationId, setAiConversationId] = useState<string | null>(null);
-  const [aiChats, setAiChats] = useState<ChatMessage[]>([]);
-  const [isAiLoading, setIsAiLoading] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window === "undefined") return "light";
     return window.localStorage.getItem("student-theme") === "dark" ? "dark" : "light";
@@ -622,52 +612,24 @@ export const StudentProvider: React.FC<{
       showToast(error instanceof Error ? error.message : "Could not delete notification.");
     }
   };
-  const sendAiQuery = async (query: string) => {
-    if (!query.trim()) return;
-    let conversationId = aiConversationId;
-    if (!conversationId) {
-      const response = await createAiConversation("Student study assistant");
-      conversationId = String(response.data?.id || "");
-      setAiConversationId(conversationId);
-    }
-    if (!conversationId) {
-      showToast("The AI service did not return a conversation id.");
-      return;
-    }
-    setAiChats((current) => [
-      ...current,
-      {
-        id: `user-${Date.now()}`,
-        sender: "user",
-        text: query,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-    setIsAiLoading(true);
-    try {
-      const response = await sendAiMessage(conversationId, query, `student-${Date.now()}`);
-      const data = response.data || {};
-      setAiChats((current) => [
-        ...current,
-        {
-          id: String(data.messageId || Date.now()),
-          sender: "assistant",
-          text: String(data.message || ""),
-          timestamp: String(data.timestamp || ""),
-        },
-      ]);
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : "AI assistant is unavailable.");
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
   const navigateToCourseWorkspace = (courseId: string, lessonId?: string) => {
     const course = courses.find((item) => item.id === courseId);
-    setSelectedCourseId(courseId);
-    setSelectedLessonId(
-      lessonId || course?.lastAccessedLessonId || course?.modules[0]?.lessons[0]?.id || "",
+    if (!course) {
+      setCurrentView("my-courses");
+      showToast("This course is no longer available in your enrolled courses.");
+      return;
+    }
+    const courseLessons = (Array.isArray(course.modules) ? course.modules : []).flatMap((module) =>
+      Array.isArray(module?.lessons)
+        ? module.lessons.filter((lesson) => lesson && typeof lesson.id === "string")
+        : [],
     );
+    const requestedLesson = lessonId && courseLessons.find((lesson) => lesson.id === lessonId);
+    const lastAccessedLesson = course.lastAccessedLessonId
+      ? courseLessons.find((lesson) => lesson.id === course.lastAccessedLessonId)
+      : undefined;
+    setSelectedCourseId(courseId);
+    setSelectedLessonId((requestedLesson || lastAccessedLesson || courseLessons[0])?.id || "");
     setCurrentView("course-workspace");
   };
   const navigateToCourseDetails = (courseId: string) => {
@@ -748,9 +710,6 @@ export const StudentProvider: React.FC<{
         deleteNotification,
         attendanceSummaries,
         attendanceOverall,
-        aiChats,
-        isAiLoading,
-        sendAiQuery,
         theme,
         toggleTheme: () => setTheme((current) => (current === "light" ? "dark" : "light")),
         isSidebarCollapsed,

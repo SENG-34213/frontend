@@ -536,7 +536,7 @@ export default function App() {
           )}
 
           {currentTab === "attendance" && (
-            <AttendanceWorkspaceView courses={courses} backendCourses={teacherCourses.courses} />
+            <AttendanceWorkspaceView courses={courses} backendCourses={teacherCourses.courses} students={teacherStudents.students} />
           )}
 
           {currentTab === "materials" && (

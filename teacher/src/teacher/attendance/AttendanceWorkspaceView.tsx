@@ -29,8 +29,13 @@ import {
   updateAttendanceRecords,
 } from "../api/attendanceApi";
 import type { Course } from "../types";
+import type { Student } from "../types";
 
-type AttendanceWorkspaceViewProps = { courses: Course[]; backendCourses: BackendCourse[] };
+type AttendanceWorkspaceViewProps = {
+  courses: Course[];
+  backendCourses: BackendCourse[];
+  students: Student[];
+};
 type EditableRecord = BackendAttendanceRecord & { remarks: string };
 
 function displayTime(value: string) {
@@ -44,6 +49,7 @@ function toEditableRecords(records: BackendAttendanceRecord[] = []): EditableRec
 export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = ({
   courses,
   backendCourses,
+  students,
 }) => {
   const [sessions, setSessions] = useState<BackendAttendanceSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<BackendAttendanceSession | null>(null);
@@ -53,6 +59,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -71,6 +78,10 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
   const courseById = useMemo(
     () => new Map(courses.map((course) => [course.id, course])),
     [courses],
+  );
+  const studentNameById = useMemo(
+    () => new Map(students.map((student) => [student.id, student.name])),
+    [students],
   );
   const selectedCourseSessions = sessions.filter(
     (session) => session.courseId === selectedCourseId,
@@ -163,7 +174,12 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();
     setIsSaving(true);
-    setError(null);
+    setCreateError(null);
+    if (createForm.startTime >= createForm.endTime) {
+      setCreateError("Start time must be before end time.");
+      setIsSaving(false);
+      return;
+    }
     try {
       const created = await createAttendanceSession(createForm);
       if (created) {
@@ -173,7 +189,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
         await selectSession(created.id, [created, ...sessions]);
       }
     } catch (requestError) {
-      setError(
+      setCreateError(
         requestError instanceof Error
           ? requestError.message
           : "Attendance session could not be created.",
@@ -299,7 +315,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
               </p>
             </div>
             <button
-              onClick={() => setShowCreate(true)}
+              onClick={() => { setCreateError(null); setShowCreate(true); }}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
             >
               <Plus className="h-4 w-4" /> New session
@@ -324,7 +340,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
             <CheckCircle className="h-4 w-4" /> {notice}
           </div>
         )}
-        {error && (
+        {error && !showCreate && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800">
             <span>{error}</span>
             <button onClick={() => void loadSessions()} className="underline">
@@ -439,7 +455,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   Select a session from the list or create a new one for your next class.
                 </p>
                 <button
-                  onClick={() => setShowCreate(true)}
+                  onClick={() => { setCreateError(null); setShowCreate(true); }}
                   className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700"
                 >
                   <Plus className="h-4 w-4" /> Create session
@@ -553,7 +569,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                             <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                               <Users className="h-3.5 w-3.5" />
                             </span>
-                            Student name unavailable
+                            {record.studentName?.trim() || studentNameById.get(record.studentId) || "Student name unavailable"}
                           </td>
                           <td className="px-4 py-3.5 text-slate-500">
                             {record.markedAt ? new Date(record.markedAt).toLocaleString() : "—"}
@@ -615,7 +631,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
             </p>
           </div>
           <button
-            onClick={() => setShowCreate(true)}
+            onClick={() => { setCreateError(null); setShowCreate(true); }}
             className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" /> New session
@@ -850,14 +866,22 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
           <form
             onSubmit={handleCreate}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-attendance-title"
             className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-slate-900">Create attendance session</h2>
-              <button type="button" onClick={() => setShowCreate(false)}>
+              <h2 id="create-attendance-title" className="text-base font-bold text-slate-900">Create attendance session</h2>
+              <button type="button" aria-label="Close" onClick={() => { setShowCreate(false); setCreateError(null); }}>
                 <X className="w-4 h-4 text-slate-500" />
               </button>
             </div>
+            {createError && (
+              <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-800">
+                {createError}
+              </div>
+            )}
             <label className="block text-xs font-semibold text-slate-700">
               Course
               <select
@@ -908,7 +932,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   type="time"
                   value={createForm.startTime}
                   onChange={(event) =>
-                    setCreateForm((current) => ({ ...current, startTime: event.target.value }))
+                  { setCreateError(null); setCreateForm((current) => ({ ...current, startTime: event.target.value })); }
                   }
                   className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
                 />
@@ -920,7 +944,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   type="time"
                   value={createForm.endTime}
                   onChange={(event) =>
-                    setCreateForm((current) => ({ ...current, endTime: event.target.value }))
+                  { setCreateError(null); setCreateForm((current) => ({ ...current, endTime: event.target.value })); }
                   }
                   className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
                 />

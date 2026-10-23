@@ -24,7 +24,6 @@ import { ExamTakingView } from "./components/examinations/ExamTakingView";
 import { GradesView } from "./components/grades/GradesView";
 import { StudentCalendarView } from "./components/calendar/StudentCalendarView";
 import { MessagesView } from "./components/messages/MessagesView";
-import { MentifyAIView } from "./components/ai/MentifyAIView";
 import { NotificationsView } from "./components/notifications/NotificationsView";
 import { ProfileView } from "./components/profile/ProfileView";
 import { SettingsView } from "./components/profile/SettingsView";
@@ -55,7 +54,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       "grades",
       "calendar",
       "messages",
-      "mentify-ai",
       "notifications",
       "profile",
       "settings",
@@ -133,8 +131,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         return <StudentCalendarView />;
       case "messages":
         return <MessagesView />;
-      case "mentify-ai":
-        return <MentifyAIView />;
       case "notifications":
         return <NotificationsView />;
       case "profile":

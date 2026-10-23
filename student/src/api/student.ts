@@ -135,7 +135,7 @@ function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
           ? { id: value.assignedTeacherId, fullName: value.teacherName }
           : undefined),
     ),
-    bannerColor: idOf(value.bannerColor),
+    bannerColor: idOf(value.bannerColor) || "from-indigo-600 via-violet-600 to-blue-700",
     coverImage: idOf(value.courseThumbnail || value.coverImage),
     enrolled: enrolledIds.has(id) || Boolean(value.enrolled),
     enrollmentStatus: enrolledIds.has(id) ? "ACTIVE" : "AVAILABLE",
@@ -1211,32 +1211,6 @@ export async function deleteCommunicationMessage(
     `/api/communication/groups/${groupId}/messages/${messageId}?scope=${scope}`,
     { method: "DELETE" },
   );
-}
-
-export async function listAiConversations() {
-  return apiRequest<unknown>("/api/ai/conversations");
-}
-
-export async function createAiConversation(title?: string) {
-  return apiRequest<ApiEnvelope<JsonRecord>>("/api/ai/conversations", {
-    method: "POST",
-    body: title ? { title } : {},
-  });
-}
-
-export async function listAiConversationMessages(conversationId: string) {
-  return apiRequest<unknown>(`/api/ai/conversations/${conversationId}/messages`);
-}
-
-export async function sendAiMessage(
-  conversationId: string,
-  message: string,
-  clientMessageId?: string,
-) {
-  return apiRequest<ApiEnvelope<JsonRecord>>("/api/ai/chat", {
-    method: "POST",
-    body: { conversationId, message, clientMessageId },
-  });
 }
 
 export { toProfile };

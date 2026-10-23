@@ -104,11 +104,23 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
             className="px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
           >
             <option value="All">All Courses</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code}
-              </option>
-            ))}
+            {backendCourses.map((course) => {
+              const courseName =
+                course.courseName?.trim() ||
+                course.title?.trim() ||
+                course.subject?.trim() ||
+                course.courseCode?.trim() ||
+                courses.find((item) => item.id === course.id)?.title?.trim() ||
+                "Untitled course";
+              const courseCode = course.courseCode?.trim();
+              return (
+                <option key={course.id} value={course.id}>
+                  {courseCode && courseCode !== courseName
+                    ? `${courseName} (${courseCode})`
+                    : courseName}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>

@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -36,7 +37,7 @@ import {
   Check,
   AlertCircle,
 } from "lucide-react";
-import type { AcademicEvent, Course, EventVisibility } from "../../../../admin/src/admin/types";
+import type { AcademicEvent, Course } from "../../../../admin/src/admin/types";
 import type {
   CalendarEventFilters,
   CalendarEventRequest,
@@ -50,6 +51,7 @@ interface TeacherCalendarProps {
   onAddEvent: (event: CalendarEventRequest) => Promise<void>;
   onUpdateEvent: (eventId: string, event: CalendarEventRequest) => Promise<void>;
   onCancelEvent: (eventId: string) => Promise<void>;
+  onDeleteEvent: (eventId: string) => Promise<void>;
   onFilterEvents: (filters: CalendarEventFilters, start: Date, end: Date) => Promise<void>;
 }
 
@@ -173,8 +175,37 @@ const TIME_OPTIONS = [
   "06:00 PM",
   "06:30 PM",
   "07:00 PM",
+  "07:30 PM",
   "08:00 PM",
+  "08:30 PM",
+  "09:00 PM",
+  "09:30 PM",
+  "10:00 PM",
+  "10:30 PM",
+  "11:00 PM",
+  "11:30 PM",
 ];
+
+function timeToMinutes(value: string) {
+  const [time, period] = value.split(" ");
+  if (!time || !period) return Number.NaN;
+  const [hourValue, minuteValue] = time.split(":").map(Number);
+  const hour = hourValue % 12 + (period === "PM" ? 12 : 0);
+  return hour * 60 + minuteValue;
+}
+
+function localDateString(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function getAvailableTimeOptions(date: string) {
+  const now = new Date();
+  const earliestMinutes =
+    date === localDateString(now)
+      ? Math.ceil((now.getHours() * 60 + now.getMinutes()) / 30) * 30
+      : 0;
+  return TIME_OPTIONS.filter((time) => timeToMinutes(time) >= earliestMinutes);
+}
 
 const TIME_HOURS_GRID = [
   "08:00 AM",
@@ -197,17 +228,20 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   onAddEvent,
   onUpdateEvent,
   onCancelEvent,
+  onDeleteEvent,
   onFilterEvents,
 }) => {
+  const todayDateString = localDateString(new Date());
   const courseOptions = courses.length
     ? courses.map((course) => ({
+        id: course.id,
         code: course.code,
         title: course.title,
         dept: course.category,
       }))
     : [];
 
-  // Calendar base state (anchor date: October 18, 2026)
+  // Start the calendar on the user's local current date.
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<CalendarViewMode>("month");
   const [localEvents, setLocalEvents] = useState<AcademicEvent[]>(initialEvents);
@@ -275,11 +309,10 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         : selectedType === "SESSION"
           ? "ADMIN"
           : selectedType;
-    const course = courses.find((item) => item.code === selectedCourse);
     void onFilterEvents(
       {
         type: type as CalendarEventType | undefined,
-        courseId: course?.id,
+        courseId: selectedCourse === "ALL" ? undefined : selectedCourse,
         status:
           selectedStatus === "SCHEDULED" || selectedStatus === "CANCELLED"
             ? selectedStatus
@@ -304,9 +337,20 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   // Modals & Selected Event Drawer
   const [selectedEvent, setSelectedEvent] = useState<AcademicEvent | null>(null);
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState<AcademicEvent | null>(null);
+  const [pendingEventActionId, setPendingEventActionId] = useState<string | null>(null);
+  const [eventActionError, setEventActionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const hasOverlay = isMobileFilterOpen || Boolean(selectedEvent) || isAddEditModalOpen;
+    if (!hasOverlay) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileFilterOpen, selectedEvent, isAddEditModalOpen]);
 
   // ----------------------------------------------------
   // ADD / EDIT FORM STATE WITH VALIDATION
@@ -316,46 +360,65 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     "EXAM",
   );
   const [formDate, setFormDate] = useState("");
+  const [isFormDateLocked, setIsFormDateLocked] = useState(false);
   const [formStartTime, setFormStartTime] = useState("09:00 AM");
   const [formEndTime, setFormEndTime] = useState("11:30 AM");
   const [formLocation, setFormLocation] = useState("");
-  const [formCourseCode, setFormCourseCode] = useState(courseOptions[0]?.code || "");
-  const [formCourseTitle, setFormCourseTitle] = useState(courseOptions[0]?.title || "");
+  const [formCourseId, setFormCourseId] = useState(courseOptions[0]?.id || "");
   const [formInstructorName, setFormInstructorName] = useState("");
   const [formInstructorEmail, setFormInstructorEmail] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  const [formVisibility, setFormVisibility] = useState<EventVisibility>("PUBLIC_STUDENTS");
   const [formStatus, setFormStatus] = useState<"SCHEDULED" | "COMPLETED" | "CANCELLED">(
     "SCHEDULED",
   );
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const availableStartTimes = editingEventId
+    ? TIME_OPTIONS
+    : getAvailableTimeOptions(formDate);
+  const availableEndTimes = TIME_OPTIONS.filter(
+    (time) => timeToMinutes(time) > timeToMinutes(formStartTime),
+  );
 
   // Reset or initialize form for creating new event
-  const openCreateModal = (defaultDate?: string) => {
+  const openCreateModal = (
+    defaultDate?: string,
+    lockDate = false,
+    defaultStartTime = "09:00 AM",
+  ) => {
     setEditingEventId(null);
     setFormTitle("");
     setFormType("EXAM");
-    setFormDate(
+    const eventDate =
       defaultDate ||
-        `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
-    );
-    setFormStartTime("09:00 AM");
-    setFormEndTime("11:30 AM");
+      `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
+    const startTimes = getAvailableTimeOptions(eventDate);
+    const startTime = startTimes.includes(defaultStartTime)
+      ? defaultStartTime
+      : startTimes[0] || "";
+    const endTime =
+      TIME_OPTIONS.find(
+        (time) =>
+          timeToMinutes(time) > timeToMinutes(startTime) &&
+          timeToMinutes(time) >= timeToMinutes("11:30 AM"),
+      ) || TIME_OPTIONS.find((time) => timeToMinutes(time) > timeToMinutes(startTime)) || "";
+    setFormDate(eventDate);
+    setFormStartTime(startTime);
+    setFormEndTime(endTime);
     setFormLocation("");
-    setFormCourseCode(courseOptions[0]?.code || "");
-    setFormCourseTitle(courseOptions[0]?.title || "");
+    setFormCourseId(courseOptions[0]?.id || "");
     setFormInstructorName("");
     setFormInstructorEmail("");
     setFormDescription("");
-    setFormVisibility("PUBLIC_STUDENTS");
     setFormStatus("SCHEDULED");
     setFormErrors({});
+    setIsFormDateLocked(lockDate);
     setIsAddEditModalOpen(true);
   };
 
   // Populate form for editing existing event
   const openEditModal = (evt: AcademicEvent) => {
     setEditingEventId(evt.id);
+    setIsFormDateLocked(false);
     setFormTitle(evt.title);
     setFormType(evt.type);
     setFormDate(evt.date);
@@ -366,12 +429,15 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     setFormEndTime(times[1] || "10:30 AM");
 
     setFormLocation(evt.location);
-    setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "");
-    setFormCourseTitle(evt.courseTitle || courseOptions[0]?.title || "");
+    setFormCourseId(
+      evt.courseId ||
+        courses.find((course) => course.code === evt.courseCode)?.id ||
+        courseOptions[0]?.id ||
+        "",
+    );
     setFormInstructorName(evt.instructorName || "");
     setFormInstructorEmail(evt.instructorEmail || "");
     setFormDescription(evt.description || "");
-    setFormVisibility(evt.visibility || "PUBLIC_STUDENTS");
     setFormStatus(evt.status || "SCHEDULED");
     setFormErrors({});
     setIsAddEditModalOpen(true);
@@ -430,12 +496,8 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   };
 
   // Course change in form: auto-populate courseTitle
-  const handleCourseSelectionChange = (code: string) => {
-    setFormCourseCode(code);
-    const found = courseOptions.find((c) => c.code === code);
-    if (found) {
-      setFormCourseTitle(found.title);
-    }
+  const handleCourseSelectionChange = (courseId: string) => {
+    setFormCourseId(courseId);
   };
 
   // Instructor change in form: auto-populate instructorEmail
@@ -510,7 +572,13 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       if (!activeTypes.includes(e.type)) return false;
 
       // 2. Course Filter
-      if (selectedCourse !== "ALL" && e.courseCode !== selectedCourse) return false;
+      if (selectedCourse !== "ALL") {
+        const selectedCourseOption = courseOptions.find((course) => course.id === selectedCourse);
+        const matchesCourse =
+          e.courseId === selectedCourse ||
+          (!e.courseId && e.courseCode === selectedCourseOption?.code);
+        if (!matchesCourse) return false;
+      }
 
       // 3. Teacher Filter
       if (selectedInstructor !== "ALL" && e.instructorName !== selectedInstructor) return false;
@@ -574,6 +642,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   }, [
     localEvents,
     activeTypes,
+    courseOptions,
     selectedCourse,
     selectedInstructor,
     selectedStatus,
@@ -674,7 +743,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         dateStr,
         dayNumber: dayNum,
         isCurrentMonth: false,
-        isToday: false,
+        isToday: dateStr === todayDateString,
       });
     }
 
@@ -682,7 +751,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     for (let i = 1; i <= totalDays; i++) {
       const d = new Date(currentYear, currentMonth, i);
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`;
-      const isToday = currentYear === 2026 && currentMonth === 9 && i === 18;
+      const isToday = dateStr === todayDateString;
       days.push({
         date: d,
         dateStr,
@@ -702,12 +771,12 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         dateStr,
         dayNumber: i,
         isCurrentMonth: false,
-        isToday: false,
+        isToday: dateStr === todayDateString,
       });
     }
 
     return days;
-  }, [currentYear, currentMonth]);
+  }, [currentYear, currentMonth, todayDateString]);
 
   // Current week calculation
   const currentWeekDays = useMemo(() => {
@@ -729,7 +798,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       const day = new Date(sunday);
       day.setDate(sunday.getDate() + i);
       const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-      const isToday = day.getFullYear() === 2026 && day.getMonth() === 9 && day.getDate() === 18;
+      const isToday = dateStr === todayDateString;
       week.push({
         date: day,
         dateStr,
@@ -739,13 +808,14 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       });
     }
     return week;
-  }, [currentDate]);
+  }, [currentDate, todayDateString]);
 
   // ----------------------------------------------------
   // FORM SUBMISSION & VALIDATION
   // ----------------------------------------------------
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const errors: Record<string, string> = {};
 
     if (!formTitle.trim()) {
@@ -754,11 +824,18 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     if (!formDate) {
       errors.date = "Date is required.";
     }
+    if (!formCourseId) {
+      errors.courseId = "Select one of your assigned courses.";
+    }
 
     // Time validation
     const startIdx = TIME_OPTIONS.indexOf(formStartTime);
     const endIdx = TIME_OPTIONS.indexOf(formEndTime);
-    if (startIdx !== -1 && endIdx !== -1 && startIdx >= endIdx) {
+    if (
+      startIdx === -1 ||
+      endIdx === -1 ||
+      timeToMinutes(formStartTime) >= timeToMinutes(formEndTime)
+    ) {
       errors.time = "End time must be later than start time.";
     }
 
@@ -777,13 +854,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     };
     const apiEventType: CalendarEventType =
       formType === "DEADLINE" ? "ASSIGNMENT" : formType === "SESSION" ? "ADMIN" : formType;
-    const apiVisibility =
-      formVisibility === "PUBLIC_STUDENTS"
-        ? "GLOBAL"
-        : formVisibility === "FACULTY_ONLY" || formVisibility === "ADMIN_RESTRICTED"
-          ? "ROLE"
-          : formVisibility;
-    const course = courses.find((item) => item.code === formCourseCode);
+    const course = courses.find((item) => item.id === formCourseId);
     const request: CalendarEventRequest = {
       title: formTitle.trim(),
       description: formDescription.trim() || undefined,
@@ -791,16 +862,13 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       startDateTime: `${formDate}T${toIsoTime(formStartTime)}`,
       endDateTime: `${formDate}T${toIsoTime(formEndTime)}`,
       allDay: false,
-      courseId: course?.id || null,
-      visibility: apiVisibility as CalendarEventRequest["visibility"],
-      targetRole:
-        formVisibility === "FACULTY_ONLY"
-          ? "TEACHER"
-          : formVisibility === "ADMIN_RESTRICTED"
-            ? "ADMIN"
-            : null,
+      courseId: course?.id || formCourseId,
+      visibility: "COURSE",
+      targetRole: null,
       location: formLocation,
     };
+    setIsSubmitting(true);
+    setFormErrors({});
     try {
       if (editingEventId) await onUpdateEvent(editingEventId, request);
       else await onAddEvent(request);
@@ -810,30 +878,46 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         submit: error instanceof Error ? error.message : "Unable to save calendar event.",
       });
       return;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // ----------------------------------------------------
   // CANCEL / DELETE HANDLERS
   // ----------------------------------------------------
-  const handleOpenDeleteConfirm = (evt: AcademicEvent) => {
-    setEventToDelete(evt);
-    setIsDeleteConfirmOpen(true);
+  const handleDeleteEvent = async (event: AcademicEvent) => {
+    if (pendingEventActionId) return;
+    setPendingEventActionId(event.id);
+    setEventActionError(null);
+    try {
+      await onDeleteEvent(event.id);
+      setLocalEvents((current) => current.filter((item) => item.id !== event.id));
+      setSelectedEvent((current) => (current?.id === event.id ? null : current));
+    } catch (error) {
+      setEventActionError(error instanceof Error ? error.message : "Unable to delete this event.");
+    } finally {
+      setPendingEventActionId(null);
+    }
   };
 
-  const handleConfirmPermanentDelete = async () => {
-    if (!eventToDelete) return;
-    await onCancelEvent(eventToDelete.id);
-    if (selectedEvent?.id === eventToDelete.id) setSelectedEvent(null);
-    setIsDeleteConfirmOpen(false);
-    setEventToDelete(null);
-  };
-
-  const handleConfirmMarkAsCancelled = async () => {
-    if (!eventToDelete) return;
-    await onCancelEvent(eventToDelete.id);
-    setIsDeleteConfirmOpen(false);
-    setEventToDelete(null);
+  const handleCancelEvent = async (event: AcademicEvent) => {
+    if (pendingEventActionId || event.status === "CANCELLED") return;
+    setPendingEventActionId(event.id);
+    setEventActionError(null);
+    try {
+      await onCancelEvent(event.id);
+      setLocalEvents((current) =>
+        current.map((item) => (item.id === event.id ? { ...item, status: "CANCELLED" } : item)),
+      );
+      setSelectedEvent((current) =>
+        current?.id === event.id ? { ...current, status: "CANCELLED" } : current,
+      );
+    } catch (error) {
+      setEventActionError(error instanceof Error ? error.message : "Unable to cancel this event.");
+    } finally {
+      setPendingEventActionId(null);
+    }
   };
 
   // Download iCal (.ics)
@@ -965,6 +1049,17 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
           </button>
         </div>
       )}
+      {eventActionError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+        >
+          <span>{eventActionError}</span>
+          <button type="button" onClick={() => setEventActionError(null)} className="underline">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Operations Bar: Navigation, View Modes, Search, Date Range */}
       <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -1015,7 +1110,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
               {view === "agenda" && `Schedule Agenda · ${monthNames[currentMonth]} ${currentYear}`}
             </h2>
             <span className="hidden sm:inline-block text-xs font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-              Fall 2026 · Week 7
+              Today · {todayDateString}
             </span>
           </div>
         </div>
@@ -1076,7 +1171,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             {/* Course chip */}
             {selectedCourse !== "ALL" && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[11px]">
-                <span>Course: {selectedCourse}</span>
+                <span>
+                  Course: {courseOptions.find((course) => course.id === selectedCourse)?.title || "Selected course"}
+                </span>
                 <button onClick={() => setSelectedCourse("ALL")} className="hover:text-indigo-900">
                   <X className="w-3 h-3" />
                 </button>
@@ -1264,7 +1361,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
               >
                 <option value="ALL">All Courses ({courseOptions.length})</option>
                 {courseOptions.map((c) => (
-                  <option key={c.code} value={c.code}>
+                  <option key={c.id} value={c.id}>
                     {c.code} — {c.title}
                   </option>
                 ))}
@@ -1555,7 +1652,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                               <button
                                 type="button"
                                 title="Schedule event on this day"
-                                onClick={() => openCreateModal(cell.dateStr)}
+                                onClick={() => openCreateModal(cell.dateStr, true)}
                                 className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-opacity"
                               >
                                 <Plus className="w-3.5 h-3.5" />
@@ -1685,9 +1782,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                             <div
                               key={dIdx}
                               onClick={() => {
-                                setFormDate(day.dateStr);
-                                setFormStartTime(hour);
-                                openCreateModal(day.dateStr);
+                                openCreateModal(day.dateStr, true, hour);
                               }}
                               className={`p-1 transition-colors relative hover:bg-slate-50/60 dark:hover:bg-slate-800/30 cursor-pointer ${
                                 day.isToday ? "bg-indigo-50/10 dark:bg-indigo-950/10" : ""
@@ -1744,7 +1839,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     </div>
 
                     <button
-                      onClick={() => openCreateModal(currentDateFormatted)}
+                      onClick={() => openCreateModal(currentDateFormatted, true)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -1844,9 +1939,11 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleOpenDeleteConfirm(evt)}
-                                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                                  onClick={() => void handleDeleteEvent(evt)}
+                                  disabled={pendingEventActionId === evt.id}
+                                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors disabled:cursor-wait disabled:opacity-50"
                                   title="Delete Event"
+                                  aria-label={`Delete ${evt.title}`}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -2022,8 +2119,8 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
               >
                 <option value="ALL">All Courses</option>
                 {courseOptions.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} - {c.title}
+                  <option key={c.id} value={c.id}>
+                    {c.code ? `${c.code} - ${c.title}` : c.title}
                   </option>
                 ))}
               </select>
@@ -2154,9 +2251,11 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => handleOpenDeleteConfirm(selectedEvent)}
-                  title="Delete/Cancel Event"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                  onClick={() => void handleDeleteEvent(selectedEvent)}
+                  disabled={pendingEventActionId === selectedEvent.id}
+                  title="Delete Event"
+                  aria-label={`Delete ${selectedEvent.title}`}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:cursor-wait disabled:opacity-50"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -2271,14 +2370,27 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
 
             {/* Actions Bar */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => handleOpenDeleteConfirm(selectedEvent)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Cancel / Delete</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedEvent.status !== "CANCELLED" && (
+                  <button
+                    type="button"
+                    disabled={pendingEventActionId === selectedEvent.id}
+                    onClick={() => void handleCancelEvent(selectedEvent)}
+                    className="flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
+                  >
+                    <span>{pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={pendingEventActionId === selectedEvent.id}
+                  onClick={() => void handleDeleteEvent(selectedEvent)}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-50 dark:hover:bg-rose-950/40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>{pendingEventActionId === selectedEvent.id ? "Deleting…" : "Delete Event"}</span>
+                </button>
+              </div>
 
               <div className="flex items-center gap-2">
                 <button
@@ -2302,78 +2414,32 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         </div>
       )}
 
-      {/* CANCEL / DELETE CONFIRMATION DIALOG */}
-      {isDeleteConfirmOpen && eventToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 animate-in zoom-in-95 duration-150 space-y-4">
-            <div className="flex items-center gap-3 text-rose-600">
-              <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Modify or Remove Academic Event
-              </h3>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Are you sure you want to alter the schedule for{" "}
-              <strong className="text-slate-900 dark:text-white">"{eventToDelete.title}"</strong> on{" "}
-              {eventToDelete.date}?
-            </p>
-
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 space-y-1">
-              <span>
-                • <strong>Mark as Cancelled:</strong> Retains event on timetable with a cancelled
-                marker for faculty and students.
-              </span>
-              <br />
-              <span>
-                • <strong>Delete Permanently:</strong> Completely removes record from calendar
-                database.
-              </span>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setIsDeleteConfirmOpen(false)}
-                className="w-full sm:w-auto px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-              >
-                Keep Event
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmMarkAsCancelled}
-                className="w-full sm:w-auto px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200"
-              >
-                Mark Cancelled
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmPermanentDelete}
-                className="w-full sm:w-auto px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-xs"
-              >
-                Delete Permanently
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* SCHEDULE / EDIT EVENT MODAL WITH FORM VALIDATION */}
-      {isAddEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+      {isAddEditModalOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto overscroll-contain p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="calendar-event-dialog-title"
+            className="my-auto w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90dvh] overflow-y-auto overscroll-contain"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
                   <CalendarIcon className="w-4 h-4" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                <h3
+                  id="calendar-event-dialog-title"
+                  className="text-base font-bold text-slate-900 dark:text-white"
+                >
                   {editingEventId ? "Edit Academic Event" : "Schedule Academic Event"}
                 </h3>
               </div>
               <button
+                type="button"
+                aria-label="Close event dialog"
                 onClick={() => setIsAddEditModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded"
               >
@@ -2390,6 +2456,14 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             )}
 
             <form onSubmit={handleFormSubmit} className="py-4 space-y-4 text-xs">
+              {formErrors.submit && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+                >
+                  {formErrors.submit}
+                </div>
+              )}
               {/* Event Title */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -2457,16 +2531,25 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     Course Module
                   </label>
                   <select
-                    value={formCourseCode}
+                    required
+                    value={formCourseId}
                     onChange={(e) => handleCourseSelectionChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                   >
+                    <option value="" disabled>
+                      {courseOptions.length ? "Select an assigned course" : "No assigned courses available"}
+                    </option>
                     {courseOptions.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.code} ({c.title})
+                      <option key={c.id} value={c.id}>
+                        {c.code ? `${c.code} (${c.title})` : c.title}
                       </option>
                     ))}
                   </select>
+                  {formErrors.courseId && (
+                    <span className="mt-1 block text-[11px] text-rose-500">
+                      {formErrors.courseId}
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -2497,9 +2580,29 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     type="date"
                     required
                     value={formDate}
-                    onChange={(e) => setFormDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                    onChange={(e) => {
+                      const nextDate = e.target.value;
+                      const nextStartOptions = getAvailableTimeOptions(nextDate);
+                      const nextStart = nextStartOptions.includes(formStartTime)
+                        ? formStartTime
+                        : nextStartOptions[0] || "";
+                      const nextEndOptions = TIME_OPTIONS.filter(
+                        (time) => timeToMinutes(time) > timeToMinutes(nextStart),
+                      );
+                      setFormDate(nextDate);
+                      setFormStartTime(nextStart);
+                      if (!nextEndOptions.includes(formEndTime)) {
+                        setFormEndTime(nextEndOptions[0] || "");
+                      }
+                    }}
+                    disabled={isFormDateLocked}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800/60"
                   />
+                  {isFormDateLocked && (
+                    <span className="mt-1 block text-[10px] font-normal text-slate-500 dark:text-slate-400">
+                      Date is fixed to the selected calendar day.
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -2507,16 +2610,36 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     Start Time
                   </label>
                   <select
+                    required
                     value={formStartTime}
-                    onChange={(e) => setFormStartTime(e.target.value)}
+                    onChange={(e) => {
+                      const nextStart = e.target.value;
+                      const nextEndOptions = TIME_OPTIONS.filter(
+                        (time) => timeToMinutes(time) > timeToMinutes(nextStart),
+                      );
+                      setFormStartTime(nextStart);
+                      if (!nextEndOptions.includes(formEndTime)) {
+                        setFormEndTime(nextEndOptions[0] || "");
+                      }
+                    }}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                   >
-                    {TIME_OPTIONS.map((h) => (
+                    {!availableStartTimes.includes(formStartTime) && (
+                      <option value="" disabled>
+                        No remaining times
+                      </option>
+                    )}
+                    {availableStartTimes.map((h) => (
                       <option key={h} value={h}>
                         {h}
                       </option>
                     ))}
                   </select>
+                  {availableStartTimes.length === 0 && (
+                    <span className="mt-1 block text-[10px] text-amber-600 dark:text-amber-400">
+                      No time intervals remain today. Choose a future date.
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -2524,16 +2647,22 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     End Time
                   </label>
                   <select
+                    required
                     value={formEndTime}
                     onChange={(e) => setFormEndTime(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                   >
-                    {TIME_OPTIONS.map((h) => (
+                    {availableEndTimes.map((h) => (
                       <option key={h} value={h}>
                         {h}
                       </option>
                     ))}
                   </select>
+                  {availableEndTimes.length === 0 && (
+                    <span className="mt-1 block text-[10px] text-amber-600 dark:text-amber-400">
+                      Choose an earlier start time to add an end time.
+                    </span>
+                  )}
                 </div>
               </div>
               {formErrors.time && (
@@ -2559,15 +2688,12 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Audience Visibility
                   </label>
-                  <select
-                    value={formVisibility}
-                    onChange={(e) => setFormVisibility(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                  >
-                    <option value="PUBLIC_STUDENTS">Public (All Students & Faculty)</option>
-                    <option value="FACULTY_ONLY">Faculty & Staff Only</option>
-                    <option value="ADMIN_RESTRICTED">Administrative Governance Only</option>
-                  </select>
+                  <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200">
+                    <span className="font-semibold">Course members only</span>
+                    <span className="mt-0.5 block text-[11px] opacity-80">
+                      Only students enrolled in the selected course can see this event.
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -2589,6 +2715,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setIsAddEditModalOpen(false)}
                   className="px-3.5 py-2 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
@@ -2596,14 +2723,20 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-60"
                 >
-                  {editingEventId ? "Save Changes" : "Confirm & Schedule"}
+                  {isSubmitting
+                    ? "Saving…"
+                    : editingEventId
+                      ? "Save Changes"
+                      : "Confirm & Schedule"}
                 </button>
               </div>
             </form>
           </div>
         </div>
+        , document.body,
       )}
     </div>
   );

@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   Calendar,
-  Sparkles,
   Bell,
   Sun,
   Moon,
@@ -40,7 +39,6 @@ const VIEW_TITLES: Record<StudentView, { title: string; category: string }> = {
   grades: { title: "Grades & Results", category: "Academic Records" },
   calendar: { title: "Student Calendar", category: "Planning" },
   messages: { title: "Messages & Discussions", category: "Communication" },
-  "mentify-ai": { title: "Mentify AI Assistant", category: "Intelligent Study" },
   notifications: { title: "Notifications", category: "Alerts" },
   profile: { title: "Student Profile", category: "Account" },
   settings: { title: "Settings", category: "Preferences" },
@@ -151,16 +149,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
           title="Student Calendar"
         >
           <Calendar className="h-4.5 w-4.5" />
-        </button>
-
-        {/* Mentify AI Assistant quick button */}
-        <button
-          onClick={() => setCurrentView("mentify-ai")}
-          className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors dark:border-indigo-900/50 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80"
-          title="Open Mentify AI Study Assistant"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span className="hidden sm:inline">Mentify AI</span>
         </button>
 
         {/* Notifications Popover */}

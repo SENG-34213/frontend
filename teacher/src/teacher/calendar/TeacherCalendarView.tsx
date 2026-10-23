@@ -13,6 +13,7 @@ import type { CalendarInstructor } from "./TeacherCalendar";
 import {
   cancelCalendarEvent,
   createCalendarEvent,
+  deleteCalendarEvent,
   getCalendarEvents,
   updateCalendarEvent,
   type BackendCalendarEvent,
@@ -71,7 +72,12 @@ function mapCourse(course: BackendCourse): AdminCourse {
   return {
     id: course.id,
     code: course.courseCode || "",
-    title: course.courseName,
+    title:
+      course.courseName?.trim() ||
+      course.title?.trim() ||
+      course.subject?.trim() ||
+      course.courseCode?.trim() ||
+      "Untitled course",
     teacherId: course.assignedTeacherId || "",
     teacherName: "",
     grade: course.gradeName || "",
@@ -87,6 +93,10 @@ function mapCourse(course: BackendCourse): AdminCourse {
 }
 
 function toTeacherRequest(request: AdminCalendarEventRequest): CalendarEventRequest {
+  if (!request.courseId) {
+    throw new Error("Select one of your assigned courses before saving this event.");
+  }
+
   return {
     title: request.title,
     description: request.description,
@@ -95,8 +105,8 @@ function toTeacherRequest(request: AdminCalendarEventRequest): CalendarEventRequ
     endDateTime: request.endDateTime,
     allDay: request.allDay,
     courseId: request.courseId,
-    visibility: request.visibility,
-    targetRole: request.targetRole === "SUPER_ADMIN" ? "ADMIN" : request.targetRole,
+    visibility: "COURSE",
+    targetRole: null,
     location: request.location,
   };
 }
@@ -161,6 +171,11 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({
     [courses],
   );
 
+  const handleDeleteEvent = useCallback(async (eventId: string) => {
+    await deleteCalendarEvent(eventId);
+    setEvents((current) => current.filter((event) => event.id !== eventId));
+  }, []);
+
   const handleFilterEvents = useCallback(
     async (filters: AdminCalendarEventFilters, start: Date, end: Date) => {
       await loadEvents(start, end, filters);
@@ -176,6 +191,7 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({
       onAddEvent={handleAddEvent}
       onUpdateEvent={handleUpdateEvent}
       onCancelEvent={handleCancelEvent}
+      onDeleteEvent={handleDeleteEvent}
       onFilterEvents={handleFilterEvents}
     />
   );

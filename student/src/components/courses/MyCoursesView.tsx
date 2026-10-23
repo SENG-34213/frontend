@@ -15,7 +15,9 @@ import { useStudent } from "../../context/StudentContext";
 import type { Course } from "../../types";
 
 const getTeachingProgress = (course: Course): number => {
-  const lessons = course.modules.flatMap((module) => module.lessons);
+  const lessons = (Array.isArray(course.modules) ? course.modules : []).flatMap((module) =>
+    Array.isArray(module?.lessons) ? module.lessons.filter(Boolean) : [],
+  );
 
   if (lessons.length === 0) {
     return 0;

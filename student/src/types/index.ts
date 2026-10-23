@@ -15,7 +15,6 @@ export type StudentView =
   | "grades"
   | "calendar"
   | "messages"
-  | "mentify-ai"
   | "notifications"
   | "profile"
   | "settings";
@@ -311,18 +310,6 @@ export interface NotificationItem {
   read: boolean;
   actionView?: StudentView;
   targetId?: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  sender: "user" | "assistant";
-  text: string;
-  timestamp: string;
-  suggestedQuestions?: string[];
-  codeBlock?: {
-    language: string;
-    code: string;
-  };
 }
 
 export interface AttendanceSummary {

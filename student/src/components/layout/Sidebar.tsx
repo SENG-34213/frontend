@@ -9,7 +9,6 @@ import {
   BarChart3,
   Calendar,
   MessageSquare,
-  Sparkles,
   Bell,
   User,
   Settings,
@@ -81,12 +80,6 @@ export const Sidebar: React.FC = () => {
           label: "Messages",
           icon: MessageSquare,
           badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
-        },
-        {
-          id: "mentify-ai",
-          label: "Mentify AI",
-          icon: Sparkles,
-          highlight: true,
         },
         {
           id: "notifications",
