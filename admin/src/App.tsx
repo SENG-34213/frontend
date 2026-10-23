@@ -997,9 +997,13 @@ export default function App() {
         />
       )}
 
-      {currentRoute === "academic" && <CurriculumManagement courses={courses} grades={gradesList} />}
+      {currentRoute === "academic" && (
+        <CurriculumManagement courses={courses} grades={gradesList} />
+      )}
 
-      {currentRoute === "assignments" && <AssignmentOversight courses={courses} grades={gradesList} />}
+      {currentRoute === "assignments" && (
+        <AssignmentOversight courses={courses} grades={gradesList} />
+      )}
 
       {currentRoute === "quizzes" && <QuizManagement courses={courses} grades={gradesList} />}
 

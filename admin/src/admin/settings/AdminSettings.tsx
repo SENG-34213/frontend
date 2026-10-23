@@ -288,9 +288,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                   <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">
                     Your account is protected
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Your account is ready to use.
-                  </p>
+                  <p className="mt-1 text-xs text-slate-500">Your account is ready to use.</p>
                   <div className="mt-3 flex items-center gap-2 text-[11px] text-emerald-600">
                     <Check className="h-3.5 w-3.5" />
                     Account security is enabled
@@ -388,9 +386,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Notification preferences
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  Choose which updates you want to see.
-                </p>
+                <p className="mt-1 text-xs text-slate-500">Choose which updates you want to see.</p>
               </div>
               <div className="space-y-3">
                 {(
@@ -445,9 +441,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 <h2 className="text-base font-bold text-slate-900 dark:text-white">
                   Account security
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  Change your password securely.
-                </p>
+                <p className="mt-1 text-xs text-slate-500">Change your password securely.</p>
               </div>
               <form onSubmit={handlePasswordChange} className="max-w-xl space-y-4">
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -506,8 +500,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
               <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-200">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  Your password is kept private and secure. Advanced account protection is managed by
-                  your organization.
+                  Your password is kept private and secure. Advanced account protection is managed
+                  by your organization.
                 </span>
               </div>
             </div>
