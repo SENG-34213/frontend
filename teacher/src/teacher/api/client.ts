@@ -138,6 +138,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
         error,
       );
     }
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
     throw new ApiError(
       "The service is temporarily unavailable. Please try again shortly.",
       503,
