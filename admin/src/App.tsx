@@ -8,10 +8,8 @@ import {
   TeacherProfile,
   AdministratorProfile,
   Course,
-  EnrollmentRecord,
   CurriculumModule,
-  Assignment,
-  Quiz,
+  EnrollmentRecord,
   Examination,
   GradeRecord,
   Grade,
@@ -30,10 +28,8 @@ import {
   MOCK_TEACHERS,
   MOCK_ADMINISTRATORS,
   MOCK_COURSES,
-  MOCK_ENROLLMENTS,
   MOCK_CURRICULUM,
-  MOCK_ASSIGNMENTS,
-  MOCK_QUIZZES,
+  MOCK_ENROLLMENTS,
   MOCK_EXAMINATIONS,
   MOCK_GRADES,
   MOCK_ATTENDANCE_SESSIONS,
@@ -135,7 +131,10 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
   const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("mentify_admin_theme") === "dark";
+  });
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
   const routeHistoryReadyRef = useRef(false);
   const routeBrowserBackRef = useRef(false);
@@ -144,8 +143,10 @@ export default function App() {
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
+      window.localStorage.setItem("mentify_admin_theme", "dark");
     } else {
       document.documentElement.classList.remove("dark");
+      window.localStorage.setItem("mentify_admin_theme", "light");
     }
   }, [isDarkMode]);
 
@@ -155,14 +156,12 @@ export default function App() {
   const [teachers, setTeachers] = useState<TeacherProfile[]>(MOCK_TEACHERS);
   const [administrators, setAdministrators] = useState<AdministratorProfile[]>(MOCK_ADMINISTRATORS);
   const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
+  const [curriculum] = useState<CurriculumModule[]>(MOCK_CURRICULUM);
   const [gradesList, setGradesList] = useState<Grade[]>([]);
   const [enrollments, setEnrollments] = useState<EnrollmentRecord[]>(MOCK_ENROLLMENTS);
   const [enrollmentApiRecords, setEnrollmentApiRecords] = useState<EnrollmentApiResponse[] | null>(
     null,
   );
-  const [curriculum, setCurriculum] = useState<CurriculumModule[]>(MOCK_CURRICULUM);
-  const [assignments, setAssignments] = useState<Assignment[]>(MOCK_ASSIGNMENTS);
-  const [quizzes, setQuizzes] = useState<Quiz[]>(MOCK_QUIZZES);
   const [examinations, setExaminations] = useState<Examination[]>(MOCK_EXAMINATIONS);
   const [grades, setGrades] = useState<GradeRecord[]>(MOCK_GRADES);
   const [attendanceSessions, setAttendanceSessions] =
@@ -999,12 +998,14 @@ export default function App() {
       )}
 
       {currentRoute === "academic" && (
-        <CurriculumManagement curriculum={curriculum} courses={courses} />
+        <CurriculumManagement courses={courses} grades={gradesList} />
       )}
 
-      {currentRoute === "assignments" && <AssignmentOversight assignments={assignments} />}
+      {currentRoute === "assignments" && (
+        <AssignmentOversight courses={courses} grades={gradesList} />
+      )}
 
-      {currentRoute === "quizzes" && <QuizManagement quizzes={quizzes} />}
+      {currentRoute === "quizzes" && <QuizManagement courses={courses} grades={gradesList} />}
 
       {currentRoute === "examinations" && <ExaminationManagement examinations={examinations} />}
 
@@ -1060,6 +1061,7 @@ export default function App() {
           role={role}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode((p) => !p)}
+          onLogout={handleLogout}
         />
       )}
     </AdminLayout>

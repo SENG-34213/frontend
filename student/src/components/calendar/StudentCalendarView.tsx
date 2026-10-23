@@ -407,27 +407,41 @@ export const StudentCalendarView: React.FC = () => {
                   <span key={day}>{day}</span>
                 ))}
               </div>
-              <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800">
+              <div className="grid min-w-0 grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800">
                 {days.map(({ date, currentMonth }) => (
                   <div
                     key={date.toISOString()}
-                    className={`min-h-[112px] p-2 ${currentMonth ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 text-slate-300 dark:bg-slate-950/40 dark:text-slate-600"}`}
+                    className={`min-h-[112px] min-w-0 overflow-hidden p-2 ${currentMonth ? "bg-white dark:bg-slate-900" : "bg-slate-50/60 text-slate-300 dark:bg-slate-950/40 dark:text-slate-600"}`}
                   >
                     <div
                       className={`mb-1 text-xs font-semibold ${dateKey(date) === dateKey(new Date()) ? "flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white" : "text-slate-500 dark:text-slate-400"}`}
                     >
                       {currentMonth ? date.getDate() : ""}
                     </div>
-                    <div className="space-y-1">
-                      {eventsFor(dateKey(date)).map((event) => (
+                    <div className="min-w-0 max-h-20 space-y-1 overflow-hidden">
+                      {eventsFor(dateKey(date))
+                        .slice(0, 3)
+                        .map((event) => (
+                          <button
+                            key={event.id}
+                            onClick={() => setSelectedEvent(event)}
+                            className={`block min-w-0 max-w-full truncate rounded border px-1.5 py-1 text-left text-[10px] font-semibold ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"}`}
+                          >
+                            {eventTime(event)} · {event.title}
+                          </button>
+                        ))}
+                      {eventsFor(dateKey(date)).length > 3 && (
                         <button
-                          key={event.id}
-                          onClick={() => setSelectedEvent(event)}
-                          className={`block w-full truncate rounded border px-1.5 py-1 text-left text-[10px] font-semibold ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"}`}
+                          type="button"
+                          onClick={() => {
+                            setCursor(date);
+                            setView("day");
+                          }}
+                          className="block w-full truncate px-1.5 text-left text-[10px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
-                          {eventTime(event)} · {event.title}
+                          +{eventsFor(dateKey(date)).length - 3} more
                         </button>
-                      ))}
+                      )}
                     </div>
                   </div>
                 ))}

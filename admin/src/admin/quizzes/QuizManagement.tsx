@@ -1,30 +1,125 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  HelpCircle,
-  Search,
   BarChart3,
+  BookOpenCheck,
   Clock,
-  CheckCircle2,
-  Award,
+  Filter,
+  HelpCircle,
+  Loader2,
   RefreshCcw,
+  Search,
+  Send,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { DetailDrawer } from "../components/DetailDrawer";
-import { Quiz } from "../types";
+import { Course, Grade, Quiz } from "../types";
+import { fetchCourseQuizzes, type AdminQuizRecord } from "../api/quizzesApi";
 import { fetchTodayAdminQuizAnalytics, type AdminQuizAnalyticsItem } from "../api/quizAnalyticsApi";
 
+/* These effects synchronize dependent filters and remote quiz data. */
+/* eslint-disable react-hooks/set-state-in-effect */
+
 interface QuizManagementProps {
-  quizzes: Quiz[];
+  courses: Course[];
+  grades: Grade[];
 }
 
-export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
-  const [searchQuery, setSearchQuery] = useState("");
+const ALL = "all";
+
+const toQuiz = (item: AdminQuizRecord, course?: Course): Quiz => ({
+  id: item.id,
+  courseId: item.courseId,
+  courseCode: course?.code || item.courseId,
+  courseTitle: course?.title || "Unknown course",
+  teacherName: course?.teacherName || "Unassigned faculty",
+  title: item.title,
+  questionCount: item.questionCount ?? item.questions?.length ?? 0,
+  durationMinutes: item.durationMinutes ?? 0,
+  attemptsCount: 0,
+  averageScore: 0,
+  passingRate: 0,
+  status: item.status === "PUBLISHED" ? "ACTIVE" : item.status === "CLOSED" ? "ARCHIVED" : "DRAFT",
+});
+
+export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades }) => {
+  const [gradeId, setGradeId] = useState(ALL);
+  const [domain, setDomain] = useState(ALL);
+  const [courseId, setCourseId] = useState(ALL);
+  const [status, setStatus] = useState(ALL);
+  const [search, setSearch] = useState("");
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [todayAnalytics, setTodayAnalytics] = useState<AdminQuizAnalyticsItem[]>([]);
   const [analyticsDate, setAnalyticsDate] = useState("");
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [analyticsError, setAnalyticsError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const gradeOptions = useMemo(() => {
+    const values = new Map<string, string>();
+    grades.forEach((grade) => values.set(grade.id, grade.name));
+    courses.forEach((course) => {
+      if (course.gradeId && course.gradeName) values.set(course.gradeId, course.gradeName);
+    });
+    return Array.from(values, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true }),
+    );
+  }, [courses, grades]);
+  const gradeCourses = useMemo(
+    () => (gradeId === ALL ? courses : courses.filter((course) => course.gradeId === gradeId)),
+    [courses, gradeId],
+  );
+  const domainOptions = useMemo(() => {
+    const selectedGrade = grades.find((grade) => grade.id === gradeId);
+    const values = new Set<string>(selectedGrade?.subjectDomains || []);
+    gradeCourses.forEach((course) => values.add(course.subject || course.category));
+    return Array.from(values)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+  }, [gradeCourses, gradeId, grades]);
+  const filteredCourses = useMemo(
+    () =>
+      gradeCourses.filter(
+        (course) => domain === ALL || (course.subject || course.category) === domain,
+      ),
+    [domain, gradeCourses],
+  );
+  const filteredQuizzes = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return quizzes.filter((quiz) => {
+      const matchesSearch =
+        !query ||
+        [quiz.title, quiz.courseCode, quiz.courseTitle, quiz.teacherName].some((value) =>
+          value.toLowerCase().includes(query),
+        );
+      return (
+        matchesSearch &&
+        (courseId === ALL || quiz.courseId === courseId) &&
+        (status === ALL || quiz.status === status)
+      );
+    });
+  }, [courseId, quizzes, search, status]);
+
+  const aggregateAnalytics = useMemo(() => {
+    const totals = todayAnalytics.reduce(
+      (result, quiz) => ({
+        submitted: result.submitted + quiz.submittedAttempts,
+        participants: result.participants + quiz.participants,
+        passed: result.passed + quiz.passedAttempts,
+        scoreTotal: result.scoreTotal + (quiz.averagePercentage ?? 0),
+        scored: result.scored + (quiz.averagePercentage == null ? 0 : 1),
+      }),
+      { submitted: 0, participants: 0, passed: 0, scoreTotal: 0, scored: 0 },
+    );
+    return {
+      attempts: totals.submitted,
+      participants: totals.participants,
+      averageScore: totals.scored ? totals.scoreTotal / totals.scored : null,
+      passingRate: totals.submitted ? (totals.passed / totals.submitted) * 100 : null,
+    };
+  }, [todayAnalytics]);
 
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
@@ -41,69 +136,80 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
   }, []);
 
   useEffect(() => {
-    const initialLoad = window.setTimeout(() => {
-      void loadAnalytics();
-    }, 0);
-    return () => window.clearTimeout(initialLoad);
+    void loadAnalytics();
   }, [loadAnalytics]);
-
-  const aggregateAnalytics = useMemo(() => {
-    const totals = todayAnalytics.reduce(
-      (result, quiz) => {
-        const score = quiz.averagePercentage;
-        return {
-          submitted: result.submitted + quiz.submittedAttempts,
-          participants: result.participants + quiz.participants,
-          passed: result.passed + quiz.passedAttempts,
-          scoreTotal:
-            score == null || !Number.isFinite(score)
-              ? result.scoreTotal
-              : result.scoreTotal + score,
-          scoredQuizzes:
-            score == null || !Number.isFinite(score)
-              ? result.scoredQuizzes
-              : result.scoredQuizzes + 1,
-        };
-      },
-      { submitted: 0, participants: 0, passed: 0, scoreTotal: 0, scoredQuizzes: 0 },
-    );
-    return {
-      averageScore: totals.scoredQuizzes
-        ? Math.min(100, Math.max(0, totals.scoreTotal / totals.scoredQuizzes))
-        : null,
-      attempts: totals.submitted,
-      passingRate: totals.submitted ? (totals.passed / totals.submitted) * 100 : null,
-      courseCount: new Set(todayAnalytics.map((quiz) => quiz.courseId)).size,
-    };
-  }, [todayAnalytics]);
+  useEffect(() => {
+    if (domain !== ALL && !domainOptions.includes(domain)) setDomain(ALL);
+  }, [domain, domainOptions]);
+  useEffect(() => {
+    if (courseId !== ALL && filteredCourses.some((course) => course.id === courseId)) return;
+    setCourseId(ALL);
+  }, [courseId, filteredCourses]);
+  useEffect(() => {
+    const selectedCourses =
+      courseId === ALL
+        ? filteredCourses
+        : filteredCourses.filter((course) => course.id === courseId);
+    if (!selectedCourses.length) {
+      setQuizzes([]);
+      return;
+    }
+    const controller = new AbortController();
+    setIsLoading(true);
+    setError("");
+    Promise.allSettled(
+      selectedCourses.map((course) => fetchCourseQuizzes(course.id, controller.signal)),
+    )
+      .then((results) => {
+        if (controller.signal.aborted) return;
+        const successful = results.filter(
+          (result): result is PromiseFulfilledResult<AdminQuizRecord[]> =>
+            result.status === "fulfilled",
+        );
+        setQuizzes(
+          successful
+            .flatMap((result) => result.value)
+            .map((item) =>
+              toQuiz(
+                item,
+                courses.find((course) => course.id === item.courseId),
+              ),
+            ),
+        );
+        if (!successful.length && results.length)
+          setError("Quizzes could not be loaded for the selected courses.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, [courseId, courses, filteredCourses]);
 
   const selectedAnalytics = selectedQuiz
-    ? todayAnalytics.find((quiz) => quiz.quizId === selectedQuiz.id)
+    ? todayAnalytics.find((item) => item.quizId === selectedQuiz.id)
     : undefined;
-
-  const filteredQuizzes = quizzes.filter(
-    (q) =>
-      q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.teacherName.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const resetFilters = () => {
+    setGradeId(ALL);
+    setDomain(ALL);
+    setCourseId(ALL);
+    setStatus(ALL);
+    setSearch("");
+  };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Quiz Management & Analytics"
-        description="Monitor automated formative quiz assessments, student attempt distributions, score medians, and question pass rates."
+        description="Monitor live formative quizzes, question coverage, student attempts, score performance, and pass rates across the academic catalogue."
         breadcrumbs={[{ label: "Admin" }, { label: "Academic Management" }, { label: "Quizzes" }]}
       />
-
       {analyticsError && (
-        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200 sm:flex-row sm:items-center sm:justify-between">
-          <span>{analyticsError} Existing quiz records remain available below.</span>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          <span>{analyticsError}</span>
           <button
-            type="button"
             onClick={() => void loadAnalytics()}
             disabled={analyticsLoading}
-            className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-semibold text-amber-800 transition hover:bg-amber-100 disabled:cursor-wait disabled:opacity-60 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-semibold dark:border-amber-800 dark:bg-slate-900"
           >
             <RefreshCcw className={`h-3.5 w-3.5 ${analyticsLoading ? "animate-spin" : ""}`} />
             Retry
@@ -111,128 +217,287 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
         </div>
       )}
 
-      {/* Analytics Highlights */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <span className="text-xs text-slate-500 block mb-1">
-            Average Institutional Quiz Score
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400">
+              <Filter className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Quiz filters</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Narrow quizzes by grade, domain, course, and lifecycle status.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={resetFilters}
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400"
+          >
+            Reset filters
+          </button>
+        </div>
+        <div className="grid gap-3 md:grid-cols-5">
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            Grade
+            <select
+              value={gradeId}
+              onChange={(event) => {
+                setGradeId(event.target.value);
+                setDomain(ALL);
+                setCourseId(ALL);
+              }}
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value={ALL}>All grades</option>
+              {gradeOptions.map((grade) => (
+                <option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            Course domain
+            <select
+              value={domain}
+              onChange={(event) => {
+                setDomain(event.target.value);
+                setCourseId(ALL);
+              }}
+              disabled={!domainOptions.length}
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value={ALL}>All domains</option>
+              {domainOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            Course
+            <select
+              value={courseId}
+              onChange={(event) => setCourseId(event.target.value)}
+              disabled={!filteredCourses.length}
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value={ALL}>All courses</option>
+              {filteredCourses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.code} · {course.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            Status
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              <option value={ALL}>All statuses</option>
+              <option value="ACTIVE">Published</option>
+              <option value="DRAFT">Draft</option>
+              <option value="ARCHIVED">Closed</option>
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+            Search quizzes
+            <div className="relative mt-1.5">
+              <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Title, course, teacher"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <span className="text-xs text-slate-500">Quizzes</span>
+          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+            {filteredQuizzes.length}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <span className="text-xs text-slate-500">Live attempts today</span>
+          <p className="mt-1 text-2xl font-bold text-indigo-600">
+            {analyticsLoading ? "—" : aggregateAnalytics.attempts}
+          </p>
+          <span className="text-[11px] text-slate-400">
+            {aggregateAnalytics.participants} participants
           </span>
-          <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <span className="text-xs text-slate-500">Average score</span>
+          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
             {analyticsLoading || aggregateAnalytics.averageScore === null
               ? "—"
               : `${aggregateAnalytics.averageScore.toFixed(1)}%`}
-          </span>
-          <span className="text-[11px] text-slate-400 block mt-1">
-            {analyticsDate ? `Live results for ${analyticsDate}` : "No live results loaded"}
-          </span>
-        </div>
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <span className="text-xs text-slate-500 block mb-1">Total Quiz Attempts Recorded</span>
-          <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-            {analyticsLoading ? "—" : `${aggregateAnalytics.attempts} Attempts`}
-          </span>
-          <span className="text-[11px] text-slate-400 block mt-1">
-            Across {aggregateAnalytics.courseCount} courses
+          </p>
+          <span className="text-[11px] text-slate-400">
+            {analyticsDate ? `Results for ${analyticsDate}` : "Live analytics"}
           </span>
         </div>
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <span className="text-xs text-slate-500 block mb-1">Average Passing Rate</span>
-          <span className="text-2xl font-bold text-emerald-600 tabular-nums">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <span className="text-xs text-slate-500">Average pass rate</span>
+          <p className="mt-1 text-2xl font-bold text-emerald-600">
             {analyticsLoading || aggregateAnalytics.passingRate === null
               ? "—"
               : `${aggregateAnalytics.passingRate.toFixed(1)}%`}
-          </span>
-          <span className="text-[11px] text-slate-400 block mt-1">
-            Calculated from submitted attempts
-          </span>
+          </p>
+          <span className="text-[11px] text-slate-400">From submitted attempts</span>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search quizzes by title or course code..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
-          />
+      {isLoading && (
+        <div className="flex items-center justify-center rounded-2xl border border-dashed border-slate-300 py-16 text-sm text-slate-500 dark:border-slate-700">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin text-indigo-500" />
+          Loading live quizzes…
         </div>
-      </div>
+      )}
+      {!isLoading && error && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-300">
+          {error}
+        </div>
+      )}
+      {!isLoading && !error && !filteredQuizzes.length && (
+        <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
+          <BookOpenCheck className="mx-auto h-8 w-8 text-slate-300" />
+          <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+            No quizzes match the selected filters
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Try another grade, domain, course, or status.
+          </p>
+        </div>
+      )}
 
-      {/* Table */}
-      <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                <th className="py-3 px-4 font-semibold">Quiz Title</th>
-                <th className="py-3 px-4 font-semibold">Course & Faculty</th>
-                <th className="py-3 px-4 font-semibold">Questions & Time</th>
-                <th className="py-3 px-4 font-semibold">Attempts</th>
-                <th className="py-3 px-4 font-semibold">Average Score</th>
-                <th className="py-3 px-4 font-semibold">Passing Rate</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredQuizzes.map((quiz) => (
-                <tr
-                  key={quiz.id}
-                  className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  <td className="py-3 px-4">
-                    <span className="font-semibold text-slate-900 dark:text-white block">
-                      {quiz.title}
-                    </span>
-                  </td>
-
-                  <td className="py-3 px-4">
-                    <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400 block">
-                      {quiz.courseCode}
-                    </span>
-                    <span className="text-slate-500">{quiz.teacherName}</span>
-                  </td>
-
-                  <td className="py-3 px-4 tabular-nums text-slate-600 dark:text-slate-300">
-                    {quiz.questionCount} Qs · {quiz.durationMinutes} mins
-                  </td>
-
-                  <td className="py-3 px-4 font-medium tabular-nums text-slate-900 dark:text-white">
-                    {quiz.attemptsCount} attempts
-                  </td>
-
-                  <td className="py-3 px-4 font-bold tabular-nums text-indigo-600 dark:text-indigo-400">
-                    {quiz.averageScore}%
-                  </td>
-
-                  <td className="py-3 px-4 font-bold tabular-nums text-emerald-600">
-                    {quiz.passingRate}%
-                  </td>
-
-                  <td className="py-3 px-4">
-                    <StatusBadge status={quiz.status} />
-                  </td>
-
-                  <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => setSelectedQuiz(quiz)}
-                      className="px-2.5 py-1 text-xs font-medium rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-                    >
-                      Analytics
-                    </button>
-                  </td>
+      {!isLoading && filteredQuizzes.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Quiz catalogue
+              </h2>
+              <p className="text-xs text-slate-500">
+                {filteredQuizzes.length} quizzes in the current view
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+              <Send className="h-3.5 w-3.5" />
+              Live data
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                  <th className="px-4 py-3 font-semibold">Quiz</th>
+                  <th className="px-4 py-3 font-semibold">Course & faculty</th>
+                  <th className="px-4 py-3 font-semibold">Questions & time</th>
+                  <th className="px-4 py-3 font-semibold">Attempts</th>
+                  <th className="px-4 py-3 font-semibold">Average score</th>
+                  <th className="px-4 py-3 font-semibold">Pass rate</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 text-right font-semibold">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredQuizzes.map((quiz) => {
+                  const analytics = todayAnalytics.find((item) => item.quizId === quiz.id);
+                  return (
+                    <tr
+                      key={quiz.id}
+                      className="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex items-start gap-3">
+                          <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400">
+                            <HelpCircle className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <span className="block font-semibold text-slate-900 dark:text-white">
+                              {quiz.title}
+                            </span>
+                            <span className="mt-1 block text-[11px] text-slate-400">
+                              {quiz.status === "ACTIVE"
+                                ? "Published assessment"
+                                : quiz.status === "DRAFT"
+                                  ? "Draft assessment"
+                                  : "Closed assessment"}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="block font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                          {quiz.courseCode}
+                        </span>
+                        <span className="mt-1 block text-slate-500">{quiz.courseTitle}</span>
+                        <span className="mt-1 block text-[11px] text-slate-400">
+                          {quiz.teacherName}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-4 text-slate-600 dark:text-slate-300">
+                        <span className="inline-flex items-center gap-1.5">
+                          <BarChart3 className="h-3.5 w-3.5 text-slate-400" />
+                          {quiz.questionCount} questions
+                        </span>
+                        <span className="mt-1 block text-[11px] text-slate-400">
+                          <Clock className="mr-1 inline h-3 w-3" />
+                          {quiz.durationMinutes} minutes
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 font-semibold tabular-nums text-slate-900 dark:text-white">
+                        {analytics?.submittedAttempts ?? "—"}
+                      </td>
+                      <td className="px-4 py-4 font-bold tabular-nums text-indigo-600 dark:text-indigo-400">
+                        {analytics?.averagePercentage == null
+                          ? "—"
+                          : `${analytics.averagePercentage}%`}
+                      </td>
+                      <td className="px-4 py-4 font-bold tabular-nums text-emerald-600">
+                        {analytics
+                          ? `${analytics.submittedAttempts ? ((analytics.passedAttempts / analytics.submittedAttempts) * 100).toFixed(1) : "0.0"}%`
+                          : "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <StatusBadge
+                          status={
+                            quiz.status === "ACTIVE"
+                              ? "PUBLISHED"
+                              : quiz.status === "ARCHIVED"
+                                ? "CLOSED"
+                                : "DRAFT"
+                          }
+                        />
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedQuiz(quiz)}
+                          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                        >
+                          Analytics
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* QUIZ ANALYTICS DRAWER */}
       {selectedQuiz && (
         <DetailDrawer
           isOpen={!!selectedQuiz}
@@ -243,58 +508,48 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
         >
           <div className="space-y-5 text-xs">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-                <span className="text-slate-400 block mb-0.5">Mean Score</span>
-                <span className="text-xl font-bold text-slate-900 dark:text-white tabular-nums">
-                  {selectedQuiz.averageScore}%
-                </span>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-800/40">
+                <span className="text-slate-400">Average score</span>
+                <p className="mt-1 text-xl font-bold text-slate-900 dark:text-white">
+                  {selectedAnalytics?.averagePercentage ?? "—"}%
+                </p>
               </div>
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800">
-                <span className="text-slate-400 block mb-0.5">Pass Rate</span>
-                <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                  {selectedQuiz.passingRate}%
-                </span>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-800/40">
+                <span className="text-slate-400">Pass rate</span>
+                <p className="mt-1 text-xl font-bold text-emerald-600">
+                  {selectedAnalytics
+                    ? `${selectedAnalytics.submittedAttempts ? ((selectedAnalytics.passedAttempts / selectedAnalytics.submittedAttempts) * 100).toFixed(1) : "0.0"}%`
+                    : "—"}
+                </p>
               </div>
             </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-3">
-              <h5 className="font-semibold text-slate-900 dark:text-white">
-                Score Distribution Breakdown
-              </h5>
-              <div className="space-y-2">
-                {selectedAnalytics ? (
-                  <>
-                    <div className="space-y-2 text-[11px] text-slate-600 dark:text-slate-300">
-                      <p>
-                        {selectedAnalytics.submittedAttempts} submitted attempts from{" "}
-                        {selectedAnalytics.participants} participants.
-                      </p>
-                      <p>
-                        {selectedAnalytics.passedAttempts} passed and{" "}
-                        {selectedAnalytics.belowPassThresholdAttempts} below the{" "}
-                        {selectedAnalytics.passMark}% threshold.
-                      </p>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                      <div
-                        className="h-full rounded-full bg-indigo-600"
-                        style={{
-                          width: `${selectedAnalytics.submittedAttempts ? (selectedAnalytics.passedAttempts / selectedAnalytics.submittedAttempts) * 100 : 0}%`,
-                        }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-                      <span>Average: {selectedAnalytics.averagePercentage ?? "—"}%</span>
-                      <span>Highest: {selectedAnalytics.highestPercentage ?? "—"}%</span>
-                      <span>Lowest: {selectedAnalytics.lowestPercentage ?? "—"}%</span>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Live analytics are not available for this quiz today.
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+              <h5 className="font-semibold text-slate-900 dark:text-white">Score distribution</h5>
+              {selectedAnalytics ? (
+                <div className="mt-3 space-y-3">
+                  <p className="text-slate-600 dark:text-slate-300">
+                    {selectedAnalytics.submittedAttempts} submitted attempts from{" "}
+                    {selectedAnalytics.participants} participants.
                   </p>
-                )}
-              </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div
+                      className="h-full rounded-full bg-indigo-600"
+                      style={{
+                        width: `${selectedAnalytics.submittedAttempts ? (selectedAnalytics.passedAttempts / selectedAnalytics.submittedAttempts) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 text-[11px] text-slate-500">
+                    <span>Average: {selectedAnalytics.averagePercentage ?? "—"}%</span>
+                    <span>Highest: {selectedAnalytics.highestPercentage ?? "—"}%</span>
+                    <span>Lowest: {selectedAnalytics.lowestPercentage ?? "—"}%</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-2 text-slate-500">
+                  Live analytics are not available for this quiz today.
+                </p>
+              )}
             </div>
           </div>
         </DetailDrawer>
@@ -302,3 +557,5 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ quizzes }) => {
     </div>
   );
 };
+
+/* eslint-enable react-hooks/set-state-in-effect */
