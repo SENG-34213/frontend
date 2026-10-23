@@ -57,7 +57,10 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [assignmentRefreshToken, setAssignmentRefreshToken] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("mentify_teacher_theme") === "dark";
+  });
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const historyReadyRef = useRef(false);
@@ -65,6 +68,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDarkMode);
+    window.localStorage.setItem("mentify_teacher_theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
   useEffect(() => {
@@ -579,6 +583,8 @@ export default function App() {
           {currentTab === "settings" && (
             <TeacherSettingsView
               teacher={teacherProfile}
+              isDarkMode={isDarkMode}
+              onToggleTheme={() => setIsDarkMode((current) => !current)}
               onLogout={async () => {
                 await logoutTeacher();
                 setSession(null);
