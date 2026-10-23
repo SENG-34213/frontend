@@ -190,7 +190,7 @@ function timeToMinutes(value: string) {
   const [time, period] = value.split(" ");
   if (!time || !period) return Number.NaN;
   const [hourValue, minuteValue] = time.split(":").map(Number);
-  const hour = hourValue % 12 + (period === "PM" ? 12 : 0);
+  const hour = (hourValue % 12) + (period === "PM" ? 12 : 0);
   return hour * 60 + minuteValue;
 }
 
@@ -372,9 +372,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     "SCHEDULED",
   );
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const availableStartTimes = editingEventId
-    ? TIME_OPTIONS
-    : getAvailableTimeOptions(formDate);
+  const availableStartTimes = editingEventId ? TIME_OPTIONS : getAvailableTimeOptions(formDate);
   const availableEndTimes = TIME_OPTIONS.filter(
     (time) => timeToMinutes(time) > timeToMinutes(formStartTime),
   );
@@ -400,7 +398,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         (time) =>
           timeToMinutes(time) > timeToMinutes(startTime) &&
           timeToMinutes(time) >= timeToMinutes("11:30 AM"),
-      ) || TIME_OPTIONS.find((time) => timeToMinutes(time) > timeToMinutes(startTime)) || "";
+      ) ||
+      TIME_OPTIONS.find((time) => timeToMinutes(time) > timeToMinutes(startTime)) ||
+      "";
     setFormDate(eventDate);
     setFormStartTime(startTime);
     setFormEndTime(endTime);
@@ -1172,7 +1172,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             {selectedCourse !== "ALL" && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[11px]">
                 <span>
-                  Course: {courseOptions.find((course) => course.id === selectedCourse)?.title || "Selected course"}
+                  Course:{" "}
+                  {courseOptions.find((course) => course.id === selectedCourse)?.title ||
+                    "Selected course"}
                 </span>
                 <button onClick={() => setSelectedCourse("ALL")} className="hover:text-indigo-900">
                   <X className="w-3 h-3" />
@@ -2378,7 +2380,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     onClick={() => void handleCancelEvent(selectedEvent)}
                     className="flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
                   >
-                    <span>{pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}</span>
+                    <span>
+                      {pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}
+                    </span>
                   </button>
                 )}
                 <button
@@ -2388,7 +2392,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-50 dark:hover:bg-rose-950/40"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  <span>{pendingEventActionId === selectedEvent.id ? "Deleting…" : "Delete Event"}</span>
+                  <span>
+                    {pendingEventActionId === selectedEvent.id ? "Deleting…" : "Delete Event"}
+                  </span>
                 </button>
               </div>
 
@@ -2418,326 +2424,328 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       {isAddEditModalOpen &&
         typeof document !== "undefined" &&
         createPortal(
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto overscroll-contain p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="calendar-event-dialog-title"
-            className="my-auto w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90dvh] overflow-y-auto overscroll-contain"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
-                  <CalendarIcon className="w-4 h-4" />
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto overscroll-contain p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="calendar-event-dialog-title"
+              className="my-auto w-full max-w-xl rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 animate-in zoom-in-95 duration-150 max-h-[90dvh] overflow-y-auto overscroll-contain"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400">
+                    <CalendarIcon className="w-4 h-4" />
+                  </div>
+                  <h3
+                    id="calendar-event-dialog-title"
+                    className="text-base font-bold text-slate-900 dark:text-white"
+                  >
+                    {editingEventId ? "Edit Academic Event" : "Schedule Academic Event"}
+                  </h3>
                 </div>
-                <h3
-                  id="calendar-event-dialog-title"
-                  className="text-base font-bold text-slate-900 dark:text-white"
+                <button
+                  type="button"
+                  aria-label="Close event dialog"
+                  onClick={() => setIsAddEditModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded"
                 >
-                  {editingEventId ? "Edit Academic Event" : "Schedule Academic Event"}
-                </h3>
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                type="button"
-                aria-label="Close event dialog"
-                onClick={() => setIsAddEditModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* In-form Venue Collision Detector Warning */}
-            {inlineFormConflict && (
-              <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2 animate-in fade-in">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <span>{inlineFormConflict}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleFormSubmit} className="py-4 space-y-4 text-xs">
-              {formErrors.submit && (
-                <div
-                  role="alert"
-                  className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
-                >
-                  {formErrors.submit}
+              {/* In-form Venue Collision Detector Warning */}
+              {inlineFormConflict && (
+                <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2 animate-in fade-in">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>{inlineFormConflict}</span>
                 </div>
               )}
-              {/* Event Title */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Event Title <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formTitle}
-                  onChange={(e) => {
-                    setFormTitle(e.target.value);
-                    if (formErrors.title) setFormErrors((p) => ({ ...p, title: "" }));
-                  }}
-                  placeholder="e.g. Advanced Calculus Midterm Examination"
-                  className={`w-full px-3 py-2 rounded-xl border bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 text-xs ${
-                    formErrors.title
-                      ? "border-rose-300 focus:ring-rose-500"
-                      : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
-                  }`}
-                />
-                {formErrors.title && (
-                  <span className="text-rose-500 text-[11px] mt-1 block">{formErrors.title}</span>
+
+              <form onSubmit={handleFormSubmit} className="py-4 space-y-4 text-xs">
+                {formErrors.submit && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+                  >
+                    {formErrors.submit}
+                  </div>
                 )}
-              </div>
-
-              {/* Event Category & Status */}
-              <div className="grid grid-cols-2 gap-3">
+                {/* Event Title */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Event Category
-                  </label>
-                  <select
-                    value={formType}
-                    onChange={(e) => setFormType(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                  >
-                    <option value="EXAM">Examination</option>
-                    <option value="QUIZ">Quiz / Assessment</option>
-                    <option value="CLASS">Regular Lecture</option>
-                    <option value="DEADLINE">Submission Cutoff</option>
-                    <option value="SESSION">Administrative Session</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Lifecycle Status
-                  </label>
-                  <select
-                    value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                  >
-                    <option value="SCHEDULED">Scheduled</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Course & Instructor Selection */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Course Module
-                  </label>
-                  <select
-                    required
-                    value={formCourseId}
-                    onChange={(e) => handleCourseSelectionChange(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
-                  >
-                    <option value="" disabled>
-                      {courseOptions.length ? "Select an assigned course" : "No assigned courses available"}
-                    </option>
-                    {courseOptions.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.code ? `${c.code} (${c.title})` : c.title}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.courseId && (
-                    <span className="mt-1 block text-[11px] text-rose-500">
-                      {formErrors.courseId}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Instructor / Proctor
-                  </label>
-                  <select
-                    value={formInstructorName}
-                    onChange={(e) => handleInstructorSelectionChange(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                  >
-                    {instructors.map((i) => (
-                      <option key={i.email} value={i.name}>
-                        {i.name} ({i.dept})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Date, Start Time & End Time */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formDate}
-                    onChange={(e) => {
-                      const nextDate = e.target.value;
-                      const nextStartOptions = getAvailableTimeOptions(nextDate);
-                      const nextStart = nextStartOptions.includes(formStartTime)
-                        ? formStartTime
-                        : nextStartOptions[0] || "";
-                      const nextEndOptions = TIME_OPTIONS.filter(
-                        (time) => timeToMinutes(time) > timeToMinutes(nextStart),
-                      );
-                      setFormDate(nextDate);
-                      setFormStartTime(nextStart);
-                      if (!nextEndOptions.includes(formEndTime)) {
-                        setFormEndTime(nextEndOptions[0] || "");
-                      }
-                    }}
-                    disabled={isFormDateLocked}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800/60"
-                  />
-                  {isFormDateLocked && (
-                    <span className="mt-1 block text-[10px] font-normal text-slate-500 dark:text-slate-400">
-                      Date is fixed to the selected calendar day.
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Start Time
-                  </label>
-                  <select
-                    required
-                    value={formStartTime}
-                    onChange={(e) => {
-                      const nextStart = e.target.value;
-                      const nextEndOptions = TIME_OPTIONS.filter(
-                        (time) => timeToMinutes(time) > timeToMinutes(nextStart),
-                      );
-                      setFormStartTime(nextStart);
-                      if (!nextEndOptions.includes(formEndTime)) {
-                        setFormEndTime(nextEndOptions[0] || "");
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
-                  >
-                    {!availableStartTimes.includes(formStartTime) && (
-                      <option value="" disabled>
-                        No remaining times
-                      </option>
-                    )}
-                    {availableStartTimes.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                  {availableStartTimes.length === 0 && (
-                    <span className="mt-1 block text-[10px] text-amber-600 dark:text-amber-400">
-                      No time intervals remain today. Choose a future date.
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    End Time
-                  </label>
-                  <select
-                    required
-                    value={formEndTime}
-                    onChange={(e) => setFormEndTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
-                  >
-                    {availableEndTimes.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                  {availableEndTimes.length === 0 && (
-                    <span className="mt-1 block text-[10px] text-amber-600 dark:text-amber-400">
-                      Choose an earlier start time to add an end time.
-                    </span>
-                  )}
-                </div>
-              </div>
-              {formErrors.time && (
-                <span className="text-rose-500 text-[11px] block">{formErrors.time}</span>
-              )}
-
-              {/* Campus Venue Location & Visibility */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Campus Venue
+                    Event Title <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={formLocation}
-                    onChange={(e) => setFormLocation(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
-                    placeholder="Enter venue or online location"
+                    required
+                    value={formTitle}
+                    onChange={(e) => {
+                      setFormTitle(e.target.value);
+                      if (formErrors.title) setFormErrors((p) => ({ ...p, title: "" }));
+                    }}
+                    placeholder="e.g. Advanced Calculus Midterm Examination"
+                    className={`w-full px-3 py-2 rounded-xl border bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 text-xs ${
+                      formErrors.title
+                        ? "border-rose-300 focus:ring-rose-500"
+                        : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
+                    }`}
+                  />
+                  {formErrors.title && (
+                    <span className="text-rose-500 text-[11px] mt-1 block">{formErrors.title}</span>
+                  )}
+                </div>
+
+                {/* Event Category & Status */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Event Category
+                    </label>
+                    <select
+                      value={formType}
+                      onChange={(e) => setFormType(e.target.value as any)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                    >
+                      <option value="EXAM">Examination</option>
+                      <option value="QUIZ">Quiz / Assessment</option>
+                      <option value="CLASS">Regular Lecture</option>
+                      <option value="DEADLINE">Submission Cutoff</option>
+                      <option value="SESSION">Administrative Session</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Lifecycle Status
+                    </label>
+                    <select
+                      value={formStatus}
+                      onChange={(e) => setFormStatus(e.target.value as any)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                    >
+                      <option value="SCHEDULED">Scheduled</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Course & Instructor Selection */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Course Module
+                    </label>
+                    <select
+                      required
+                      value={formCourseId}
+                      onChange={(e) => handleCourseSelectionChange(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
+                    >
+                      <option value="" disabled>
+                        {courseOptions.length
+                          ? "Select an assigned course"
+                          : "No assigned courses available"}
+                      </option>
+                      {courseOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.code ? `${c.code} (${c.title})` : c.title}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.courseId && (
+                      <span className="mt-1 block text-[11px] text-rose-500">
+                        {formErrors.courseId}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Instructor / Proctor
+                    </label>
+                    <select
+                      value={formInstructorName}
+                      onChange={(e) => handleInstructorSelectionChange(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                    >
+                      {instructors.map((i) => (
+                        <option key={i.email} value={i.name}>
+                          {i.name} ({i.dept})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Date, Start Time & End Time */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Date <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formDate}
+                      onChange={(e) => {
+                        const nextDate = e.target.value;
+                        const nextStartOptions = getAvailableTimeOptions(nextDate);
+                        const nextStart = nextStartOptions.includes(formStartTime)
+                          ? formStartTime
+                          : nextStartOptions[0] || "";
+                        const nextEndOptions = TIME_OPTIONS.filter(
+                          (time) => timeToMinutes(time) > timeToMinutes(nextStart),
+                        );
+                        setFormDate(nextDate);
+                        setFormStartTime(nextStart);
+                        if (!nextEndOptions.includes(formEndTime)) {
+                          setFormEndTime(nextEndOptions[0] || "");
+                        }
+                      }}
+                      disabled={isFormDateLocked}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800/60"
+                    />
+                    {isFormDateLocked && (
+                      <span className="mt-1 block text-[10px] font-normal text-slate-500 dark:text-slate-400">
+                        Date is fixed to the selected calendar day.
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Start Time
+                    </label>
+                    <select
+                      required
+                      value={formStartTime}
+                      onChange={(e) => {
+                        const nextStart = e.target.value;
+                        const nextEndOptions = TIME_OPTIONS.filter(
+                          (time) => timeToMinutes(time) > timeToMinutes(nextStart),
+                        );
+                        setFormStartTime(nextStart);
+                        if (!nextEndOptions.includes(formEndTime)) {
+                          setFormEndTime(nextEndOptions[0] || "");
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
+                    >
+                      {!availableStartTimes.includes(formStartTime) && (
+                        <option value="" disabled>
+                          No remaining times
+                        </option>
+                      )}
+                      {availableStartTimes.map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                    {availableStartTimes.length === 0 && (
+                      <span className="mt-1 block text-[10px] text-amber-600 dark:text-amber-400">
+                        No time intervals remain today. Choose a future date.
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      End Time
+                    </label>
+                    <select
+                      required
+                      value={formEndTime}
+                      onChange={(e) => setFormEndTime(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
+                    >
+                      {availableEndTimes.map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                    {availableEndTimes.length === 0 && (
+                      <span className="mt-1 block text-[10px] text-amber-600 dark:text-amber-400">
+                        Choose an earlier start time to add an end time.
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {formErrors.time && (
+                  <span className="text-rose-500 text-[11px] block">{formErrors.time}</span>
+                )}
+
+                {/* Campus Venue Location & Visibility */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Campus Venue
+                    </label>
+                    <input
+                      type="text"
+                      value={formLocation}
+                      onChange={(e) => setFormLocation(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                      placeholder="Enter venue or online location"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      Audience Visibility
+                    </label>
+                    <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200">
+                      <span className="font-semibold">Course members only</span>
+                      <span className="mt-0.5 block text-[11px] opacity-80">
+                        Only students enrolled in the selected course can see this event.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Event Description & Clinical Notes
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    placeholder="Provide syllabus context, materials required, or proctor instructions..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Audience Visibility
-                  </label>
-                  <div className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200">
-                    <span className="font-semibold">Course members only</span>
-                    <span className="mt-0.5 block text-[11px] opacity-80">
-                      Only students enrolled in the selected course can see this event.
-                    </span>
-                  </div>
+                {/* Form Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => setIsAddEditModalOpen(false)}
+                    className="px-3.5 py-2 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {isSubmitting
+                      ? "Saving…"
+                      : editingEventId
+                        ? "Save Changes"
+                        : "Confirm & Schedule"}
+                  </button>
                 </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Event Description & Clinical Notes
-                </label>
-                <textarea
-                  rows={3}
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Provide syllabus context, materials required, or proctor instructions..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Form Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => setIsAddEditModalOpen(false)}
-                  className="px-3.5 py-2 text-xs font-medium rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-60"
-                >
-                  {isSubmitting
-                    ? "Saving…"
-                    : editingEventId
-                      ? "Save Changes"
-                      : "Confirm & Schedule"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-        , document.body,
-      )}
+              </form>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

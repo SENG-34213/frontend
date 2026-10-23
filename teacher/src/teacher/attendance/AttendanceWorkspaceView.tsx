@@ -315,7 +315,10 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
               </p>
             </div>
             <button
-              onClick={() => { setCreateError(null); setShowCreate(true); }}
+              onClick={() => {
+                setCreateError(null);
+                setShowCreate(true);
+              }}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
             >
               <Plus className="h-4 w-4" /> New session
@@ -455,7 +458,10 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   Select a session from the list or create a new one for your next class.
                 </p>
                 <button
-                  onClick={() => { setCreateError(null); setShowCreate(true); }}
+                  onClick={() => {
+                    setCreateError(null);
+                    setShowCreate(true);
+                  }}
                   className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700"
                 >
                   <Plus className="h-4 w-4" /> Create session
@@ -569,7 +575,9 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                             <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
                               <Users className="h-3.5 w-3.5" />
                             </span>
-                            {record.studentName?.trim() || studentNameById.get(record.studentId) || "Student name unavailable"}
+                            {record.studentName?.trim() ||
+                              studentNameById.get(record.studentId) ||
+                              "Student name unavailable"}
                           </td>
                           <td className="px-4 py-3.5 text-slate-500">
                             {record.markedAt ? new Date(record.markedAt).toLocaleString() : "—"}
@@ -631,7 +639,10 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
             </p>
           </div>
           <button
-            onClick={() => { setCreateError(null); setShowCreate(true); }}
+            onClick={() => {
+              setCreateError(null);
+              setShowCreate(true);
+            }}
             className="px-3.5 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" /> New session
@@ -872,13 +883,25 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
             className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between">
-              <h2 id="create-attendance-title" className="text-base font-bold text-slate-900">Create attendance session</h2>
-              <button type="button" aria-label="Close" onClick={() => { setShowCreate(false); setCreateError(null); }}>
+              <h2 id="create-attendance-title" className="text-base font-bold text-slate-900">
+                Create attendance session
+              </h2>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => {
+                  setShowCreate(false);
+                  setCreateError(null);
+                }}
+              >
                 <X className="w-4 h-4 text-slate-500" />
               </button>
             </div>
             {createError && (
-              <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-800">
+              <div
+                role="alert"
+                className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-medium text-rose-800"
+              >
                 {createError}
               </div>
             )}
@@ -931,9 +954,10 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   required
                   type="time"
                   value={createForm.startTime}
-                  onChange={(event) =>
-                  { setCreateError(null); setCreateForm((current) => ({ ...current, startTime: event.target.value })); }
-                  }
+                  onChange={(event) => {
+                    setCreateError(null);
+                    setCreateForm((current) => ({ ...current, startTime: event.target.value }));
+                  }}
                   className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
                 />
               </label>
@@ -943,9 +967,10 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   required
                   type="time"
                   value={createForm.endTime}
-                  onChange={(event) =>
-                  { setCreateError(null); setCreateForm((current) => ({ ...current, endTime: event.target.value })); }
-                  }
+                  onChange={(event) => {
+                    setCreateError(null);
+                    setCreateForm((current) => ({ ...current, endTime: event.target.value }));
+                  }}
                   className="mt-1 w-full border border-slate-200 rounded-lg px-2 py-2 text-sm"
                 />
               </label>
