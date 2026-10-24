@@ -21,6 +21,8 @@ import {
   Award,
   ChevronDown,
   RefreshCw,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { Course, Quiz, QuizQuestion, NavigationTab } from "../types";
 import {
@@ -62,6 +64,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState<"All" | "Draft" | "Active" | "Completed">("All");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [isQuestionBuilderOpen, setIsQuestionBuilderOpen] = useState(false);
   const [isCreateQuizOpen, setIsCreateQuizOpen] = useState(false);
@@ -367,8 +370,10 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   };
 
   return (
-    <div className="mx-auto min-h-full max-w-[1500px] space-y-6 pb-14">
-      <header className="relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950 px-5 py-6 text-white shadow-xl shadow-slate-950/10 sm:px-7 sm:py-7">
+    <div className="mx-auto min-h-full max-w-[1500px] space-y-8 pb-16">
+      <header
+        className={`${selectedQuiz ? "hidden" : ""} relative overflow-hidden rounded-[28px] border border-slate-800 bg-slate-950 px-5 py-6 text-white shadow-xl shadow-slate-950/10 sm:px-7 sm:py-7`}
+      >
         <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
         <div className="pointer-events-none absolute bottom-[-100px] left-1/3 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -428,7 +433,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
       )}
       {!selectedQuiz && (
         <>
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <section className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)] sm:p-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-start gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20">
@@ -471,8 +476,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               </div>
             </div>
           </section>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_10px_25px_rgba(15,23,42,0.04)]">
               <span className="text-xs text-slate-500 font-medium">Total Quizzes</span>
               <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
                 {teacherQuizState.isLoading ? "—" : quizzes.length}
@@ -480,7 +485,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               <p className="text-[11px] text-slate-400 mt-0.5">Across active courses</p>
             </div>
 
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 shadow-sm">
+            <div className="rounded-[22px] border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-5 shadow-[0_10px_25px_rgba(79,70,229,0.08)]">
               <span className="text-xs text-slate-500 font-medium">Active This Week</span>
               <div className="text-2xl font-bold text-indigo-600 font-mono mt-1 tabular-nums">
                 {teacherQuizState.isLoading
@@ -490,7 +495,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               <p className="text-[11px] text-slate-400 mt-0.5">Published quizzes</p>
             </div>
 
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 shadow-sm">
+            <div className="rounded-[22px] border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-[0_10px_25px_rgba(16,185,129,0.08)]">
               <span className="text-xs text-slate-500 font-medium">Avg Class Score</span>
               <div className="text-2xl font-bold text-emerald-600 font-mono mt-1 tabular-nums">
                 {averageTodayScore === null ? "—" : `${averageTodayScore}%`}
@@ -500,7 +505,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               </p>
             </div>
 
-            <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4 shadow-sm">
+            <div className="rounded-[22px] border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5 shadow-[0_10px_25px_rgba(139,92,246,0.08)]">
               <span className="text-xs text-slate-500 font-medium">Completion Rate</span>
               <div className="text-2xl font-bold text-slate-900 font-mono mt-1 tabular-nums">
                 {completionRate === null ? "—" : `${completionRate}%`}
@@ -524,8 +529,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
         </>
       )}
 
-      {!selectedQuiz && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      {false && !selectedQuiz && todayAnalytics && (
+        <section className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)] sm:p-7">
           <div className="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">
@@ -536,7 +541,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               </h2>
               <p className="mt-1 text-xs text-slate-500">
                 {todayAnalytics?.date
-                  ? `Results for ${todayAnalytics.date}`
+                  ? `Results for ${todayAnalytics?.date}`
                   : "No daily results loaded"}
               </p>
             </div>
@@ -557,7 +562,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           </div>
           {todayAnalytics?.quizzes.length ? (
             <div className="space-y-3">
-              {todayAnalytics.quizzes.map((quiz) => {
+              {todayAnalytics?.quizzes?.map((quiz) => {
                 const quizCompletion = quiz.participants
                   ? Math.round((quiz.submittedAttempts / quiz.participants) * 100)
                   : null;
@@ -637,7 +642,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
         {/* Left Column: Quiz Directory */}
         {!selectedQuiz && (
           <div className="space-y-4">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)] sm:p-7">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-600">
@@ -655,6 +660,26 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   <span className="rounded-full bg-indigo-50 px-2.5 py-1.5 text-[10px] font-bold text-indigo-700">
                     {filtered.length} shown
                   </span>
+                  <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("list")}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition ${viewMode === "list" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+                      aria-label="Show list view"
+                      aria-pressed={viewMode === "list"}
+                    >
+                      <List className="h-3.5 w-3.5" /> List
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("grid")}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10px] font-bold transition ${viewMode === "grid" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+                      aria-label="Show grid view"
+                      aria-pressed={viewMode === "grid"}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" /> Grid
+                    </button>
+                  </div>
                   {(search || statusFilter !== "All") && (
                     <button
                       type="button"
@@ -721,7 +746,85 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div
+              className={`${viewMode === "list" ? "block" : "hidden"} overflow-hidden rounded-[22px] border border-slate-200/80 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.045)]`}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[860px] border-collapse text-left">
+                  <thead className="border-b border-slate-200 bg-slate-50/80">
+                    <tr className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                      <th className="px-5 py-4">Quiz</th>
+                      <th className="px-4 py-4">Course</th>
+                      <th className="px-4 py-4">Status</th>
+                      <th className="px-4 py-4 text-center">Questions</th>
+                      <th className="px-4 py-4 text-center">Duration</th>
+                      <th className="px-4 py-4 text-center">Attempts</th>
+                      <th className="px-4 py-4 text-center">Marks</th>
+                      <th className="px-5 py-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filtered.map((quiz) => (
+                      <tr
+                        key={`row-${quiz.id}`}
+                        onClick={() => {
+                          setSelectedQuiz(quiz);
+                          setQuizPanel(quiz.status === "Completed" ? "results" : "overview");
+                          setQuestionPage(0);
+                        }}
+                        className="group cursor-pointer transition-colors hover:bg-indigo-50/40"
+                      >
+                        <td className="max-w-[300px] px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                              <ClipboardCheck className="h-4 w-4" />
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-bold text-slate-900">
+                                {quiz.title}
+                              </p>
+                              <p className="mt-1 truncate text-[11px] text-slate-400">
+                                {quiz.description || "No description added"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                            {quiz.courseCode}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <StatusBadge status={quiz.status} />
+                        </td>
+                        <td className="px-4 py-4 text-center text-sm font-semibold tabular-nums text-slate-700">
+                          {quiz.totalQuestions}
+                        </td>
+                        <td className="px-4 py-4 text-center text-sm font-semibold tabular-nums text-slate-700">
+                          {quiz.durationMinutes} min
+                        </td>
+                        <td className="px-4 py-4 text-center text-sm font-semibold tabular-nums text-slate-700">
+                          {quiz.attemptsCount}
+                        </td>
+                        <td className="px-4 py-4 text-center text-sm font-semibold tabular-nums text-slate-700">
+                          {quiz.totalMarks}
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 transition-colors group-hover:text-indigo-700">
+                            Open{" "}
+                            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div
+              className={`${viewMode === "grid" ? "grid" : "hidden"} grid-cols-1 gap-5 xl:grid-cols-3`}
+            >
               {filtered.map((quiz) => {
                 return (
                   <div
@@ -741,7 +844,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                     }}
                     role="button"
                     tabIndex={0}
-                    className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg"
+                    className="group relative overflow-hidden rounded-[24px] border border-slate-200/80 bg-white p-6 text-left shadow-[0_10px_28px_rgba(15,23,42,0.045)] transition-all hover:-translate-y-1 hover:border-indigo-300 hover:shadow-[0_18px_40px_rgba(79,70,229,0.14)]"
                   >
                     <div className="absolute right-0 top-0 h-20 w-20 rounded-bl-full bg-indigo-50/70 transition-colors group-hover:bg-indigo-100/70" />
                     <div className="relative flex items-start justify-between gap-2">
@@ -801,9 +904,9 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
 
         {/* Right Column: Quiz Question Breakdown & Questions Builder */}
         {selectedQuiz && (
-          <div className="w-full">
-            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl shadow-slate-900/5 lg:flex lg:max-h-[calc(100vh-6rem)] lg:flex-col">
-              <div className="flex shrink-0 flex-col justify-between gap-5 border-b border-slate-800 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-5 sm:flex-row sm:items-center sm:p-6">
+          <div className="w-full space-y-5">
+            <div className="overflow-hidden rounded-[30px] border border-slate-800 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.1)] lg:flex lg:flex-col">
+              <div className="flex shrink-0 flex-col justify-between gap-6 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-6 text-white sm:p-8 lg:flex-row lg:items-end">
                 <div>
                   <button
                     type="button"
@@ -812,14 +915,14 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   >
                     <ArrowLeft className="h-3.5 w-3.5" /> Back to quiz library
                   </button>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <span className="rounded-full border border-indigo-400/20 bg-indigo-400/10 px-2.5 py-1 text-xs font-mono font-bold text-indigo-300">
                       {selectedQuiz.courseCode}
                     </span>
                     <h2 className="text-base font-bold text-white">{selectedQuiz.title}</h2>
                     <StatusBadge status={selectedQuiz.status} />
                   </div>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-3 text-xs text-slate-400">
                     Duration:{" "}
                     <strong className="text-slate-200">{selectedQuiz.durationMinutes} mins</strong>{" "}
                     · Total Marks:{" "}
@@ -828,7 +931,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   {selectedQuiz.questions.length > 0 && (
                     <button
                       onClick={() => setSliderPreviewQuiz(selectedQuiz)}
@@ -876,11 +979,11 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 px-4 pt-3">
+              <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-slate-200 bg-white px-5 py-3 sm:px-7">
                 <button
                   type="button"
                   onClick={() => setQuizPanel("overview")}
-                  className={`rounded-t-lg px-3 py-2 text-xs font-bold transition-colors ${quizPanel === "overview" ? "border-b-2 border-indigo-600 text-indigo-700" : "text-slate-400 hover:text-slate-700"}`}
+                  className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-colors ${quizPanel === "overview" ? "bg-indigo-50 text-indigo-700" : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"}`}
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <BookOpen className="h-3.5 w-3.5" /> Overview
@@ -889,7 +992,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setQuizPanel("questions")}
-                  className={`rounded-t-lg px-3 py-2 text-xs font-bold transition-colors ${quizPanel === "questions" ? "border-b-2 border-indigo-600 text-indigo-700" : "text-slate-400 hover:text-slate-700"}`}
+                  className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-colors ${quizPanel === "questions" ? "bg-indigo-50 text-indigo-700" : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"}`}
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <Layers className="h-3.5 w-3.5" /> Questions
@@ -898,7 +1001,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setQuizPanel("results")}
-                  className={`rounded-t-lg px-3 py-2 text-xs font-bold transition-colors ${quizPanel === "results" ? "border-b-2 border-indigo-600 text-indigo-700" : "text-slate-400 hover:text-slate-700"}`}
+                  className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-colors ${quizPanel === "results" ? "bg-indigo-50 text-indigo-700" : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"}`}
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5" /> Student results
@@ -906,7 +1009,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                 </button>
               </div>
 
-              <div className="min-h-0 overflow-y-auto bg-white">
+              <div className="min-h-0 overflow-y-auto bg-slate-50/50">
                 {quizPanel === "results" && (
                   <QuizResultsPanel
                     quiz={selectedQuiz}
@@ -944,8 +1047,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                           No questions configured yet
                         </p>
                         <p className="text-xs text-slate-500 mt-1">
-                          Click &quot;Add Question&quot; above or use Mentify AI to generate
-                          questions.
+                          Click &quot;Add Question&quot; above or use TiT AI to generate questions.
                         </p>
                       </div>
                     ) : (
@@ -1097,7 +1199,13 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           initialTitle={sliderPreviewQuiz.title}
           initialDescription={sliderPreviewQuiz.description}
           initialDuration={sliderPreviewQuiz.durationMinutes}
-          initialPassMark={Math.round(sliderPreviewQuiz.totalMarks * 0.6)}
+          initialPassMark={
+            sliderPreviewQuiz.passMark ?? Math.round(sliderPreviewQuiz.totalMarks * 0.6)
+          }
+          initialStartTime={sliderPreviewQuiz.startTime || ""}
+          initialEndTime={sliderPreviewQuiz.endTime || ""}
+          initialMaxAttempts={sliderPreviewQuiz.maxAttempts ?? 1}
+          initialShowResultImmediately={sliderPreviewQuiz.showResultImmediately ?? true}
           course={teacherCourses.find((course) => course.id === sliderPreviewQuiz.courseId)}
           onClose={() => setSliderPreviewQuiz(null)}
           onRegenerate={() => setSliderPreviewQuiz(null)}
@@ -1187,9 +1295,12 @@ function QuizOverviewPanel({ quiz }: { quiz: Quiz }) {
           </div>
           <StatusBadge status={quiz.status} />
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 border-t border-white/10 pt-4 sm:grid-cols-4">
           {details.map((detail) => (
-            <div key={detail.label} className="rounded-xl border border-white/10 bg-white/10 p-3">
+            <div
+              key={detail.label}
+              className="border-r border-white/10 px-3 py-1 first:pl-0 last:border-r-0"
+            >
               <p className="text-[10px] text-slate-400">{detail.label}</p>
               <p className="mt-1 text-lg font-bold text-white">{detail.value}</p>
             </div>
@@ -1197,8 +1308,8 @@ function QuizOverviewPanel({ quiz }: { quiz: Quiz }) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="grid gap-6 border-t border-slate-200 pt-6 sm:grid-cols-2">
+        <div className="border-b border-slate-200 pb-5 sm:border-b-0 sm:border-r sm:pr-6">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
               <Clock className="h-4 w-4" />
@@ -1224,7 +1335,7 @@ function QuizOverviewPanel({ quiz }: { quiz: Quiz }) {
             </div>
           </dl>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="pb-2 sm:pl-2">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
               <ClipboardCheck className="h-4 w-4" />
@@ -1568,7 +1679,7 @@ function quizToSliderDraft(quiz: Quiz): AiQuizDraft {
     difficulty: "MEDIUM",
     questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
     creationMethod: "AI_GENERATED",
-    provider: "Mentify Assessment Engine",
+    provider: "TiT Assessment Engine",
     model: "assignment-service",
     questions: quiz.questions.map((question, index) => ({
       questionText: question.question,
@@ -1610,6 +1721,11 @@ function mapBackendQuiz(quiz: BackendQuiz, courses: Course[]): Quiz {
     title: quiz.title,
     description: quiz.description || "No quiz description available.",
     durationMinutes: quiz.durationMinutes,
+    passMark: Number(quiz.passMark),
+    startTime: quiz.startTime,
+    endTime: quiz.endTime,
+    maxAttempts: quiz.maxAttempts,
+    showResultImmediately: quiz.showResultImmediately,
     totalQuestions: questions.length,
     totalMarks: Number(quiz.totalMarks),
     status:

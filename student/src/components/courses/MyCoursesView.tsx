@@ -3,11 +3,9 @@ import {
   Search,
   LayoutGrid,
   List,
-  PlayCircle,
   BookOpen,
   User,
   Clock,
-  Sparkles,
   ChevronRight,
   Filter,
 } from "lucide-react";
@@ -15,7 +13,9 @@ import { useStudent } from "../../context/StudentContext";
 import type { Course } from "../../types";
 
 const getTeachingProgress = (course: Course): number => {
-  const lessons = course.modules.flatMap((module) => module.lessons);
+  const lessons = (Array.isArray(course.modules) ? course.modules : []).flatMap((module) =>
+    Array.isArray(module?.lessons) ? module.lessons.filter(Boolean) : [],
+  );
 
   if (lessons.length === 0) {
     return 0;
@@ -27,8 +27,7 @@ const getTeachingProgress = (course: Course): number => {
 };
 
 export const MyCoursesView: React.FC = () => {
-  const { courses, navigateToCourseWorkspace, navigateToCourseDetails, setCurrentView } =
-    useStudent();
+  const { courses, navigateToCourseDetails } = useStudent();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
@@ -81,15 +80,6 @@ export const MyCoursesView: React.FC = () => {
             Manage your enrolled academic subjects, curriculum progression, and active lecture
             modules
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentView("explore-courses")}
-            className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
-          >
-            <Sparkles className="h-4 w-4" />
-            <span>Explore New Courses</span>
-          </button>
         </div>
       </div>
 
@@ -200,8 +190,7 @@ export const MyCoursesView: React.FC = () => {
             No courses match your filter
           </h3>
           <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-            Try adjusting your search query, status tab, or browse additional subjects in Explore
-            Courses.
+            Try adjusting your search query or status filter.
           </p>
           <button
             onClick={() => {
@@ -222,6 +211,15 @@ export const MyCoursesView: React.FC = () => {
             return (
               <div
                 key={course.id}
+                onClick={() => navigateToCourseDetails(course.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigateToCourseDetails(course.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
                 className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all hover:border-indigo-300 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-800"
               >
                 <div>
@@ -285,23 +283,6 @@ export const MyCoursesView: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Bottom Actions */}
-                <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
-                  <button
-                    onClick={() => navigateToCourseDetails(course.id)}
-                    className="text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
-                  >
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => navigateToCourseWorkspace(course.id)}
-                    className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-700 transition-colors"
-                  >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    <span>Continue</span>
-                  </button>
-                </div>
               </div>
             );
           })}
@@ -315,6 +296,15 @@ export const MyCoursesView: React.FC = () => {
             return (
               <div
                 key={course.id}
+                onClick={() => navigateToCourseDetails(course.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigateToCourseDetails(course.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
                 className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -354,22 +344,6 @@ export const MyCoursesView: React.FC = () => {
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => navigateToCourseDetails(course.id)}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-                    >
-                      Details
-                    </button>
-                    <button
-                      onClick={() => navigateToCourseWorkspace(course.id)}
-                      className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-                    >
-                      <PlayCircle className="h-3.5 w-3.5" />
-                      <span>Workspace</span>
-                    </button>
                   </div>
                 </div>
               </div>

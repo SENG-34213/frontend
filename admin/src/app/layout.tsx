@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./tailwind.css";
 
 export const metadata: Metadata = {
-  title: "Mentify Admin Dashboard",
-  description: "Mentify platform administration workspace.",
+  title: "TiT Admin Dashboard",
+  description: "TiT platform administration workspace.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

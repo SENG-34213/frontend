@@ -1,16 +1,8 @@
 import React, { useState } from "react";
-import {
-  Bell,
-  CheckCircle2,
-  AlertCircle,
-  BookOpen,
-  Award,
-  Clock,
-  ArrowRight,
-  CheckCheck,
-} from "lucide-react";
+import { Bell, AlertCircle, BookOpen, Award, Clock, ArrowRight, CheckCheck } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { NotificationItem } from "../../types";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const NotificationsView: React.FC = () => {
   const {
@@ -98,15 +90,11 @@ export const NotificationsView: React.FC = () => {
       {/* Notifications List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-            <Bell className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-            <h3 className="mt-3 font-display text-sm font-bold text-slate-900 dark:text-white">
-              No notifications
-            </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              You&apos;re completely up to date with your academic alerts.
-            </p>
-          </div>
+          <EmptyState
+            icon={Bell}
+            title="No notifications"
+            description="You're completely up to date with your academic alerts."
+          />
         ) : (
           filtered.map((item) => (
             <div
@@ -122,15 +110,15 @@ export const NotificationsView: React.FC = () => {
                 <div className="mt-0.5 shrink-0">{getIcon(item.type)}</div>
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-display text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
+                    <h3 className="font-display break-words text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                       {item.title}
                     </h3>
                     {!item.read && <span className="h-2 w-2 rounded-full bg-indigo-600 shrink-0" />}
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <p className="whitespace-pre-line text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                     {item.description}
                   </p>
-                  <span className="text-[11px] text-slate-400 block pt-1">{item.timestamp}</span>
+                  <span className="block pt-1 text-[10px] text-slate-400">{item.timestamp}</span>
                 </div>
               </div>
 
@@ -144,7 +132,13 @@ export const NotificationsView: React.FC = () => {
                 >
                   Delete
                 </button>
-                <button className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs">
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleAction(item);
+                  }}
+                  className="flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs"
+                >
                   <span>Open</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>

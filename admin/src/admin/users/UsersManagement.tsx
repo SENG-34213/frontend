@@ -21,6 +21,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { ConfirmationDialog } from "../components/ConfirmationDialog";
 import { DetailDrawer } from "../components/DetailDrawer";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 import {
   BaseUser,
   StudentProfile,
@@ -188,7 +189,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
 
       {isLoading && (
         <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-indigo-700">
-          Loading users from the Mentify backend…
+          Loading users from the TiT backend…
         </div>
       )}
 
@@ -266,7 +267,13 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
               {filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400">
-                    No users match your search and filter criteria.
+                    <EmptyState
+                      compact
+                      icon={UserCheck}
+                      title="No users found"
+                      description="No users match your search and filter criteria."
+                      className="border-0 py-0"
+                    />
                   </td>
                 </tr>
               ) : (
@@ -385,7 +392,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
           confirmDialog.action === "DELETE"
             ? "This permanently removes the user account, profile, address, and linked sign-in account. This action cannot be undone."
             : confirmDialog.action === "DEACTIVATE"
-              ? "Suspending this user account will revoke active Keycloak session tokens and temporarily disable access to Mentify portals and LMS coursework."
+              ? "Suspending this user account will revoke active Keycloak session tokens and temporarily disable access to TiT portals and LMS coursework."
               : "Re-activating this user account will restore Keycloak authentication privileges and grant immediate access back to their assigned courses and records."
         }
         consequences={

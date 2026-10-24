@@ -9,7 +9,6 @@ import {
   BarChart3,
   Calendar,
   MessageSquare,
-  Sparkles,
   Bell,
   User,
   Settings,
@@ -83,12 +82,6 @@ export const Sidebar: React.FC = () => {
           badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
         },
         {
-          id: "mentify-ai",
-          label: "Mentify AI",
-          icon: Sparkles,
-          highlight: true,
-        },
-        {
           id: "notifications",
           label: "Notifications",
           icon: Bell,
@@ -123,7 +116,7 @@ export const Sidebar: React.FC = () => {
           {!isSidebarCollapsed && (
             <div className="flex flex-col">
               <span className="font-display text-base font-bold tracking-tight text-slate-900 dark:text-white">
-                Mentify
+                TiT
               </span>
               <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
                 Student Portal

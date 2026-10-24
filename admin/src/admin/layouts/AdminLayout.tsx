@@ -125,7 +125,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: "materials", title: "Learning Materials (AWS S3)", category: "Platform Operations" },
     { id: "calendar", title: "Operations Calendar", category: "Platform Operations" },
     { id: "communication", title: "Broadcast Communication", category: "Platform Operations" },
-    { id: "ai-assistant", title: "Mentify AI Admin Assistant", category: "Platform Operations" },
+    { id: "ai-assistant", title: "TiT AI Admin Assistant", category: "Platform Operations" },
     { id: "reports", title: "Institutional Reports & Exports", category: "Platform Operations" },
     { id: "audit", title: "System Audit Logs & Security Stream", category: "Administration" },
     { id: "settings", title: "Platform & Keycloak Settings", category: "Administration" },

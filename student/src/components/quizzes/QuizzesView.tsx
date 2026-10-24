@@ -42,13 +42,18 @@ export const QuizzesView: React.FC = () => {
   }, []);
 
   const quizState = (quiz: Quiz) => {
-    const attemptsExhausted =
-      (quiz.attemptsAllowed ?? 0) > 0 && (quiz.attemptsUsed ?? 0) >= (quiz.attemptsAllowed ?? 0);
-    if (quiz.status === "COMPLETED" || attemptsExhausted) return "completed" as const;
+    const attemptsAllowed = quiz.attemptsAllowed ?? 0;
+    const attemptsUsed = quiz.attemptsUsed ?? 0;
+    const attemptsExhausted = attemptsAllowed > 0 && attemptsUsed >= attemptsAllowed;
     const startAt = quiz.startTime ? Date.parse(quiz.startTime) : NaN;
     const endAt = quiz.dueDate ? Date.parse(quiz.dueDate) : NaN;
     if (Number.isFinite(endAt) && endAt <= now) return "closed" as const;
     if (Number.isFinite(startAt) && startAt > now) return "upcoming" as const;
+    if (attemptsExhausted) return "completed" as const;
+    // A local submission can mark the quiz COMPLETED while more attempts
+    // remain. Keep it available until the configured limit is exhausted.
+    if (quiz.status === "COMPLETED" && (attemptsAllowed === 0 || attemptsUsed >= attemptsAllowed))
+      return "completed" as const;
     if (quiz.status === "UPCOMING") return "upcoming" as const;
     return "available" as const;
   };
@@ -262,7 +267,8 @@ export const QuizzesView: React.FC = () => {
                             onClick={() => setInstructionModalQuiz(quiz)}
                             className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 font-semibold text-white hover:bg-indigo-700"
                           >
-                            <PlayCircle className="h-3.5 w-3.5" /> Start
+                            <PlayCircle className="h-3.5 w-3.5" />
+                            {quiz.attemptsUsed && quiz.attemptsUsed > 0 ? "Retake" : "Start"}
                           </button>
                         )}
                       </td>
@@ -388,7 +394,9 @@ export const QuizzesView: React.FC = () => {
                       className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 py-2 text-xs font-semibold text-white hover:bg-indigo-700 shadow-2xs"
                     >
                       <PlayCircle className="h-3.5 w-3.5" />
-                      <span>Start Quiz</span>
+                      <span>
+                        {quiz.attemptsUsed && quiz.attemptsUsed > 0 ? "Retake Quiz" : "Start Quiz"}
+                      </span>
                     </button>
                   )}
                 </div>

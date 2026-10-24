@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import {
   loginAdmin,
   requestAdminPasswordReset,
@@ -11,8 +11,9 @@ import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel
 type Props = { onLogin: (session: Awaited<ReturnType<typeof loginAdmin>>) => void };
 
 export function AdminLoginView({ onLogin }: Props) {
-  const [email, setEmail] = useState("alex.mercer@mentify.edu");
-  const [password, setPassword] = useState("admin-demo");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,14 +22,14 @@ export function AdminLoginView({ onLogin }: Props) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!email.trim() || !password.trim()) {
-      setError("Enter the sample admin email and password to continue.");
+      setError("Enter your admin email and password to continue.");
       return;
     }
 
     setError("");
     setIsSubmitting(true);
     try {
-      const session = await loginAdmin(email.trim(), password);
+      const session = await loginAdmin(email.trim(), password, rememberMe);
       onLogin(session);
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Unable to sign in.");
@@ -65,7 +66,7 @@ export function AdminLoginView({ onLogin }: Props) {
               M
             </span>
             <div>
-              <p className="text-lg font-bold tracking-tight">Mentify</p>
+              <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 Administration Workspace
               </p>
@@ -101,7 +102,7 @@ export function AdminLoginView({ onLogin }: Props) {
               M
             </span>
             <div>
-              <p className="text-base font-bold text-slate-900">Mentify</p>
+              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Admin Portal
               </p>
@@ -163,8 +164,13 @@ export function AdminLoginView({ onLogin }: Props) {
               </label>
               <div className="flex items-center justify-between pt-1 text-xs">
                 <label className="flex items-center gap-2 text-slate-500">
-                  <input type="checkbox" defaultChecked className="h-3.5 w-3.5 accent-indigo-600" />{" "}
-                  Remember me
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-3.5 w-3.5 accent-indigo-600"
+                  />{" "}
+                  Keep me signed in for one day
                 </label>
                 <button
                   type="button"
@@ -182,20 +188,12 @@ export function AdminLoginView({ onLogin }: Props) {
                 disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700"
               >
-                {isSubmitting ? "Signing in…" : "Sign in to Mentify"}
+                {isSubmitting ? "Signing in…" : "Sign in to TiT"}
                 {!isSubmitting && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>
-            <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/70 p-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-800">
-                <Sparkles className="h-4 w-4" /> Demo admin account
-              </div>
-              <p className="mt-1 text-[11px] leading-5 text-indigo-700/80">
-                alex.mercer@mentify.edu · admin-demo
-              </p>
-            </div>
             <p className="mt-6 text-center text-[11px] text-slate-400">
-              Protected administration workspace · Sample UI mode
+              Protected administration workspace
             </p>
           </div>
         </div>

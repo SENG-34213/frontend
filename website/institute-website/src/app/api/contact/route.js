@@ -146,7 +146,7 @@ export async function POST(request) {
 
     // Send plain text rather than user-controlled HTML.
     const emailBody = [
-      "New message from the Mentify contact form",
+      "New message from the TiT contact form",
       "",
       `Name: ${name}`,
       `Email: ${email}`,
@@ -162,7 +162,7 @@ export async function POST(request) {
       from: process.env.EMAIL_FROM,
       to: [process.env.CONTACT_EMAIL],
       replyTo: email,
-      subject: "New Mentify contact form message",
+      subject: "New TiT contact form message",
       text: emailBody,
     });
 

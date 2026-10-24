@@ -1,7 +1,6 @@
 export type StudentView =
   | "dashboard"
   | "my-courses"
-  | "explore-courses"
   | "course-details"
   | "course-workspace"
   | "enrollments"
@@ -15,7 +14,6 @@ export type StudentView =
   | "grades"
   | "calendar"
   | "messages"
-  | "mentify-ai"
   | "notifications"
   | "profile"
   | "settings";
@@ -213,16 +211,23 @@ export interface Examination {
   type: "MIDTERM" | "FINAL" | "COMPREHENSIVE";
   scheduledDate: string;
   startTime: string;
+  endTime?: string;
   durationMinutes: number;
   location: string;
   proctorName: string;
   status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED" | "UNKNOWN";
+  eligible?: boolean;
   totalMarks: number;
+  passMarks?: number;
   weightPercentage: number;
   rules: string[];
   score?: number;
   scorePercentage?: number;
   letterGrade?: string;
+  attendanceStatus?: string;
+  resultStatus?: string;
+  remarks?: string;
+  description?: string;
   questions?: QuizQuestion[];
 }
 
@@ -243,6 +248,7 @@ export interface LearningMaterial {
 
 export interface CalendarEvent {
   id: string;
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
   courseId?: string;
   title: string;
   courseCode?: string;
@@ -311,18 +317,6 @@ export interface NotificationItem {
   read: boolean;
   actionView?: StudentView;
   targetId?: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  sender: "user" | "assistant";
-  text: string;
-  timestamp: string;
-  suggestedQuestions?: string[];
-  codeBlock?: {
-    language: string;
-    code: string;
-  };
 }
 
 export interface AttendanceSummary {

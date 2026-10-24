@@ -557,7 +557,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
           </div>
         </div>
         <span className="text-xs text-slate-400 font-mono hidden sm:inline">
-          Mentify Messaging · Secure
+          TiT Messaging · Secure
         </span>
       </div>
 

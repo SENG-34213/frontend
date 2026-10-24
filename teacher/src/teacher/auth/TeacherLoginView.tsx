@@ -14,6 +14,7 @@ type Props = { onLogin: (session: AuthSession) => void };
 export function TeacherLoginView({ onLogin }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +29,7 @@ export function TeacherLoginView({ onLogin }: Props) {
     setError("");
     setIsSubmitting(true);
     try {
-      const session = await loginTeacher(email.trim(), password);
+      const session = await loginTeacher(email.trim(), password, rememberMe);
       onLogin(session);
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Unable to sign in.");
@@ -65,7 +66,7 @@ export function TeacherLoginView({ onLogin }: Props) {
               M
             </span>
             <div>
-              <p className="text-lg font-bold tracking-tight">Mentify</p>
+              <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 Faculty Workspace
               </p>
@@ -101,7 +102,7 @@ export function TeacherLoginView({ onLogin }: Props) {
               M
             </span>
             <div>
-              <p className="text-base font-bold text-slate-900">Mentify</p>
+              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Teacher Portal
               </p>
@@ -163,8 +164,13 @@ export function TeacherLoginView({ onLogin }: Props) {
               </label>
               <div className="flex items-center justify-between pt-1 text-xs">
                 <label className="flex items-center gap-2 text-slate-500">
-                  <input type="checkbox" defaultChecked className="h-3.5 w-3.5 accent-indigo-600" />{" "}
-                  Remember me
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-3.5 w-3.5 accent-indigo-600"
+                  />{" "}
+                  Keep me signed in for one day
                 </label>
                 <button
                   type="button"
@@ -182,8 +188,7 @@ export function TeacherLoginView({ onLogin }: Props) {
                 disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"
               >
-                {isSubmitting ? "Signing in…" : "Sign in to Mentify"}{" "}
-                <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? "Signing in…" : "Sign in to TiT"} <ArrowRight className="h-4 w-4" />
               </button>
             </form>
             <p className="mt-6 text-center text-[11px] text-slate-400">

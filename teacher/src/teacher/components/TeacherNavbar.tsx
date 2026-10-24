@@ -58,7 +58,7 @@ const tabTitles: Record<NavigationTab, { title: string; category: string }> = {
   grades: { title: "Gradebook & Final Results", category: "Assessments" },
   analytics: { title: "Teaching Analytics & Insights", category: "Insights" },
   messages: { title: "Student & Faculty Messages", category: "Communication" },
-  "ai-assistant": { title: "Mentify AI Teaching Assistant", category: "AI Intelligence" },
+  "ai-assistant": { title: "TiT AI Teaching Assistant", category: "AI Intelligence" },
   profile: { title: "Teacher Profile", category: "Account" },
   settings: { title: "Account Settings & Preferences", category: "Account" },
 };
@@ -124,7 +124,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
             onClick={() => onNavigate("dashboard")}
             className="hover:text-slate-900 dark:hover:text-white cursor-pointer font-medium"
           >
-            Mentify
+            TiT
           </span>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-slate-400 dark:text-slate-500">{currentMeta.category}</span>
@@ -260,7 +260,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           <Calendar className="w-4 h-4" />
         </button>
 
-        {/* Mentify AI Shortcut */}
+        {/* TiT AI Shortcut */}
         <button
           onClick={() => onNavigate("ai-assistant")}
           className={`p-2 rounded-lg transition-colors ${
@@ -268,7 +268,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               ? "text-violet-700 bg-violet-100"
               : "text-violet-600 hover:bg-violet-50"
           }`}
-          title="Open Mentify AI Assistant"
+          title="Open TiT AI Assistant"
         >
           <Sparkles className="w-4 h-4" />
         </button>
@@ -335,8 +335,8 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-40 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-3 py-2 border-b border-slate-100">
                 <p className="text-xs font-semibold text-slate-900">{teacher.name}</p>
-                <p className="text-[11px] text-slate-500 font-mono">{teacher.email}</p>
-                <p className="text-[10px] text-indigo-600 font-medium mt-0.5">Faculty Member</p>
+                <p className="text-[11px] text-slate-500 truncate">{teacher.email}</p>
+                <p className="text-[10px] text-indigo-600 font-medium mt-0.5">Teacher</p>
               </div>
 
               <div className="py-1">
@@ -348,7 +348,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
                 >
                   <User className="w-4 h-4 text-slate-400" />
-                  <span>My Profile & Office Hours</span>
+                  <span>Profile</span>
                 </button>
                 <button
                   onClick={() => {
@@ -358,15 +358,11 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
                 >
                   <Settings className="w-4 h-4 text-slate-400" />
-                  <span>Account & Preferences</span>
+                  <span>Settings</span>
                 </button>
               </div>
 
               <div className="pt-1 border-t border-slate-100">
-                <div className="px-3 py-1.5 text-[11px] text-slate-400">
-                  Account Session:{" "}
-                  <span className="text-emerald-600 font-medium">Active (SSO)</span>
-                </div>
                 <button
                   onClick={() => {
                     setProfileMenuOpen(false);
@@ -375,7 +371,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors text-left"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign out</span>
+                  <span>Log out</span>
                 </button>
               </div>
             </div>

@@ -32,6 +32,7 @@ export const QuizTakingView: React.FC = () => {
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
+  const [attemptsUsedAtResult, setAttemptsUsedAtResult] = useState<number | null>(null);
   const [resultsData, setResultsData] = useState<{
     score: number;
     maxScore: number;
@@ -93,6 +94,7 @@ export const QuizTakingView: React.FC = () => {
     try {
       const res = await submitQuizAnswers(quiz.id, attemptId);
       if (quiz.showResultImmediately !== false) {
+        setAttemptsUsedAtResult((current) => Math.max(current ?? 0, (quiz.attemptsUsed ?? 0) + 1));
         setResultsData(res);
       } else {
         setCurrentView("quizzes");
@@ -144,6 +146,9 @@ export const QuizTakingView: React.FC = () => {
     submitQuizAnswers(quiz.id, attemptId)
       .then((result) => {
         if (quiz.showResultImmediately !== false) {
+          setAttemptsUsedAtResult((current) =>
+            Math.max(current ?? 0, (quiz.attemptsUsed ?? 0) + 1),
+          );
           setResultsData(result);
         } else {
           setCurrentView("quizzes");
@@ -405,8 +410,25 @@ export const QuizTakingView: React.FC = () => {
           passed={resultsData.passed}
           answers={resultsData.answers}
           quizTitle={quiz.title}
+          remainingAttempts={
+            quiz.attemptsAllowed && quiz.attemptsAllowed > 0
+              ? Math.max(
+                  0,
+                  quiz.attemptsAllowed -
+                    Math.max(quiz.attemptsUsed ?? 0, attemptsUsedAtResult ?? 0),
+                )
+              : null
+          }
           onClose={() => setCurrentView("quizzes")}
           onRetake={() => {
+            const remainingAttempts =
+              quiz.attemptsAllowed && quiz.attemptsAllowed > 0
+                ? quiz.attemptsAllowed - Math.max(quiz.attemptsUsed ?? 0, attemptsUsedAtResult ?? 0)
+                : null;
+            if (remainingAttempts !== null && remainingAttempts <= 0) {
+              showToast("You have used all available attempts for this quiz.");
+              return;
+            }
             setAnswers({});
             setFlaggedQuestions({});
             if (attemptId) window.localStorage.removeItem(`student:quiz-answers:${attemptId}`);

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Course, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
+import { CourseThumbnailImage } from "../../components/CourseThumbnailImage";
 
 interface CourseListViewProps {
   courses: Course[];
@@ -172,7 +173,15 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
                 <div
                   className={`h-24 bg-gradient-to-r ${themeColors} p-4 flex flex-col justify-between text-white relative`}
                 >
-                  <div className="flex items-center justify-between">
+                  {course.courseThumbnail && (
+                    <CourseThumbnailImage
+                      source={course.courseThumbnail}
+                      alt={`${course.title} course cover`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-slate-950/30" />
+                  <div className="flex items-center justify-between relative">
                     <span className="text-xs font-mono font-bold bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded border border-white/20">
                       {course.code}
                     </span>
@@ -180,7 +189,7 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
                       {course.level}
                     </span>
                   </div>
-                  <div className="text-[11px] text-white/80 font-medium">
+                  <div className="text-[11px] text-white/80 font-medium relative">
                     {course.semester}
                     {course.academicYear ? ` · ${course.academicYear}` : ""}
                   </div>
@@ -261,8 +270,15 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
               className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="flex items-start gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0 font-mono border border-indigo-100">
-                  {course.code.replace("CS-", "")}
+                <div className="relative w-16 h-11 rounded-lg overflow-hidden bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0 font-mono border border-indigo-100">
+                  {course.courseThumbnail ? (
+                    <CourseThumbnailImage
+                      source={course.courseThumbnail}
+                      alt={`${course.title} course cover`}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : null}
+                  <span className="relative">{course.code.replace("CS-", "")}</span>
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

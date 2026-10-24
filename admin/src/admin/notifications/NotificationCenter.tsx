@@ -1,18 +1,9 @@
 import React, { useState } from "react";
-import {
-  Bell,
-  CheckCheck,
-  Filter,
-  Clock,
-  Shield,
-  Award,
-  UserPlus,
-  CheckCircle2,
-  Trash2,
-} from "lucide-react";
+import { Bell, CheckCheck, Clock, Shield, Award, UserPlus, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { NotificationItem } from "../types";
 import { AdminRoute } from "../components/AdminSidebar";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface NotificationCenterProps {
   notifications: NotificationItem[];
@@ -101,7 +92,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         >
           <option value="ALL">All Categories</option>
           <option value="REGISTRATION">Registrations</option>
-          <option value="SECURITY">Security / Keycloak</option>
+          <option value="SECURITY">Security</option>
           <option value="ACADEMIC">Academic Schedule</option>
           <option value="SYSTEM">System Health</option>
         </select>
@@ -111,7 +102,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
         {filteredNotifications.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-xs">
-            No notifications in this view.
+            <EmptyState
+              compact
+              icon={Bell}
+              title="No notifications"
+              description="There are no notifications in this view."
+              className="border-0"
+            />
           </div>
         ) : (
           filteredNotifications.map((notif) => (
@@ -137,8 +134,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
                     )}
                   </div>
-                  <span className="text-[11px] text-slate-400 tabular-nums shrink-0">
-                    {notif.timestamp}
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-slate-400 tabular-nums">
+                    <Clock className="h-3 w-3" /> {notif.timestamp}
                   </span>
                 </div>
 

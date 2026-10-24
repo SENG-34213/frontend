@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   Calendar,
-  Sparkles,
   Bell,
   Sun,
   Moon,
@@ -26,7 +25,6 @@ interface TopNavbarProps {
 const VIEW_TITLES: Record<StudentView, { title: string; category: string }> = {
   dashboard: { title: "Dashboard", category: "Overview" },
   "my-courses": { title: "My Courses", category: "Learning" },
-  "explore-courses": { title: "Explore Courses", category: "Course Discovery" },
   "course-details": { title: "Course Details", category: "Learning" },
   "course-workspace": { title: "Learning Workspace", category: "Classroom" },
   enrollments: { title: "My Enrollments", category: "Academic Records" },
@@ -40,7 +38,6 @@ const VIEW_TITLES: Record<StudentView, { title: string; category: string }> = {
   grades: { title: "Grades & Results", category: "Academic Records" },
   calendar: { title: "Student Calendar", category: "Planning" },
   messages: { title: "Messages & Discussions", category: "Communication" },
-  "mentify-ai": { title: "Mentify AI Assistant", category: "Intelligent Study" },
   notifications: { title: "Notifications", category: "Alerts" },
   profile: { title: "Student Profile", category: "Account" },
   settings: { title: "Settings", category: "Preferences" },
@@ -67,7 +64,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
   const profileRef = useRef<HTMLDivElement>(null);
 
   const unreadNotifs = notifications.filter((n) => !n.read);
-  const viewInfo = VIEW_TITLES[currentView] || { title: "Portal", category: "Mentify" };
+  const viewInfo = VIEW_TITLES[currentView] || { title: "Portal", category: "TiT" };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -103,7 +100,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
             onClick={() => setCurrentView("dashboard")}
             className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
-            Mentify
+            TiT
           </button>
           <ChevronRight className="h-3 w-3 text-slate-400" />
           <span className="hidden sm:inline text-slate-600 dark:text-slate-300">
@@ -151,16 +148,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
           title="Student Calendar"
         >
           <Calendar className="h-4.5 w-4.5" />
-        </button>
-
-        {/* Mentify AI Assistant quick button */}
-        <button
-          onClick={() => setCurrentView("mentify-ai")}
-          className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50/70 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors dark:border-indigo-900/50 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80"
-          title="Open Mentify AI Study Assistant"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span className="hidden sm:inline">Mentify AI</span>
         </button>
 
         {/* Notifications Popover */}
@@ -279,11 +266,14 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-50">
+            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-50">
               <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
                 <p className="text-xs font-bold text-slate-900 dark:text-white">{profile.name}</p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                   {profile.email}
+                </p>
+                <p className="mt-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400">
+                  Student
                 </p>
               </div>
 
@@ -296,7 +286,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <User className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Student Profile</span>
+                  <span>Profile</span>
                 </button>
                 <button
                   onClick={() => {
@@ -306,17 +296,18 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   <Settings className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Account Settings</span>
+                  <span>Settings</span>
                 </button>
+                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
                 <button
                   onClick={() => {
                     onLogout();
                     setIsProfileOpen(false);
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30"
                 >
-                  <LogOut className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Sign out</span>
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span>Log out</span>
                 </button>
               </div>
             </div>

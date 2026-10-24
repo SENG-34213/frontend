@@ -47,7 +47,19 @@ async function readJson(response: Response) {
   return response.json().catch(() => null);
 }
 
+let refreshSessionPromise: Promise<AuthSession | null> | null = null;
+
 async function refreshSession(): Promise<AuthSession | null> {
+  if (refreshSessionPromise) return refreshSessionPromise;
+  refreshSessionPromise = refreshSessionInternal();
+  try {
+    return await refreshSessionPromise;
+  } finally {
+    refreshSessionPromise = null;
+  }
+}
+
+async function refreshSessionInternal(): Promise<AuthSession | null> {
   const current = getSession();
   if (!current?.refreshToken) {
     expireStudentSession();

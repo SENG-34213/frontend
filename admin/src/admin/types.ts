@@ -220,21 +220,39 @@ export interface Examination {
   endTime: string;
   hallOrPlatform: string;
   candidateCount: number;
-  status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "RESULTS_PUBLISHED";
+  status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "RESULTS_PUBLISHED";
 }
 
 export interface GradeRecord {
   id: string;
   studentId: string;
+  studentNumber?: string;
   studentName: string;
+  courseId?: string;
+  courseTitle?: string;
+  gradeName?: string;
   courseCode: string;
   assessmentType: "ASSIGNMENT" | "QUIZ" | "MIDTERM" | "FINAL_EXAM";
   assessmentTitle: string;
   score: number;
   maxScore: number;
   letterGrade: string;
+  percentage?: number;
+  status?: string;
   feedback?: string;
   gradedDate: string;
+  updatedAt?: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  status: "PRESENT" | "ABSENT" | "LATE" | "NOT_MARKED";
+  remarks?: string;
+  markedBy?: string;
+  markedAt?: string;
+  updatedAt?: string;
 }
 
 export interface AttendanceSession {
@@ -250,6 +268,7 @@ export interface AttendanceSession {
   absentCount: number;
   lateCount: number;
   markedBy: string;
+  records: AttendanceRecord[];
 }
 
 export interface LearningMaterial {
@@ -287,6 +306,7 @@ export interface AcademicEvent {
   targetRole?: "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN" | null;
   canEdit?: boolean;
   canCancel?: boolean;
+  canDelete?: boolean;
 }
 
 export type EventVisibility =

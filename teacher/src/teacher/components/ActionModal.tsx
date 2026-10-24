@@ -5,9 +5,10 @@ interface ModalShellProps {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  className?: string;
 }
 
-const ModalShell: React.FC<ModalShellProps> = ({ title, children, onClose }) => {
+const ModalShell: React.FC<ModalShellProps> = ({ title, children, onClose, className = "" }) => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ const ModalShell: React.FC<ModalShellProps> = ({ title, children, onClose }) => 
         role="dialog"
         aria-modal="true"
         aria-labelledby="action-modal-title"
-        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
+        className={`w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 ${className}`}
       >
         <div className="flex items-start justify-between gap-4">
           <h2 id="action-modal-title" className="text-base font-bold text-slate-900">
@@ -108,6 +109,7 @@ interface TextInputModalProps {
   isSubmitting?: boolean;
   onSave: (value: string) => void | Promise<void>;
   onClose: () => void;
+  wide?: boolean;
 }
 
 export const TextInputModal: React.FC<TextInputModalProps> = ({
@@ -121,6 +123,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
   isSubmitting = false,
   onSave,
   onClose,
+  wide = false,
 }) => {
   const [value, setValue] = useState(initialValue);
   useEffect(() => {
@@ -129,7 +132,11 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <ModalShell title={title} onClose={onClose}>
+    <ModalShell
+      title={title}
+      onClose={onClose}
+      className={wide ? "max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto p-4 sm:p-5" : ""}
+    >
       <form
         className="mt-5 space-y-4"
         onSubmit={(event) => {

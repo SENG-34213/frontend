@@ -28,6 +28,7 @@ export interface LoginResponse {
   scope?: string;
   issuedAt?: string;
   mustChangePassword?: boolean;
+  rememberMe?: boolean;
   user?: StudentUserSummary;
   profile?: StudentUserSummary;
 }
@@ -38,4 +39,5 @@ export interface AuthSession {
   user: StudentUserSummary;
   expiresAt: number;
   mustChangePassword?: boolean;
+  rememberMe?: boolean;
 }

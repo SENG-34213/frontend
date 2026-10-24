@@ -48,6 +48,10 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState(25);
   const [passMark, setPassMark] = useState(10);
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [maxAttempts, setMaxAttempts] = useState(1);
+  const [showResultImmediately, setShowResultImmediately] = useState(true);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -196,6 +200,10 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
           initialDescription={description}
           initialDuration={duration}
           initialPassMark={passMark}
+          initialStartTime={startTime}
+          initialEndTime={endTime}
+          initialMaxAttempts={maxAttempts}
+          initialShowResultImmediately={showResultImmediately}
           course={courses.find((course) => course.id === courseId)}
           onClose={() => setIsSliderOpen(false)}
           onRegenerate={reset}
@@ -316,7 +324,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                           Click to browse or drag and drop course documents here
                         </p>
                         <p className="mt-1 text-[11px] text-slate-400">
-                          Multipart upload processed by Mentify assignment-service
+                          Multipart upload processed by TiT assignment-service
                         </p>
                       </div>
                     )}
@@ -453,7 +461,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                   <div>
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <span className="rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-violet-800">
-                        {draft.provider || "Mentify AI"}
+                        {draft.provider || "TiT AI"}
                       </span>
                       <span className="rounded-full border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-[10px] font-mono font-bold text-indigo-800">
                         {courses.find((course) => course.id === courseId)?.code || "Course"}
@@ -528,7 +536,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
             <div className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-md border border-violet-200 bg-violet-100 px-2.5 py-1 text-xs font-mono font-bold text-violet-800">
-                  {draft.provider || "Mentify AI"}
+                  {draft.provider || "TiT AI"}
                 </span>
                 <span className="rounded-md border border-indigo-200 bg-indigo-100 px-2.5 py-1 text-xs font-mono font-bold text-indigo-800">
                   Difficulty: {draft.difficulty}

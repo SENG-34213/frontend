@@ -7,6 +7,7 @@ export type TeacherDashboardCalendarEvent = {
   eventType: string;
   startDateTime: string;
   endDateTime: string;
+  status?: "SCHEDULED" | "COMPLETED" | "CANCELLED" | string;
   courseId?: string | null;
   location?: string | null;
 };

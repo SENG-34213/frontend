@@ -166,7 +166,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-indigo-900">Ask Mentify AI</p>
+                <p className="text-xs font-semibold text-indigo-900">Ask TiT AI</p>
                 <p className="text-xs text-indigo-700/80">
                   Draft lesson plans, generate quiz questions, or summarize content
                 </p>
@@ -272,7 +272,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
         <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span>Tip: Jump directly between views with the left sidebar or quick shortcuts.</span>
-          <span className="font-mono text-[11px]">Mentify Enterprise v2.4</span>
+          <span className="font-mono text-[11px]">TiT Enterprise v2.4</span>
         </div>
       </div>
     </div>

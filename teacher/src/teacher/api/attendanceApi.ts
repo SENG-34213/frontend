@@ -7,6 +7,7 @@ export type BackendAttendanceSessionStatus = "OPEN" | "COMPLETED" | "CANCELLED";
 export type BackendAttendanceRecord = {
   id: string;
   studentId: string;
+  studentName?: string | null;
   status: BackendAttendanceStatus;
   remarks?: string;
   markedAt?: string;

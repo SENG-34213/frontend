@@ -10,7 +10,6 @@ import { TopNavbar } from "./components/layout/TopNavbar";
 import { CommandPalette } from "./components/layout/CommandPalette";
 import { StudentDashboard } from "./components/dashboard/StudentDashboard";
 import { MyCoursesView } from "./components/courses/MyCoursesView";
-import { ExploreCoursesView } from "./components/courses/ExploreCoursesView";
 import { CourseDetailsView } from "./components/courses/CourseDetailsView";
 import { CourseWorkspaceView } from "./components/courses/CourseWorkspaceView";
 import { EnrollmentsView } from "./components/enrollments/EnrollmentsView";
@@ -24,7 +23,6 @@ import { ExamTakingView } from "./components/examinations/ExamTakingView";
 import { GradesView } from "./components/grades/GradesView";
 import { StudentCalendarView } from "./components/calendar/StudentCalendarView";
 import { MessagesView } from "./components/messages/MessagesView";
-import { MentifyAIView } from "./components/ai/MentifyAIView";
 import { NotificationsView } from "./components/notifications/NotificationsView";
 import { ProfileView } from "./components/profile/ProfileView";
 import { SettingsView } from "./components/profile/SettingsView";
@@ -41,7 +39,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     const validViews = new Set([
       "dashboard",
       "my-courses",
-      "explore-courses",
       "course-details",
       "course-workspace",
       "enrollments",
@@ -55,7 +52,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       "grades",
       "calendar",
       "messages",
-      "mentify-ai",
       "notifications",
       "profile",
       "settings",
@@ -105,8 +101,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         return <StudentDashboard />;
       case "my-courses":
         return <MyCoursesView />;
-      case "explore-courses":
-        return <ExploreCoursesView />;
       case "course-details":
         return <CourseDetailsView />;
       case "course-workspace":
@@ -133,8 +127,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         return <StudentCalendarView />;
       case "messages":
         return <MessagesView />;
-      case "mentify-ai":
-        return <MentifyAIView />;
       case "notifications":
         return <NotificationsView />;
       case "profile":

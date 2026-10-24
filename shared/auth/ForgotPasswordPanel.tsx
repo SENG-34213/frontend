@@ -54,7 +54,7 @@ export function ForgotPasswordPanel({
   async function handleRequestCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!email.trim()) {
-      setError("Enter the email address connected to your Mentify account.");
+      setError("Enter the email address connected to your TiT account.");
       return;
     }
     setError("");
@@ -143,7 +143,7 @@ export function ForgotPasswordPanel({
               M
             </span>
             <div>
-              <p className="text-lg font-bold tracking-tight">Mentify</p>
+              <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 {roleLabel} Workspace
               </p>
@@ -173,7 +173,7 @@ export function ForgotPasswordPanel({
               M
             </span>
             <div>
-              <p className="text-base font-bold text-slate-900">Mentify</p>
+              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Account Recovery
               </p>

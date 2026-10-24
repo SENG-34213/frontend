@@ -74,7 +74,7 @@ export const ExamTakingView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-[11px] font-mono text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Proctored Secure Session · Student ID: Verified</span>
+              <span>Secure Exam Session · Identity Verified</span>
             </div>
             <h1 className="font-display text-sm sm:text-base font-bold truncate">
               {exam.courseCode}: {exam.title}

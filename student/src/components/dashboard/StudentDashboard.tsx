@@ -14,11 +14,11 @@ import {
   MessageSquare,
   PlayCircle,
   RefreshCw,
-  Sparkles,
   Target,
   TrendingUp,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 
 const clamp = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
 const boundedPercentage = (value: unknown): number | null => {
@@ -108,7 +108,6 @@ export const StudentDashboard: React.FC = () => {
     navigateToCourseWorkspace,
     setSelectedAssignmentId,
     setCurrentView,
-    sendAiQuery,
     attendanceSummaries,
     attendanceOverall,
     workspaceLoading,
@@ -235,11 +234,15 @@ export const StudentDashboard: React.FC = () => {
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <button
-                onClick={() => firstCourse && navigateToCourseWorkspace(firstCourse.id)}
+                onClick={() =>
+                  firstCourse
+                    ? navigateToCourseWorkspace(firstCourse.id)
+                    : setCurrentView("my-courses")
+                }
                 className="flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-bold text-slate-900 hover:bg-cyan-50"
               >
                 <PlayCircle className="h-4 w-4 text-indigo-600" />
-                {firstCourse ? `Resume ${firstCourse.code}` : "Explore courses"}
+                {firstCourse ? `Resume ${firstCourse.code}` : "View my courses"}
               </button>
               <button
                 onClick={() => setCurrentView("calendar")}
@@ -609,9 +612,14 @@ export const StudentDashboard: React.FC = () => {
                   <span className="text-sm font-bold">{new Date(event.date).getDate()}</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                  <p
+                    className={`truncate text-xs font-bold text-slate-800 dark:text-slate-100 ${event.status === "CANCELLED" ? "line-through opacity-70" : ""}`}
+                  >
                     {event.title}
                   </p>
+                  {event.status === "CANCELLED" && (
+                    <EventStatusBadge status={event.status} compact />
+                  )}
                   <p className="mt-1 truncate text-[10px] text-slate-500">
                     {event.startTime} · {event.location || "Location not set"}
                   </p>
@@ -621,50 +629,6 @@ export const StudentDashboard: React.FC = () => {
             {calendarEvents.length === 0 && (
               <p className="py-8 text-center text-xs text-slate-400">No upcoming events.</p>
             )}
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-950 p-6 text-white shadow-xl sm:p-7">
-          <Sparkles className="absolute -right-4 -top-4 h-32 w-32 text-white/10" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-indigo-200">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">
-                Mentify AI study coach
-              </span>
-            </div>
-            <h2 className="mt-4 max-w-md text-2xl font-bold tracking-tight">
-              Make your next study session count.
-            </h2>
-            <p className="mt-2 max-w-md text-xs leading-5 text-indigo-100/80">
-              Ask for a concept explanation, generate practice questions, or get help preparing for
-              an assessment.
-            </p>
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <button
-                onClick={() => {
-                  sendAiQuery("Help me understand a difficult topic");
-                  setCurrentView("mentify-ai");
-                }}
-                className="rounded-xl bg-white/10 px-3 py-2.5 text-left text-[11px] font-semibold text-white hover:bg-white/15"
-              >
-                Explain a difficult topic <ArrowRight className="ml-1 inline h-3 w-3" />
-              </button>
-              <button
-                onClick={() => {
-                  sendAiQuery("Help me prepare for my next assessment");
-                  setCurrentView("mentify-ai");
-                }}
-                className="rounded-xl bg-white/10 px-3 py-2.5 text-left text-[11px] font-semibold text-white hover:bg-white/15"
-              >
-                Prepare for assessment <ArrowRight className="ml-1 inline h-3 w-3" />
-              </button>
-            </div>
-            <button
-              onClick={() => setCurrentView("mentify-ai")}
-              className="mt-5 flex items-center gap-2 text-xs font-bold text-white"
-            >
-              Open study coach <ArrowRight className="h-3.5 w-3.5" />
-            </button>
           </div>
         </div>
       </section>

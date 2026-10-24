@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const AssignmentsView: React.FC = () => {
   const { assignments, setSelectedAssignmentId, setCurrentView } = useStudent();
@@ -117,15 +118,11 @@ export const AssignmentsView: React.FC = () => {
       {/* Assignment Cards List */}
       <div className="space-y-4">
         {filteredAssignments.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-            <FileCheck2 className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-            <h3 className="mt-3 font-display text-sm font-bold text-slate-900 dark:text-white">
-              No assignments found
-            </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              No coursework matches the active tab or search query.
-            </p>
-          </div>
+          <EmptyState
+            icon={FileCheck2}
+            title="No assignments found"
+            description="No coursework matches the active tab or search query."
+          />
         ) : (
           filteredAssignments.map((asg) => {
             const isPending = asg.status === "PENDING";

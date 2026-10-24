@@ -46,6 +46,7 @@ export type BackendCalendarEvent = {
   updatedAt?: string;
   canEdit: boolean;
   canCancel: boolean;
+  canDelete?: boolean;
 };
 
 function isoDateTime(value: Date) {
@@ -106,4 +107,10 @@ export async function cancelCalendarEvent(id: string) {
   );
   if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
   return response.data;
+}
+
+export async function deleteCalendarEvent(id: string) {
+  return apiRequest<ApiResponse<void>>(`/api/v1/calendar/events/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
 }

@@ -12,6 +12,7 @@ interface QuizResultModalProps {
   answers: QuizAnswerReview[];
   onClose: () => void;
   onRetake?: () => void;
+  remainingAttempts?: number | null;
 }
 
 export const QuizResultModal: React.FC<QuizResultModalProps> = ({
@@ -23,6 +24,7 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
   answers,
   onClose,
   onRetake,
+  remainingAttempts,
 }) => {
   useEffect(() => {
     if (percentage >= 70) {
@@ -87,7 +89,7 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
 
         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
           {isPassed
-            ? "Outstanding work! Your results have been officially recorded in your Mentify gradebook."
+            ? "Outstanding work! Your results have been officially recorded in your TiT gradebook."
             : "Your result has been recorded. Review the course material before your next attempt."}
         </p>
 
@@ -159,13 +161,18 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
         )}
 
         <div className="flex items-center gap-3 pt-2">
-          {onRetake && (
+          {onRetake && (remainingAttempts === null || (remainingAttempts ?? 0) > 0) && (
             <button
               onClick={onRetake}
               className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Retake Quiz</span>
+              <span>
+                Retake Quiz
+                {remainingAttempts !== null && remainingAttempts !== undefined
+                  ? ` · ${remainingAttempts} attempt${remainingAttempts === 1 ? "" : "s"} remaining`
+                  : ""}
+              </span>
             </button>
           )}
           <button

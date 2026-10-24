@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Users, Layers, Award, Plus, Clock } from "lucide-react";
+import { ArrowLeft, Users, Layers, Award, Plus, Clock, BookOpen } from "lucide-react";
 import { Assignment, Course, LearningMaterial, Module, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { getCalendarEvents, type BackendCalendarEvent } from "../api/calendarApi";
@@ -10,6 +10,8 @@ import { getTeacherQuizzes, type BackendQuiz } from "../api/quizApi";
 import { getCourseExams, type BackendExam } from "../api/examApi";
 import { getModuleMaterials } from "../api/courseContentApi";
 import { useTeacherStudents } from "../hooks/useTeacherStudents";
+import { CourseThumbnailImage } from "../../components/CourseThumbnailImage";
+import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -313,23 +315,35 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
       <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2.5 mb-2">
-                <span className="text-xs font-mono font-bold bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded border border-indigo-400/30">
-                  {displayCourse.code}
-                </span>
-                <span className="text-xs text-slate-300 font-medium">
-                  {course.semester} · {course.academicYear}
-                </span>
-                <span className="text-xs text-slate-400">·</span>
-                <span className="text-xs text-slate-300">{displayCourse.level} Level</span>
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="relative w-24 h-20 sm:w-32 sm:h-24 rounded-xl overflow-hidden bg-gradient-to-br from-indigo-600 to-violet-700 border border-white/20 shadow-lg shrink-0">
+                {displayCourse.courseThumbnail ? (
+                  <CourseThumbnailImage
+                    source={displayCourse.courseThumbnail}
+                    alt={`${displayCourse.title} course cover`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : null}
+                <BookOpen className="w-7 h-7 text-white/80 absolute inset-0 m-auto" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                {displayCourse.title}
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-3xl mt-1.5 leading-relaxed">
-                {displayCourse.description}
-              </p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5 mb-2">
+                  <span className="text-xs font-mono font-bold bg-indigo-500/30 text-indigo-200 px-2.5 py-0.5 rounded border border-indigo-400/30">
+                    {displayCourse.code}
+                  </span>
+                  <span className="text-xs text-slate-300 font-medium">
+                    {course.semester} · {course.academicYear}
+                  </span>
+                  <span className="text-xs text-slate-400">·</span>
+                  <span className="text-xs text-slate-300">{displayCourse.level} Level</span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                  {displayCourse.title}
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-3xl mt-1.5 leading-relaxed">
+                  {displayCourse.description}
+                </p>
+              </div>
             </div>
 
             <div className="flex md:flex-col items-end justify-between md:justify-center gap-2 shrink-0 border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-6">
@@ -457,7 +471,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-slate-900">
+                          <p
+                            className={`truncate text-xs font-semibold ${event.status === "CANCELLED" ? "text-slate-500 line-through" : "text-slate-900"}`}
+                          >
                             {event.title}
                           </p>
                           <p className="mt-0.5 text-[11px] text-slate-500">
@@ -465,9 +481,12 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                             {event.location || "No location"}
                           </p>
                         </div>
-                        <span className="shrink-0 rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">
-                          {event.eventType}
-                        </span>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">
+                            {event.eventType}
+                          </span>
+                          <EventStatusBadge status={event.status} compact />
+                        </div>
                       </div>
                     ))}
                   </div>

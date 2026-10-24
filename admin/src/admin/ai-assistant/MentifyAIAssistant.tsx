@@ -97,7 +97,7 @@ function AssistantMessage({ message, onCopy }: { message: AiMessage; onCopy: () 
       </div>
       <div className="min-w-0 max-w-3xl">
         <div className="mb-1 flex items-center gap-2 text-[11px]">
-          <span className="font-semibold text-slate-900 dark:text-white">Mentify AI</span>
+          <span className="font-semibold text-slate-900 dark:text-white">TiT AI</span>
           <span className="text-slate-400">{messageTime(message)}</span>
         </div>
         <div className="rounded-2xl rounded-tl-sm border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-200">
@@ -332,13 +332,9 @@ export const MentifyAIAssistant: React.FC = () => {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Mentify AI Assistant"
-        description="Premium conversational intelligence grounded in Mentify institutional data and live platform analytics."
-        breadcrumbs={[
-          { label: "Admin" },
-          { label: "Platform Operations" },
-          { label: "Mentify AI" },
-        ]}
+        title="TiT AI Assistant"
+        description="Premium conversational intelligence grounded in TiT institutional data and live platform analytics."
+        breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "TiT AI" }]}
         actions={
           <button
             onClick={startNewChat}
@@ -473,7 +469,7 @@ export const MentifyAIAssistant: React.FC = () => {
                   {activeConversation?.title || "New AI workspace"}
                 </p>
                 <p className="flex items-center gap-1 text-[10px] text-emerald-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> HTTP API connected
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Assistant connected
                 </p>
               </div>
             </div>
@@ -511,12 +507,10 @@ export const MentifyAIAssistant: React.FC = () => {
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
                 <ShieldCheck className="h-3 w-3" />
               </span>
-              <span className="truncate">
-                Connected to Mentify AI · authorized admin tools enabled
-              </span>
+              <span className="truncate">Connected to TiT AI · authorized admin tools enabled</span>
             </div>
             <span className="hidden shrink-0 text-[10px] text-slate-400 sm:block">
-              HTTP API · secure session
+              Secure assistant session
             </span>
           </div>
 
@@ -532,7 +526,7 @@ export const MentifyAIAssistant: React.FC = () => {
                   <Sparkles className="h-7 w-7" />
                 </div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  How can I help with Mentify?
+                  How can I help with TiT?
                 </h2>
                 <p className="mt-2 max-w-lg text-sm text-slate-500">
                   Ask about courses, users, registrations, attendance, examinations, or platform
@@ -585,7 +579,7 @@ export const MentifyAIAssistant: React.FC = () => {
                         <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-500" />
                         <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:120ms]" />
                         <span className="h-2 w-2 animate-bounce rounded-full bg-indigo-500 [animation-delay:240ms]" />
-                        <span className="ml-2 text-xs text-slate-500">Mentify AI is thinking…</span>
+                        <span className="ml-2 text-xs text-slate-500">TiT AI is thinking…</span>
                       </div>
                     </div>
                   </div>
@@ -663,7 +657,7 @@ export const MentifyAIAssistant: React.FC = () => {
                   }
                 }}
                 rows={1}
-                placeholder="Ask Mentify AI about your platform..."
+                placeholder="Ask TiT AI about your platform..."
                 className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
               />
               <label
@@ -711,7 +705,7 @@ export const MentifyAIAssistant: React.FC = () => {
               <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
                 <p className="text-[10px] font-bold uppercase text-slate-400">Connection</p>
                 <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-emerald-600">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> AI API available
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Assistant available
                 </p>
                 <p className="mt-1 text-[11px] text-slate-500">POST /api/ai/chat</p>
               </div>

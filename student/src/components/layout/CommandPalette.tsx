@@ -6,7 +6,6 @@ import {
   HelpCircle,
   FolderArchive,
   ArrowRight,
-  Sparkles,
   Calendar,
   X,
 } from "lucide-react";
@@ -128,14 +127,6 @@ export const CommandPalette: React.FC = () => {
     }));
 
   const staticActions = [
-    {
-      id: "act-ai",
-      type: "action" as const,
-      title: "Ask Mentify AI Study Assistant",
-      subtitle: "Ask concept questions, exam prep, or code explanation",
-      icon: Sparkles,
-      action: () => setCurrentView("mentify-ai"),
-    },
     {
       id: "act-cal",
       type: "action" as const,

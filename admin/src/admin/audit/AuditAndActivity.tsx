@@ -72,7 +72,7 @@ export const AuditAndActivity: React.FC<AuditAndActivityProps> = ({ logs }) => {
           <option value="USER_REGISTRATION">User Registration Service</option>
           <option value="KEYCLOAK_AUTH">Keycloak Auth Realm</option>
           <option value="MATERIAL_SERVICE">AWS S3 Material Service</option>
-          <option value="AI_SERVICE">Mentify AI Service</option>
+          <option value="AI_SERVICE">TiT AI Service</option>
           <option value="COURSE_MANAGEMENT">Course Service</option>
         </select>
       </div>

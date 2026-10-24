@@ -128,7 +128,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
         },
         {
           id: "ai-assistant",
-          label: "Mentify AI",
+          label: "TiT AI",
           icon: Sparkles,
           aiGlow: true,
           badge: "Pro",
@@ -161,7 +161,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           {!isCollapsed && (
             <div className="truncate">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-slate-900 tracking-tight text-sm">Mentify</span>
+                <span className="font-bold text-slate-900 tracking-tight text-sm">TiT</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">
                   Teacher
                 </span>

@@ -152,7 +152,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         { id: "marketplace" as AdminRoute, label: "Marketplace", icon: ShoppingBag },
         { id: "calendar" as AdminRoute, label: "Calendar", icon: Calendar },
         { id: "communication" as AdminRoute, label: "Communication", icon: MessageSquare },
-        { id: "ai-assistant" as AdminRoute, label: "Mentify AI", icon: Sparkles },
+        { id: "ai-assistant" as AdminRoute, label: "TiT AI", icon: Sparkles },
         { id: "reports" as AdminRoute, label: "Reports", icon: FileText },
       ],
     },
@@ -181,7 +181,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white">
-                  Mentify
+                  TiT
                 </span>
                 <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                   Admin

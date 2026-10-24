@@ -8,19 +8,12 @@ import {
   Download,
   ExternalLink,
   Award,
-  Sparkles,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const EnrollmentsView: React.FC = () => {
-  const {
-    courses,
-    profile,
-    navigateToCourseWorkspace,
-    navigateToCourseDetails,
-    showToast,
-    setCurrentView,
-  } = useStudent();
+  const { courses, profile, navigateToCourseWorkspace, showToast } = useStudent();
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "COMPLETED" | "ALL">("ALL");
 
   const enrolledCourses = courses.filter((c) => c.enrolled);
@@ -52,13 +45,6 @@ export const EnrollmentsView: React.FC = () => {
             credentials
           </p>
         </div>
-        <button
-          onClick={() => setCurrentView("explore-courses")}
-          className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-700 transition-colors"
-        >
-          <Sparkles className="h-4 w-4" />
-          <span>Register New Course</span>
-        </button>
       </div>
 
       {/* Summary KPI Cards */}
@@ -138,9 +124,12 @@ export const EnrollmentsView: React.FC = () => {
       {/* Enrollments Table / Cards */}
       <div className="space-y-4">
         {displayedCourses.length === 0 ? (
-          <div className="py-12 text-center text-xs text-slate-500">
-            No enrollments found for this filter.
-          </div>
+          <EmptyState
+            compact
+            icon={BookOpen}
+            title="No enrollments found"
+            description="There are no courses matching the selected filter."
+          />
         ) : (
           displayedCourses.map((course) => (
             <div

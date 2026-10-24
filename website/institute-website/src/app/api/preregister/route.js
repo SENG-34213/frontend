@@ -242,7 +242,7 @@ export async function POST(request) {
     }
 
     const emailBody = [
-      "New Mentify class pre-registration",
+      "New TiT class pre-registration",
       "",
       `Name: ${name}`,
       `Email: ${email}`,
@@ -265,7 +265,7 @@ export async function POST(request) {
       from: process.env.EMAIL_FROM,
       to: [process.env.CONTACT_EMAIL],
       replyTo: email,
-      subject: "New Mentify class pre-registration",
+      subject: "New TiT class pre-registration",
       text: emailBody,
     });
 

@@ -49,7 +49,19 @@ function safeErrorMessage(body: any, status: number): string {
   return raw || `Request failed with status ${status}`;
 }
 
+let refreshSessionPromise: Promise<AuthSession | null> | null = null;
+
 async function refreshSession(): Promise<AuthSession | null> {
+  if (refreshSessionPromise) return refreshSessionPromise;
+  refreshSessionPromise = refreshSessionInternal();
+  try {
+    return await refreshSessionPromise;
+  } finally {
+    refreshSessionPromise = null;
+  }
+}
+
+async function refreshSessionInternal(): Promise<AuthSession | null> {
   const currentSession = getSession();
   if (!currentSession?.refreshToken) {
     expireTeacherSession();
@@ -137,6 +149,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
         504,
         error,
       );
+    }
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
     }
     throw new ApiError(
       "The service is temporarily unavailable. Please try again shortly.",

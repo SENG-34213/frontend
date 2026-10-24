@@ -1,4 +1,4 @@
-// Central class directory for the Mentify website.
+// Central class directory for the TiT website.
 // Replace the sample details with confirmed institute information.
 
 export const classGrades = [

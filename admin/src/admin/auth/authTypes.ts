@@ -28,6 +28,7 @@ export interface LoginResponse {
   scope?: string;
   issuedAt?: string;
   mustChangePassword?: boolean;
+  rememberMe?: boolean;
   profile: AdminUserSummary;
   /** Backward-compatible response shape for older auth-service builds. */
   user?: AdminUserSummary;
@@ -49,4 +50,5 @@ export interface AuthSession {
   user: AdminUserSummary;
   expiresAt: number;
   mustChangePassword?: boolean;
+  rememberMe?: boolean;
 }

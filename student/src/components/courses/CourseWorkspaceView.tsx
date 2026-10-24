@@ -11,7 +11,6 @@ import {
   Download,
   Copy,
   Check,
-  Sparkles,
   BookOpen,
   ChevronDown,
   ChevronUp,
@@ -20,6 +19,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const CourseWorkspaceView: React.FC = () => {
   const {
@@ -29,7 +29,6 @@ export const CourseWorkspaceView: React.FC = () => {
     setSelectedLessonId,
     markLessonComplete,
     setCurrentView,
-    sendAiQuery,
     showToast,
     downloadMaterial,
   } = useStudent();
@@ -39,20 +38,71 @@ export const CourseWorkspaceView: React.FC = () => {
   const [videoProgress, setVideoProgress] = useState<number>(0);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isAiHelperOpen, setIsAiHelperOpen] = useState(false);
-  const [quickAiQuestion, setQuickAiQuestion] = useState("");
 
-  const course = courses.find((c) => c.id === selectedCourseId) || courses[0];
+  const course = courses.find((c) => c.id === selectedCourseId);
   if (!course) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900">
-        Course content is not available yet.
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
+        <EmptyState
+          compact
+          icon={BookOpen}
+          title="Course not found"
+          description="This course is no longer available in your enrolled courses."
+          className="border-0 py-0"
+        />
+        <button
+          type="button"
+          onClick={() => setCurrentView("my-courses")}
+          className="mt-5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+        >
+          Back to My Courses
+        </button>
       </div>
     );
   }
-  const allLessons = course.modules.flatMap((m) => m.lessons);
-  const currentLessonIndex = allLessons.findIndex((l) => l.id === selectedLessonId);
-  const currentLesson = allLessons[currentLessonIndex] || allLessons[0];
+  const courseModules = (Array.isArray(course.modules) ? course.modules : [])
+    .filter((module) => module && Array.isArray(module.lessons))
+    .map((module) => ({
+      ...module,
+      lessons: module.lessons.filter(
+        (lesson) => lesson && typeof lesson === "object" && typeof lesson.id === "string",
+      ),
+    }));
+  const allLessons = courseModules.flatMap((module) => module.lessons);
+  const requestedLessonIndex = allLessons.findIndex((l) => l.id === selectedLessonId);
+  const currentLessonIndex = requestedLessonIndex >= 0 ? requestedLessonIndex : 0;
+  const currentLesson = allLessons[currentLessonIndex];
+
+  if (!currentLesson) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-12">
+        <BookOpen className="mx-auto h-10 w-10 text-indigo-500" />
+        <h2 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+          Course content is not available yet
+        </h2>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500 dark:text-slate-400">
+          {course.title} does not have any published lessons to start yet. You can review the course
+          syllabus or return to your course list.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setCurrentView("course-details")}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            View Course Syllabus
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentView("my-courses")}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+          >
+            Back to My Courses
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const prevLesson = currentLessonIndex > 0 ? allLessons[currentLessonIndex - 1] : null;
   const nextLesson =
@@ -63,12 +113,6 @@ export const CourseWorkspaceView: React.FC = () => {
     setCopiedCode(true);
     showToast("Code copied to clipboard");
     setTimeout(() => setCopiedCode(false), 2000);
-  };
-
-  const handleQuickAiAsk = () => {
-    if (!quickAiQuestion.trim()) return;
-    sendAiQuery(`In ${course.code} (${currentLesson?.title}): ${quickAiQuestion}`);
-    setCurrentView("mentify-ai");
   };
 
   return (
@@ -317,30 +361,6 @@ export const CourseWorkspaceView: React.FC = () => {
                 </div>
               )}
 
-            {/* Quick Mentify AI Helper Input */}
-            <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-900/60 dark:bg-indigo-950/40 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-900 dark:text-indigo-200">
-                <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                <span>Need help with {currentLesson.title}?</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={quickAiQuestion}
-                  onChange={(e) => setQuickAiQuestion(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleQuickAiAsk()}
-                  placeholder="Ask Mentify AI to explain this formula, concept, or code..."
-                  className="flex-1 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none dark:border-indigo-800 dark:bg-slate-900 dark:text-white"
-                />
-                <button
-                  onClick={handleQuickAiAsk}
-                  className="rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors"
-                >
-                  Ask AI
-                </button>
-              </div>
-            </div>
-
             {/* Bottom Lesson Navigation */}
             <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-slate-800">
               {prevLesson ? (
@@ -399,7 +419,7 @@ export const CourseWorkspaceView: React.FC = () => {
               </div>
 
               <div className="space-y-4 max-h-[calc(100vh-20rem)] overflow-y-auto pr-1">
-                {course.modules.map((mod, modIdx) => (
+                {courseModules.map((mod, modIdx) => (
                   <div key={mod.id} className="space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                       Module {modIdx + 1}

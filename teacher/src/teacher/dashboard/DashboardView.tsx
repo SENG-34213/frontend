@@ -16,7 +16,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { NavigationTab, NotificationItem, TeacherProfile } from "../types";
-import { StatusBadge } from "../components/StatusBadge";
+import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 import { getTeacherDashboard, type TeacherDashboardData } from "../api/dashboardApi";
 
 interface DashboardViewProps {
@@ -549,12 +549,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <Clock3 className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-bold text-slate-800">{event.title}</p>
+                    <p
+                      className={`truncate text-xs font-bold ${event.status === "CANCELLED" ? "text-slate-500 line-through" : "text-slate-800"}`}
+                    >
+                      {event.title}
+                    </p>
                     <p className="mt-0.5 text-[11px] text-slate-500">
                       {formatTime(event.startDateTime)} · {event.location || "Location not set"}
                     </p>
                   </div>
-                  <StatusBadge status="Scheduled" variant="clean" />
+                  <EventStatusBadge status={event.status ?? "SCHEDULED"} compact />
                 </div>
               ))
             )}
@@ -610,7 +614,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="relative">
             <div className="flex items-center gap-2 text-indigo-200">
               <Sparkles className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Mentify AI</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">TiT AI</span>
             </div>
             <h2 className="mt-4 text-xl font-bold">Turn course data into your next move.</h2>
             <p className="mt-2 text-xs leading-5 text-indigo-100/80">
@@ -674,7 +678,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <p className="truncate text-xs font-semibold text-slate-800">
                     {notification.title}
                   </p>
-                  <p className="mt-1 truncate text-[11px] text-slate-500">{notification.message}</p>
+                  <p className="mt-1 whitespace-pre-line break-words text-[11px] text-slate-600">
+                    {notification.message}
+                  </p>
                   <p className="mt-1 text-[10px] text-slate-400">{notification.timestamp}</p>
                 </div>
               </div>

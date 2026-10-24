@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Search,
   Plus,
@@ -17,21 +17,33 @@ import {
   UserCheck,
   Send,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { DetailDrawer } from "../components/DetailDrawer";
-import { StudentProfile, EnrollmentRecord, GradeRecord, AttendanceSession } from "../types";
+import {
+  StudentProfile,
+  EnrollmentRecord,
+  Grade,
+  GradeRecord,
+  AttendanceSession,
+  Course,
+} from "../types";
 import type { RegisterStudentRequest } from "../api/usersApi";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface StudentManagementProps {
   students: StudentProfile[];
   enrollments: EnrollmentRecord[];
+  courses: Course[];
+  availableGrades: Grade[];
   grades: GradeRecord[];
   attendanceSessions: AttendanceSession[];
   onAddStudent: (newStudent: StudentProfile) => void;
   onRegisterStudent: (request: RegisterStudentRequest) => Promise<StudentProfile>;
+  onCreateEnrollment: (studentId: string, courseIds: string[]) => Promise<unknown>;
   onResendInvitation: (email: string, role: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
@@ -39,10 +51,13 @@ interface StudentManagementProps {
 export const StudentManagement: React.FC<StudentManagementProps> = ({
   students,
   enrollments,
+  courses,
+  availableGrades,
   grades,
   attendanceSessions,
   onAddStudent,
   onRegisterStudent,
+  onCreateEnrollment,
   onResendInvitation,
   showRegistrationWizardDirectly = false,
 }) => {
@@ -58,6 +73,11 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   const [isWizardOpen, setIsWizardOpen] = useState(showRegistrationWizardDirectly);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [createdStudentId, setCreatedStudentId] = useState<string>("");
+  const [createdStudent, setCreatedStudent] = useState<StudentProfile | null>(null);
+  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [enrollmentNotice, setEnrollmentNotice] = useState("");
+  const [enrollmentError, setEnrollmentError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
 
@@ -77,7 +97,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
     email: "",
     phone: "",
     dob: "2008-05-15",
-    grade: "Grade 12",
+    grade: "",
     schoolName: "Metropolitan STEM Collegiate",
     guardianName: "",
     guardianPhone: "",
@@ -90,6 +110,13 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const activeGradeOptions = useMemo(
+    () => availableGrades.filter((grade) => grade.active),
+    [availableGrades],
+  );
+
+  const selectedGradeName = formData.grade || activeGradeOptions[0]?.name || "";
 
   const filteredStudents = students.filter((s) => {
     const matchesSearch =
@@ -113,6 +140,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
         errors.email = "Valid institutional or student email is required";
     }
     if (step === 2) {
+      if (!selectedGradeName.trim()) errors.grade = "Select an active grade";
       if (!formData.guardianName.trim()) errors.guardianName = "Guardian name is required";
       if (!formData.guardianPhone.trim()) errors.guardianPhone = "Guardian phone is required";
     }
@@ -140,9 +168,13 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
     setIsSubmitting(true);
     setFormErrors({});
     try {
-      const createdStudent = await onRegisterStudent(formData);
+      const createdStudent = await onRegisterStudent({ ...formData, grade: selectedGradeName });
       onAddStudent(createdStudent);
       setCreatedStudentId(createdStudent.studentId);
+      setCreatedStudent(createdStudent);
+      setSelectedCourseIds([]);
+      setEnrollmentNotice("");
+      setEnrollmentError("");
       setCurrentStep(5);
     } catch (error) {
       setFormErrors({
@@ -160,7 +192,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       email: "",
       phone: "",
       dob: "2008-05-15",
-      grade: "Grade 12",
+      grade: activeGradeOptions[0]?.name || "",
       schoolName: "Metropolitan STEM Collegiate",
       guardianName: "",
       guardianPhone: "",
@@ -172,9 +204,52 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       postalCode: "95112",
     });
     setFormErrors({});
+    setCreatedStudent(null);
+    setCreatedStudentId("");
+    setSelectedCourseIds([]);
+    setEnrollmentNotice("");
+    setEnrollmentError("");
     setIsSubmitting(false);
     setCurrentStep(1);
     setIsWizardOpen(false);
+  };
+
+  const studentCourses = useMemo(() => {
+    if (!createdStudent) return [];
+    const normalizedStudentGrade = createdStudent.grade
+      .trim()
+      .toLowerCase()
+      .replace(/^grade\s*/i, "");
+    const comparableStudentGrade = /^\d+$/.test(normalizedStudentGrade)
+      ? normalizedStudentGrade.padStart(2, "0")
+      : normalizedStudentGrade;
+    return courses.filter((course) => {
+      const courseGrade = (course.gradeName || course.grade || "")
+        .trim()
+        .toLowerCase()
+        .replace(/^grade\s*/i, "");
+      const comparableCourseGrade = /^\d+$/.test(courseGrade)
+        ? courseGrade.padStart(2, "0")
+        : courseGrade;
+      return course.status !== "ARCHIVED" && comparableCourseGrade === comparableStudentGrade;
+    });
+  }, [courses, createdStudent]);
+
+  const handleEnrollCreatedStudent = async () => {
+    if (!createdStudent || selectedCourseIds.length === 0 || isEnrolling) return;
+    setIsEnrolling(true);
+    setEnrollmentError("");
+    try {
+      await onCreateEnrollment(createdStudent.id, selectedCourseIds);
+      setEnrollmentNotice(
+        `${selectedCourseIds.length} course${selectedCourseIds.length === 1 ? "" : "s"} added to ${createdStudent.firstName}'s learning plan.`,
+      );
+      setSelectedCourseIds([]);
+    } catch (error) {
+      setEnrollmentError(error instanceof Error ? error.message : "Unable to enroll the student.");
+    } finally {
+      setIsEnrolling(false);
+    }
   };
 
   // Student specific relations
@@ -226,9 +301,15 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
             className="px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none"
           >
             <option value="ALL">All Grades</option>
-            <option value="Grade 10">Grade 10</option>
-            <option value="Grade 11">Grade 11</option>
-            <option value="Grade 12">Grade 12</option>
+            {activeGradeOptions.length === 0 ? (
+              <option value="">No active grades available</option>
+            ) : (
+              activeGradeOptions.map((grade) => (
+                <option key={grade.id} value={grade.name}>
+                  {/^\d+$/.test(grade.name.trim()) ? `Grade ${grade.name.trim()}` : grade.name}
+                </option>
+              ))
+            )}
           </select>
 
           <select
@@ -267,7 +348,13 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
               {filteredStudents.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
-                    No student records found matching filters.
+                    <EmptyState
+                      compact
+                      icon={GraduationCap}
+                      title="No students found"
+                      description="No student records match the selected filters."
+                      className="border-0 py-0"
+                    />
                   </td>
                 </tr>
               ) : (
@@ -503,14 +590,26 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       Enrolling Grade Level
                     </label>
                     <select
-                      value={formData.grade}
+                      value={selectedGradeName}
                       onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                      disabled={activeGradeOptions.length === 0}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     >
-                      <option value="Grade 10">Grade 10</option>
-                      <option value="Grade 11">Grade 11</option>
-                      <option value="Grade 12">Grade 12</option>
+                      {activeGradeOptions.length === 0 ? (
+                        <option value="">No active grades available</option>
+                      ) : (
+                        activeGradeOptions.map((grade) => (
+                          <option key={grade.id} value={grade.name}>
+                            {/^\d+$/.test(grade.name.trim())
+                              ? `Grade ${grade.name.trim()}`
+                              : grade.name}
+                          </option>
+                        ))
+                      )}
                     </select>
+                    {formErrors.grade && (
+                      <p className="mt-1 text-[11px] text-rose-600">{formErrors.grade}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
@@ -673,7 +772,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                     <div>
                       <span className="text-slate-400 block">Grade & Mode:</span>
                       <span className="font-medium text-slate-900 dark:text-white">
-                        {formData.grade} · {formData.attendanceMode}
+                        {selectedGradeName} · {formData.attendanceMode}
                       </span>
                     </div>
                     <div>
@@ -725,7 +824,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Account Status:</span>
-                    <StatusBadge status="INVITED" />
+                    <StatusBadge status={createdStudent?.status || "ACTIVE"} />
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Invitation Email:</span>
@@ -733,6 +832,89 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       {formData.email}
                     </span>
                   </div>
+                </div>
+
+                <div className="max-w-xl mx-auto text-left rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/20 p-4">
+                  <div className="flex items-start gap-2 mb-3">
+                    <BookOpen className="w-4 h-4 mt-0.5 text-indigo-600 dark:text-indigo-400" />
+                    <div>
+                      <h5 className="text-xs font-semibold text-slate-900 dark:text-white">
+                        Enroll in courses now
+                      </h5>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Choose courses for {createdStudent?.firstName || "this student"}. You can
+                        also do this later from Enrollments.
+                      </p>
+                    </div>
+                  </div>
+
+                  {studentCourses.length > 0 ? (
+                    <div className="grid sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                      {studentCourses.map((course) => {
+                        const selected = selectedCourseIds.includes(course.id);
+                        return (
+                          <label
+                            key={course.id}
+                            className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                              selected
+                                ? "border-indigo-400 bg-white dark:bg-slate-900"
+                                : "border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              onChange={() =>
+                                setSelectedCourseIds((current) =>
+                                  selected
+                                    ? current.filter((id) => id !== course.id)
+                                    : [...current, course.id],
+                                )
+                              }
+                              className="mt-0.5 accent-indigo-600"
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
+                                {course.title || course.courseName}
+                              </span>
+                              <span className="block text-[10px] text-slate-500 truncate">
+                                {course.code} · {course.category || course.subject || "Course"}
+                              </span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg bg-white/70 dark:bg-slate-900/50 px-3 py-3 text-center text-[11px] text-slate-500">
+                      No active courses are available for {createdStudent?.grade || "this grade"}{" "}
+                      yet.
+                    </div>
+                  )}
+
+                  {enrollmentNotice && (
+                    <p className="mt-2 text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> {enrollmentNotice}
+                    </p>
+                  )}
+                  {enrollmentError && (
+                    <p className="mt-2 text-[11px] text-rose-600 dark:text-rose-400">
+                      {enrollmentError}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    disabled={selectedCourseIds.length === 0 || isEnrolling}
+                    onClick={handleEnrollCreatedStudent}
+                    className="mt-3 w-full px-3 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white flex items-center justify-center gap-1.5"
+                  >
+                    {isEnrolling ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <BookOpen className="w-3.5 h-3.5" />
+                    )}
+                    {isEnrolling ? "Enrolling..." : "Enroll Selected Courses"}
+                  </button>
                 </div>
 
                 <div className="pt-4 flex items-center justify-center gap-3">
@@ -904,7 +1086,13 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                 </h4>
                 {studentEnrollments.length === 0 ? (
                   <p className="text-xs text-slate-400 py-6 text-center">
-                    No active course enrollments recorded for this student.
+                    <EmptyState
+                      compact
+                      icon={BookOpen}
+                      title="No active enrollments"
+                      description="No active course enrollments are recorded for this student."
+                      className="border-0 py-2"
+                    />
                   </p>
                 ) : (
                   studentEnrollments.map((e) => (
@@ -940,7 +1128,13 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                 </h4>
                 {studentGrades.length === 0 ? (
                   <p className="text-xs text-slate-400 py-6 text-center">
-                    No grade records submitted yet for this student.
+                    <EmptyState
+                      compact
+                      icon={Award}
+                      title="No grade records"
+                      description="No grade records have been submitted for this student yet."
+                      className="border-0 py-2"
+                    />
                   </p>
                 ) : (
                   studentGrades.map((g) => (

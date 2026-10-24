@@ -9,6 +9,7 @@ import {
   type BackendNotification,
 } from "../api/notificationApi";
 import type { NotificationItem } from "../types";
+import { formatNotificationTime } from "../../../../shared/notifications/notificationFormat";
 
 type NotificationState = {
   notifications: NotificationItem[];
@@ -31,24 +32,36 @@ function toNotificationItem(notification: BackendNotification): NotificationItem
         : type.includes("MESSAGE")
           ? "message"
           : "system";
-  const actionUrl =
-    category === "submission"
-      ? "assignments"
-      : category === "enrollment"
-        ? undefined
-        : category === "exam"
+  const actionUrl: NotificationItem["actionUrl"] =
+    type.includes("SECURITY") || type.includes("AUTH")
+      ? "settings"
+      : type.includes("RESULT") || type.includes("GRADE")
+        ? "grades"
+        : type.includes("EXAM")
           ? "exams"
-          : category === "message"
-            ? "messages"
-            : undefined;
-  const timestamp = notification.occurredAt || notification.createdAt;
-
+          : type.includes("SUBMISSION") || type.includes("ASSIGNMENT")
+            ? "assignments"
+            : type.includes("QUIZ")
+              ? "quizzes"
+              : type.includes("ATTENDANCE")
+                ? "attendance"
+                : type.includes("CALENDAR") || type.includes("EVENT")
+                  ? "calendar"
+                  : type.includes("MESSAGE") || type.includes("COMMUNICATION")
+                    ? "messages"
+                    : type.includes("ENROLL") || type.includes("STUDENT")
+                      ? "students"
+                      : type.includes("MATERIAL")
+                        ? "materials"
+                        : type.includes("COURSE")
+                          ? "courses"
+                          : "dashboard";
   return {
     id: notification.id,
     title: notification.title,
     message: notification.message,
     category,
-    timestamp: timestamp ? new Date(timestamp).toLocaleString() : "Just now",
+    timestamp: formatNotificationTime(notification.occurredAt || notification.createdAt),
     read: Boolean(notification.readAt),
     actionUrl,
   };

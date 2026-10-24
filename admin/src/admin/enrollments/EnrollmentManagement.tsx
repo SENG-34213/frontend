@@ -25,10 +25,11 @@ interface EnrollmentManagementProps {
 }
 
 function normalizedGrade(value?: string) {
-  return (value || "")
+  const normalized = (value || "")
     .trim()
     .toLowerCase()
     .replace(/^grade\s*/i, "");
+  return /^\d+$/.test(normalized) ? normalized.padStart(2, "0") : normalized;
 }
 
 function studentName(student: StudentProfile) {

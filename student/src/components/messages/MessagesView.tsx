@@ -3,6 +3,7 @@ import { Download, FileText, Search, Send, User } from "lucide-react";
 import { getCommunicationAttachmentDownload } from "../../api/student";
 import { useStudent } from "../../context/StudentContext";
 import type { Message } from "../../types";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 const VoiceAttachment: React.FC<{
   groupId: string;
@@ -195,9 +196,11 @@ export const MessagesView: React.FC = () => {
                 );
               })}
               {!filteredConversations.length && (
-                <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400">
-                  No course communication groups are available.
-                </div>
+                <EmptyState
+                  compact
+                  title="No communication groups"
+                  description="Course communication groups will appear here when available."
+                />
               )}
             </div>
           </div>
@@ -285,9 +288,11 @@ export const MessagesView: React.FC = () => {
                 </div>
               ))}
               {activeConv && !activeConv.messages.length && (
-                <div className="py-12 text-center text-xs text-slate-500 dark:text-slate-400">
-                  No messages in this group yet.
-                </div>
+                <EmptyState
+                  compact
+                  title="No messages yet"
+                  description="Messages sent in this group will appear here."
+                />
               )}
             </div>
 
@@ -330,9 +335,11 @@ export const MessagesView: React.FC = () => {
         /* Announcements View */
         <div className="space-y-4">
           {!announcements.length && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-              No announcements are available.
-            </div>
+            <EmptyState
+              compact
+              title="No announcements"
+              description="There are no announcements available right now."
+            />
           )}
           {announcements.map((ann) => (
             <div

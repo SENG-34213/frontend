@@ -28,25 +28,38 @@ function canUseStorage() {
 
 export function saveSession(session: AuthSession) {
   if (canUseStorage()) {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    const serialized = JSON.stringify(session);
+    if (session.rememberMe !== false) {
+      window.localStorage.setItem(SESSION_KEY, serialized);
+      window.sessionStorage.removeItem(SESSION_KEY);
+    } else {
+      window.sessionStorage.setItem(SESSION_KEY, serialized);
+      window.localStorage.removeItem(SESSION_KEY);
+    }
   }
 }
 
 export function getSession(): AuthSession | null {
   if (!canUseStorage()) return null;
 
-  const storedSession = window.sessionStorage.getItem(SESSION_KEY);
+  const persistentSession = window.localStorage.getItem(SESSION_KEY);
+  const storedSession = persistentSession ?? window.sessionStorage.getItem(SESSION_KEY);
   if (!storedSession) return null;
 
   try {
     const session = JSON.parse(storedSession) as AuthSession;
-    if (!session.accessToken || !isCurrentAccessToken(session.accessToken)) {
+    if (!persistentSession && session.rememberMe !== false) {
+      session.rememberMe = true;
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       window.sessionStorage.removeItem(SESSION_KEY);
+    }
+    if (!session.accessToken || !isCurrentAccessToken(session.accessToken)) {
+      clearSession();
       return null;
     }
     return session;
   } catch {
-    window.sessionStorage.removeItem(SESSION_KEY);
+    clearSession();
     return null;
   }
 }
@@ -58,5 +71,6 @@ export function getAccessToken() {
 export function clearSession() {
   if (canUseStorage()) {
     window.sessionStorage.removeItem(SESSION_KEY);
+    window.localStorage.removeItem(SESSION_KEY);
   }
 }

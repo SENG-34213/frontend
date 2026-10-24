@@ -74,7 +74,7 @@ function AssistantMessage({ message, onCopy }: { message: AiMessage; onCopy: () 
       </div>
       <div className="min-w-0 max-w-3xl">
         <div className="mb-1 flex items-center gap-2 text-[11px]">
-          <b>Mentify AI</b>
+          <b>TiT AI</b>
           <span className="text-slate-400">{messageTime(message)}</span>
         </div>
         <div className="rounded-2xl rounded-tl-sm border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
@@ -268,7 +268,7 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Mentify AI Teaching Assistant</h1>
+          <h1 className="text-xl font-bold text-slate-900">TiT AI Teaching Assistant</h1>
           <p className="mt-1 text-sm text-slate-500">
             Plan lessons, create assessments, and understand your students with authorized teacher
             data.
@@ -386,7 +386,7 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
             )}
           </header>
           <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50/80 px-4 py-2 text-[11px] text-slate-500">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Connected to Mentify AI ·
+            <ShieldCheck className="h-4 w-4 text-emerald-600" /> Connected to TiT AI ·
             teacher-authorized tools enabled
           </div>
           {error && (
@@ -432,7 +432,7 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
                 )}
                 {sending && (
                   <div className="flex items-center gap-3 text-xs text-slate-500">
-                    <Sparkles className="h-4 w-4 animate-pulse text-indigo-600" /> Mentify AI is
+                    <Sparkles className="h-4 w-4 animate-pulse text-indigo-600" /> TiT AI is
                     thinking...
                   </div>
                 )}
@@ -458,7 +458,7 @@ export const MentifyAIWorkspaceView: React.FC<{ initialPrompt?: string }> = ({ i
                   }
                 }}
                 rows={1}
-                placeholder="Ask Mentify AI about your teaching..."
+                placeholder="Ask TiT AI about your teaching..."
                 className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none"
               />
               <button
