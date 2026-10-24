@@ -550,7 +550,10 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           ) : (
             <>
               {formError && (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                <div
+                  role="alert"
+                  className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700"
+                >
                   {formError}
                 </div>
               )}

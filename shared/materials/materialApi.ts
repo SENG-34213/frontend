@@ -60,7 +60,7 @@ function token() {
     "mentify_teacher_auth_session",
     "mentify_student_auth_session",
   ]) {
-    const stored = sessionStorage.getItem(key);
+    const stored = localStorage.getItem(key) ?? sessionStorage.getItem(key);
     if (!stored) continue;
     try {
       const accessToken = (JSON.parse(stored) as { accessToken?: string }).accessToken;

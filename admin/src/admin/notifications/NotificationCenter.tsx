@@ -1,15 +1,5 @@
 import React, { useState } from "react";
-import {
-  Bell,
-  CheckCheck,
-  Filter,
-  Clock,
-  Shield,
-  Award,
-  UserPlus,
-  CheckCircle2,
-  Trash2,
-} from "lucide-react";
+import { Bell, CheckCheck, Clock, Shield, Award, UserPlus, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { NotificationItem } from "../types";
 import { AdminRoute } from "../components/AdminSidebar";
@@ -144,8 +134,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
                     )}
                   </div>
-                  <span className="text-[11px] text-slate-400 tabular-nums shrink-0">
-                    {notif.timestamp}
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-slate-400 tabular-nums">
+                    <Clock className="h-3 w-3" /> {notif.timestamp}
                   </span>
                 </div>
 

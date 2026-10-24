@@ -67,7 +67,7 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
   - Pre-configured administrative inquiry prompt chips (registration velocity, quiz failure variance, exam venue conflicts).
   - Markdown message rendering, response copy utilities, and new session management.
 - **Analytics Dashboard**: Departmental enrollment distribution bars, weekly attendance compliance curves, and demographic KPIs.
-- **Certified Institutional Reports**: Report template preview and parameter customization with CSV/PDF export simulation.
+- **Certified Institutional Reports**: Report template preview and parameter customization.
 - **System Audit & Activity**: Immutable event stream with full JSON payload drawer inspection.
 
 ### 6. Profile & Settings
@@ -151,7 +151,7 @@ src/
 │   ├── profile/            # Admin user profile & contact preferences
 │   ├── quizzes/            # Quiz directory and score distributions
 │   ├── registrations/      # Keycloak invitation operations center
-│   ├── reports/            # Certified report generation & CSV export
+│   ├── reports/            # Certified report templates and details
 │   ├── settings/           # Appearance, Keycloak SSO, and session settings
 │   ├── students/           # Student directory & 5-step registration wizard
 │   ├── teachers/           # Teacher directory & 5-step registration wizard

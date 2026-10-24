@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Calendar,
@@ -8,6 +8,8 @@ import {
   ChevronRight,
   ClipboardList,
   FileText,
+  Download,
+  Edit2,
 } from "lucide-react";
 import { Examination, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
@@ -98,6 +100,12 @@ const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examinatio
   };
 };
 
+const attachmentsForExamList = (attachments?: ExamAttachment[]) => {
+  if (!attachments) return null;
+  const activeAttachments = attachments.filter((attachment) => attachment.active);
+  return activeAttachments.length ? activeAttachments : attachments.slice(0, 1);
+};
+
 export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   onNavigate,
   backendCourses = [],
@@ -106,6 +114,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
 }) => {
   const [exams, setExams] = useState<Examination[]>([]);
   const [backendExams, setBackendExams] = useState<BackendExam[]>([]);
+  const [examAttachments, setExamAttachments] = useState<Record<string, ExamAttachment[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -144,6 +153,44 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [editingAttachment, setEditingAttachment] = useState<ExamAttachment | null>(null);
   const [studentVisible, setStudentVisible] = useState(true);
   const [isSavingExam, setIsSavingExam] = useState(false);
+  const [gradeFilter, setGradeFilter] = useState("all");
+  const [courseFilter, setCourseFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [examSearch, setExamSearch] = useState("");
+
+  const gradeOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          backendCourses
+            .map((course) => course.gradeName?.trim())
+            .filter((grade): grade is string => Boolean(grade)),
+        ),
+      ),
+    [backendCourses],
+  );
+  const filterCourses = useMemo(
+    () =>
+      backendCourses.filter(
+        (course) => gradeFilter === "all" || course.gradeName?.trim() === gradeFilter,
+      ),
+    [backendCourses, gradeFilter],
+  );
+  const filteredExams = useMemo(() => {
+    const query = examSearch.trim().toLowerCase();
+    return exams.filter((exam) => {
+      const course = backendCourses.find((item) => item.id === exam.courseId);
+      const matchesGrade = gradeFilter === "all" || course?.gradeName?.trim() === gradeFilter;
+      const matchesCourse = courseFilter === "all" || exam.courseId === courseFilter;
+      const matchesStatus = statusFilter === "all" || exam.status === statusFilter;
+      const matchesSearch =
+        !query ||
+        [exam.title, exam.courseCode, course?.courseName, course?.subject, course?.gradeName]
+          .filter(Boolean)
+          .some((value) => value!.toLowerCase().includes(query));
+      return matchesGrade && matchesCourse && matchesStatus && matchesSearch;
+    });
+  }, [backendCourses, courseFilter, examSearch, exams, gradeFilter, statusFilter]);
 
   useEffect(() => {
     if (
@@ -164,6 +211,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
     if (backendCourses.length === 0) {
       setBackendExams([]);
       setExams([]);
+      setExamAttachments({});
       setIsLoading(false);
       return;
     }
@@ -171,17 +219,30 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
     setIsLoading(true);
     setError(null);
     Promise.all(backendCourses.map((course) => getCourseExams(course.id, controller.signal)))
-      .then((responses) => {
+      .then(async (responses) => {
         if (controller.signal.aborted) return;
         const liveExams = responses.flat();
         setBackendExams(liveExams);
         setExams(liveExams.map((exam) => mapBackendExam(exam, backendCourses)));
+        const attachmentEntries = await Promise.all(
+          liveExams.map(async (exam) => {
+            try {
+              return [exam.id, await getExamAttachments(exam.id)] as const;
+            } catch {
+              return [exam.id, []] as const;
+            }
+          }),
+        );
+        if (!controller.signal.aborted) {
+          setExamAttachments(Object.fromEntries(attachmentEntries));
+        }
       })
       .catch((requestError: unknown) => {
         if (!controller.signal.aborted) {
           setError(requestError instanceof Error ? requestError.message : "Exams failed to load.");
           setBackendExams([]);
           setExams([]);
+          setExamAttachments({});
         }
       })
       .finally(() => {
@@ -198,6 +259,26 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         exam.id === updated.id ? mapBackendExam(updated, backendCourses) : exam,
       ),
     );
+  };
+
+  const handleDownloadAttachment = async (examId: string, attachment: ExamAttachment) => {
+    try {
+      const blob = await downloadExamAttachment(examId, attachment.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = attachment.originalFilename || "exam-instructions.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "The exam attachment could not be downloaded.",
+      );
+    }
   };
 
   const handleTransition = async (
@@ -240,6 +321,12 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         { instructionFile: editingInstructionFile, studentVisible },
       );
       replaceExam(updated);
+      try {
+        const attachments = await getExamAttachments(updated.id);
+        setExamAttachments((current) => ({ ...current, [updated.id]: attachments }));
+      } catch {
+        // Keep the existing attachment list if the refresh request is unavailable.
+      }
       setEditingExam(null);
       setEditingInstructionFile(null);
       setEditingAttachment(null);
@@ -322,7 +409,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   };
 
   const saveExamMarks = async () => {
-    if (!resultsExam || !resultSheet || resultsExam.status !== "MARKING") return;
+    if (!resultsExam || !resultSheet || !canEditExamResults(resultsExam.status)) return;
     try {
       const results = resultSheet.results.map((result) => {
         const attendanceStatus = resultAttendance[result.studentId];
@@ -349,24 +436,17 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
           remarks: result.remarks,
         };
       });
-      const saved = await enterExamMarks(resultsExam.id, results);
-      setResultSheet((current) => (current ? { ...current, results: saved.results } : current));
-      setResultAttendance(
-        Object.fromEntries(
-          saved.results.map((result) => [
-            result.studentId,
-            result.attendanceStatus === "PRESENT" || result.attendanceStatus === "ABSENT"
-              ? result.attendanceStatus
-              : "",
-          ]),
-        ) as Record<string, "PRESENT" | "ABSENT" | "">,
-      );
+      await enterExamMarks(resultsExam.id, results);
+      setResultsExam(null);
     } catch (requestError) {
       setResultsError(
         requestError instanceof Error ? requestError.message : "Exam marks could not be saved.",
       );
     }
   };
+
+  const canEditExamResults = (status: BackendExam["status"]) =>
+    status === "MARKING" || status === "COMPLETED" || status === "CANCELLED";
 
   const handleFinishWizard = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -409,6 +489,12 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         if (created) {
           setBackendExams((current) => [created, ...current]);
           setExams((current) => [mapBackendExam(created, backendCourses), ...current]);
+          try {
+            const attachments = await getExamAttachments(created.id);
+            setExamAttachments((current) => ({ ...current, [created.id]: attachments }));
+          } catch {
+            setExamAttachments((current) => ({ ...current, [created.id]: [] }));
+          }
           setIsWizardOpen(false);
           setWizardStep(1);
           setWizardTitle("");
@@ -751,6 +837,58 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
           {error}
         </div>
       )}
+      <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.5fr]">
+        <select
+          aria-label="Filter exams by grade"
+          value={gradeFilter}
+          onChange={(event) => {
+            setGradeFilter(event.target.value);
+            setCourseFilter("all");
+          }}
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+        >
+          <option value="all">All grades</option>
+          {gradeOptions.map((grade) => (
+            <option key={grade} value={grade}>
+              {grade}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter exams by course"
+          value={courseFilter}
+          onChange={(event) => setCourseFilter(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+        >
+          <option value="all">All courses</option>
+          {filterCourses.map((course) => (
+            <option key={course.id} value={course.id}>
+              {course.courseCode || course.subject || course.courseName} — {course.courseName}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter exams by status"
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+        >
+          <option value="all">All statuses</option>
+          {Array.from(new Set(exams.map((exam) => exam.status))).map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
+        <input
+          type="search"
+          aria-label="Search exams"
+          placeholder="Search exam title, course, or grade..."
+          value={examSearch}
+          onChange={(event) => setExamSearch(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400"
+        />
+      </div>
       {isLoading ? (
         <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
           Loading exams...
@@ -762,16 +900,20 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
           title="No assigned courses"
           description="Exams will appear after a course is assigned to you."
         />
-      ) : exams.length === 0 ? (
+      ) : filteredExams.length === 0 ? (
         <EmptyState
           compact
           icon={FileText}
-          title="No exams found"
-          description="No exams have been created for your assigned courses yet."
+          title={exams.length === 0 ? "No exams found" : "No matching exams"}
+          description={
+            exams.length === 0
+              ? "No exams have been created for your assigned courses yet."
+              : "Try changing the grade, course, status, or search filters."
+          }
         />
       ) : null}
       <div className="space-y-4">
-        {exams.map((exam) => (
+        {filteredExams.map((exam) => (
           <div
             key={exam.id}
             className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs hover:border-slate-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
@@ -801,6 +943,35 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                   <span>{exam.roomOrPlatform}</span>
                 </span>
               </div>
+              {examAttachments[exam.id] !== undefined && (
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  {attachmentsForExamList(examAttachments[exam.id])?.length ? (
+                    attachmentsForExamList(examAttachments[exam.id])?.map((attachment) => (
+                      <button
+                        key={attachment.id}
+                        type="button"
+                        onClick={() => void handleDownloadAttachment(exam.id, attachment)}
+                        title={`Download ${attachment.originalFilename}`}
+                        className="inline-flex max-w-full items-center gap-2 rounded-lg border border-indigo-100 bg-indigo-50/70 px-2.5 py-1.5 text-left text-[11px] font-medium text-indigo-700 transition hover:border-indigo-200 hover:bg-indigo-100"
+                      >
+                        <FileText className="h-3.5 w-3.5 shrink-0" />
+                        <span className="max-w-[220px] truncate">
+                          {attachment.originalFilename || "Exam instructions.pdf"}
+                        </span>
+                        <span className="shrink-0 rounded bg-white/80 px-1 py-0.5 text-[9px] font-bold uppercase text-indigo-500">
+                          {(attachment.contentType || "").toLowerCase().includes("pdf") ||
+                          (attachment.originalFilename || "").toLowerCase().endsWith(".pdf")
+                            ? "PDF"
+                            : "FILE"}
+                        </span>
+                        <Download className="h-3 w-3 shrink-0" />
+                      </button>
+                    ))
+                  ) : (
+                    <span className="text-[11px] text-slate-400">No instruction file attached</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-4 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
@@ -819,9 +990,12 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                         const record = backendExams.find((item) => item.id === exam.id);
                         if (record) void openEditExam(record);
                       }}
-                      className="px-2.5 py-1.5 text-[10px] font-medium text-slate-700 border border-slate-200 rounded-md"
+                      type="button"
+                      aria-label={`Edit ${exam.title}`}
+                      title="Edit exam"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
                     >
-                      Edit
+                      <Edit2 className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={() => {
@@ -869,13 +1043,16 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => {
                     const record = backendExams.find((item) => item.id === exam.id);
                     if (record) void openResults(record);
                   }}
-                  className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors flex items-center gap-1.5"
+                  aria-label={`Edit results for ${exam.title}`}
+                  title="Edit results"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 transition-colors hover:bg-indigo-100"
                 >
-                  <span>View Results Sheet</span>
+                  <Edit2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
@@ -921,7 +1098,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     </div>
                     <select
                       value={resultAttendance[result.studentId] ?? ""}
-                      disabled={resultsExam.status !== "MARKING"}
+                      disabled={!canEditExamResults(resultsExam.status)}
                       onChange={(event) => {
                         const value = event.target.value as "PRESENT" | "ABSENT" | "";
                         setResultAttendance((current) => ({
@@ -944,7 +1121,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                       max={Number(resultsExam.totalMarks)}
                       value={resultMarks[result.studentId] ?? ""}
                       disabled={
-                        resultsExam.status !== "MARKING" ||
+                        !canEditExamResults(resultsExam.status) ||
                         resultAttendance[result.studentId] === "ABSENT"
                       }
                       onChange={(event) =>
@@ -958,7 +1135,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     <span className="text-xs text-slate-500">/ {resultsExam.totalMarks}</span>
                   </div>
                 ))}
-                {resultsExam.status === "MARKING" && (
+                {canEditExamResults(resultsExam.status) && (
                   <button
                     onClick={() => void saveExamMarks()}
                     className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"

@@ -1384,7 +1384,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-attendance-title"
-            className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl space-y-4"
+            className="max-h-[90dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-xl bg-white p-6 shadow-2xl space-y-4"
           >
             <div className="flex items-center justify-between">
               <h2 id="create-attendance-title" className="text-base font-bold text-slate-900">

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { CalendarEvent } from "../../types";
+import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 
 type CalendarView = "month" | "week" | "day" | "agenda";
 
@@ -167,7 +168,7 @@ export const StudentCalendarView: React.FC = () => {
     view === "month"
       ? monthLabel
       : view === "week"
-        ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+        ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} â€“ ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
         : view === "day"
           ? cursor.toLocaleDateString(undefined, {
               weekday: "long",
@@ -237,7 +238,7 @@ export const StudentCalendarView: React.FC = () => {
                   />
                   {label}
                 </span>
-                {typeFilter === value && <span className="text-indigo-600">✓</span>}
+                {typeFilter === value && <span className="text-indigo-600">âœ“</span>}
               </button>
             ))}
         </div>
@@ -349,7 +350,7 @@ export const StudentCalendarView: React.FC = () => {
             )}
             {searchQuery && (
               <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-700 dark:text-slate-300">
-                Search: “{searchQuery}”
+                Search: â€œ{searchQuery}â€
               </span>
             )}
           </div>
@@ -425,9 +426,14 @@ export const StudentCalendarView: React.FC = () => {
                           <button
                             key={event.id}
                             onClick={() => setSelectedEvent(event)}
-                            className={`block min-w-0 max-w-full truncate rounded border px-1.5 py-1 text-left text-[10px] font-semibold ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"}`}
+                            className={`block min-w-0 max-w-full truncate rounded border px-1.5 py-1 text-left text-[10px] font-semibold ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"} ${event.status === "CANCELLED" ? "opacity-70" : ""}`}
                           >
-                            {eventTime(event)} · {event.title}
+                            <span className={event.status === "CANCELLED" ? "line-through" : ""}>
+                              {eventTime(event)} · {event.title}
+                            </span>
+                            {event.status === "CANCELLED" && (
+                              <EventStatusBadge status={event.status} compact />
+                            )}
                           </button>
                         ))}
                       {eventsFor(dateKey(date)).length > 3 && (
@@ -468,11 +474,18 @@ export const StudentCalendarView: React.FC = () => {
                       <button
                         key={event.id}
                         onClick={() => setSelectedEvent(event)}
-                        className={`w-full rounded-xl border p-2 text-left text-xs ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"}`}
+                        className={`w-full rounded-xl border p-2 text-left text-xs ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"} ${event.status === "CANCELLED" ? "opacity-70" : ""}`}
                       >
-                        <b className="block truncate">{event.title}</b>
+                        <b
+                          className={`block truncate ${event.status === "CANCELLED" ? "line-through" : ""}`}
+                        >
+                          {event.title}
+                        </b>
+                        {event.status === "CANCELLED" && (
+                          <EventStatusBadge status={event.status} compact />
+                        )}
                         <span className="mt-1 block text-[10px]">
-                          {eventTime(event)} · {event.location || "No location"}
+                          {eventTime(event)} Â· {event.location || "No location"}
                         </span>
                       </button>
                     ))}
@@ -492,13 +505,20 @@ export const StudentCalendarView: React.FC = () => {
                   <button
                     key={event.id}
                     onClick={() => setSelectedEvent(event)}
-                    className={`flex w-full items-start gap-4 rounded-xl border p-4 text-left ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"}`}
+                    className={`flex w-full items-start gap-4 rounded-xl border p-4 text-left ${typeColors[event.type] || "border-slate-200 bg-slate-50 text-slate-600"} ${event.status === "CANCELLED" ? "opacity-70" : ""}`}
                   >
                     <span className="w-20 shrink-0 text-xs font-bold">{eventTime(event)}</span>
                     <span>
-                      <b className="block text-sm">{event.title}</b>
+                      <b
+                        className={`block text-sm ${event.status === "CANCELLED" ? "line-through" : ""}`}
+                      >
+                        {event.title}
+                      </b>
+                      {event.status === "CANCELLED" && (
+                        <EventStatusBadge status={event.status} compact />
+                      )}
                       <span className="mt-1 block text-xs">
-                        {event.courseCode || "General"} · {event.location || "No location"}
+                        {event.courseCode || "General"} Â· {event.location || "No location"}
                       </span>
                     </span>
                   </button>
@@ -519,7 +539,7 @@ export const StudentCalendarView: React.FC = () => {
                   <button
                     key={event.id}
                     onClick={() => setSelectedEvent(event)}
-                    className="flex w-full items-center gap-4 rounded-xl border border-slate-200 p-4 text-left hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700"
+                    className={`flex w-full items-center gap-4 rounded-xl border border-slate-200 p-4 text-left hover:border-indigo-300 dark:border-slate-800 dark:hover:border-indigo-700 ${event.status === "CANCELLED" ? "opacity-70" : ""}`}
                   >
                     <span className="w-24 shrink-0 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                       {new Date(`${event.date}T00:00:00`).toLocaleDateString(undefined, {
@@ -528,11 +548,13 @@ export const StudentCalendarView: React.FC = () => {
                       })}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <b className="block truncate text-sm text-slate-900 dark:text-white">
+                      <b
+                        className={`block truncate text-sm text-slate-900 dark:text-white ${event.status === "CANCELLED" ? "line-through" : ""}`}
+                      >
                         {event.title}
                       </b>
                       <span className="text-xs text-slate-500">
-                        {event.courseCode || "General"} · {eventTime(event)}
+                        {event.courseCode || "General"} Â· {eventTime(event)}
                       </span>
                     </span>
                     <span
@@ -540,6 +562,9 @@ export const StudentCalendarView: React.FC = () => {
                     >
                       {typeLabels[event.type] || event.type}
                     </span>
+                    {event.status === "CANCELLED" && (
+                      <EventStatusBadge status={event.status} compact />
+                    )}
                   </button>
                 ))}
                 {!agendaEvents.length && (
@@ -589,7 +614,14 @@ export const StudentCalendarView: React.FC = () => {
                 >
                   {typeLabels[selectedEvent.type] || selectedEvent.type}
                 </span>
-                <h3 className="mt-3 font-display text-lg font-bold text-slate-900 dark:text-white">
+                {selectedEvent.status === "CANCELLED" && (
+                  <span className="ml-2 inline-flex align-middle">
+                    <EventStatusBadge status={selectedEvent.status} />
+                  </span>
+                )}
+                <h3
+                  className={`mt-3 font-display text-lg font-bold text-slate-900 dark:text-white ${selectedEvent.status === "CANCELLED" ? "line-through text-slate-400" : ""}`}
+                >
                   {selectedEvent.title}
                 </h3>
               </div>
@@ -614,7 +646,7 @@ export const StudentCalendarView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-slate-400" />
                 {selectedEvent.startTime || "All day"}
-                {selectedEvent.endTime ? ` – ${selectedEvent.endTime}` : ""}
+                {selectedEvent.endTime ? ` â€“ ${selectedEvent.endTime}` : ""}
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-slate-400" />

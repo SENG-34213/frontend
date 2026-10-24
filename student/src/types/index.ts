@@ -211,16 +211,23 @@ export interface Examination {
   type: "MIDTERM" | "FINAL" | "COMPREHENSIVE";
   scheduledDate: string;
   startTime: string;
+  endTime?: string;
   durationMinutes: number;
   location: string;
   proctorName: string;
   status: "UPCOMING" | "IN_PROGRESS" | "COMPLETED" | "UNKNOWN";
+  eligible?: boolean;
   totalMarks: number;
+  passMarks?: number;
   weightPercentage: number;
   rules: string[];
   score?: number;
   scorePercentage?: number;
   letterGrade?: string;
+  attendanceStatus?: string;
+  resultStatus?: string;
+  remarks?: string;
+  description?: string;
   questions?: QuizQuestion[];
 }
 
@@ -241,6 +248,7 @@ export interface LearningMaterial {
 
 export interface CalendarEvent {
   id: string;
+  status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
   courseId?: string;
   title: string;
   courseCode?: string;

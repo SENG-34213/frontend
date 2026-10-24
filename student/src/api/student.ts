@@ -13,6 +13,7 @@ import type {
   StudentProfile,
   Teacher,
 } from "../types";
+import { formatNotificationTime } from "../../../shared/notifications/notificationFormat";
 import type { StudentUserSummary } from "../auth/authTypes";
 
 type ApiEnvelope<T> = { data?: T; message?: string };
@@ -373,6 +374,12 @@ export function toCalendarEvent(value: JsonRecord): CalendarEvent {
       : "";
   return {
     id: idOf(value.id),
+    status:
+      String(value.status || "").toUpperCase() === "CANCELLED"
+        ? "CANCELLED"
+        : String(value.status || "").toUpperCase() === "COMPLETED"
+          ? "COMPLETED"
+          : "SCHEDULED",
     title: idOf(value.title),
     courseId: idOf(value.courseId),
     courseCode: "",
@@ -392,15 +399,46 @@ export function toCalendarEvent(value: JsonRecord): CalendarEvent {
 
 function toNotification(value: JsonRecord): NotificationItem {
   const type = String(value.type || "ANNOUNCEMENT").toUpperCase();
+  const mappedType: NotificationItem["type"] =
+    type.includes("DEADLINE") || type.includes("ASSIGNMENT")
+      ? "DEADLINE"
+      : type.includes("GRADE") || type.includes("RESULT")
+        ? "GRADE"
+        : type.includes("EXAM")
+          ? "EXAM"
+          : type.includes("MATERIAL")
+            ? "MATERIAL"
+            : "ANNOUNCEMENT";
+  const actionView: NonNullable<NotificationItem["actionView"]> =
+    type.includes("SECURITY") || type.includes("AUTH")
+      ? "settings"
+      : type.includes("RESULT") || type.includes("GRADE")
+        ? "grades"
+        : type.includes("EXAM")
+          ? "examinations"
+          : type.includes("ASSIGNMENT") || type.includes("SUBMISSION") || type.includes("DEADLINE")
+            ? "assignments"
+            : type.includes("QUIZ")
+              ? "quizzes"
+              : type.includes("MATERIAL")
+                ? "materials"
+                : type.includes("ATTENDANCE") || type.includes("CALENDAR") || type.includes("EVENT")
+                  ? "calendar"
+                  : type.includes("MESSAGE") || type.includes("COMMUNICATION")
+                    ? "messages"
+                    : type.includes("PAYMENT") || type.includes("ENROLL")
+                      ? "enrollments"
+                      : type.includes("COURSE")
+                        ? "my-courses"
+                        : "dashboard";
   return {
     id: idOf(value.id),
     title: idOf(value.title),
     description: idOf(value.message || value.description),
-    timestamp: idOf(value.occurredAt || value.createdAt),
-    type: ["DEADLINE", "GRADE", "ANNOUNCEMENT", "EXAM", "MATERIAL"].includes(type)
-      ? (type as NotificationItem["type"])
-      : "ANNOUNCEMENT",
+    timestamp: formatNotificationTime(idOf(value.occurredAt || value.createdAt)),
+    type: mappedType,
     read: Boolean(value.readAt),
+    actionView,
   };
 }
 
@@ -424,6 +462,8 @@ function toExamination(value: JsonRecord): Examination {
   const endMinutes = endTime ? timeToMinutes(endTime) : 0;
   const durationMinutes = endMinutes > startMinutes ? endMinutes - startMinutes : 0;
   const rawStatus = String(value.status || value.examStatus || "UNKNOWN").toUpperCase();
+  const mappedStatus =
+    rawStatus === "SCHEDULED" ? "UPCOMING" : rawStatus === "MARKING" ? "IN_PROGRESS" : rawStatus;
   return {
     id: idOf(value.examId || value.id),
     courseId: idOf(value.courseId),
@@ -435,17 +475,28 @@ function toExamination(value: JsonRecord): Examination {
       : "FINAL",
     scheduledDate: idOf(value.examDate),
     startTime,
+    endTime,
     durationMinutes,
-    location: idOf(value.location),
-    proctorName: idOf(value.proctorName),
-    status: ["UPCOMING", "IN_PROGRESS", "COMPLETED"].includes(rawStatus)
-      ? (rawStatus as Examination["status"])
+    location: idOf(value.venue || value.location),
+    proctorName: readableName(value.proctorName),
+    status: ["UPCOMING", "IN_PROGRESS", "COMPLETED"].includes(mappedStatus)
+      ? (mappedStatus as Examination["status"])
       : "UNKNOWN",
+    eligible: Boolean(value.eligible),
     totalMarks: Number(value.totalMarks ?? 0),
+    passMarks: Number(value.passMarks ?? 0),
     weightPercentage: Number(value.weightPercentage ?? 0),
     rules: [],
-    score: value.marksObtained,
-    letterGrade: value.grade,
+    score: value.marksObtained == null ? undefined : Number(value.marksObtained),
+    scorePercentage:
+      value.marksObtained == null || !Number(value.totalMarks)
+        ? undefined
+        : (Number(value.marksObtained) / Number(value.totalMarks)) * 100,
+    letterGrade: idOf(value.grade) || undefined,
+    attendanceStatus: idOf(value.attendanceStatus) || undefined,
+    resultStatus: idOf(value.resultStatus) || undefined,
+    remarks: idOf(value.remarks) || undefined,
+    description: idOf(value.description) || undefined,
   };
 }
 
@@ -953,7 +1004,16 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
       ).values(),
     ).map((exam) => {
       const course = courseMap.get(exam.courseId);
-      return { ...exam, courseCode: course?.code || "", courseTitle: course?.title || "" };
+      return {
+        ...exam,
+        courseCode: course?.code || "",
+        courseTitle: course?.title || "",
+        // Student exam DTOs may omit proctorName. In that case, show the
+        // teacher assigned to the course instead of presenting an empty or
+        // misleading "Not assigned" value.
+        proctorName:
+          readableName(exam.proctorName) || readableName(course?.instructor.name, "Not assigned"),
+      };
     }),
     materials: [
       ...courseScopedMaterials,

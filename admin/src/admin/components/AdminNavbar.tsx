@@ -13,9 +13,7 @@ import {
   BookOpen,
   Calendar,
   ChevronRight,
-  CheckCircle2,
   Menu,
-  Shield,
   LogOut,
   User,
   Settings,
@@ -321,7 +319,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
                       </span>
                       <span className="text-[10px] text-slate-400 shrink-0">{item.timestamp}</span>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                    <p className="whitespace-pre-line break-words text-xs text-slate-600 dark:text-slate-300 mt-1">
                       {item.message}
                     </p>
                   </div>

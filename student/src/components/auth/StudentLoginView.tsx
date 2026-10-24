@@ -12,6 +12,7 @@ import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel
 export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -28,7 +29,7 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
     setNotice("");
     setIsSubmitting(true);
     try {
-      onLogin(await loginStudent(email.trim(), password));
+      onLogin(await loginStudent(email.trim(), password, rememberMe));
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Unable to sign in.");
     } finally {
@@ -169,8 +170,13 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
               </label>
               <div className="flex items-center justify-between pt-1 text-xs">
                 <label className="flex items-center gap-2 text-slate-500">
-                  <input type="checkbox" defaultChecked className="h-3.5 w-3.5 accent-indigo-600" />{" "}
-                  Remember me
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-3.5 w-3.5 accent-indigo-600"
+                  />{" "}
+                  Keep me signed in for one day
                 </label>
                 <button
                   type="button"

@@ -1,30 +1,57 @@
-import React, { useState } from "react";
-import { BarChart3, Search, Filter, Award, CheckCircle2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
-import { GradeRecord } from "../types";
+import type { Course, GradeRecord } from "../types";
 
 interface GradesAndResultsProps {
   grades: GradeRecord[];
+  courses: Course[];
+  loading?: boolean;
 }
 
-export const GradesAndResults: React.FC<GradesAndResultsProps> = ({ grades }) => {
+export const GradesAndResults: React.FC<GradesAndResultsProps> = ({
+  grades,
+  courses,
+  loading = false,
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("ALL");
   const [courseFilter, setCourseFilter] = useState("ALL");
+  const [typeFilter, setTypeFilter] = useState("ALL");
 
-  const filteredGrades = grades.filter((g) => {
+  const gradeNames = useMemo(
+    () => Array.from(new Set(courses.map((course) => course.grade).filter(Boolean))).sort(),
+    [courses],
+  );
+  const availableCourses =
+    gradeFilter === "ALL" ? courses : courses.filter((course) => course.grade === gradeFilter);
+  const filteredGrades = grades.filter((grade) => {
+    const query = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      g.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.assessmentTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCourse = courseFilter === "ALL" || g.courseCode === courseFilter;
-    return matchesSearch && matchesCourse;
+      !query ||
+      [
+        grade.studentName,
+        grade.studentNumber,
+        grade.courseCode,
+        grade.courseTitle,
+        grade.assessmentTitle,
+        grade.gradeName,
+      ]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(query));
+    return (
+      matchesSearch &&
+      (gradeFilter === "ALL" || grade.gradeName === gradeFilter) &&
+      (courseFilter === "ALL" || grade.courseId === courseFilter) &&
+      (typeFilter === "ALL" || grade.assessmentType === typeFilter)
+    );
   });
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Grades & Results Gradebook"
-        description="Comprehensive evaluation ledger, assessment mark distributions, faculty feedback records, and grade verification."
+        description="Published assignment, quiz, and examination marks across courses."
         breadcrumbs={[
           { label: "Admin" },
           { label: "Academic Management" },
@@ -32,87 +59,127 @@ export const GradesAndResults: React.FC<GradesAndResultsProps> = ({ grades }) =>
         ]}
       />
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <label className="relative min-w-[220px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
-            type="text"
+            type="search"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by student, ID, or assessment title..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search student, course, or assessment..."
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
           />
-        </div>
-
+        </label>
         <select
+          aria-label="Filter results by grade"
+          value={gradeFilter}
+          onChange={(event) => {
+            setGradeFilter(event.target.value);
+            setCourseFilter("ALL");
+          }}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+        >
+          <option value="ALL">All Grades</option>
+          {gradeNames.map((grade) => (
+            <option key={grade} value={grade}>
+              {grade}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter results by course"
           value={courseFilter}
-          onChange={(e) => setCourseFilter(e.target.value)}
-          className="px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+          onChange={(event) => setCourseFilter(event.target.value)}
+          className="max-w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
         >
           <option value="ALL">All Courses</option>
-          <option value="MATH-401">MATH-401</option>
-          <option value="CS-302">CS-302</option>
-          <option value="PHYS-402">PHYS-402</option>
+          {availableCourses.map((course) => (
+            <option key={course.id} value={course.id}>
+              {course.code} — {course.title}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter results by assessment type"
+          value={typeFilter}
+          onChange={(event) => setTypeFilter(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+        >
+          <option value="ALL">All Assessments</option>
+          <option value="ASSIGNMENT">Assignments</option>
+          <option value="QUIZ">Quizzes</option>
+          <option value="MIDTERM">Examinations</option>
+          <option value="FINAL_EXAM">Final examinations</option>
         </select>
       </div>
 
-      {/* Gradebook Table */}
-      <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                <th className="py-3 px-4 font-semibold">Student Name & ID</th>
-                <th className="py-3 px-4 font-semibold">Course</th>
-                <th className="py-3 px-4 font-semibold">Assessment</th>
-                <th className="py-3 px-4 font-semibold">Score / Max</th>
-                <th className="py-3 px-4 font-semibold">Letter Grade</th>
-                <th className="py-3 px-4 font-semibold">Evaluator Feedback</th>
-                <th className="py-3 px-4 font-semibold">Graded Date</th>
+              <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                <th className="px-4 py-3 font-semibold">Student</th>
+                <th className="px-4 py-3 font-semibold">Grade / Course</th>
+                <th className="px-4 py-3 font-semibold">Assessment</th>
+                <th className="px-4 py-3 font-semibold">Score / Max</th>
+                <th className="px-4 py-3 font-semibold">Result</th>
+                <th className="px-4 py-3 font-semibold">Updated</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredGrades.map((grade) => (
-                <tr
-                  key={grade.id}
-                  className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  <td className="py-3 px-4">
-                    <span className="font-semibold text-slate-900 dark:text-white block">
-                      {grade.studentName}
+                <tr key={grade.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                  <td className="px-4 py-3">
+                    <span className="block font-semibold text-slate-900 dark:text-white">
+                      {grade.studentName || "Student name unavailable"}
                     </span>
-                    <span className="font-mono text-[11px] text-slate-400">{grade.studentId}</span>
+                    {grade.studentNumber && (
+                      <span className="text-[11px] text-slate-400">{grade.studentNumber}</span>
+                    )}
                   </td>
-
-                  <td className="py-3 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                    {grade.courseCode}
+                  <td className="px-4 py-3">
+                    <span className="block font-medium text-slate-800 dark:text-slate-200">
+                      {grade.gradeName || "Grade unavailable"}
+                    </span>
+                    <span className="text-slate-500">
+                      {grade.courseCode} · {grade.courseTitle}
+                    </span>
                   </td>
-
-                  <td className="py-3 px-4 text-slate-700 dark:text-slate-300">
-                    <span className="font-medium block">{grade.assessmentTitle}</span>
+                  <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                    <span className="block font-medium">{grade.assessmentTitle}</span>
                     <span className="text-[10px] uppercase text-slate-400">
                       {grade.assessmentType.replace("_", " ")}
                     </span>
                   </td>
-
-                  <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white tabular-nums">
+                  <td className="px-4 py-3 font-mono font-bold tabular-nums text-slate-900 dark:text-white">
                     {grade.score} / {grade.maxScore}
                   </td>
-
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded font-bold text-xs bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <td className="px-4 py-3">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
                       {grade.letterGrade}
                     </span>
+                    {grade.percentage != null && (
+                      <span className="ml-2 text-slate-500">{grade.percentage.toFixed(1)}%</span>
+                    )}
                   </td>
-
-                  <td className="py-3 px-4 text-slate-500 max-w-xs truncate">
-                    {grade.feedback || "No remarks recorded"}
+                  <td className="px-4 py-3 text-slate-500">
+                    {grade.updatedAt || grade.gradedDate
+                      ? new Date(grade.updatedAt || grade.gradedDate).toLocaleString()
+                      : "—"}
                   </td>
-
-                  <td className="py-3 px-4 text-slate-500 tabular-nums">{grade.gradedDate}</td>
                 </tr>
               ))}
+              {filteredGrades.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
+                    {loading
+                      ? "Loading published results…"
+                      : grades.length === 0
+                        ? "No published results are available for these courses yet."
+                        : "No results match the selected filters."}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

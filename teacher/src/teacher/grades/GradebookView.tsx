@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Check, Download, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import type { NavigationTab } from "../types";
 import type { BackendCourse } from "../api/courseApi";
 import { getTeacherGradebook, type TeacherGradebook } from "../api/gradebookApi";
@@ -14,16 +14,34 @@ const numberValue = (value: number | string | null | undefined) =>
 
 export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
   const [courseId, setCourseId] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [gradebook, setGradebook] = useState<TeacherGradebook | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [exported, setExported] = useState(false);
+
+  const gradeOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          courses
+            .map((course) => course.gradeName?.trim())
+            .filter((grade): grade is string => Boolean(grade)),
+        ),
+      ),
+    [courses],
+  );
+  const availableCourses = useMemo(
+    () =>
+      courses.filter((course) => gradeFilter === "all" || course.gradeName?.trim() === gradeFilter),
+    [courses, gradeFilter],
+  );
 
   useEffect(() => {
-    if (!courseId && courses[0]?.id) setCourseId(courses[0].id);
-    if (courseId && !courses.some((course) => course.id === courseId)) setCourseId("");
-  }, [courseId, courses]);
+    if (!availableCourses.some((course) => course.id === courseId)) {
+      setCourseId(availableCourses[0]?.id || "");
+    }
+  }, [availableCourses, courseId]);
 
   useEffect(() => {
     if (!courseId) {
@@ -53,7 +71,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
   const filtered = useMemo(() => {
     const query = search.toLowerCase();
     return rows.filter((row) =>
-      [row.studentId, row.studentNumber, row.studentName, row.email]
+      [row.studentNumber, row.studentName, row.email]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(query)),
     );
@@ -70,30 +88,6 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
   const marksReturned = allItems.filter(
     (item) => numberValue(item.status === "MISSING" ? null : item.score) !== null,
   );
-
-  const exportCsv = () => {
-    const csv = [
-      "Student ID,Student Name,Assignments,Quizzes,Exams,Overall,Letter",
-      ...filtered.map((row) =>
-        [
-          row.studentNumber || row.studentId,
-          row.studentName || "Unavailable",
-          row.assignments.map((item) => item.percentage ?? "").join(";"),
-          row.quizzes.map((item) => item.percentage ?? "").join(";"),
-          row.exams.map((item) => item.percentage ?? "").join(";"),
-          row.overallPercentage ?? row.percentage ?? "",
-          row.letterGrade ?? row.grade ?? "",
-        ].join(","),
-      ),
-    ].join("\n");
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    link.download = "gradebook.csv";
-    link.click();
-    URL.revokeObjectURL(link.href);
-    setExported(true);
-    window.setTimeout(() => setExported(false), 2000);
-  };
 
   const renderPercentage = (row: (typeof rows)[number], id: string) => {
     const item = [...row.assignments, ...row.quizzes, ...row.exams].find(
@@ -116,32 +110,30 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
         </div>
         <div className="flex items-center gap-2">
           <select
+            aria-label="Filter gradebook by grade"
+            value={gradeFilter}
+            onChange={(event) => setGradeFilter(event.target.value)}
+            className="px-3 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden shadow-2xs"
+          >
+            <option value="all">All grades</option>
+            {gradeOptions.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
+          <select
             value={courseId}
             onChange={(event) => setCourseId(event.target.value)}
             className="px-3 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden shadow-2xs"
           >
-            {courses.length === 0 && <option value="">No courses available</option>}
-            {courses.map((course) => (
+            {availableCourses.length === 0 && <option value="">No courses available</option>}
+            {availableCourses.map((course) => (
               <option key={course.id} value={course.id}>
                 {course.courseCode || course.courseName} — {course.courseName}
               </option>
             ))}
           </select>
-          <button
-            onClick={exportCsv}
-            disabled={!filtered.length}
-            className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
-          >
-            {exported ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" /> Exported!
-              </>
-            ) : (
-              <>
-                <Download className="w-3.5 h-3.5 text-slate-500" /> Export CSV
-              </>
-            )}
-          </button>
         </div>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -179,7 +171,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search students by name, ID, or email..."
+            placeholder="Search by student name, number, or email..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-xs text-slate-900 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
@@ -225,9 +217,11 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
                   <tr key={row.studentId} className="hover:bg-slate-50/70">
                     <td className="px-5 py-3.5 sticky left-0 bg-white font-sans font-semibold text-slate-900">
                       <div>{row.studentName || "Name unavailable"}</div>
-                      <div className="text-[10px] text-slate-400 font-normal">
-                        {row.studentNumber || row.studentId}
-                      </div>
+                      {row.studentNumber && (
+                        <div className="text-[10px] text-slate-400 font-normal">
+                          {row.studentNumber}
+                        </div>
+                      )}
                     </td>
                     {[...assignments, ...quizzes, ...exams].map((item) => (
                       <td key={item.assessmentId} className="px-4 py-3.5 text-right">

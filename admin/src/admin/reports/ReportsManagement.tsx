@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { FileText, Download, Calendar, Filter, Eye, CheckCircle2, ArrowRight } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { DetailDrawer } from "../components/DetailDrawer";
 
@@ -14,7 +13,6 @@ interface ReportTemplate {
 
 export const ReportsManagement: React.FC = () => {
   const [selectedReport, setSelectedReport] = useState<ReportTemplate | null>(null);
-  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
 
   const reports: ReportTemplate[] = [
     {
@@ -55,11 +53,6 @@ export const ReportsManagement: React.FC = () => {
     },
   ];
 
-  const handleSimulateExport = (title: string) => {
-    setDownloadSuccess(title);
-    setTimeout(() => setDownloadSuccess(null), 3000);
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -67,15 +60,6 @@ export const ReportsManagement: React.FC = () => {
         description="Generate certified administrative audits, enrollment digests, and compliance reporting packages."
         breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Reports" }]}
       />
-
-      {downloadSuccess && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>
-            Report generated and downloaded: <strong>{downloadSuccess}</strong> (PDF/CSV Export)
-          </span>
-        </div>
-      )}
 
       {/* Reports Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -99,21 +83,12 @@ export const ReportsManagement: React.FC = () => {
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-[11px] text-slate-400">Cadence: {report.frequency}</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSelectedReport(report)}
-                  className="px-2.5 py-1 text-xs font-medium rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-                >
-                  Inspect Schema
-                </button>
-                <button
-                  onClick={() => handleSimulateExport(report.title)}
-                  className="px-3 py-1 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-xs"
-                >
-                  <Download className="w-3 h-3" />
-                  <span>Generate CSV</span>
-                </button>
-              </div>
+              <button
+                onClick={() => setSelectedReport(report)}
+                className="px-2.5 py-1 text-xs font-medium rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+              >
+                Inspect Details
+              </button>
             </div>
           </div>
         ))}
@@ -142,16 +117,6 @@ export const ReportsManagement: React.FC = () => {
                 • status, created date, activation date, sign-in location
               </span>
             </div>
-
-            <button
-              onClick={() => {
-                handleSimulateExport(selectedReport.title);
-                setSelectedReport(null);
-              }}
-              className="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium"
-            >
-              Export Report Data Now
-            </button>
           </div>
         </DetailDrawer>
       )}

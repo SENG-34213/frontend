@@ -165,7 +165,7 @@ export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <h3
-                          className={`truncate text-xs font-bold sm:text-sm ${item.read ? "text-slate-700" : "text-slate-900"}`}
+                          className={`break-words text-xs font-bold sm:text-sm ${item.read ? "text-slate-700" : "text-slate-900"}`}
                         >
                           {item.title}
                         </h3>
@@ -173,7 +173,7 @@ export const NotificationCenterView: React.FC<NotificationCenterViewProps> = ({
                           <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-600" />
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                      <p className="mt-0.5 whitespace-pre-line text-xs leading-relaxed text-slate-600">
                         {item.message}
                       </p>
                       <span className="mt-1 block font-mono text-[10px] text-slate-400">

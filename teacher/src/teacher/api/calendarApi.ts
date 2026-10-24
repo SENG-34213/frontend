@@ -46,6 +46,7 @@ export type BackendCalendarEvent = {
   updatedAt?: string;
   canEdit: boolean;
   canCancel: boolean;
+  canDelete?: boolean;
 };
 
 function isoDateTime(value: Date) {

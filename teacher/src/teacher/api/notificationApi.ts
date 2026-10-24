@@ -6,7 +6,6 @@ export type BackendNotification = {
   type?: string;
   title: string;
   message: string;
-  sourceService?: string;
   occurredAt?: string;
   createdAt?: string;
   readAt?: string | null;

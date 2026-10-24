@@ -7,11 +7,15 @@ import type {
   TeacherUserSummary,
 } from "../auth/authTypes";
 
-export async function loginTeacher(identifier: string, password: string): Promise<AuthSession> {
+export async function loginTeacher(
+  identifier: string,
+  password: string,
+  rememberMe = true,
+): Promise<AuthSession> {
   const response = await apiRequest<ApiResponse<LoginResponse>>("/api/v1/auth/login", {
     method: "POST",
     authenticated: false,
-    body: { identifier, password },
+    body: { identifier, password, rememberMe },
   });
   const data = response.data;
   const user = data?.profile ?? data?.user;
@@ -26,6 +30,7 @@ export async function loginTeacher(identifier: string, password: string): Promis
     user,
     expiresAt: Date.now() + data.expiresIn * 1000,
     mustChangePassword: Boolean(data.mustChangePassword ?? user.mustChangePassword),
+    rememberMe: data.rememberMe ?? rememberMe,
   };
   saveSession(session);
   return session;

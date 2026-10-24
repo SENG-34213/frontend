@@ -1,181 +1,213 @@
 import React from "react";
-import { TrendingUp, Award, CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Search } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 
 export const GradesView: React.FC = () => {
-  const { courses, profile, assignments } = useStudent();
-
-  const enrolledCourses = courses.filter((c) => c.enrolled);
-
-  const gradedAssignments = assignments.filter((a) => a.status === "GRADED");
+  const { courses, assignments, quizzes, examinations } = useStudent();
+  const [courseFilter, setCourseFilter] = React.useState("all");
+  const [search, setSearch] = React.useState("");
+  const enrolledCourses = courses.filter((course) => course.enrolled);
+  const resultRows = [
+    ...assignments
+      .filter((assignment) => assignment.status === "GRADED" && assignment.grade != null)
+      .map((assignment) => ({
+        id: `assignment-${assignment.id}`,
+        courseId: assignment.courseId,
+        courseCode: assignment.courseCode,
+        title: assignment.title,
+        category: "Assignment",
+        score: Number(assignment.grade),
+        maxScore: assignment.maxScore,
+        grade: assignment.letterGrade || "—",
+        feedback: assignment.feedback || "No feedback provided",
+      })),
+    ...quizzes
+      .filter((quiz) => quiz.status === "COMPLETED" && quiz.lastScore != null)
+      .map((quiz) => ({
+        id: `quiz-${quiz.id}`,
+        courseId: quiz.courseId,
+        courseCode: quiz.courseCode,
+        title: quiz.title,
+        category: "Quiz",
+        score: Number(quiz.lastScore),
+        maxScore: quiz.totalPoints,
+        grade:
+          quiz.lastScorePercentage == null
+            ? "—"
+            : `${Number(quiz.lastScorePercentage).toFixed(1)}%`,
+        feedback: "Quiz result",
+      })),
+    ...examinations
+      .filter((exam) => exam.status === "COMPLETED" && exam.score != null)
+      .map((exam) => ({
+        id: `exam-${exam.id}`,
+        courseId: exam.courseId,
+        courseCode: exam.courseCode,
+        title: exam.title,
+        category: "Examination",
+        score: Number(exam.score),
+        maxScore: exam.totalMarks,
+        grade: exam.letterGrade || exam.resultStatus || "—",
+        feedback: exam.remarks || exam.attendanceStatus || "Result published",
+      })),
+  ];
+  const filteredResults = resultRows.filter((result) => {
+    const matchesCourse = courseFilter === "all" || result.courseId === courseFilter;
+    const query = search.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      [result.title, result.courseCode, result.category].some((value) =>
+        value.toLowerCase().includes(query),
+      );
+    return matchesCourse && matchesSearch;
+  });
+  const averagePercentage = resultRows.length
+    ? resultRows.reduce(
+        (total, result) =>
+          total + (result.maxScore > 0 ? (result.score / result.maxScore) * 100 : 0),
+        0,
+      ) / resultRows.length
+    : null;
+  const academicStanding =
+    averagePercentage == null
+      ? "No results yet"
+      : averagePercentage >= 75
+        ? "Good Standing"
+        : averagePercentage >= 50
+          ? "Satisfactory"
+          : "Needs Improvement";
+  const standingColor =
+    averagePercentage == null
+      ? "text-slate-500"
+      : averagePercentage >= 50
+        ? "text-emerald-600 dark:text-emerald-400"
+        : "text-rose-600 dark:text-rose-400";
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Academic Grades & Results
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Comprehensive evaluation transcripts, course letter grades, and assessment weightage
-            distributions
+            Published assignment, quiz, and examination results
           </p>
         </div>
-        <span className="text-xs text-slate-500">Transcript export is not available yet.</span>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-          <span className="text-xs font-medium text-slate-500">Cumulative GPA</span>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">
-              {profile.currentGpa ? profile.currentGpa.toFixed(2) : "—"}
-            </span>
-            <span className="text-xs font-bold text-slate-400">/ 4.00 Scale</span>
-          </div>
-          <span className="mt-1 text-xs text-slate-500 block">
-            {profile.currentGpa ? "Current academic average" : "No GPA has been recorded"}
-          </span>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
           <span className="text-xs font-medium text-slate-500">Overall Average</span>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-display text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">
-              —
+              {averagePercentage == null ? "—" : `${averagePercentage.toFixed(1)}%`}
             </span>
-            <span className="text-xs font-bold text-slate-500">Not available</span>
+            <span className="text-xs font-bold text-slate-500">
+              {averagePercentage == null ? "Not available" : "Published results"}
+            </span>
           </div>
-          <span className="mt-1 text-xs text-slate-500 block">
-            Overall results are provided when available
+          <span className="mt-1 block text-xs text-slate-500">
+            Average across published assessment results
           </span>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-          <span className="text-xs font-medium text-slate-500">Credits Completed</span>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-3xl font-extrabold tabular-nums text-slate-900 dark:text-white">
-              {profile.creditsCompleted || "—"}
-            </span>
-            <span className="text-xs text-slate-400">
-              {profile.totalCreditsRequired ? `/ ${profile.totalCreditsRequired} Units` : ""}
-            </span>
-          </div>
-          <span className="mt-1 text-xs text-slate-500 block">
-            Recorded by your academic profile
-          </span>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
           <span className="text-xs font-medium text-slate-500">Academic Standing</span>
-          <div className="mt-2 flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+          <div className={`mt-2 flex items-center gap-1.5 ${standingColor}`}>
             <CheckCircle2 className="h-5 w-5" />
-            <span className="font-display text-lg font-bold">Good Standing</span>
+            <span className="font-display text-lg font-bold">{academicStanding}</span>
           </div>
-          <span className="mt-1 text-xs text-slate-500 block">
-            Based on available academic records
+          <span className="mt-1 block text-xs text-slate-500">
+            {averagePercentage == null
+              ? "Standing appears after results are published"
+              : `Based on a ${averagePercentage.toFixed(1)}% published-results average`}
           </span>
         </div>
       </div>
 
-      {/* Course Breakdown Cards */}
-      <div className="space-y-4">
-        <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
-          Active Course Grades
-        </h2>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {enrolledCourses.map((course) => (
-            <div
-              key={course.id}
-              className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-3"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                    {course.code}
-                  </span>
-                  <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
-                    {course.title}
-                  </h3>
-                  <p className="text-xs text-slate-500">{course.credits} Academic Credits</p>
-                </div>
-                <div className="text-right">
-                  <span className="font-display text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                    {course.currentGrade || "—"}
-                  </span>
-                  <span className="text-xs text-slate-400 block tabular-nums">
-                    {course.currentScorePercentage === undefined
-                      ? "—"
-                      : `${course.currentScorePercentage}%`}
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-indigo-600"
-                  style={{ width: `${course.currentScorePercentage || 0}%` }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <span>Faculty: {course.instructor.name.split(" ")[1]}</span>
-                <span className="font-medium text-slate-500">
-                  {course.currentGrade ? "Grade recorded" : "No grade recorded"}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Graded Deliverables Ledger */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="font-display text-base font-bold text-slate-900 dark:text-white">
             Official Evaluation Ledger
           </h2>
           <span className="text-xs text-slate-500">
-            Showing all published problem sets, laboratory benchmarks, and exams
+            Published assignment, quiz, and examination results
           </span>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 dark:border-slate-700">
+            <Search className="h-4 w-4 shrink-0 text-slate-400" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by assessment or course..."
+              className="w-full bg-transparent py-2 text-xs text-slate-700 outline-none dark:text-slate-200"
+            />
+          </label>
+          <select
+            aria-label="Filter results by course"
+            value={courseFilter}
+            onChange={(event) => setCourseFilter(event.target.value)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          >
+            <option value="all">All courses</option>
+            {enrolledCourses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.code} — {course.title}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/60">
               <tr>
-                <th className="py-3 px-4">Subject</th>
-                <th className="py-3 px-4">Deliverable Title</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4 text-right">Points Earned</th>
-                <th className="py-3 px-4 text-right">Weight</th>
-                <th className="py-3 px-4 text-center">Grade</th>
-                <th className="py-3 px-4">Instructor Feedback</th>
+                <th className="px-4 py-3">Subject</th>
+                <th className="px-4 py-3">Deliverable Title</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3 text-right">Points Earned</th>
+                <th className="px-4 py-3 text-right">Percentage</th>
+                <th className="px-4 py-3 text-center">Grade</th>
+                <th className="px-4 py-3">Instructor Feedback</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-sans dark:divide-slate-800">
-              {gradedAssignments.map((assignment) => (
-                <tr key={assignment.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+              {filteredResults.map((result) => (
+                <tr key={result.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                   <td className="px-4 py-3.5 font-mono font-bold text-indigo-600">
-                    {assignment.courseCode || "—"}
+                    {result.courseCode || "—"}
                   </td>
                   <td className="px-4 py-3.5 font-medium text-slate-900 dark:text-white">
-                    {assignment.title}
+                    {result.title}
                   </td>
-                  <td className="px-4 py-3.5 text-slate-500">Assignment</td>
+                  <td className="px-4 py-3.5 text-slate-500">{result.category}</td>
                   <td className="px-4 py-3.5 text-right font-mono font-bold tabular-nums">
-                    {assignment.grade ?? "—"} / {assignment.maxScore || "—"}
+                    {result.score} / {result.maxScore || "—"}
                   </td>
-                  <td className="px-4 py-3.5 text-right text-slate-500">—</td>
-                  <td className="px-4 py-3.5 text-center">{assignment.letterGrade || "—"}</td>
+                  <td className="px-4 py-3.5 text-right text-slate-500">
+                    {result.maxScore > 0
+                      ? `${((result.score / result.maxScore) * 100).toFixed(1)}%`
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-3.5 text-center">{result.grade}</td>
                   <td className="max-w-xs truncate px-4 py-3.5 text-slate-500">
-                    {assignment.feedback || "No feedback provided"}
+                    {result.feedback}
                   </td>
                 </tr>
               ))}
+              {filteredResults.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                    {resultRows.length === 0
+                      ? "No published assignment, quiz, or exam results yet."
+                      : "No results match the selected filters."}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

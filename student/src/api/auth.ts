@@ -7,11 +7,15 @@ import type {
   StudentUserSummary,
 } from "../auth/authTypes";
 
-export async function loginStudent(identifier: string, password: string): Promise<AuthSession> {
+export async function loginStudent(
+  identifier: string,
+  password: string,
+  rememberMe = true,
+): Promise<AuthSession> {
   const response = await apiRequest<ApiResponse<LoginResponse>>("/api/v1/auth/login", {
     method: "POST",
     authenticated: false,
-    body: { identifier, password },
+    body: { identifier, password, rememberMe },
   });
   const data = response.data;
   // The auth service returns the authenticated account as `profile`.
@@ -29,6 +33,7 @@ export async function loginStudent(identifier: string, password: string): Promis
     id: rawUser.id ?? rawUser.userId,
     role: "STUDENT",
     mustChangePassword: Boolean(data.mustChangePassword ?? rawUser.mustChangePassword),
+    rememberMe: data.rememberMe ?? rememberMe,
   };
 
   const session: AuthSession = {

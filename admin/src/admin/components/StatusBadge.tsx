@@ -79,6 +79,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ""
       case "DROPPED":
       case "RESTRICTED":
       case "CLOSED":
+      case "CANCELLED":
         return {
           label:
             status === "SUSPENDED"
@@ -89,7 +90,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ""
                   ? "Restricted"
                   : status === "CLOSED"
                     ? "Closed"
-                    : "Inactive",
+                    : status === "CANCELLED"
+                      ? "Cancelled"
+                      : "Inactive",
           text: "text-rose-700 dark:text-rose-400",
           bg: "bg-rose-50 dark:bg-rose-950/40",
           border: "border-rose-200 dark:border-rose-800",

@@ -65,6 +65,7 @@ function mapEvent(event: BackendCalendarEvent, courses: AdminCourse[]): Academic
     targetRole: event.targetRole,
     canEdit: event.canEdit,
     canCancel: event.canCancel,
+    canDelete: event.canDelete,
   };
 }
 

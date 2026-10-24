@@ -45,6 +45,7 @@ interface CalendarEventResponse extends CalendarEventRequest {
   updatedAt?: string;
   canEdit?: boolean;
   canCancel?: boolean;
+  canDelete?: boolean;
 }
 
 function uiEventType(type: CalendarEventType): AcademicEvent["type"] {
@@ -89,6 +90,7 @@ export function mapCalendarEvent(event: CalendarEventResponse): AcademicEvent {
     targetRole: event.targetRole,
     canEdit: event.canEdit,
     canCancel: event.canCancel,
+    canDelete: event.canDelete,
   };
 }
 
@@ -165,4 +167,10 @@ export async function cancelCalendarEvent(eventId: string): Promise<AcademicEven
   );
   if (!response.data) throw new Error(response.message || "Calendar service returned no event.");
   return mapCalendarEvent(response.data);
+}
+
+export async function deleteCalendarEvent(eventId: string): Promise<void> {
+  await apiRequest<ApiResponse<void>>(`/api/v1/calendar/events/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
+  });
 }

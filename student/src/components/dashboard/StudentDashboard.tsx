@@ -18,6 +18,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 
 const clamp = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
 const boundedPercentage = (value: unknown): number | null => {
@@ -611,9 +612,14 @@ export const StudentDashboard: React.FC = () => {
                   <span className="text-sm font-bold">{new Date(event.date).getDate()}</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+                  <p
+                    className={`truncate text-xs font-bold text-slate-800 dark:text-slate-100 ${event.status === "CANCELLED" ? "line-through opacity-70" : ""}`}
+                  >
                     {event.title}
                   </p>
+                  {event.status === "CANCELLED" && (
+                    <EventStatusBadge status={event.status} compact />
+                  )}
                   <p className="mt-1 truncate text-[10px] text-slate-500">
                     {event.startTime} · {event.location || "Location not set"}
                   </p>

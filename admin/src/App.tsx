@@ -67,8 +67,11 @@ import {
   resendUserInvitation,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
+import { formatNotificationTime } from "../../shared/notifications/notificationFormat";
 import { fetchAdminAnalyticsOverview, type AdminAnalyticsOverview } from "./admin/api/analyticsApi";
 import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi";
+import { fetchCourseExaminations } from "./admin/api/examinationsApi";
+import { fetchAdminCourseGradebook } from "./admin/api/gradebookApi";
 import {
   createEnrollment,
   deleteEnrollment,
@@ -81,6 +84,7 @@ import { createGrade, deleteGrade, fetchGrades, updateGrade } from "./admin/api/
 import {
   cancelCalendarEvent,
   createCalendarEvent,
+  deleteCalendarEvent,
   fetchCalendarEvents,
   fetchUpcomingCalendarEvents,
   updateCalendarEvent,
@@ -122,6 +126,24 @@ function notificationCategory(type?: string): NotificationItem["category"] {
   return "SYSTEM";
 }
 
+function notificationRoute(type?: string): AdminRoute {
+  const normalized = type?.toUpperCase() ?? "";
+  if (normalized.includes("SECURITY") || normalized.includes("AUTH")) return "audit";
+  if (normalized.includes("RESULT") || normalized.includes("GRADE")) return "results";
+  if (normalized.includes("EXAM")) return "examinations";
+  if (normalized.includes("ASSIGNMENT") || normalized.includes("SUBMISSION")) return "assignments";
+  if (normalized.includes("QUIZ")) return "quizzes";
+  if (normalized.includes("ATTENDANCE")) return "attendance";
+  if (normalized.includes("CALENDAR") || normalized.includes("EVENT")) return "calendar";
+  if (normalized.includes("MATERIAL")) return "materials";
+  if (normalized.includes("PAYMENT") || normalized.includes("ENROLL")) return "enrollments";
+  if (normalized.includes("COURSE")) return "courses";
+  if (normalized.includes("MESSAGE") || normalized.includes("COMMUNICATION"))
+    return "communication";
+  if (normalized.includes("REGISTRATION") || normalized.includes("USER")) return "registrations";
+  return "notifications";
+}
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -160,6 +182,7 @@ export default function App() {
   );
   const [examinations, setExaminations] = useState<Examination[]>([]);
   const [grades, setGrades] = useState<GradeRecord[]>([]);
+  const [gradesLoading, setGradesLoading] = useState(false);
   const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
   const [attendanceError, setAttendanceError] = useState("");
   const [materials, setMaterials] = useState<LearningMaterial[]>([]);
@@ -354,6 +377,47 @@ export default function App() {
 
   useEffect(() => {
     if (!isAuthenticated || courses.length === 0) {
+      if (courses.length === 0) queueMicrotask(() => setExaminations([]));
+      return;
+    }
+
+    let active = true;
+    const loadExaminations = async () => {
+      const courseExams = await Promise.all(
+        courses.map(async (course) => {
+          try {
+            const exams = await fetchCourseExaminations(course.id);
+            return exams.map((exam) => ({
+              id: exam.id,
+              code: `${course.code}-${exam.examDate.replace(/-/g, "")}`,
+              title: exam.title,
+              courseId: course.id,
+              courseCode: course.code,
+              courseTitle: course.title,
+              examDate: exam.examDate,
+              startTime: exam.startTime?.slice(0, 5) || "—",
+              endTime: exam.endTime?.slice(0, 5) || "—",
+              hallOrPlatform: exam.venue?.trim() || "Venue not provided",
+              candidateCount: course.enrollmentCount || 0,
+              status: exam.status === "MARKING" ? ("IN_PROGRESS" as const) : exam.status,
+            }));
+          } catch {
+            // A failed course request should not hide exams from other courses.
+            return [];
+          }
+        }),
+      );
+      if (active) setExaminations(courseExams.flat());
+    };
+
+    void loadExaminations();
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, courses]);
+
+  useEffect(() => {
+    if (!isAuthenticated || courses.length === 0) {
       queueMicrotask(() => {
         setAttendanceSessions([]);
         setAttendanceError("");
@@ -457,6 +521,88 @@ export default function App() {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated || courses.length === 0) {
+      queueMicrotask(() => {
+        setGrades([]);
+        setGradesLoading(false);
+      });
+      return;
+    }
+
+    const controller = new AbortController();
+    queueMicrotask(() => setGradesLoading(true));
+    const loadCourseResults = async () => {
+      const rows = await Promise.all(
+        courses.map(async (course) => {
+          try {
+            const gradebook = await fetchAdminCourseGradebook(course.id, controller.signal);
+            return (gradebook?.students ?? []).flatMap((student) => {
+              const categories = [
+                ["ASSIGNMENT", student.assignments ?? []],
+                ["QUIZ", student.quizzes ?? []],
+                ["FINAL_EXAM", student.exams ?? []],
+              ] as const;
+              return categories.flatMap(([assessmentType, items]) =>
+                items
+                  .filter((item) => item.status?.toUpperCase() !== "MISSING")
+                  .map((item) => {
+                    const score = Number(item.score ?? 0);
+                    const maxScore = Number(item.maxScore ?? 0);
+                    const percentage = Number(
+                      item.percentage ?? (maxScore > 0 ? (score / maxScore) * 100 : 0),
+                    );
+                    const statusGrade = assessmentType === "FINAL_EXAM" ? item.status : undefined;
+                    const letterGrade =
+                      statusGrade && /^[A-F][+-]?$/.test(statusGrade)
+                        ? statusGrade
+                        : percentage >= 90
+                          ? "A"
+                          : percentage >= 80
+                            ? "B"
+                            : percentage >= 70
+                              ? "C"
+                              : percentage >= 60
+                                ? "D"
+                                : "F";
+                    return {
+                      id: `${course.id}-${student.studentId}-${item.assessmentId}`,
+                      studentId: student.studentId,
+                      studentNumber: student.studentNumber || undefined,
+                      studentName: student.studentName || "Student name unavailable",
+                      courseId: course.id,
+                      courseTitle: course.title,
+                      gradeName: course.grade,
+                      courseCode: course.code,
+                      assessmentType,
+                      assessmentTitle: item.title,
+                      score,
+                      maxScore,
+                      percentage,
+                      letterGrade,
+                      status: item.status || undefined,
+                      gradedDate: item.updatedAt || "",
+                      updatedAt: item.updatedAt || undefined,
+                    } satisfies GradeRecord;
+                  }),
+              );
+            });
+          } catch {
+            // A failed course gradebook should not prevent results loading for other courses.
+            return [];
+          }
+        }),
+      );
+      if (!controller.signal.aborted) {
+        setGrades(rows.flat());
+        setGradesLoading(false);
+      }
+    };
+
+    void loadCourseResults();
+    return () => controller.abort();
+  }, [isAuthenticated, courses]);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
 
     const loadRegistrationOverview = async () => {
@@ -496,6 +642,38 @@ export default function App() {
       setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
     }, 4500);
   }
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    void getAdminNotifications()
+      .then((items) => {
+        if (!active) return;
+        setNotifications(
+          items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            message: item.message,
+            category: notificationCategory(item.type),
+            timestamp: formatNotificationTime(item.occurredAt || item.createdAt),
+            read: Boolean(item.readAt),
+            linkAction: notificationRoute(item.type),
+          })),
+        );
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          addToast(
+            "error",
+            "Notifications unavailable",
+            error instanceof Error ? error.message : "Unable to load notifications.",
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -824,6 +1002,17 @@ export default function App() {
     addToast("success", "Event Cancelled", `"${cancelled.title}" was cancelled.`);
   };
 
+  const handleDeleteEvent = async (eventId: string) => {
+    const event = events.find((item) => item.id === eventId);
+    await deleteCalendarEvent(eventId);
+    setEvents((previous) => previous.filter((item) => item.id !== eventId));
+    addToast(
+      "success",
+      "Event Deleted",
+      event ? `"${event.title}" was deleted.` : "The event was deleted.",
+    );
+  };
+
   const handleMarkNotificationRead = async (id: string) => {
     try {
       await markAdminNotificationRead(id);
@@ -1037,9 +1226,13 @@ export default function App() {
 
       {currentRoute === "quizzes" && <QuizManagement courses={courses} grades={gradesList} />}
 
-      {currentRoute === "examinations" && <ExaminationManagement examinations={examinations} />}
+      {currentRoute === "examinations" && (
+        <ExaminationManagement examinations={examinations} courses={courses} />
+      )}
 
-      {currentRoute === "results" && <GradesAndResults grades={grades} />}
+      {currentRoute === "results" && (
+        <GradesAndResults grades={grades} courses={courses} loading={gradesLoading} />
+      )}
 
       {currentRoute === "attendance" && (
         <AttendanceManagement
@@ -1067,6 +1260,7 @@ export default function App() {
           onAddEvent={handleAddEvent}
           onUpdateEvent={handleUpdateEvent}
           onCancelEvent={handleCancelEvent}
+          onDeleteEvent={handleDeleteEvent}
           onFilterEvents={handleFilterCalendarEvents}
         />
       )}

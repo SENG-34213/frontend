@@ -4,11 +4,15 @@ import { clearSession, getSession, saveSession } from "../auth/authStorage";
 
 const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN"]);
 
-export async function loginAdmin(identifier: string, password: string): Promise<AuthSession> {
+export async function loginAdmin(
+  identifier: string,
+  password: string,
+  rememberMe = true,
+): Promise<AuthSession> {
   const response = await apiRequest<ApiResponse<LoginResponse>>("/api/v1/auth/login", {
     method: "POST",
     authenticated: false,
-    body: { identifier, password },
+    body: { identifier, password, rememberMe },
   });
 
   const user = response.data?.profile ?? response.data?.user;
@@ -22,6 +26,7 @@ export async function loginAdmin(identifier: string, password: string): Promise<
     user,
     expiresAt: Date.now() + response.data.expiresIn * 1000,
     mustChangePassword: Boolean(response.data.mustChangePassword ?? user.mustChangePassword),
+    rememberMe: response.data.rememberMe ?? rememberMe,
   };
 
   saveSession(session);

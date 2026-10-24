@@ -11,6 +11,7 @@ import { getCourseExams, type BackendExam } from "../api/examApi";
 import { getModuleMaterials } from "../api/courseContentApi";
 import { useTeacherStudents } from "../hooks/useTeacherStudents";
 import { CourseThumbnailImage } from "../../components/CourseThumbnailImage";
+import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -470,7 +471,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-slate-900">
+                          <p
+                            className={`truncate text-xs font-semibold ${event.status === "CANCELLED" ? "text-slate-500 line-through" : "text-slate-900"}`}
+                          >
                             {event.title}
                           </p>
                           <p className="mt-0.5 text-[11px] text-slate-500">
@@ -478,9 +481,12 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                             {event.location || "No location"}
                           </p>
                         </div>
-                        <span className="shrink-0 rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">
-                          {event.eventType}
-                        </span>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700">
+                            {event.eventType}
+                          </span>
+                          <EventStatusBadge status={event.status} compact />
+                        </div>
                       </div>
                     ))}
                   </div>

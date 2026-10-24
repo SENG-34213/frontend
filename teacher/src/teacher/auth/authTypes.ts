@@ -43,6 +43,7 @@ export interface LoginResponse {
   scope?: string;
   issuedAt?: string;
   mustChangePassword?: boolean;
+  rememberMe?: boolean;
   /** Current auth-service contract. */
   profile?: TeacherUserSummary;
   /** Legacy response shape kept for backwards compatibility. */
@@ -55,4 +56,5 @@ export interface AuthSession {
   user: TeacherUserSummary;
   expiresAt: number;
   mustChangePassword?: boolean;
+  rememberMe?: boolean;
 }

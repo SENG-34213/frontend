@@ -16,7 +16,6 @@ import {
   Filter,
   X,
   Search,
-  Download,
   CheckCircle2,
   AlertTriangle,
   BookOpen,
@@ -24,6 +23,7 @@ import {
   Layers,
   Building2,
   Trash2,
+  CircleX,
   User,
   Mail,
   Eye,
@@ -43,6 +43,12 @@ import type {
   CalendarEventRequest,
   CalendarEventType,
 } from "../../../../admin/src/admin/api/calendarApi";
+import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
+import {
+  calendarEventsOverlap,
+  findVenueCollision,
+  venueBookingsOverlap,
+} from "../../../../shared/calendar/venueCollision";
 
 interface TeacherCalendarProps {
   events: AcademicEvent[];
@@ -383,6 +389,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     lockDate = false,
     defaultStartTime = "09:00 AM",
   ) => {
+    setEventActionError(null);
     setEditingEventId(null);
     setFormTitle("");
     setFormType("EXAM");
@@ -417,6 +424,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
 
   // Populate form for editing existing event
   const openEditModal = (evt: AcademicEvent) => {
+    setEventActionError(null);
     setEditingEventId(evt.id);
     setIsFormDateLocked(false);
     setFormTitle(evt.title);
@@ -498,6 +506,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   // Course change in form: auto-populate courseTitle
   const handleCourseSelectionChange = (courseId: string) => {
     setFormCourseId(courseId);
+    if (formErrors.courseId) setFormErrors((previous) => ({ ...previous, courseId: "" }));
   };
 
   // Instructor change in form: auto-populate instructorEmail
@@ -518,9 +527,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       for (let j = i + 1; j < localEvents.length; j++) {
         const a = localEvents[i];
         const b = localEvents[j];
-        if (a.date === b.date && a.status !== "CANCELLED" && b.status !== "CANCELLED") {
+        if (a.status !== "CANCELLED" && b.status !== "CANCELLED") {
           // Check venue overlap
-          if (a.location && a.location === b.location) {
+          if (venueBookingsOverlap(a, b)) {
             conflicts.push({
               eventA: a,
               eventB: b,
@@ -528,7 +537,12 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             });
           }
           // Check teacher overlap
-          if (a.instructorName && b.instructorName && a.instructorName === b.instructorName) {
+          if (
+            a.instructorName &&
+            b.instructorName &&
+            a.instructorName === b.instructorName &&
+            calendarEventsOverlap(a, b)
+          ) {
             conflicts.push({
               eventA: a,
               eventB: b,
@@ -549,19 +563,19 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   // In-form real-time conflict detector
   const inlineFormConflict = useMemo(() => {
     if (!formDate || !formLocation) return null;
-    const conflict = localEvents.find(
-      (e) =>
-        e.id !== editingEventId &&
-        e.date === formDate &&
-        e.location === formLocation &&
-        e.status !== "CANCELLED",
-    );
+    const conflict = findVenueCollision(localEvents, {
+      date: formDate,
+      startTime: formStartTime,
+      endTime: formEndTime,
+      location: formLocation,
+      excludeEventId: editingEventId,
+    });
 
     if (conflict) {
-      return `Venue Warning: "${conflict.title}" is already scheduled in ${formLocation} on ${formDate} (${conflict.time}).`;
+      return `This time overlaps “${conflict.title}” at ${formLocation} (${conflict.time}). Choose another time or venue.`;
     }
     return null;
-  }, [formDate, formLocation, localEvents, editingEventId]);
+  }, [formDate, formStartTime, formEndTime, formLocation, localEvents, editingEventId]);
 
   // ----------------------------------------------------
   // FILTERING LOGIC WITH MULTI-DIMENSIONAL CRITERIA
@@ -843,6 +857,10 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       setFormErrors(errors);
       return;
     }
+    if (inlineFormConflict) {
+      setFormErrors({ submit: inlineFormConflict });
+      return;
+    }
 
     const toIsoTime = (value: string) => {
       const [time, meridiem] = value.split(" ");
@@ -918,32 +936,6 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     } finally {
       setPendingEventActionId(null);
     }
-  };
-
-  // Download iCal (.ics)
-  const handleDownloadIcs = (event: AcademicEvent) => {
-    const icsData = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//TiT Inc//Academic Operations Portal//EN",
-      "BEGIN:VEVENT",
-      `UID:${event.id}@mentify.edu`,
-      `SUMMARY:${event.title}`,
-      `DESCRIPTION:${event.description || "Academic Event"}\\nCourse: ${event.courseCode || "General"}\\nInstructor: ${event.instructorName || "Faculty"}`,
-      `LOCATION:${event.location}`,
-      `STATUS:${event.status}`,
-      "END:VEVENT",
-      "END:VCALENDAR",
-    ].join("\r\n");
-
-    const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `${event.id}_${event.title.replace(/\s+/g, "_")}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const toggleTypeFilter = (type: string) => {
@@ -1036,7 +1028,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       )}
 
       {/* ERROR STATE BANNER (if simulated/triggered) */}
-      {hasSimulatedError && (
+      {hasSimulatedError && !selectedEvent && !isAddEditModalOpen && (
         <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center justify-between text-xs text-rose-800 dark:text-rose-300">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
@@ -1050,18 +1042,6 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
           </button>
         </div>
       )}
-      {eventActionError && (
-        <div
-          role="alert"
-          className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
-        >
-          <span>{eventActionError}</span>
-          <button type="button" onClick={() => setEventActionError(null)} className="underline">
-            Dismiss
-          </button>
-        </div>
-      )}
-
       {/* Operations Bar: Navigation, View Modes, Search, Date Range */}
       <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Date Navigation */}
@@ -1677,7 +1657,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                                   onClick={() => setSelectedEvent(evt)}
                                   className={`w-full text-left px-2 py-1 rounded-lg border text-[10.5px] font-medium truncate transition-all hover:scale-[1.01] block cursor-pointer ${
                                     isCancelled
-                                      ? "line-through opacity-50 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500"
+                                      ? "opacity-60 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500"
                                       : `${meta.bg} ${meta.text} ${meta.border}`
                                   }`}
                                 >
@@ -1696,7 +1676,14 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                                         {evt.courseCode}
                                       </span>
                                     )}
-                                    <span className="truncate">{evt.title}</span>
+                                    <span
+                                      className={`truncate ${isCancelled ? "line-through" : ""}`}
+                                    >
+                                      {evt.title}
+                                    </span>
+                                    {isCancelled && (
+                                      <EventStatusBadge status={evt.status} compact />
+                                    )}
                                   </div>
                                 </button>
                               );
@@ -1942,18 +1929,6 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                                     <Edit2 className="w-3.5 h-3.5" />
                                   </button>
                                 )}
-                                {evt.canCancel !== false && (
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleDeleteEvent(evt)}
-                                    disabled={pendingEventActionId === evt.id}
-                                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors disabled:cursor-wait disabled:opacity-50"
-                                    title="Delete Event"
-                                    aria-label={`Delete ${evt.title}`}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
                               </div>
                             </div>
                           );
@@ -2017,6 +1992,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                                 >
                                   {evt.title}
                                 </h4>
+                                {isCancelled && <EventStatusBadge status={evt.status} compact />}
                                 {evt.courseCode && (
                                   <span className="font-mono text-[10px] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.2 rounded border border-indigo-200/40 dark:border-indigo-800/40">
                                     {evt.courseCode}
@@ -2067,14 +2043,6 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
                             )}
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadIcs(evt)}
-                              title="Download iCal (.ics)"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 transition-colors"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                            </button>
                             <span
                               onClick={() => setSelectedEvent(evt)}
                               className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 cursor-pointer pl-1"
@@ -2224,17 +2192,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   >
                     {selectedEvent.type}
                   </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase border ${
-                      selectedEvent.status === "COMPLETED"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : selectedEvent.status === "CANCELLED"
-                          ? "bg-rose-50 text-rose-700 border-rose-200"
-                          : "bg-indigo-50 text-indigo-700 border-indigo-200"
-                    }`}
-                  >
-                    {selectedEvent.status}
-                  </span>
+                  <EventStatusBadge status={selectedEvent.status} />
                   {selectedEvent.visibility && (
                     <span className="text-[10px] font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                       {selectedEvent.visibility === "PUBLIC_STUDENTS"
@@ -2246,7 +2204,9 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   )}
                 </div>
 
-                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                <h3
+                  className={`text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug ${selectedEvent.status === "CANCELLED" ? "line-through text-slate-400" : ""}`}
+                >
                   {selectedEvent.title}
                 </h3>
               </div>
@@ -2261,17 +2221,6 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     <Edit2 className="w-4 h-4" />
                   </button>
                 )}
-                {selectedEvent.canCancel !== false && (
-                  <button
-                    onClick={() => void handleDeleteEvent(selectedEvent)}
-                    disabled={pendingEventActionId === selectedEvent.id}
-                    title="Delete Event"
-                    aria-label={`Delete ${selectedEvent.title}`}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:cursor-wait disabled:opacity-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
                 <button
                   onClick={() => setSelectedEvent(null)}
                   className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg"
@@ -2280,6 +2229,22 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 </button>
               </div>
             </div>
+
+            {eventActionError && (
+              <div
+                role="alert"
+                className="flex items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-800 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+              >
+                <span>{eventActionError}</span>
+                <button
+                  type="button"
+                  onClick={() => setEventActionError(null)}
+                  className="shrink-0 underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
 
             {/* Collision Warning if in conflict */}
             {isEventConflicted(selectedEvent.id) && (
@@ -2384,42 +2349,47 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             {/* Actions Bar */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                {selectedEvent.canCancel !== false && selectedEvent.status !== "CANCELLED" && (
-                  <button
-                    type="button"
-                    disabled={pendingEventActionId === selectedEvent.id}
-                    onClick={() => void handleCancelEvent(selectedEvent)}
-                    className="flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
-                  >
-                    <span>
-                      {pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}
-                    </span>
-                  </button>
-                )}
-                {selectedEvent.canCancel !== false && (
-                  <button
-                    type="button"
-                    disabled={pendingEventActionId === selectedEvent.id}
-                    onClick={() => void handleDeleteEvent(selectedEvent)}
-                    className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-50 dark:hover:bg-rose-950/40"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span>
-                      {pendingEventActionId === selectedEvent.id ? "Deleting…" : "Delete Event"}
-                    </span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  disabled={
+                    pendingEventActionId === selectedEvent.id ||
+                    selectedEvent.status === "CANCELLED" ||
+                    selectedEvent.canCancel === false
+                  }
+                  onClick={() => void handleCancelEvent(selectedEvent)}
+                  title={
+                    selectedEvent.status === "CANCELLED"
+                      ? "Event is already cancelled"
+                      : selectedEvent.canCancel === false
+                        ? "You cannot cancel this event"
+                        : "Cancel event"
+                  }
+                  className="flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
+                >
+                  <CircleX className="h-3.5 w-3.5" />
+                  <span>
+                    {pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    pendingEventActionId === selectedEvent.id || selectedEvent.canDelete === false
+                  }
+                  onClick={() => void handleDeleteEvent(selectedEvent)}
+                  title={
+                    selectedEvent.canDelete === false
+                      ? "You cannot delete this event"
+                      : "Delete event"
+                  }
+                  aria-label={`Delete ${selectedEvent.title}`}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-rose-950/40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleDownloadIcs(selectedEvent)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export iCal (.ics)</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => setSelectedEvent(null)}
@@ -2468,13 +2438,16 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
 
               {/* In-form Venue Collision Detector Warning */}
               {inlineFormConflict && (
-                <div className="mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2 animate-in fade-in">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div
+                  role="alert"
+                  className="mt-3 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-xs text-rose-800 dark:text-rose-300 flex items-start gap-2 animate-in fade-in"
+                >
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   <span>{inlineFormConflict}</span>
                 </div>
               )}
 
-              <form onSubmit={handleFormSubmit} className="py-4 space-y-4 text-xs">
+              <form noValidate onSubmit={handleFormSubmit} className="py-4 space-y-4 text-xs">
                 {formErrors.submit && (
                   <div
                     role="alert"
@@ -2496,6 +2469,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                       setFormTitle(e.target.value);
                       if (formErrors.title) setFormErrors((p) => ({ ...p, title: "" }));
                     }}
+                    aria-invalid={Boolean(formErrors.title)}
                     placeholder="e.g. Advanced Calculus Midterm Examination"
                     className={`w-full px-3 py-2 rounded-xl border bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 text-xs ${
                       formErrors.title
@@ -2553,6 +2527,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                       required
                       value={formCourseId}
                       onChange={(e) => handleCourseSelectionChange(e.target.value)}
+                      aria-invalid={Boolean(formErrors.courseId)}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                     >
                       <option value="" disabled>
@@ -2611,17 +2586,27 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                           (time) => timeToMinutes(time) > timeToMinutes(nextStart),
                         );
                         setFormDate(nextDate);
+                        if (formErrors.date)
+                          setFormErrors((previous) => ({ ...previous, date: "" }));
                         setFormStartTime(nextStart);
+                        if (formErrors.time)
+                          setFormErrors((previous) => ({ ...previous, time: "" }));
                         if (!nextEndOptions.includes(formEndTime)) {
                           setFormEndTime(nextEndOptions[0] || "");
                         }
                       }}
+                      aria-invalid={Boolean(formErrors.date)}
                       disabled={isFormDateLocked}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800/60"
                     />
                     {isFormDateLocked && (
                       <span className="mt-1 block text-[10px] font-normal text-slate-500 dark:text-slate-400">
                         Date is fixed to the selected calendar day.
+                      </span>
+                    )}
+                    {formErrors.date && (
+                      <span className="mt-1 block text-[11px] text-rose-500">
+                        {formErrors.date}
                       </span>
                     )}
                   </div>
@@ -2670,7 +2655,11 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     <select
                       required
                       value={formEndTime}
-                      onChange={(e) => setFormEndTime(e.target.value)}
+                      onChange={(e) => {
+                        setFormEndTime(e.target.value);
+                        if (formErrors.time)
+                          setFormErrors((previous) => ({ ...previous, time: "" }));
+                      }}
                       className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                     >
                       {availableEndTimes.map((h) => (
