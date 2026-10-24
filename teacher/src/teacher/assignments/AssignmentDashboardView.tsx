@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   FileCheck,
   Plus,
@@ -770,8 +770,18 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
   const [courseFilter, setCourseFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [editingAssignment, setEditingAssignment] = useState<BackendAssignment | null>(null);
+<<<<<<< Updated upstream
   const [assignmentModalMode, setAssignmentModalMode] = useState<"edit" | "view">("edit");
   const [deletingAssignment, setDeletingAssignment] = useState<Assignment | null>(null);
+=======
+  const [assignmentAction, setAssignmentAction] = useState<{
+    assignment: BackendAssignment;
+    action: "close" | "delete";
+  } | null>(null);
+  const [isAssignmentActionPending, setIsAssignmentActionPending] = useState(false);
+  const [assignmentActionError, setAssignmentActionError] = useState<string | null>(null);
+  const assignmentActionInFlight = useRef(false);
+>>>>>>> Stashed changes
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   useEffect(() => {
@@ -839,12 +849,9 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     return () => controller.abort();
   }, [backendCourses, refreshToken]);
 
-  const handleStatusChange = async (assignment: Assignment, action: "publish" | "close") => {
+  const handleStatusChange = async (assignment: Assignment) => {
     try {
-      const updated =
-        action === "publish"
-          ? await publishAssignment(assignment.id)
-          : await closeAssignment(assignment.id);
+      const updated = await publishAssignment(assignment.id);
       setAssignments((current) =>
         current.map((entry) =>
           entry.id === assignment.id ? toAssignment(updated, backendCourses) : entry,
@@ -862,9 +869,51 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
+<<<<<<< Updated upstream
   const handleEdit = async (
     draft: AssignmentUpdateDraft | AssignmentMetadataPatchDraft,
   ) => {
+=======
+  const confirmAssignmentAction = async () => {
+    if (!assignmentAction || assignmentActionInFlight.current) return;
+    assignmentActionInFlight.current = true;
+    setIsAssignmentActionPending(true);
+    setAssignmentActionError(null);
+    try {
+      if (assignmentAction.action === "close") {
+        const updated = await closeAssignment(assignmentAction.assignment.id);
+        setBackendAssignments((current) =>
+          current.map((entry) => (entry.id === updated.id ? updated : entry)),
+        );
+        setAssignments((current) =>
+          current.map((entry) =>
+            entry.id === updated.id ? toAssignment(updated, backendCourses) : entry,
+          ),
+        );
+      } else {
+        await deleteAssignment(assignmentAction.assignment.id);
+        setBackendAssignments((current) =>
+          current.filter((entry) => entry.id !== assignmentAction.assignment.id),
+        );
+        setAssignments((current) =>
+          current.filter((entry) => entry.id !== assignmentAction.assignment.id),
+        );
+      }
+      setAssignmentAction(null);
+    } catch (requestError: unknown) {
+      setAssignmentActionError(
+        requestError instanceof Error
+          ? requestError.message
+          : `Assignment could not be ${assignmentAction.action === "close" ? "closed" : "deleted"}.`,
+      );
+    } finally {
+      assignmentActionInFlight.current = false;
+      setIsAssignmentActionPending(false);
+    }
+  };
+
+  const handleEdit = async (draft: AssignmentUpdateDraft) => {
+>>>>>>> Stashed changes
     const record = editingAssignment;
     if (!record) throw new Error("Select an assignment before saving changes.");
     try {
@@ -895,11 +944,16 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
+<<<<<<< Updated upstream
   const openAssignment = (assignmentId: string, mode: "edit" | "view") => {
+=======
+  const openAssignmentAction = (assignmentId: string, action: "close" | "delete") => {
+>>>>>>> Stashed changes
     const assignment = backendAssignments.find((entry) => entry.id === assignmentId);
     if (!assignment) {
       setError("Assignment details could not be loaded. Refresh the assignment list and try again.");
       return;
+<<<<<<< Updated upstream
     }
     setAssignmentModalMode(mode);
     setEditingAssignment(assignment);
@@ -917,7 +971,11 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
       setError(
         requestError instanceof Error ? requestError.message : "Assignment could not be deleted.",
       );
+=======
+>>>>>>> Stashed changes
     }
+    setAssignmentActionError(null);
+    setAssignmentAction({ assignment, action });
   };
 
   const filtered = assignments.filter((a) => {
@@ -1155,7 +1213,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                     {asg.status === "Draft" && (
                       <button
                         type="button"
-                        onClick={() => void handleStatusChange(asg, "publish")}
+                        onClick={() => void handleStatusChange(asg)}
                         aria-label={`Publish ${asg.title}`}
                         title="Publish assignment"
                         className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-emerald-200 text-emerald-700 transition-colors hover:bg-emerald-50"
@@ -1166,7 +1224,9 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                     {asg.status === "Active" && (
                       <button
                         type="button"
-                        onClick={() => void handleStatusChange(asg, "close")}
+                        onClick={() => openAssignmentAction(asg.id, "close")}
+                        aria-label={`Close ${asg.title}`}
+                        title="Close assignment"
                         className="rounded-md border border-amber-200 px-2 py-1 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-50"
                       >
                         Close
@@ -1185,7 +1245,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                     )}
                     <button
                       type="button"
-                      onClick={() => setDeletingAssignment(asg)}
+                      onClick={() => openAssignmentAction(asg.id, "delete")}
                       aria-label={`Delete ${asg.title}`}
                       title="Delete assignment"
                       className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-rose-200 text-rose-700 transition-colors hover:bg-rose-50"
@@ -1207,11 +1267,25 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
         onSave={handleEdit}
       />
       <ConfirmModal
-        isOpen={Boolean(deletingAssignment)}
-        title="Delete assignment?"
-        description={`Deleting “${deletingAssignment?.title ?? "this assignment"}” permanently removes it from the course.`}
-        onClose={() => setDeletingAssignment(null)}
-        onConfirm={handleDelete}
+        isOpen={Boolean(assignmentAction)}
+        title={assignmentAction?.action === "close" ? "Close assignment?" : "Delete assignment?"}
+        description={
+          assignmentAction?.action === "close"
+            ? `Closing “${assignmentAction.assignment.title}” stops students from submitting it. Existing submissions and grades remain available for review.`
+            : `Deleting “${assignmentAction?.assignment.title ?? "this assignment"}” removes it from the active assignment list and cancels its calendar event. This cannot be undone from the dashboard.`
+        }
+        confirmText={assignmentAction?.action === "close" ? "Close assignment" : "Delete assignment"}
+        pendingText={assignmentAction?.action === "close" ? "Closing..." : "Deleting..."}
+        intent={assignmentAction?.action === "close" ? "warning" : "danger"}
+        isSubmitting={isAssignmentActionPending}
+        errorMessage={assignmentActionError}
+        onClose={() => {
+          if (!isAssignmentActionPending) {
+            setAssignmentAction(null);
+            setAssignmentActionError(null);
+          }
+        }}
+        onConfirm={confirmAssignmentAction}
       />
     </div>
   );
