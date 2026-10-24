@@ -6,6 +6,12 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:
   "",
 );
 
+function apiUrl(path: string) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const apiPath = normalizedPath.replace(/^\/api(?=\/|$)/, "");
+  return `${API_BASE_URL}${API_BASE_URL.endsWith("/api") ? apiPath : normalizedPath}`;
+}
+
 export class ApiError extends Error {
   status: number;
   details?: unknown;
@@ -68,7 +74,7 @@ async function refreshSessionInternal(): Promise<AuthSession | null> {
     return null;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+  const response = await fetch(apiUrl("/api/v1/auth/refresh"), {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: currentSession.refreshToken }),
@@ -136,7 +142,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   else callerSignal?.addEventListener("abort", abortRequest, { once: true });
 
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(apiUrl(path), {
       ...requestInit,
       headers: requestHeaders,
       body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
