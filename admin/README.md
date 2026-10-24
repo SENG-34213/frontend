@@ -1,4 +1,4 @@
-# Mentify — Enterprise Admin Portal
+# TiT — Enterprise Admin Portal
 
 > **Premium Enterprise Education Management Platform**  
 > Complete Administrative Workspace & Unified Governance Interface
@@ -7,9 +7,9 @@
 
 ## 📌 Overview
 
-**Mentify** is a modern, enterprise-grade educational management platform designed to orchestrate complex academic lifecycles across secondary and collegiate institutions.
+**TiT** is a modern, enterprise-grade educational management platform designed to orchestrate complex academic lifecycles across secondary and collegiate institutions.
 
-While Mentify features dedicated Student and Teacher portals, this **Admin Portal** serves as the central administrative mission control. It provides centralized visibility and governance across user provisioning, course rosters, multi-tier curriculum planning, summative examinations, AWS S3 pedagogical media, and Keycloak-federated authentication.
+While TiT features dedicated Student and Teacher portals, this **Admin Portal** serves as the central administrative mission control. It provides centralized visibility and governance across user provisioning, course rosters, multi-tier curriculum planning, summative examinations, AWS S3 pedagogical media, and Keycloak-federated authentication.
 
 Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace adheres strictly to modern SaaS UI/UX conventions, tabular typographic discipline, and role-based access control (RBAC).
 
@@ -62,7 +62,7 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
 
 ### 5. Intelligence & Administrative Governance
 
-- **Mentify AI Assistant**:
+- **TiT AI Assistant**:
   - Interactive conversational assistant grounded in institutional data and microservice operations.
   - Pre-configured administrative inquiry prompt chips (registration velocity, quiz failure variance, exam venue conflicts).
   - Markdown message rendering, response copy utilities, and new session management.
@@ -90,7 +90,7 @@ The application models the institutional authorization policies enforced by Keyc
 | Resend Keycloak Invitations                 |       ✅        |     ✅      |
 | Course & Enrollment Management              |       ✅        |     ✅      |
 | S3 Learning Materials & Calendar            |       ✅        |     ✅      |
-| Mentify AI Assistant & Reports              |       ✅        |     ✅      |
+| TiT AI Assistant & Reports                  |       ✅        |     ✅      |
 | **View Administrator Directory**            | ❌ (Role-gated) |     ✅      |
 | **Register New Administrators**             | ❌ (Role-gated) |     ✅      |
 | **Inspect System-Wide Keycloak Audit Logs** |    Read-Only    | Full Access |
@@ -121,7 +121,7 @@ All administrative modules reside in `src/admin/`:
 src/
 ├── admin/
 │   ├── academic/           # Modules & Lessons syllabus explorer
-│   ├── ai-assistant/       # Mentify AI conversational assistant
+│   ├── ai-assistant/       # TiT AI conversational assistant
 │   ├── administrators/     # SUPER_ADMIN governance & admin registration
 │   ├── analytics/          # Department charts and weekly attendance trends
 │   ├── assignments/        # Assignment oversight and grading progress

@@ -113,11 +113,26 @@ function toTeacher(value: JsonRecord | undefined): Teacher {
     id: idOf(value?.id || value?.teacherId || value?.assignedTeacherId),
     name: readableName(value?.name || value?.fullName),
     title: idOf(value?.title),
-    avatar: idOf(value?.avatar),
+    avatar: idOf(value?.avatar || value?.avatarUrl || value?.profileImage),
     department: idOf(value?.department),
     officeHours: idOf(value?.officeHours),
     email: idOf(value?.email),
   };
+}
+
+async function resolveTeacherAvatar(teacher: Teacher): Promise<Teacher> {
+  const storageKey = teacher.avatar;
+  if (!storageKey || !storageKey.startsWith("materials/profile-images/")) return teacher;
+  const cachedUrl = profileImageUrls.get(storageKey);
+  if (cachedUrl) return { ...teacher, avatar: cachedUrl };
+  try {
+    const blob = await apiBlob(`/api/v1/profile-images?key=${encodeURIComponent(storageKey)}`);
+    const objectUrl = URL.createObjectURL(blob);
+    profileImageUrls.set(storageKey, objectUrl);
+    return { ...teacher, avatar: objectUrl };
+  } catch {
+    return { ...teacher, avatar: "" };
+  }
 }
 
 function toCourse(value: JsonRecord, enrolledIds: Set<string>): Course {
@@ -706,9 +721,17 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
         const teacherName = idOf(
           response.fullName || [response.firstName, response.lastName].filter(Boolean).join(" "),
         );
-        if (!teacherName) return;
+        const resolvedTeacher = await resolveTeacherAvatar({
+          ...toTeacher(response),
+          name: teacherName || toTeacher(response).name,
+        });
         courses.forEach((course) => {
-          if (course.instructor.id === teacherId) course.instructor.name = teacherName;
+          if (course.instructor.id !== teacherId) return;
+          if (resolvedTeacher.name) course.instructor.name = resolvedTeacher.name;
+          if (resolvedTeacher.title) course.instructor.title = resolvedTeacher.title;
+          if (resolvedTeacher.department) course.instructor.department = resolvedTeacher.department;
+          if (resolvedTeacher.email) course.instructor.email = resolvedTeacher.email;
+          if (resolvedTeacher.avatar) course.instructor.avatar = resolvedTeacher.avatar;
         });
       } catch {
         // Keep the course available if profile lookup is temporarily unavailable.

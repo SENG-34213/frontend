@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { NotificationItem } from "../../types";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const NotificationsView: React.FC = () => {
   const {
@@ -98,15 +99,11 @@ export const NotificationsView: React.FC = () => {
       {/* Notifications List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-            <Bell className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-            <h3 className="mt-3 font-display text-sm font-bold text-slate-900 dark:text-white">
-              No notifications
-            </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              You&apos;re completely up to date with your academic alerts.
-            </p>
-          </div>
+          <EmptyState
+            icon={Bell}
+            title="No notifications"
+            description="You're completely up to date with your academic alerts."
+          />
         ) : (
           filtered.map((item) => (
             <div

@@ -37,6 +37,7 @@ import {
 import { StatusBadge } from "../components/StatusBadge";
 import { ApiError } from "../api/client";
 import { ConfirmModal } from "../components/ActionModal";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
@@ -982,13 +983,19 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           Loading assignments...
         </div>
       ) : backendCourses.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-          No courses are assigned to you yet.
-        </div>
+        <EmptyState
+          compact
+          icon={ClipboardList}
+          title="No assigned courses"
+          description="Assignments will appear after a course is assigned to you."
+        />
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-          No assignments found.
-        </div>
+        <EmptyState
+          compact
+          icon={FileCheck}
+          title="No assignments found"
+          description="No assignments match the current filters."
+        />
       ) : null}
       <div className="space-y-3">
         {filtered.map((asg) => {

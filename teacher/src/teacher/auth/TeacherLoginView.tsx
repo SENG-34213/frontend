@@ -65,7 +65,7 @@ export function TeacherLoginView({ onLogin }: Props) {
               M
             </span>
             <div>
-              <p className="text-lg font-bold tracking-tight">Mentify</p>
+              <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 Faculty Workspace
               </p>
@@ -101,7 +101,7 @@ export function TeacherLoginView({ onLogin }: Props) {
               M
             </span>
             <div>
-              <p className="text-base font-bold text-slate-900">Mentify</p>
+              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Teacher Portal
               </p>
@@ -182,8 +182,7 @@ export function TeacherLoginView({ onLogin }: Props) {
                 disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"
               >
-                {isSubmitting ? "Signing in…" : "Sign in to Mentify"}{" "}
-                <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? "Signing in…" : "Sign in to TiT"} <ArrowRight className="h-4 w-4" />
               </button>
             </form>
             <p className="mt-6 text-center text-[11px] text-slate-400">

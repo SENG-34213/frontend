@@ -32,8 +32,7 @@ export const SettingsView: React.FC = () => {
           Appearance & Theme
         </h2>
         <p className="text-xs text-slate-500">
-          Choose between Mentify Light (primary clean presentation) or Dark mode for low-light
-          studying.
+          Choose between TiT Light (primary clean presentation) or Dark mode for low-light studying.
         </p>
 
         <div className="flex items-center gap-4 pt-2">
@@ -49,7 +48,7 @@ export const SettingsView: React.FC = () => {
           >
             <Sun className="h-5 w-5 text-amber-500" />
             <div className="text-left">
-              <span>Mentify Light Mode</span>
+              <span>TiT Light Mode</span>
               <span className="text-[10px] text-slate-400 block font-normal">
                 Standard Presentation
               </span>
@@ -68,7 +67,7 @@ export const SettingsView: React.FC = () => {
           >
             <Moon className="h-5 w-5 text-indigo-400" />
             <div className="text-left">
-              <span>Mentify Dark Mode</span>
+              <span>TiT Dark Mode</span>
               <span className="text-[10px] text-slate-400 block font-normal">
                 Optimal for night study
               </span>
@@ -157,7 +156,7 @@ export const SettingsView: React.FC = () => {
           Your account is protected
         </h3>
         <p className="text-xs text-slate-500 leading-relaxed">
-          Your sign-in is secure and managed by Mentify.
+          Your sign-in is secure and managed by TiT.
         </p>
 
         <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-xs text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">

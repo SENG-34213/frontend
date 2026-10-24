@@ -634,7 +634,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                 Grade Requirement Notice
               </p>
               <p className="text-amber-700 dark:text-amber-400 mt-0.5">
-                Every course in the Mentify backend must link to an existing Grade ID to inherit its
+                Every course in the TiT backend must link to an existing Grade ID to inherit its
                 monthly fee. Please define at least one Grade level before creating new academic
                 courses.
               </p>

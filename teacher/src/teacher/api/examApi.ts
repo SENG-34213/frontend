@@ -10,6 +10,7 @@ export type BackendExam = {
   courseId: string;
   title: string;
   description?: string;
+  venue?: string;
   examDate: string;
   startTime: string;
   endTime: string;
@@ -24,6 +25,7 @@ export type BackendExam = {
 
 export type ExamResult = {
   studentId: string;
+  studentName?: string;
   attendanceStatus: ExamAttendanceStatus;
   marksObtained?: number | string;
   resultStatus?: string;
@@ -64,6 +66,7 @@ export type ExamDraft = {
   courseId: string;
   title: string;
   description?: string;
+  venue?: string;
   examDate: string;
   startTime: string;
   endTime: string;

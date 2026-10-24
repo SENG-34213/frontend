@@ -237,6 +237,17 @@ export interface GradeRecord {
   gradedDate: string;
 }
 
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  status: "PRESENT" | "ABSENT" | "LATE" | "NOT_MARKED";
+  remarks?: string;
+  markedBy?: string;
+  markedAt?: string;
+  updatedAt?: string;
+}
+
 export interface AttendanceSession {
   id: string;
   courseId: string;
@@ -250,6 +261,7 @@ export interface AttendanceSession {
   absentCount: number;
   lateCount: number;
   markedBy: string;
+  records: AttendanceRecord[];
 }
 
 export interface LearningMaterial {

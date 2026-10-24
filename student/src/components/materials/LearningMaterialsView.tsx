@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { LearningMaterial } from "../../types";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const LearningMaterialsView: React.FC = () => {
   const { materials, courses, showToast, downloadMaterial } = useStudent();
@@ -148,13 +149,11 @@ export const LearningMaterialsView: React.FC = () => {
 
       {/* Grid View */}
       {filteredMaterials.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-          <FileText className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-          <h3 className="mt-3 font-display text-sm font-bold text-slate-900 dark:text-white">
-            No materials found
-          </h3>
-          <p className="mt-1 text-xs text-slate-500">No document matches your filter parameters.</p>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="No materials found"
+          description="No document matches your filter parameters."
+        />
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredMaterials.map((mat) => (

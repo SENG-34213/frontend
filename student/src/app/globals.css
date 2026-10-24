@@ -45,7 +45,7 @@
   }
 }
 
-/* Shared Mentify dark palette, matching the admin workspace surfaces. */
+/* Shared TiT dark palette, matching the admin workspace surfaces. */
 @layer utilities {
   .dark .bg-white {
     background-color: #0f172a;

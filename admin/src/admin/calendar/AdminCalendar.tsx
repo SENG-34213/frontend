@@ -1,5 +1,5 @@
 /**
- * Mentify Academic Operations Calendar Service
+ * TiT Academic Operations Calendar Service
  * Production-ready enterprise scheduling console with multi-criteria filtering,
  * collision sentinel, mobile filter drawer, comprehensive form validation, and event lifecycle management.
  */
@@ -108,7 +108,7 @@ const CAMPUS_VENUES: VenueStatus[] = [
   },
   {
     id: "v-07",
-    name: "Mentify LMS Submission Portal",
+    name: "TiT LMS Submission Portal",
     building: "Cloud Platform",
     capacity: 2000,
     type: "Virtual Platform",
@@ -225,16 +225,14 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   onCancelEvent,
   onFilterEvents,
 }) => {
-  const courseOptions = courses.length
-    ? courses.map((course) => ({
-        code: course.code,
-        title: course.title,
-        dept: course.category,
-      }))
-    : KNOWN_COURSES;
+  const courseOptions = courses.map((course) => ({
+    code: course.code,
+    title: course.title,
+    dept: course.category,
+  }));
 
-  // Calendar base state (anchor date: October 18, 2026)
-  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 9, 18));
+  // Calendar base state follows the user's current local date.
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [view, setView] = useState<CalendarViewMode>("month");
   const [localEvents, setLocalEvents] = useState<AcademicEvent[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(false);
@@ -337,16 +335,17 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   const [formType, setFormType] = useState<"CLASS" | "EXAM" | "QUIZ" | "DEADLINE" | "SESSION">(
     "EXAM",
   );
-  const [formDate, setFormDate] = useState("2026-10-26");
+  const [formDate, setFormDate] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  });
   const [formStartTime, setFormStartTime] = useState("09:00 AM");
   const [formEndTime, setFormEndTime] = useState("11:30 AM");
-  const [formLocation, setFormLocation] = useState("Science Hall Auditorium B");
-  const [formCourseCode, setFormCourseCode] = useState(courseOptions[0]?.code || "MATH-401");
-  const [formCourseTitle, setFormCourseTitle] = useState(
-    courseOptions[0]?.title || "Advanced Calculus & Real Analysis",
-  );
-  const [formInstructorName, setFormInstructorName] = useState("Dr. Marcus Sterling");
-  const [formInstructorEmail, setFormInstructorEmail] = useState("marcus.sterling@mentify.edu");
+  const [formLocation, setFormLocation] = useState("");
+  const [formCourseCode, setFormCourseCode] = useState(courseOptions[0]?.code || "");
+  const [formCourseTitle, setFormCourseTitle] = useState(courseOptions[0]?.title || "");
+  const [formInstructorName, setFormInstructorName] = useState("");
+  const [formInstructorEmail, setFormInstructorEmail] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formVisibility, setFormVisibility] = useState<EventVisibility>("PUBLIC_STUDENTS");
   const [formStatus, setFormStatus] = useState<"SCHEDULED" | "COMPLETED" | "CANCELLED">(
@@ -365,12 +364,12 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     );
     setFormStartTime("09:00 AM");
     setFormEndTime("11:30 AM");
-    setFormLocation("Science Hall Auditorium B");
-    setFormCourseCode(courseOptions[0]?.code || "MATH-401");
-    setFormCourseTitle(courseOptions[0]?.title || "Advanced Calculus & Real Analysis");
-    setFormInstructorName("Dr. Marcus Sterling");
-    setFormInstructorEmail("marcus.sterling@mentify.edu");
-    setFormDescription("Supervised examination in designated campus facility.");
+    setFormLocation("");
+    setFormCourseCode(courseOptions[0]?.code || "");
+    setFormCourseTitle(courseOptions[0]?.title || "");
+    setFormInstructorName("");
+    setFormInstructorEmail("");
+    setFormDescription("");
     setFormVisibility("PUBLIC_STUDENTS");
     setFormStatus("SCHEDULED");
     setFormErrors({});
@@ -390,12 +389,10 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     setFormEndTime(times[1] || "10:30 AM");
 
     setFormLocation(evt.location);
-    setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "MATH-401");
-    setFormCourseTitle(
-      evt.courseTitle || courseOptions[0]?.title || "Advanced Calculus & Real Analysis",
-    );
-    setFormInstructorName(evt.instructorName || "Dr. Marcus Sterling");
-    setFormInstructorEmail(evt.instructorEmail || "marcus.sterling@mentify.edu");
+    setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "");
+    setFormCourseTitle(evt.courseTitle || courseOptions[0]?.title || "");
+    setFormInstructorName(evt.instructorName || "");
+    setFormInstructorEmail(evt.instructorEmail || "");
     setFormDescription(evt.description || "");
     setFormVisibility(evt.visibility || "PUBLIC_STUDENTS");
     setFormStatus(evt.status || "SCHEDULED");
@@ -419,7 +416,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
 
   const handleToday = () => {
     triggerSimulatedLoading();
-    setCurrentDate(new Date(2026, 9, 18));
+    setCurrentDate(new Date());
   };
 
   const handlePrevWeek = () => {
@@ -461,6 +458,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     const found = courseOptions.find((c) => c.code === code);
     if (found) {
       setFormCourseTitle(found.title);
+    } else {
+      setFormCourseTitle("");
     }
   };
 
@@ -486,7 +485,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
           // Check venue overlap
           if (
             a.location === b.location &&
-            a.location !== "Mentify LMS Submission Portal" &&
+            a.location !== "TiT LMS Submission Portal" &&
             a.location !== "Campus Wide"
           ) {
             conflicts.push({
@@ -522,8 +521,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   // In-form real-time conflict detector
   const inlineFormConflict = useMemo(() => {
     if (!formDate || !formLocation) return null;
-    if (formLocation === "Mentify LMS Submission Portal" || formLocation === "Campus Wide")
-      return null;
+    if (formLocation === "TiT LMS Submission Portal" || formLocation === "Campus Wide") return null;
 
     const conflict = localEvents.find(
       (e) =>
@@ -566,16 +564,21 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
       if (selectedVenue !== "ALL" && e.location !== selectedVenue) return false;
 
       // 7. Date Range Filter
+      const now = new Date();
       if (dateRangePreset === "THIS_WEEK") {
         const d = new Date(e.date + "T00:00:00");
-        const now = new Date(2026, 9, 18);
         const weekStart = new Date(now);
         weekStart.setDate(now.getDate() - now.getDay());
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
         if (d < weekStart || d > weekEnd) return false;
       } else if (dateRangePreset === "THIS_MONTH") {
-        if (!e.date.startsWith("2026-10")) return false;
+        if (
+          !e.date.startsWith(
+            `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
+          )
+        )
+          return false;
       } else if (dateRangePreset === "CUSTOM") {
         if (customStartDate && e.date < customStartDate) return false;
         if (customEndDate && e.date > customEndDate) return false;
@@ -714,7 +717,9 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     for (let i = 1; i <= totalDays; i++) {
       const d = new Date(currentYear, currentMonth, i);
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`;
-      const isToday = currentYear === 2026 && currentMonth === 9 && i === 18;
+      const today = new Date();
+      const isToday =
+        currentYear === today.getFullYear() && currentMonth === today.getMonth() && i === today.getDate();
       days.push({
         date: d,
         dateStr,
@@ -761,7 +766,11 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
       const day = new Date(sunday);
       day.setDate(sunday.getDate() + i);
       const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-      const isToday = day.getFullYear() === 2026 && day.getMonth() === 9 && day.getDate() === 18;
+      const today = new Date();
+      const isToday =
+        day.getFullYear() === today.getFullYear() &&
+        day.getMonth() === today.getMonth() &&
+        day.getDate() === today.getDate();
       week.push({
         date: day,
         dateStr,
@@ -873,7 +882,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     const icsData = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Mentify Inc//Academic Operations Portal//EN",
+      "PRODID:-//TiT Inc//Academic Operations Portal//EN",
       "BEGIN:VEVENT",
       `UID:${event.id}@mentify.edu`,
       `SUMMARY:${event.title}`,
@@ -946,10 +955,11 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
 
             <button
               onClick={() => openCreateModal(currentDateFormatted)}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-indigo-600/30 cursor-pointer sm:w-auto"
+              title="Create a new calendar event"
             >
               <Plus className="w-4 h-4" />
-              <span>Schedule Event</span>
+              <span>Create event</span>
             </button>
           </div>
         }
@@ -2498,6 +2508,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                     onChange={(e) => handleCourseSelectionChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono"
                   >
+                    <option value="">General event (no course)</option>
                     {courseOptions.map((c) => (
                       <option key={c.code} value={c.code}>
                         {c.code} ({c.title})

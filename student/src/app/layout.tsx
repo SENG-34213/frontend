@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mentify · Student Portal",
-  description: "Next-generation connected student learning portal for Mentify LMS",
+  title: "TiT · Student Portal",
+  description: "Next-generation connected student learning portal for TiT LMS",
 };
 
 export default function RootLayout({

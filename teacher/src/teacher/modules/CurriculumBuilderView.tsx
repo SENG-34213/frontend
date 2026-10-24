@@ -39,6 +39,7 @@ import {
 import { StatusBadge } from "../components/StatusBadge";
 import { LessonEditorModal } from "../lessons/LessonEditorModal";
 import { ConfirmModal } from "../components/ActionModal";
+import { CourseThumbnailImage } from "../../components/CourseThumbnailImage";
 
 interface CurriculumBuilderViewProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -166,6 +167,7 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
     id: selectedCourseId,
     code: currentBackendCourse?.courseCode || "",
     title: currentBackendCourse?.courseName || "",
+    courseThumbnail: currentBackendCourse?.courseThumbnail,
     description: currentBackendCourse?.courseDescription || "",
     category: currentBackendCourse?.subject || "",
     level: currentBackendCourse?.level || "",
@@ -682,12 +684,24 @@ export const CurriculumBuilderView: React.FC<CurriculumBuilderViewProps> = ({
 
       {/* Course Header Banner */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 font-bold font-mono flex items-center justify-center text-sm border border-indigo-100">
-            {currentCourse.code}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-indigo-600 to-violet-700 text-white flex items-center justify-center shrink-0 border border-indigo-100 shadow-sm">
+            {currentCourse.courseThumbnail ? (
+              <CourseThumbnailImage
+                source={currentCourse.courseThumbnail}
+                alt={`${currentCourse.title} course cover`}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : null}
+            <BookOpen className="w-5 h-5 relative" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900">{currentCourse.title}</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold text-indigo-600">
+                {currentCourse.code}
+              </span>
+              <h2 className="text-sm font-bold text-slate-900 truncate">{currentCourse.title}</h2>
+            </div>
             <p className="text-xs text-slate-500">
               {courseModules.length} Modules ·{" "}
               {courseModules.reduce((acc, m) => acc + m.lessons.length, 0)} Total Lessons ·{" "}

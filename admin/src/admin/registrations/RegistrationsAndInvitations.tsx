@@ -91,7 +91,7 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
     <div className="space-y-6">
       <PageHeader
         title="Registrations & Invitations Operations"
-        description="Centralized Keycloak onboarding lifecycle, email dispatch audit, and activation monitoring."
+        description="Manage new accounts, invitations, email delivery, and account activation."
         breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "Registrations" }]}
       />
 
@@ -99,7 +99,7 @@ export const RegistrationsAndInvitations: React.FC<RegistrationsAndInvitationsPr
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span>Pending Keycloak Activations</span>
+            <span>Pending Account Activations</span>
             <Clock className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">

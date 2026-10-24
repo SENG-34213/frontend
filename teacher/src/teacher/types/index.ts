@@ -40,6 +40,7 @@ export interface Course {
   id: string;
   code: string;
   title: string;
+  courseThumbnail?: string;
   description: string;
   category: string;
   level: string;
@@ -169,6 +170,11 @@ export interface Quiz {
   title: string;
   description: string;
   durationMinutes: number;
+  passMark?: number;
+  startTime?: string;
+  endTime?: string;
+  maxAttempts?: number;
+  showResultImmediately?: boolean;
   totalQuestions: number;
   totalMarks: number;
   status: "Active" | "Draft" | "Completed";

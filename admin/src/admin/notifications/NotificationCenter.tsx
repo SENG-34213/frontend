@@ -13,6 +13,7 @@ import {
 import { PageHeader } from "../components/PageHeader";
 import { NotificationItem } from "../types";
 import { AdminRoute } from "../components/AdminSidebar";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface NotificationCenterProps {
   notifications: NotificationItem[];
@@ -101,7 +102,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         >
           <option value="ALL">All Categories</option>
           <option value="REGISTRATION">Registrations</option>
-          <option value="SECURITY">Security / Keycloak</option>
+          <option value="SECURITY">Security</option>
           <option value="ACADEMIC">Academic Schedule</option>
           <option value="SYSTEM">System Health</option>
         </select>
@@ -111,7 +112,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 shadow-xs overflow-hidden">
         {filteredNotifications.length === 0 ? (
           <div className="p-12 text-center text-slate-400 text-xs">
-            No notifications in this view.
+            <EmptyState
+              compact
+              icon={Bell}
+              title="No notifications"
+              description="There are no notifications in this view."
+              className="border-0"
+            />
           </div>
         ) : (
           filteredNotifications.map((notif) => (

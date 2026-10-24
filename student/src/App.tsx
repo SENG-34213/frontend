@@ -10,7 +10,6 @@ import { TopNavbar } from "./components/layout/TopNavbar";
 import { CommandPalette } from "./components/layout/CommandPalette";
 import { StudentDashboard } from "./components/dashboard/StudentDashboard";
 import { MyCoursesView } from "./components/courses/MyCoursesView";
-import { ExploreCoursesView } from "./components/courses/ExploreCoursesView";
 import { CourseDetailsView } from "./components/courses/CourseDetailsView";
 import { CourseWorkspaceView } from "./components/courses/CourseWorkspaceView";
 import { EnrollmentsView } from "./components/enrollments/EnrollmentsView";
@@ -40,7 +39,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     const validViews = new Set([
       "dashboard",
       "my-courses",
-      "explore-courses",
       "course-details",
       "course-workspace",
       "enrollments",
@@ -103,8 +101,6 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
         return <StudentDashboard />;
       case "my-courses":
         return <MyCoursesView />;
-      case "explore-courses":
-        return <ExploreCoursesView />;
       case "course-details":
         return <CourseDetailsView />;
       case "course-workspace":

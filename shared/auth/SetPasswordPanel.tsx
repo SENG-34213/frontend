@@ -84,7 +84,7 @@ export function SetPasswordPanel({ email, roleLabel, onSubmit, onCancel }: Props
               M
             </span>
             <div>
-              <p className="text-lg font-bold tracking-tight">Mentify</p>
+              <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 {roleLabel} Workspace
               </p>
@@ -98,7 +98,7 @@ export function SetPasswordPanel({ email, roleLabel, onSubmit, onCancel }: Props
               Make your workspace yours.
             </h1>
             <p className="mt-5 max-w-lg text-sm leading-7 text-indigo-100/80">
-              Create a personal password to finish activating your Mentify account.
+              Create a personal password to finish activating your TiT account.
             </p>
           </div>
         </div>
@@ -114,7 +114,7 @@ export function SetPasswordPanel({ email, roleLabel, onSubmit, onCancel }: Props
               M
             </span>
             <div>
-              <p className="text-base font-bold text-slate-900">Mentify</p>
+              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Account Setup
               </p>

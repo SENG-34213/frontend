@@ -39,12 +39,12 @@ export const ExaminationsView: React.FC = () => {
           <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h3 className="font-display text-xs font-bold text-indigo-950 dark:text-indigo-200 uppercase tracking-wider">
-              Mentify Proctored Examination Integrity System
+              TiT Proctored Examination Integrity System
             </h3>
             <p className="text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
               Examinations are strictly proctored under institutional university guidelines.
-              Students must present a valid Mentify photo ID. Laptops must remain in secure
-              fullscreen browser kiosk mode throughout the timed duration.
+              Students must present a valid TiT photo ID. Laptops must remain in secure fullscreen
+              browser kiosk mode throughout the timed duration.
             </p>
           </div>
         </div>

@@ -80,6 +80,7 @@ export function mapBackendCourse(course: BackendCourse): Course {
     id: course.id,
     code: course.courseCode || "",
     title: course.courseName,
+    courseThumbnail: course.courseThumbnail,
     description: course.courseDescription || "",
     category: course.subject || "",
     level: course.level || "",

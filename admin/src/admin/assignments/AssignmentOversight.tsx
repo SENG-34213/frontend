@@ -13,6 +13,7 @@ import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { Assignment, Course, Grade } from "../types";
 import { AdminAssignmentRecord, fetchCourseAssignments } from "../api/assignmentApi";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 /* These effects synchronize dependent filters and remote assignment data. */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -332,15 +333,11 @@ export const AssignmentOversight: React.FC<AssignmentOversightProps> = ({ course
         </div>
       )}
       {!isLoading && !error && !filteredAssignments.length && (
-        <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
-          <BookOpenCheck className="mx-auto h-8 w-8 text-slate-300" />
-          <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            No assignments match the selected filters
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Try another grade, domain, course, or status.
-          </p>
-        </div>
+        <EmptyState
+          icon={BookOpenCheck}
+          title="No assignments found"
+          description="Try another grade, domain, course, or status."
+        />
       )}
 
       {!isLoading && filteredAssignments.length > 0 && (

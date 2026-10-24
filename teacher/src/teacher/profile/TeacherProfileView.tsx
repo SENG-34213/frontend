@@ -116,16 +116,18 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="mx-auto max-w-6xl space-y-6 pb-12">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)] sm:flex-row sm:items-center sm:p-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-            Faculty Profile
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-600">
+            Account
+          </p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+            Teacher Profile
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Institutional credentials, office hour scheduling, and academic departmental
-            affiliations.
+          <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+            Manage your personal details, teaching role, and contact information.
           </p>
         </div>
 
@@ -156,9 +158,9 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
       )}
 
       {/* Main Profile Card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+      <div className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.07)]">
         {/* Banner */}
-        <div className="h-32 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 relative p-6 flex items-end">
+        <div className="relative flex h-36 items-end bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-6">
           <span className="text-xs font-mono text-indigo-300 font-semibold bg-white/10 px-2.5 py-0.5 rounded backdrop-blur-xs">
             {profile.teacherCode}
           </span>

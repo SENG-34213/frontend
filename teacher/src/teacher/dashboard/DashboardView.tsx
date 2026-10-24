@@ -610,7 +610,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="relative">
             <div className="flex items-center gap-2 text-indigo-200">
               <Sparkles className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Mentify AI</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">TiT AI</span>
             </div>
             <h2 className="mt-4 text-xl font-bold">Turn course data into your next move.</h2>
             <p className="mt-2 text-xs leading-5 text-indigo-100/80">

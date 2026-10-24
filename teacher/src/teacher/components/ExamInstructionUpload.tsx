@@ -19,8 +19,10 @@ const formatSize = (bytes: number) =>
 export const ExamInstructionUpload: React.FC<{
   value: File | null;
   onChange: (file: File | null) => void;
+  existingFile?: { name: string; sizeBytes?: number } | null;
+  onOpenExisting?: () => void;
   disabled?: boolean;
-}> = ({ value, onChange, disabled = false }) => {
+}> = ({ value, onChange, existingFile, onOpenExisting, disabled = false }) => {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +56,26 @@ export const ExamInstructionUpload: React.FC<{
           >
             <X className="h-4 w-4" />
           </button>
+        </div>
+      ) : existingFile ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2 text-xs text-slate-700">
+            <FileText className="h-4 w-4 shrink-0 text-indigo-600" />
+            <span className="truncate">{existingFile.name}</span>
+            {existingFile.sizeBytes ? (
+              <span className="shrink-0 text-slate-500">{formatSize(existingFile.sizeBytes)}</span>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-3 text-xs font-semibold text-indigo-600">
+            {onOpenExisting && (
+              <button type="button" onClick={onOpenExisting} disabled={disabled}>
+                Open
+              </button>
+            )}
+            <label htmlFor={inputId} className="cursor-pointer hover:text-indigo-800">
+              Choose new PDF
+            </label>
+          </div>
         </div>
       ) : (
         <label

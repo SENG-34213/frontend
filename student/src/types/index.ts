@@ -1,7 +1,6 @@
 export type StudentView =
   | "dashboard"
   | "my-courses"
-  | "explore-courses"
   | "course-details"
   | "course-workspace"
   | "enrollments"

@@ -128,7 +128,6 @@ const StudentContext = createContext<StudentContextType | undefined>(undefined);
 const STUDENT_VIEWS: StudentView[] = [
   "dashboard",
   "my-courses",
-  "explore-courses",
   "course-details",
   "course-workspace",
   "enrollments",
@@ -433,7 +432,10 @@ export const StudentProvider: React.FC<{
     if (!attemptId) throw new Error("The backend did not return a quiz attempt id.");
     const attempt = { attemptId, startedAt: response.data?.startedAt };
     window.localStorage.setItem(storageKey, JSON.stringify(attempt));
-    await refreshWorkspace();
+    // Do not block the quiz screen on a full workspace refresh. The attempt
+    // is already created and can start immediately; refresh the list in the
+    // background so attempt counts stay current after the quiz is opened.
+    void refreshWorkspace().catch(() => undefined);
     return attempt;
   };
   const saveQuizAnswer = async (
@@ -483,8 +485,15 @@ export const StudentProvider: React.FC<{
         quiz.id === quizId
           ? {
               ...quiz,
-              status: "COMPLETED",
               attemptsUsed: Math.max(quiz.attemptsUsed ?? 0, (quiz.attemptsUsed ?? 0) + 1),
+              status:
+                (quiz.attemptsAllowed ?? 0) > 0 &&
+                Math.max(quiz.attemptsUsed ?? 0, (quiz.attemptsUsed ?? 0) + 1) >=
+                  (quiz.attemptsAllowed ?? 0)
+                  ? "COMPLETED"
+                  : quiz.status === "COMPLETED"
+                    ? "AVAILABLE"
+                    : quiz.status,
               lastScore: score,
               lastScorePercentage: percentage,
             }

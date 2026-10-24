@@ -22,22 +22,6 @@ import {
   AuditEvent,
   PlatformKPIs,
 } from "./admin/types";
-import {
-  INITIAL_KPIS,
-  MOCK_STUDENTS,
-  MOCK_TEACHERS,
-  MOCK_ADMINISTRATORS,
-  MOCK_COURSES,
-  MOCK_CURRICULUM,
-  MOCK_ENROLLMENTS,
-  MOCK_EXAMINATIONS,
-  MOCK_GRADES,
-  MOCK_ATTENDANCE_SESSIONS,
-  MOCK_MATERIALS,
-  MOCK_EVENTS,
-  MOCK_AUDIT_LOGS,
-} from "./admin/mockData";
-
 // Screens
 import { AdminDashboard } from "./admin/dashboard/AdminDashboard";
 import { StudentManagement } from "./admin/students/StudentManagement";
@@ -53,6 +37,7 @@ import { ExaminationManagement } from "./admin/examinations/ExaminationManagemen
 import { GradesAndResults } from "./admin/grades/GradesAndResults";
 import { GradeManagement } from "./admin/grades/GradeManagement";
 import { AttendanceManagement } from "./admin/attendance/AttendanceManagement";
+import { fetchAttendanceSessions } from "./admin/api/attendanceApi";
 import { LearningMaterialManagement } from "./admin/materials/LearningMaterialManagement";
 import { MarketplaceManagement } from "./admin/marketplace/MarketplaceManagement";
 import { AdminCalendar } from "./admin/calendar/AdminCalendar";
@@ -101,6 +86,17 @@ import {
   updateCalendarEvent,
   type CalendarEventFilters,
 } from "./admin/api/calendarApi";
+
+const EMPTY_KPIS: PlatformKPIs = {
+  totalStudents: 0,
+  totalTeachers: 0,
+  totalCourses: 0,
+  activeEnrollments: 0,
+  pendingInvitations: 0,
+  activeUsers: 0,
+  upcomingExams: 0,
+  pendingAdminActions: 0,
+};
 
 const ADMIN_ROUTE_STORAGE_KEY = "mentify_admin_current_route";
 
@@ -151,26 +147,26 @@ export default function App() {
   }, [isDarkMode]);
 
   // Platform state
-  const [kpis, setKpis] = useState<PlatformKPIs>(INITIAL_KPIS);
-  const [students, setStudents] = useState<StudentProfile[]>(MOCK_STUDENTS);
-  const [teachers, setTeachers] = useState<TeacherProfile[]>(MOCK_TEACHERS);
-  const [administrators, setAdministrators] = useState<AdministratorProfile[]>(MOCK_ADMINISTRATORS);
-  const [courses, setCourses] = useState<Course[]>(MOCK_COURSES);
-  const [curriculum] = useState<CurriculumModule[]>(MOCK_CURRICULUM);
+  const [kpis, setKpis] = useState<PlatformKPIs>(EMPTY_KPIS);
+  const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
+  const [administrators, setAdministrators] = useState<AdministratorProfile[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [curriculum] = useState<CurriculumModule[]>([]);
   const [gradesList, setGradesList] = useState<Grade[]>([]);
-  const [enrollments, setEnrollments] = useState<EnrollmentRecord[]>(MOCK_ENROLLMENTS);
+  const [enrollments, setEnrollments] = useState<EnrollmentRecord[]>([]);
   const [enrollmentApiRecords, setEnrollmentApiRecords] = useState<EnrollmentApiResponse[] | null>(
     null,
   );
-  const [examinations, setExaminations] = useState<Examination[]>(MOCK_EXAMINATIONS);
-  const [grades, setGrades] = useState<GradeRecord[]>(MOCK_GRADES);
-  const [attendanceSessions, setAttendanceSessions] =
-    useState<AttendanceSession[]>(MOCK_ATTENDANCE_SESSIONS);
-  const [materials, setMaterials] = useState<LearningMaterial[]>(MOCK_MATERIALS);
-  const [events, setEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
-  const [upcomingEvents, setUpcomingEvents] = useState<AcademicEvent[]>(MOCK_EVENTS);
+  const [examinations, setExaminations] = useState<Examination[]>([]);
+  const [grades, setGrades] = useState<GradeRecord[]>([]);
+  const [attendanceSessions, setAttendanceSessions] = useState<AttendanceSession[]>([]);
+  const [attendanceError, setAttendanceError] = useState("");
+  const [materials, setMaterials] = useState<LearningMaterial[]>([]);
+  const [events, setEvents] = useState<AcademicEvent[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<AcademicEvent[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditEvent[]>(MOCK_AUDIT_LOGS);
+  const [auditLogs, setAuditLogs] = useState<AuditEvent[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Trigger states for quick action modals
@@ -355,6 +351,35 @@ export default function App() {
         // Keep the dashboard available when the calendar service is unavailable.
       });
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || courses.length === 0) {
+      setAttendanceSessions([]);
+      setAttendanceError("");
+      return;
+    }
+
+    let mounted = true;
+    void fetchAttendanceSessions(courses, teachers)
+      .then(({ sessions, failedCourses }) => {
+        if (!mounted) return;
+        setAttendanceSessions(sessions);
+        setAttendanceError(
+          failedCourses.length > 0
+            ? "Some attendance records could not be loaded. Please check the attendance service and try again."
+            : "",
+        );
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setAttendanceSessions([]);
+        setAttendanceError("Attendance records could not be loaded. Please try again shortly.");
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [courses, isAuthenticated, teachers]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -913,10 +938,13 @@ export default function App() {
         <StudentManagement
           students={students}
           enrollments={enrollments}
+          courses={courses}
+          availableGrades={gradesList}
           grades={grades}
           attendanceSessions={attendanceSessions}
           onAddStudent={handleAddStudent}
           onRegisterStudent={handleRegisterStudent}
+          onCreateEnrollment={handleCreateEnrollment}
           onResendInvitation={handleResendInvitation}
           showRegistrationWizardDirectly={openStudentWizard}
         />
@@ -1011,7 +1039,14 @@ export default function App() {
 
       {currentRoute === "results" && <GradesAndResults grades={grades} />}
 
-      {currentRoute === "attendance" && <AttendanceManagement sessions={attendanceSessions} />}
+      {currentRoute === "attendance" && (
+        <AttendanceManagement
+          sessions={attendanceSessions}
+          courses={courses}
+          grades={gradesList}
+          error={attendanceError}
+        />
+      )}
 
       {currentRoute === "materials" && (
         <LearningMaterialManagement

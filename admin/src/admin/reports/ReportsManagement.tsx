@@ -19,10 +19,10 @@ export const ReportsManagement: React.FC = () => {
   const reports: ReportTemplate[] = [
     {
       id: "rep-1",
-      title: "Institutional User Registration & Keycloak Onboarding Audit",
+      title: "Institutional User Registration & Account Activity",
       category: "User Management",
       description:
-        "Detailed breakdown of newly registered students, appointed faculty, Keycloak activation latencies, and invitation failure logs.",
+        "Detailed breakdown of newly registered students, appointed faculty, account activation times, and invitation issues.",
       frequency: "Weekly",
       lastGenerated: "Oct 16, 2026",
     },
@@ -136,10 +136,10 @@ export const ReportsManagement: React.FC = () => {
             <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 space-y-1">
               <span className="text-slate-400 font-medium block">Included Data Fields:</span>
               <span className="font-mono text-[11px] text-slate-700 dark:text-slate-300 block">
-                • record_id, user_uuid, full_name, email, institutional_role
+                • record number, name, email, role
               </span>
               <span className="font-mono text-[11px] text-slate-700 dark:text-slate-300 block">
-                • status, created_at, keycloak_timestamp, ip_address
+                • status, created date, activation date, sign-in location
               </span>
             </div>
 

@@ -15,6 +15,21 @@ export interface AdminQuizRecord {
   questionCount?: number;
 }
 
+export interface QuizResultRecord {
+  studentId: string;
+  studentName: string;
+  marksObtained?: number;
+  percentage?: number;
+  passed: boolean;
+  submittedAt?: string;
+}
+
+export interface QuizResultsResponse {
+  quizId: string;
+  totalMarks?: number;
+  results?: QuizResultRecord[];
+}
+
 type ApiEnvelope<T> = { data?: T };
 
 function unwrap<T>(response: T | ApiEnvelope<T>): T {
@@ -26,9 +41,17 @@ function unwrap<T>(response: T | ApiEnvelope<T>): T {
 
 export async function fetchCourseQuizzes(courseId: string, signal?: AbortSignal) {
   const response = await apiRequest<AdminQuizRecord[] | ApiEnvelope<AdminQuizRecord[]>>(
-    `/api/courses/${encodeURIComponent(courseId)}/quizzes`,
+    `/api/quizzes/admin/courses/${encodeURIComponent(courseId)}`,
     { signal },
   );
   const data = unwrap(response);
   return Array.isArray(data) ? data : [];
+}
+
+export async function fetchQuizResults(quizId: string, signal?: AbortSignal) {
+  const response = await apiRequest<
+    QuizResultsResponse | ApiEnvelope<QuizResultsResponse>
+  >(`/api/quizzes/${encodeURIComponent(quizId)}/results`, { signal });
+  const data = unwrap(response);
+  return data ?? { quizId, results: [] };
 }

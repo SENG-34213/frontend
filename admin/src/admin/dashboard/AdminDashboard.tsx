@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import {
   Activity,
   ArrowRight,
-  ArrowUpRight,
   Bell,
   BookOpen,
   CalendarDays,
@@ -18,6 +17,7 @@ import {
   Sparkles,
   Users,
   UserRoundCheck,
+  Zap,
 } from "lucide-react";
 import { RoleBadge } from "../components/RoleBadge";
 import { UserAvatar } from "../components/UserAvatar";
@@ -53,6 +53,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   kpis,
+  students,
   events,
   recentLogs,
   role,
@@ -66,13 +67,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   analyticsError,
 }) => {
   const [showActions, setShowActions] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(new Date(2026, 9, 1));
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState("2026-10-19");
+  const [hoveredGrowthPoint, setHoveredGrowthPoint] = useState<number | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  });
   const metricColorClasses: Record<string, string> = {
     indigo: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300",
     violet: "bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300",
     sky: "bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-300",
     amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
+  };
+  const metricArrowColorClasses: Record<string, string> = {
+    indigo: "text-indigo-500 group-hover:text-indigo-600",
+    violet: "text-violet-500 group-hover:text-violet-600",
+    sky: "text-sky-500 group-hover:text-sky-600",
+    amber: "text-amber-500 group-hover:text-amber-600",
   };
   const todayLabel = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -89,36 +103,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 5);
   }, [registrationOverview]);
-  const fallbackRegistrations = [
-    {
-      id: "r1",
-      name: "Elena Rostova",
-      role: "STUDENT" as const,
-      email: "elena.rostova@mentify.edu",
-      date: "Today",
-    },
-    {
-      id: "r2",
-      name: "Tariq Mansoor",
-      role: "STUDENT" as const,
-      email: "tariq.mansoor@mentify.edu",
-      date: "Yesterday",
-    },
-    {
-      id: "r3",
-      name: "Sarah Jenkins",
-      role: "TEACHER" as const,
-      email: "sarah.jenkins@mentify.edu",
-      date: "Oct 16",
-    },
-    {
-      id: "r4",
-      name: "Chloe Lin",
-      role: "STUDENT" as const,
-      email: "chloe.lin@mentify.edu",
-      date: "Oct 15",
-    },
-  ];
   const accountMix = useMemo(() => {
     const colors: Record<string, string> = {
       STUDENT: "bg-indigo-500",
@@ -172,25 +156,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return `conic-gradient(${stops.join(", ")})`;
   }, [accountMix, accountMixTotal]);
   const enrollmentTrend = useMemo(() => {
-    const historicalPoints = Object.entries(analytics?.enrollment?.enrollmentTrend ?? {})
-      .filter(([, value]) => typeof value === "number" && Number.isFinite(value))
-      .map(([label, value]) => ({ label, value: value as number }))
-      .slice(-8);
-
-    if (historicalPoints.length > 0) return historicalPoints;
-
-    const activeEnrollments = analytics?.enrollment?.activeEnrollments;
-    const newThisMonth = analytics?.enrollment?.newThisMonth;
-    if (activeEnrollments === undefined && newThisMonth === undefined) return [];
-
     return [
-      ...(activeEnrollments !== undefined ? [{ label: "Active", value: activeEnrollments }] : []),
-      ...(newThisMonth !== undefined ? [{ label: "This month", value: newThisMonth }] : []),
+      { label: "Jan", value: 120 },
+      { label: "Feb", value: 168 },
+      { label: "Mar", value: 215 },
+      { label: "Apr", value: 248 },
+      { label: "May", value: 302 },
+      { label: "Jun", value: 365 },
+      { label: "Jul", value: 418 },
+      { label: "Aug", value: 486 },
     ];
-  }, [analytics]);
-  const hasHistoricalEnrollmentTrend =
-    Object.keys(analytics?.enrollment?.enrollmentTrend ?? {}).length > 0;
+  }, []);
+  const isSampleEnrollmentTrend = true;
   const maxEnrollmentTrend = Math.max(...enrollmentTrend.map((point) => point.value), 1);
+  const revenueTrend = [
+    { label: "Jan", value: 185000 },
+    { label: "Feb", value: 224000 },
+    { label: "Mar", value: 208000 },
+    { label: "Apr", value: 276000 },
+    { label: "May", value: 318000 },
+    { label: "Jun", value: 362000 },
+    { label: "Jul", value: 405000 },
+    { label: "Aug", value: 468000 },
+  ];
+  const maxRevenue = Math.max(...revenueTrend.map((point) => point.value), 1);
   const calendarCells = useMemo(() => {
     const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
     const start = new Date(firstDay);
@@ -218,7 +207,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const liveEnrollments = analytics?.enrollment?.activeEnrollments ?? kpis.activeEnrollments;
   const liveAttendance = analytics?.attendance?.averageAttendance;
   const analyticsIsPartial = analytics?.partial === true;
-
   return (
     <div className="flex flex-col space-y-6 pb-8">
       <section className="relative overflow-hidden rounded-[28px] bg-slate-950 px-6 py-7 text-white shadow-xl shadow-indigo-950/10 sm:px-8">
@@ -372,7 +360,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <p className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-white">
                   {metric.value.toLocaleString()}
                 </p>
-                <ArrowUpRight className="mb-1 h-4 w-4 text-slate-300 transition group-hover:text-indigo-500" />
+                <Zap
+                  className={`mb-1 h-4 w-4 transition ${metricArrowColorClasses[metric.color]}`}
+                />
               </div>
               <p
                 className={`mt-2 text-[11px] ${metric.color === "amber" ? "text-amber-600" : "text-emerald-600"}`}
@@ -393,44 +383,132 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   Community growth
                 </h2>
                 <span className="rounded-full bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300">
-                  {hasHistoricalEnrollmentTrend ? "Enrollment trend" : "Enrollment snapshot"}
+                  Sample preview
                 </span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {hasHistoricalEnrollmentTrend
-                  ? "Live enrollment activity reported by the Analytics Service"
-                  : "Live enrollment totals reported by the Analytics Service"}
+                Example enrollment growth preview
               </p>
             </div>
             <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
-              {analyticsLoading ? "Refreshing" : analyticsError ? "Unavailable" : "Live"}
+              {isSampleEnrollmentTrend
+                ? "Sample"
+                : analyticsLoading
+                  ? "Refreshing"
+                  : analyticsError
+                    ? "Unavailable"
+                    : "Live"}
             </span>
           </div>
           {enrollmentTrend.length > 0 ? (
-            <div className="mt-6 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 dark:from-indigo-950/30 dark:via-slate-950/30 dark:to-violet-950/20 sm:p-5">
-              <div className="flex h-[205px] items-end gap-2 sm:gap-3">
-                {enrollmentTrend.map((point, index) => {
-                  const height = Math.max(10, (point.value / maxEnrollmentTrend) * 100);
+            <div className="mt-6 overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 p-4 dark:from-indigo-950/30 dark:via-slate-950/30 dark:to-violet-950/20 sm:p-5">
+              <svg
+                viewBox="0 0 800 260"
+                className="h-[245px] w-full min-w-[560px]"
+                role="img"
+                aria-label="Sample community enrollment growth line chart"
+              >
+                <defs>
+                  <linearGradient id="community-growth-area" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.32" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.03" />
+                  </linearGradient>
+                </defs>
+                {[0, 1, 2, 3].map((line) => {
+                  const y = 24 + line * 55;
                   return (
-                    <div
-                      key={`${point.label}-${index}`}
-                      className="group flex min-w-0 flex-1 flex-col items-center justify-end gap-2"
-                    >
-                      <span className="text-[10px] font-semibold text-indigo-600 opacity-0 transition group-hover:opacity-100 dark:text-indigo-300">
-                        {point.value.toLocaleString()}
-                      </span>
-                      <div
-                        className="w-full rounded-t-lg bg-gradient-to-t from-indigo-600 to-violet-400 shadow-sm transition-all duration-500 group-hover:from-indigo-500 group-hover:to-fuchsia-400"
-                        style={{ height: `${height}%` }}
-                        title={`${point.label}: ${point.value.toLocaleString()} enrollments`}
-                      />
-                      <span className="max-w-full truncate text-[10px] text-slate-400">
-                        {point.label.length > 9 ? point.label.slice(0, 9) : point.label}
-                      </span>
-                    </div>
+                    <line
+                      key={line}
+                      x1="42"
+                      x2="778"
+                      y1={y}
+                      y2={y}
+                      stroke="currentColor"
+                      strokeOpacity="0.12"
+                      strokeDasharray="4 6"
+                    />
                   );
                 })}
-              </div>
+                <polyline
+                  points={enrollmentTrend
+                    .map((point, index) => {
+                      const x = 48 + (index / Math.max(enrollmentTrend.length - 1, 1)) * 720;
+                      const y = 190 - (point.value / maxEnrollmentTrend) * 150;
+                      return `${x},${y}`;
+                    })
+                    .join(" ")}
+                  fill="none"
+                  stroke="#6366f1"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="4"
+                />
+                <polygon
+                  points={`48,190 ${enrollmentTrend
+                    .map((point, index) => {
+                      const x = 48 + (index / Math.max(enrollmentTrend.length - 1, 1)) * 720;
+                      const y = 190 - (point.value / maxEnrollmentTrend) * 150;
+                      return `${x},${y}`;
+                    })
+                    .join(" ")} 768,190`}
+                  fill="url(#community-growth-area)"
+                />
+                {enrollmentTrend.map((point, index) => {
+                  const x = 48 + (index / Math.max(enrollmentTrend.length - 1, 1)) * 720;
+                  const y = 190 - (point.value / maxEnrollmentTrend) * 150;
+                  const tooltipX = Math.min(Math.max(x - 58, 4), 680);
+                  const tooltipY = Math.max(y - 58, 4);
+                  return (
+                    <g
+                      key={`${point.label}-${index}`}
+                      onMouseEnter={() => setHoveredGrowthPoint(index)}
+                      onMouseLeave={() => setHoveredGrowthPoint(null)}
+                      onFocus={() => setHoveredGrowthPoint(index)}
+                      onBlur={() => setHoveredGrowthPoint(null)}
+                      tabIndex={0}
+                      className="cursor-pointer outline-none"
+                    >
+                      {hoveredGrowthPoint === index && (
+                        <g pointerEvents="none">
+                          <rect
+                            x={tooltipX}
+                            y={tooltipY}
+                            width="116"
+                            height="40"
+                            rx="8"
+                            fill="#0f172a"
+                            stroke="#6366f1"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x={tooltipX + 58}
+                            y={tooltipY + 16}
+                            textAnchor="middle"
+                            fill="#c7d2fe"
+                            className="text-[10px] font-semibold"
+                          >
+                            {point.label}
+                          </text>
+                          <text
+                            x={tooltipX + 58}
+                            y={tooltipY + 31}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            className="text-[11px] font-bold"
+                          >
+                            {point.value.toLocaleString()} enrollments
+                          </text>
+                        </g>
+                      )}
+                      <circle cx={x} cy={y} r="7" fill="#ffffff" stroke="#6366f1" strokeWidth="4" />
+                      <text x={x} y="222" textAnchor="middle" className="fill-slate-500 text-[11px]">
+                        {point.label}
+                      </text>
+                      <title>{`${point.label}: ${point.value.toLocaleString()} enrollments`}</title>
+                    </g>
+                  );
+                })}
+              </svg>
             </div>
           ) : (
             <div className="mt-6 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 p-8 text-center dark:border-indigo-900/60 dark:bg-indigo-950/20">
@@ -558,9 +636,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {(latestRegistrations.length ? latestRegistrations : fallbackRegistrations).map(
-              (user: any) => {
-                const name = user.name || `${user.firstName} ${user.lastName}`;
+            {latestRegistrations.length ? (
+              latestRegistrations.map((user) => {
+                const name = `${user.firstName} ${user.lastName}`.trim();
                 const userRole = user.role;
                 return (
                   <div
@@ -576,11 +654,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                     <RoleBadge role={userRole} />
                     <span className="hidden text-[11px] text-slate-400 md:block">
-                      {user.date ||
-                        new Date(user.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                      {new Date(user.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </span>
                     <button
                       onClick={() => onNavigate(userRole === "STUDENT" ? "students" : "teachers")}
@@ -590,7 +667,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </button>
                   </div>
                 );
-              },
+              })
+            ) : (
+              <p className="px-5 py-8 text-center text-xs text-slate-400 sm:px-6">
+                No recent registrations yet.
+              </p>
             )}
           </div>
         </div>
@@ -682,8 +763,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             Open full calendar <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
-          <div>
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+            <div>
             <div className="mb-3 flex items-center justify-between rounded-2xl border border-indigo-100/80 bg-white/70 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
               <button
                 onClick={() =>
@@ -738,8 +820,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 })}
               </div>
             </div>
-          </div>
-          <div className="relative overflow-hidden rounded-2xl bg-slate-950 p-5 text-white shadow-lg shadow-indigo-200/40 dark:bg-indigo-950/70 dark:shadow-none">
+            </div>
+            <div className="relative overflow-hidden rounded-2xl bg-slate-950 p-5 text-white shadow-lg shadow-indigo-200/40 dark:bg-indigo-950/70 dark:shadow-none">
             <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-indigo-500/30 blur-2xl" />
             <div className="flex items-center justify-between">
               <div className="relative">
@@ -788,6 +870,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </p>
                 </div>
               )}
+            </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-emerald-100 bg-white/80 p-5 shadow-sm dark:border-emerald-950/60 dark:bg-slate-900/70 sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald-500" />
+                  <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+                    Income &amp; revenue
+                  </h2>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">Sample monthly revenue growth</p>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                Sample
+              </span>
+            </div>
+            <div className="mt-6 overflow-x-auto rounded-2xl bg-emerald-50/60 p-3 dark:bg-emerald-950/20">
+              <svg
+                viewBox="0 0 520 245"
+                className="h-[230px] min-w-[460px] w-full"
+                role="img"
+                aria-label="Sample monthly income and revenue line chart"
+              >
+                {[0, 1, 2, 3].map((line) => {
+                  const y = 25 + line * 48;
+                  return (
+                    <line
+                      key={line}
+                      x1="34"
+                      x2="500"
+                      y1={y}
+                      y2={y}
+                      stroke="#10b981"
+                      strokeOpacity="0.18"
+                      strokeDasharray="4 5"
+                    />
+                  );
+                })}
+                <polyline
+                  points={revenueTrend
+                    .map((point, index) => {
+                      const x = 38 + (index / (revenueTrend.length - 1)) * 454;
+                      const y = 180 - (point.value / maxRevenue) * 135;
+                      return `${x},${y}`;
+                    })
+                    .join(" ")}
+                  fill="none"
+                  stroke="#059669"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="4"
+                />
+                {revenueTrend.map((point, index) => {
+                  const x = 38 + (index / (revenueTrend.length - 1)) * 454;
+                  const y = 180 - (point.value / maxRevenue) * 135;
+                  return (
+                    <g key={`${point.label}-${index}`}>
+                      <circle cx={x} cy={y} r="6" fill="#ffffff" stroke="#059669" strokeWidth="4" />
+                      <text x={x} y="214" textAnchor="middle" className="fill-slate-500 text-[10px]">
+                        {point.label}
+                      </text>
+                      <title>{`${point.label}: LKR ${point.value.toLocaleString()}`}</title>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-emerald-100 pt-4 dark:border-emerald-950/60">
+              <span className="text-xs text-slate-500">August revenue</span>
+              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                LKR {revenueTrend[revenueTrend.length - 1].value.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -896,7 +1052,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               Need a deeper read?
             </p>
             <p className="mt-0.5 text-[11px] text-slate-500">
-              Ask Mentify AI to summarize trends across your institution.
+              Ask TiT AI to summarize trends across your institution.
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
-# Mentify · Student Portal
+# TiT · Student Portal
 
-A comprehensive, next-generation student learning portal frontend for the Mentify Learning Management System. Built with Next.js 16 (App Router), React 19, Tailwind CSS v4, and Lucide Icons, following the exact UI/UX design language and components from `student-portal`.
+A comprehensive, next-generation student learning portal frontend for the TiT Learning Management System. Built with Next.js 16 (App Router), React 19, Tailwind CSS v4, and Lucide Icons, following the exact UI/UX design language and components from `student-portal`.
 
 ---
 
@@ -18,7 +18,7 @@ A comprehensive, next-generation student learning portal frontend for the Mentif
 - **Collaboration & Tools**:
   - **My Calendar**: Color-coded class, exam, quiz, and assignment timeline with monthly/weekly/daily perspectives.
   - **Communication & Messages**: Real-time course group chat with instructor messaging simulation.
-  - **Mentify AI Assistant**: Specialized educational AI tutor with formula rendering, code generation, and practice prompt suggestions.
+  - **TiT AI Assistant**: Specialized educational AI tutor with formula rendering, code generation, and practice prompt suggestions.
   - **Notifications**: Interactive alerts center with quick navigation to deadlines, grades, and announcements.
   - **Command Palette (`Cmd+K` / `Ctrl+K`)**: Rapid keyboard search across courses, assignments, quizzes, and materials.
   - **Theme**: Seamless persistent Light/Dark mode.
@@ -27,7 +27,7 @@ A comprehensive, next-generation student learning portal frontend for the Mentif
 
 ### 2. Microservices Backend Integration (`services`)
 
-Connected directly to the Mentify backend microservices through the Spring Cloud API Gateway:
+Connected directly to the TiT backend microservices through the Spring Cloud API Gateway:
 
 | Backend Service           | Port / Path                                                           | Integrated Features                                                    |
 | ------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------- |

@@ -92,9 +92,8 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
               Super Administrator Authorization Required
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              According to institutional Keycloak security policies, only accounts with the{" "}
-              <strong className="text-slate-700 dark:text-slate-300">SUPER_ADMIN</strong> role can
-              view administrator directories or provision new administrative credentials.
+              Only super administrators can view administrator directories or create new
+              administrator accounts.
             </p>
           </div>
         </div>

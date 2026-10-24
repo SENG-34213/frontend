@@ -233,11 +233,15 @@ export const StudentDashboard: React.FC = () => {
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <button
-                onClick={() => firstCourse && navigateToCourseWorkspace(firstCourse.id)}
+                onClick={() =>
+                  firstCourse
+                    ? navigateToCourseWorkspace(firstCourse.id)
+                    : setCurrentView("my-courses")
+                }
                 className="flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-bold text-slate-900 hover:bg-cyan-50"
               >
                 <PlayCircle className="h-4 w-4 text-indigo-600" />
-                {firstCourse ? `Resume ${firstCourse.code}` : "Explore courses"}
+                {firstCourse ? `Resume ${firstCourse.code}` : "View my courses"}
               </button>
               <button
                 onClick={() => setCurrentView("calendar")}

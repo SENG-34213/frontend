@@ -32,6 +32,10 @@ interface Props {
   initialDescription: string;
   initialDuration: number;
   initialPassMark: number;
+  initialStartTime: string;
+  initialEndTime: string;
+  initialMaxAttempts: number;
+  initialShowResultImmediately: boolean;
   course?: Course;
   onClose: () => void;
   onRegenerate: () => void;
@@ -44,6 +48,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
   initialDescription,
   initialDuration,
   initialPassMark,
+  initialStartTime,
+  initialEndTime,
+  initialMaxAttempts,
+  initialShowResultImmediately,
   course,
   onClose,
   onRegenerate,
@@ -55,6 +63,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
   const [description, setDescription] = useState(initialDescription);
   const [duration, setDuration] = useState(initialDuration);
   const [passMark, setPassMark] = useState(initialPassMark);
+  const [startTime, setStartTime] = useState(initialStartTime);
+  const [endTime, setEndTime] = useState(initialEndTime);
+  const [maxAttempts, setMaxAttempts] = useState(initialMaxAttempts);
+  const [showResultImmediately, setShowResultImmediately] = useState(initialShowResultImmediately);
   const [showSettings, setShowSettings] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -84,6 +96,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
     if (!title.trim()) return "Quiz title is required.";
     if (title.length > 150) return "Quiz title cannot exceed 150 characters.";
     if (duration < 1) return "Quiz duration must be at least 1 minute.";
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1)
+      return "Maximum attempts must be a positive whole number.";
+    if (startTime && endTime && new Date(startTime) >= new Date(endTime))
+      return "The end date and time must be after the start date and time.";
     if (!questions.length) return "Quiz must contain at least one question.";
     if (passMark > totalMarks) return `Pass mark cannot exceed total marks (${totalMarks}).`;
     for (const [index, item] of questions.entries()) {
@@ -112,8 +128,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
         description: description.trim(),
         durationMinutes: duration,
         passMark,
-        maxAttempts: 1,
-        showResultImmediately: true,
+        startTime: startTime || undefined,
+        endTime: endTime || undefined,
+        maxAttempts,
+        showResultImmediately,
         creationMethod: "AI_GENERATED",
       });
       const savedQuestions = [];
@@ -241,13 +259,51 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
               </label>
+              <label className="text-xs font-semibold text-slate-300 md:col-span-3">
+                Maximum Attempts
+                <input
+                  type="number"
+                  min={1}
+                  value={maxAttempts}
+                  onChange={(event) => setMaxAttempts(Number(event.target.value))}
+                  className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
+                />
+              </label>
               <label className="text-xs font-semibold text-slate-300 md:col-span-12">
                 Description
-                <input
+                <textarea
+                  rows={2}
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
+              </label>
+              <label className="text-xs font-semibold text-slate-300 md:col-span-6">
+                Start Date &amp; Time
+                <input
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={(event) => setStartTime(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-300 md:col-span-6">
+                End Date &amp; Time
+                <input
+                  type="datetime-local"
+                  value={endTime}
+                  onChange={(event) => setEndTime(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-300 md:col-span-12">
+                <input
+                  type="checkbox"
+                  checked={showResultImmediately}
+                  onChange={(event) => setShowResultImmediately(event.target.checked)}
+                  className="rounded border-slate-600 bg-slate-900 text-indigo-500"
+                />
+                Show results immediately after submission
               </label>
             </div>
           )}

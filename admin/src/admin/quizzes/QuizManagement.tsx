@@ -9,13 +9,20 @@ import {
   RefreshCcw,
   Search,
   Send,
+  Users,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { DetailDrawer } from "../components/DetailDrawer";
 import { Course, Grade, Quiz } from "../types";
-import { fetchCourseQuizzes, type AdminQuizRecord } from "../api/quizzesApi";
+import {
+  fetchCourseQuizzes,
+  fetchQuizResults,
+  type AdminQuizRecord,
+  type QuizResultRecord,
+} from "../api/quizzesApi";
 import { fetchTodayAdminQuizAnalytics, type AdminQuizAnalyticsItem } from "../api/quizAnalyticsApi";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 /* These effects synchronize dependent filters and remote quiz data. */
 /* eslint-disable react-hooks/set-state-in-effect */
@@ -50,6 +57,11 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
   const [search, setSearch] = useState("");
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  const [quizResults, setQuizResults] = useState<QuizResultRecord[]>([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [resultsError, setResultsError] = useState("");
+  const [resultsSearch, setResultsSearch] = useState("");
+  const [resultsFilter, setResultsFilter] = useState(ALL);
   const [todayAnalytics, setTodayAnalytics] = useState<AdminQuizAnalyticsItem[]>([]);
   const [analyticsDate, setAnalyticsDate] = useState("");
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
@@ -166,6 +178,17 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
           (result): result is PromiseFulfilledResult<AdminQuizRecord[]> =>
             result.status === "fulfilled",
         );
+        const failed = results.flatMap((result, index) =>
+          result.status === "rejected"
+            ? [
+                `${selectedCourses[index]?.title || "A selected course"}: ${
+                  result.reason instanceof Error
+                    ? result.reason.message
+                    : "The quiz service rejected the request."
+                }`,
+              ]
+            : [],
+        );
         setQuizzes(
           successful
             .flatMap((result) => result.value)
@@ -176,8 +199,13 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
               ),
             ),
         );
-        if (!successful.length && results.length)
-          setError("Quizzes could not be loaded for the selected courses.");
+        if (failed.length) {
+          setError(
+            successful.length
+              ? `Some quizzes could not be loaded: ${failed.join("; ")}`
+              : `Quizzes could not be loaded for the selected courses: ${failed.join("; ")}`,
+          );
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -188,6 +216,45 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
   const selectedAnalytics = selectedQuiz
     ? todayAnalytics.find((item) => item.quizId === selectedQuiz.id)
     : undefined;
+  const filteredResults = useMemo(() => {
+    const query = resultsSearch.trim().toLowerCase();
+    return quizResults.filter((result) => {
+      const matchesStudent =
+        !query ||
+        result.studentName.toLowerCase().includes(query) ||
+        result.studentId.toLowerCase().includes(query);
+      const matchesStatus =
+        resultsFilter === ALL || (resultsFilter === "PASSED" ? result.passed : !result.passed);
+      return matchesStudent && matchesStatus;
+    });
+  }, [quizResults, resultsFilter, resultsSearch]);
+
+  useEffect(() => {
+    if (!selectedQuiz) {
+      setQuizResults([]);
+      setResultsError("");
+      return;
+    }
+    const controller = new AbortController();
+    setResultsLoading(true);
+    setResultsError("");
+    setResultsSearch("");
+    setResultsFilter(ALL);
+    void fetchQuizResults(selectedQuiz.id, controller.signal)
+      .then((response) => setQuizResults(response.results ?? []))
+      .catch((reason: unknown) => {
+        if (!controller.signal.aborted) {
+          setQuizResults([]);
+          setResultsError(
+            reason instanceof Error ? reason.message : "Quiz results could not be loaded.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setResultsLoading(false);
+      });
+    return () => controller.abort();
+  }, [selectedQuiz]);
   const resetFilters = () => {
     setGradeId(ALL);
     setDomain(ALL);
@@ -370,15 +437,11 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
         </div>
       )}
       {!isLoading && !error && !filteredQuizzes.length && (
-        <div className="rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-slate-700">
-          <BookOpenCheck className="mx-auto h-8 w-8 text-slate-300" />
-          <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
-            No quizzes match the selected filters
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Try another grade, domain, course, or status.
-          </p>
-        </div>
+        <EmptyState
+          icon={BookOpenCheck}
+          title="No quizzes found"
+          description="Try another grade, domain, course, or status."
+        />
       )}
 
       {!isLoading && filteredQuizzes.length > 0 && (
@@ -549,6 +612,102 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
                 <p className="mt-2 text-slate-500">
                   Live analytics are not available for this quiz today.
                 </p>
+              )}
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800">
+                <div>
+                  <h5 className="font-semibold text-slate-900 dark:text-white">Student results</h5>
+                  <p className="mt-1 text-slate-500">
+                    Latest submitted result for each student.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Users className="h-4 w-4" />
+                  {quizResults.length} students
+                </div>
+              </div>
+              <div className="grid gap-2 border-b border-slate-200 p-4 sm:grid-cols-[1fr_auto] dark:border-slate-800">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    value={resultsSearch}
+                    onChange={(event) => setResultsSearch(event.target.value)}
+                    placeholder="Search student name or ID"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+                <select
+                  value={resultsFilter}
+                  onChange={(event) => setResultsFilter(event.target.value)}
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                  <option value={ALL}>All results</option>
+                  <option value="PASSED">Passed</option>
+                  <option value="FAILED">Needs improvement</option>
+                </select>
+              </div>
+              {resultsLoading && (
+                <div className="flex items-center justify-center p-8 text-slate-500">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin text-indigo-500" />
+                  Loading student results…
+                </div>
+              )}
+              {!resultsLoading && resultsError && (
+                <p className="p-4 text-rose-600 dark:text-rose-300">{resultsError}</p>
+              )}
+              {!resultsLoading && !resultsError && !filteredResults.length && (
+                <div className="p-8 text-center text-slate-500">
+                  <Users className="mx-auto mb-2 h-7 w-7 text-slate-300" />
+                  No submitted student results match the current filter.
+                </div>
+              )}
+              {!resultsLoading && !resultsError && filteredResults.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[620px] text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Student</th>
+                        <th className="px-4 py-3 font-semibold">Score</th>
+                        <th className="px-4 py-3 font-semibold">Submitted</th>
+                        <th className="px-4 py-3 font-semibold">Result</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredResults.map((result) => (
+                        <tr key={result.studentId}>
+                          <td className="px-4 py-3">
+                            <span className="block font-semibold text-slate-900 dark:text-white">
+                              {result.studentName}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-200">
+                            {result.marksObtained ?? "—"} marks
+                            <span className="ml-1 text-slate-400">
+                              ({result.percentage ?? "—"}%)
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-slate-500">
+                            {result.submittedAt
+                              ? new Date(result.submittedAt).toLocaleString()
+                              : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                                result.passed
+                                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                  : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                              }`}
+                            >
+                              {result.passed ? "Passed" : "Needs improvement"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

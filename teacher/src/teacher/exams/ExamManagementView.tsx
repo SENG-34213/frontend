@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Calendar, Clock, MapPin, CheckCircle, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  Clock,
+  MapPin,
+  CheckCircle,
+  ChevronRight,
+  ClipboardList,
+  FileText,
+} from "lucide-react";
 import { Examination, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import {
@@ -8,6 +17,7 @@ import {
   createExam,
   enterExamMarks,
   getCourseExams,
+  getExam,
   getExamResults,
   getExamSummary,
   scheduleExam,
@@ -21,6 +31,7 @@ import type { BackendCourse } from "../api/courseApi";
 import { TextInputModal } from "../components/ActionModal";
 import { ExamInstructionUpload } from "../components/ExamInstructionUpload";
 import { downloadExamAttachment, getExamAttachments, type ExamAttachment } from "../api/examApi";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface ExamManagementViewProps {
   onNavigate?: (tab: NavigationTab) => void;
@@ -78,7 +89,7 @@ const mapBackendExam = (exam: BackendExam, courses: BackendCourse[]): Examinatio
     scheduledDate: exam.examDate,
     startTime: toDisplayTime(start),
     durationMinutes: minutesBetween(start, exam.endTime?.slice(0, 5) || start),
-    roomOrPlatform: "Venue not provided",
+    roomOrPlatform: exam.venue?.trim() || "Venue not provided",
     totalMarks: Number(exam.totalMarks),
     weightagePercent: 0,
     status: examStatusLabel(exam.status),
@@ -114,9 +125,18 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [resultSheet, setResultSheet] = useState<ExamResultSheet | null>(null);
   const [examSummary, setExamSummary] = useState<ExamSummary | null>(null);
   const [resultMarks, setResultMarks] = useState<Record<string, string>>({});
+  const [resultAttendance, setResultAttendance] = useState<Record<string, "PRESENT" | "ABSENT" | "">>({});
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsError, setResultsError] = useState<string | null>(null);
   const [editingExam, setEditingExam] = useState<BackendExam | null>(null);
+  const [editingDescription, setEditingDescription] = useState("");
+  const [editingExamDate, setEditingExamDate] = useState("");
+  const [editingStartTime, setEditingStartTime] = useState("");
+  const [editingEndTime, setEditingEndTime] = useState("");
+  const [editingTotalMarks, setEditingTotalMarks] = useState("");
+  const [editingPassMarks, setEditingPassMarks] = useState("");
+  const [editingType, setEditingType] = useState<BackendExam["type"]>("MIDTERM");
+  const [editingVenue, setEditingVenue] = useState("");
   const [instructionFile, setInstructionFile] = useState<File | null>(null);
   const [editingInstructionFile, setEditingInstructionFile] = useState<File | null>(null);
   const [editingAttachment, setEditingAttachment] = useState<ExamAttachment | null>(null);
@@ -200,23 +220,20 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const handleEditExam = async (title: string) => {
     const exam = editingExam;
     if (!exam || exam.status !== "DRAFT") return;
-    if (title === exam.title && !editingInstructionFile) {
-      setEditingExam(null);
-      return;
-    }
     try {
       setIsSavingExam(true);
       const updated = await updateExam(
         exam.id,
         {
           title,
-          description: exam.description,
-          examDate: exam.examDate,
-          startTime: exam.startTime,
-          endTime: exam.endTime,
-          totalMarks: Number(exam.totalMarks),
-          passMarks: Number(exam.passMarks),
-          type: exam.type,
+          description: editingDescription.trim() || undefined,
+          venue: editingVenue.trim() || undefined,
+          examDate: editingExamDate,
+          startTime: editingStartTime,
+          endTime: editingEndTime,
+          totalMarks: Number(editingTotalMarks),
+          passMarks: Number(editingPassMarks),
+          type: editingType,
         },
         { instructionFile: editingInstructionFile, studentVisible },
       );
@@ -233,12 +250,28 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
 
   const openEditExam = async (exam: BackendExam) => {
     setEditingExam(exam);
+    const setFields = (details: BackendExam) => {
+      setEditingDescription(details.description ?? "");
+      setEditingExamDate(details.examDate);
+      setEditingStartTime(details.startTime.slice(0, 8));
+      setEditingEndTime(details.endTime.slice(0, 8));
+      setEditingTotalMarks(String(details.totalMarks));
+      setEditingPassMarks(String(details.passMarks));
+      setEditingType(details.type);
+      setEditingVenue(details.venue ?? "");
+    };
+    setFields(exam);
     setEditingInstructionFile(null);
     setEditingAttachment(null);
     setStudentVisible(true);
     try {
-      const attachments = await getExamAttachments(exam.id);
-      const activeAttachment = attachments.find((attachment) => attachment.active) ?? null;
+      const [details, attachments] = await Promise.all([
+        getExam(exam.id),
+        getExamAttachments(exam.id),
+      ]);
+      setEditingExam(details);
+      setFields(details);
+      const activeAttachment = attachments.find((attachment) => attachment.active) ?? attachments[0] ?? null;
       setEditingAttachment(activeAttachment);
       if (activeAttachment) setStudentVisible(activeAttachment.studentVisible);
     } catch (requestError) {
@@ -253,15 +286,27 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
     setResultsLoading(true);
     setResultsError(null);
     try {
-      const [sheet, summary] = await Promise.all([
+      const [sheetResult, summaryResult] = await Promise.allSettled([
         getExamResults(exam.id),
         getExamSummary(exam.id),
       ]);
+      if (sheetResult.status === "rejected") throw sheetResult.reason;
+      const sheet = sheetResult.value;
       setResultSheet(sheet);
-      setExamSummary(summary);
+      setExamSummary(summaryResult.status === "fulfilled" ? summaryResult.value : null);
       setResultMarks(
         Object.fromEntries(
           sheet.results.map((result) => [result.studentId, result.marksObtained?.toString() ?? ""]),
+        ),
+      );
+      setResultAttendance(
+        Object.fromEntries(
+          sheet.results.map((result) => [
+            result.studentId,
+            result.attendanceStatus === "PRESENT" || result.attendanceStatus === "ABSENT"
+              ? result.attendanceStatus
+              : "",
+          ]),
         ),
       );
     } catch (requestError) {
@@ -277,8 +322,15 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
     if (!resultsExam || !resultSheet || resultsExam.status !== "MARKING") return;
     try {
       const results = resultSheet.results.map((result) => {
+        const attendanceStatus = resultAttendance[result.studentId];
+        if (!attendanceStatus) {
+          throw new Error(`Select attendance status for ${result.studentName || "every student"}.`);
+        }
         const raw = resultMarks[result.studentId];
         const marks = raw === "" ? undefined : Number(raw);
+        if (attendanceStatus === "PRESENT" && marks === undefined) {
+          throw new Error(`Enter marks for ${result.studentName || "every present student"}.`);
+        }
         if (
           marks !== undefined &&
           (!Number.isFinite(marks) || marks < 0 || marks > Number(resultsExam.totalMarks))
@@ -289,13 +341,23 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         }
         return {
           studentId: result.studentId,
-          attendanceStatus: result.attendanceStatus,
+          attendanceStatus,
           ...(marks === undefined ? {} : { marksObtained: marks }),
           remarks: result.remarks,
         };
       });
       const saved = await enterExamMarks(resultsExam.id, results);
       setResultSheet((current) => (current ? { ...current, results: saved.results } : current));
+      setResultAttendance(
+        Object.fromEntries(
+          saved.results.map((result) => [
+            result.studentId,
+            result.attendanceStatus === "PRESENT" || result.attendanceStatus === "ABSENT"
+              ? result.attendanceStatus
+              : "",
+          ]),
+        ) as Record<string, "PRESENT" | "ABSENT" | "">,
+      );
     } catch (requestError) {
       setResultsError(
         requestError instanceof Error ? requestError.message : "Exam marks could not be saved.",
@@ -326,6 +388,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
             courseId: backendCourse.id,
             title: wizardTitle || `${courseCode} ${wizardType} Examination`,
             description: wizardDescription.trim() || undefined,
+            venue: wizardRoom.trim() || undefined,
             examDate: wizardDate,
             startTime,
             endTime,
@@ -550,8 +613,8 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     </p>
                   </div>
                   <div className="text-xs text-slate-600">
-                    Question paper blueprint will be finalized in the Mentify Examination Vault 48
-                    hours prior to start.
+                    Question paper blueprint will be finalized in the TiT Examination Vault 48 hours
+                    prior to start.
                   </div>
                 </div>
               )}
@@ -690,13 +753,19 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
           Loading exams...
         </div>
       ) : backendCourses.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-          No courses are assigned to you yet.
-        </div>
+        <EmptyState
+          compact
+          icon={ClipboardList}
+          title="No assigned courses"
+          description="Exams will appear after a course is assigned to you."
+        />
       ) : exams.length === 0 ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
-          No exams have been created for your courses yet.
-        </div>
+        <EmptyState
+          compact
+          icon={FileText}
+          title="No exams found"
+          description="No exams have been created for your assigned courses yet."
+        />
       ) : null}
       <div className="space-y-4">
         {exams.map((exam) => (
@@ -813,7 +882,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
 
       {resultsExam && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-5xl max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl bg-white p-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div>
                 <h2 className="text-base font-bold text-slate-900">{resultsExam.title} results</h2>
@@ -842,13 +911,36 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     key={result.studentId}
                     className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
                   >
-                    <span className="text-xs font-semibold text-slate-900">{result.studentId}</span>
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-semibold text-slate-900">
+                        {result.studentName || "Student"}
+                      </div>
+                    </div>
+                    <select
+                      value={resultAttendance[result.studentId] ?? ""}
+                      disabled={resultsExam.status !== "MARKING"}
+                      onChange={(event) => {
+                        const value = event.target.value as "PRESENT" | "ABSENT" | "";
+                        setResultAttendance((current) => ({
+                          ...current,
+                          [result.studentId]: value,
+                        }));
+                        if (value === "ABSENT") {
+                          setResultMarks((current) => ({ ...current, [result.studentId]: "" }));
+                        }
+                      }}
+                      className="rounded border border-slate-200 px-2 py-1 text-xs disabled:bg-slate-50"
+                    >
+                      <option value="">Attendance</option>
+                      <option value="PRESENT">Present</option>
+                      <option value="ABSENT">Absent</option>
+                    </select>
                     <input
                       type="number"
                       min="0"
                       max={Number(resultsExam.totalMarks)}
                       value={resultMarks[result.studentId] ?? ""}
-                      disabled={resultsExam.status !== "MARKING"}
+                      disabled={resultsExam.status !== "MARKING" || resultAttendance[result.studentId] === "ABSENT"}
                       onChange={(event) =>
                         setResultMarks((current) => ({
                           ...current,
@@ -870,7 +962,12 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                 )}
               </div>
             ) : (
-              <p className="p-8 text-center text-xs text-slate-500">No result records available.</p>
+              <EmptyState
+                compact
+                icon={FileText}
+                title="No result records"
+                description="Exam result records will appear here after submissions are graded."
+              />
             )}
           </div>
         </div>
@@ -883,34 +980,77 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         onClose={() => setEditingExam(null)}
         onSave={handleEditExam}
         isSubmitting={isSavingExam}
+        wide
         extraContent={
           editingExam ? (
-            <div className="space-y-3">
-              {editingAttachment && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
-                  <span className="truncate text-slate-700">
-                    Current PDF: {editingAttachment.originalFilename}
-                  </span>
-                  <button
-                    type="button"
-                    className="shrink-0 font-semibold text-indigo-600"
-                    onClick={() =>
-                      void downloadExamAttachment(editingExam.id, editingAttachment.id).then(
-                        (blob) => {
-                          const url = URL.createObjectURL(blob);
-                          window.open(url, "_blank", "noopener,noreferrer");
-                          setTimeout(() => URL.revokeObjectURL(url), 60_000);
-                        },
-                      )
-                    }
-                  >
-                    Open
-                  </button>
-                </div>
-              )}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-700">
+                Description
+                <textarea
+                  value={editingDescription}
+                  onChange={(event) => setEditingDescription(event.target.value)}
+                  rows={2}
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal text-slate-900 outline-none focus:border-indigo-500"
+                />
+              </label>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <label className="text-xs font-semibold text-slate-700">
+                  Exam date
+                  <input type="date" value={editingExamDate} onChange={(event) => setEditingExamDate(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Venue
+                  <input value={editingVenue} onChange={(event) => setEditingVenue(event.target.value)} placeholder="Room or online venue" className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Start time
+                  <input type="time" value={editingStartTime.slice(0, 5)} onChange={(event) => setEditingStartTime(`${event.target.value}:00`)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  End time
+                  <input type="time" value={editingEndTime.slice(0, 5)} onChange={(event) => setEditingEndTime(`${event.target.value}:00`)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Total marks
+                  <input type="number" min="1" value={editingTotalMarks} onChange={(event) => setEditingTotalMarks(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                </label>
+                <label className="text-xs font-semibold text-slate-700">
+                  Pass marks
+                  <input type="number" min="0" value={editingPassMarks} onChange={(event) => setEditingPassMarks(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                </label>
+              </div>
+              <label className="block text-xs font-semibold text-slate-700">
+                Exam type
+                <select value={editingType} onChange={(event) => setEditingType(event.target.value as BackendExam["type"])} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal">
+                  <option value="MIDTERM">Midterm</option>
+                  <option value="FINAL">Final</option>
+                  <option value="PRACTICAL">Practical</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </label>
               <ExamInstructionUpload
                 value={editingInstructionFile}
                 onChange={setEditingInstructionFile}
+                existingFile={
+                  editingAttachment
+                    ? {
+                        name: editingAttachment.originalFilename,
+                        sizeBytes: editingAttachment.sizeBytes,
+                      }
+                    : null
+                }
+                onOpenExisting={
+                  editingAttachment
+                    ? () =>
+                        void downloadExamAttachment(editingExam.id, editingAttachment.id).then(
+                          (blob) => {
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, "_blank", "noopener,noreferrer");
+                            setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                          },
+                        )
+                    : undefined
+                }
                 disabled={isSavingExam}
               />
               <label className="flex items-center gap-2 text-xs text-slate-700">
