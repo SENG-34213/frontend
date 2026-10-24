@@ -19,10 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "react": ["./node_modules/@types/react/index.d.ts"],
-      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime.d.ts"]
-    }
+      "@/*": ["./src/*"]
+    },
+    "typeRoots": ["./node_modules/@types"]
   },
   "include": [
     "next-env.d.ts",
