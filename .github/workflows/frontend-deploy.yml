@@ -122,6 +122,6 @@ jobs:
           export TEACHER_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-teacher"
           export STUDENT_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-student"
           docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml up -d --remove-orphans
+          docker compose -f docker-compose.prod.yml up -d
           docker compose -f docker-compose.prod.yml ps
           EOF

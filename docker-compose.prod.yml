@@ -1,4 +1,4 @@
-name: mentify-prod
+name: mentify-frontend
 
 services:
   admin-frontend:
