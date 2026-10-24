@@ -49,9 +49,10 @@ export async function fetchCourseQuizzes(courseId: string, signal?: AbortSignal)
 }
 
 export async function fetchQuizResults(quizId: string, signal?: AbortSignal) {
-  const response = await apiRequest<
-    QuizResultsResponse | ApiEnvelope<QuizResultsResponse>
-  >(`/api/quizzes/${encodeURIComponent(quizId)}/results`, { signal });
+  const response = await apiRequest<QuizResultsResponse | ApiEnvelope<QuizResultsResponse>>(
+    `/api/quizzes/${encodeURIComponent(quizId)}/results`,
+    { signal },
+  );
   const data = unwrap(response);
   return data ?? { quizId, results: [] };
 }

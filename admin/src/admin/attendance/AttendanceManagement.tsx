@@ -407,17 +407,25 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
                 </div>
                 <div className="space-y-3">
                   {[
-                    { label: "Present", count: selectedSession.presentCount, color: "bg-emerald-500" },
+                    {
+                      label: "Present",
+                      count: selectedSession.presentCount,
+                      color: "bg-emerald-500",
+                    },
                     { label: "Absent", count: selectedSession.absentCount, color: "bg-rose-500" },
                     { label: "Late", count: selectedSession.lateCount, color: "bg-amber-500" },
                   ].map((item) => (
-                    <div key={item.label} className="flex items-center justify-between gap-4 text-xs">
+                    <div
+                      key={item.label}
+                      className="flex items-center justify-between gap-4 text-xs"
+                    >
                       <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                         <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
                         {item.label}
                       </span>
                       <span className="font-semibold tabular-nums text-slate-900 dark:text-white">
-                        {item.count} ({Math.round((item.count / selectedDistribution.total) * 100)}%)
+                        {item.count} ({Math.round((item.count / selectedDistribution.total) * 100)}
+                        %)
                       </span>
                     </div>
                   ))}

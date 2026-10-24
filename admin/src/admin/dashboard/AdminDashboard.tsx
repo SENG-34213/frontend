@@ -386,9 +386,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   Sample preview
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-500">
-                Example enrollment growth preview
-              </p>
+              <p className="mt-1 text-xs text-slate-500">Example enrollment growth preview</p>
             </div>
             <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
               {isSampleEnrollmentTrend
@@ -501,7 +499,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </g>
                       )}
                       <circle cx={x} cy={y} r="7" fill="#ffffff" stroke="#6366f1" strokeWidth="4" />
-                      <text x={x} y="222" textAnchor="middle" className="fill-slate-500 text-[11px]">
+                      <text
+                        x={x}
+                        y="222"
+                        textAnchor="middle"
+                        className="fill-slate-500 text-[11px]"
+                      >
                         {point.label}
                       </text>
                       <title>{`${point.label}: ${point.value.toLocaleString()} enrollments`}</title>
@@ -766,111 +769,111 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.65fr)]">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
             <div>
-            <div className="mb-3 flex items-center justify-between rounded-2xl border border-indigo-100/80 bg-white/70 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
-              <button
-                onClick={() =>
-                  setCalendarMonth(
-                    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1),
-                  )
-                }
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                aria-label="Previous month"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                {monthLabel}
-              </span>
-              <button
-                onClick={() =>
-                  setCalendarMonth(
-                    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1),
-                  )
-                }
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-                aria-label="Next month"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="rounded-2xl border border-white/80 bg-white/70 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                  <span key={day} className="py-2">
-                    {day.slice(0, 2)}
-                  </span>
-                ))}
-                {calendarCells.map((cell) => {
-                  const dayEvents = events.filter((event) => event.date === cell.key);
-                  const isSelected = selectedCalendarDate === cell.key;
-                  return (
-                    <button
-                      key={cell.key}
-                      onClick={() => setSelectedCalendarDate(cell.key)}
-                      className={`relative min-h-12 rounded-xl p-2 text-xs transition ${isSelected ? "bg-indigo-600 font-bold text-white shadow-md shadow-indigo-200 dark:shadow-none" : cell.isCurrentMonth ? "text-slate-700 hover:bg-indigo-50 dark:text-slate-300 dark:hover:bg-indigo-950/40" : "text-slate-300 dark:text-slate-700"}`}
-                    >
-                      <span>{cell.date.getDate()}</span>
-                      {dayEvents.length > 0 && (
-                        <span
-                          className={`absolute bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${isSelected ? "bg-white" : "bg-indigo-500"}`}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
+              <div className="mb-3 flex items-center justify-between rounded-2xl border border-indigo-100/80 bg-white/70 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60">
+                <button
+                  onClick={() =>
+                    setCalendarMonth(
+                      new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1),
+                    )
+                  }
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+                  aria-label="Previous month"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {monthLabel}
+                </span>
+                <button
+                  onClick={() =>
+                    setCalendarMonth(
+                      new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1),
+                    )
+                  }
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+                  aria-label="Next month"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
-            </div>
+              <div className="rounded-2xl border border-white/80 bg-white/70 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-slate-400">
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                    <span key={day} className="py-2">
+                      {day.slice(0, 2)}
+                    </span>
+                  ))}
+                  {calendarCells.map((cell) => {
+                    const dayEvents = events.filter((event) => event.date === cell.key);
+                    const isSelected = selectedCalendarDate === cell.key;
+                    return (
+                      <button
+                        key={cell.key}
+                        onClick={() => setSelectedCalendarDate(cell.key)}
+                        className={`relative min-h-12 rounded-xl p-2 text-xs transition ${isSelected ? "bg-indigo-600 font-bold text-white shadow-md shadow-indigo-200 dark:shadow-none" : cell.isCurrentMonth ? "text-slate-700 hover:bg-indigo-50 dark:text-slate-300 dark:hover:bg-indigo-950/40" : "text-slate-300 dark:text-slate-700"}`}
+                      >
+                        <span>{cell.date.getDate()}</span>
+                        {dayEvents.length > 0 && (
+                          <span
+                            className={`absolute bottom-1.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full ${isSelected ? "bg-white" : "bg-indigo-500"}`}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
             <div className="relative overflow-hidden rounded-2xl bg-slate-950 p-5 text-white shadow-lg shadow-indigo-200/40 dark:bg-indigo-950/70 dark:shadow-none">
-            <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-indigo-500/30 blur-2xl" />
-            <div className="flex items-center justify-between">
-              <div className="relative">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-200">
-                  Selected day
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  {new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-              <span className="relative rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold text-indigo-100 ring-1 ring-white/15">
-                {selectedDayEvents.length} events
-              </span>
-            </div>
-            <div className="relative mt-5 space-y-2.5">
-              {selectedDayEvents.length > 0 ? (
-                selectedDayEvents.map((event) => (
-                  <button
-                    key={event.id}
-                    onClick={() => onNavigate("calendar")}
-                    className="flex w-full items-start gap-2.5 rounded-xl bg-white p-3 text-left shadow-sm transition hover:ring-2 hover:ring-indigo-200 dark:bg-slate-900 dark:hover:ring-indigo-800"
-                  >
-                    <span
-                      className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${event.type === "EXAM" ? "bg-rose-500" : event.type === "DEADLINE" ? "bg-amber-500" : "bg-indigo-500"}`}
-                    />
-                    <span className="min-w-0">
-                      <span className="block truncate text-[11px] font-semibold text-slate-900 dark:text-white">
-                        {event.title}
-                      </span>
-                      <span className="mt-1 block text-[10px] text-slate-400">
-                        {event.time} · {event.location}
-                      </span>
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="py-7 text-center">
-                  <CalendarDays className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600" />
-                  <p className="mt-2 text-xs text-slate-200">No events scheduled</p>
-                  <p className="mt-1 text-[10px] text-slate-400">
-                    Select another day to explore the schedule.
+              <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-indigo-500/30 blur-2xl" />
+              <div className="flex items-center justify-between">
+                <div className="relative">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-200">
+                    Selected day
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {new Date(`${selectedCalendarDate}T00:00:00`).toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </p>
                 </div>
-              )}
-            </div>
+                <span className="relative rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold text-indigo-100 ring-1 ring-white/15">
+                  {selectedDayEvents.length} events
+                </span>
+              </div>
+              <div className="relative mt-5 space-y-2.5">
+                {selectedDayEvents.length > 0 ? (
+                  selectedDayEvents.map((event) => (
+                    <button
+                      key={event.id}
+                      onClick={() => onNavigate("calendar")}
+                      className="flex w-full items-start gap-2.5 rounded-xl bg-white p-3 text-left shadow-sm transition hover:ring-2 hover:ring-indigo-200 dark:bg-slate-900 dark:hover:ring-indigo-800"
+                    >
+                      <span
+                        className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${event.type === "EXAM" ? "bg-rose-500" : event.type === "DEADLINE" ? "bg-amber-500" : "bg-indigo-500"}`}
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate text-[11px] font-semibold text-slate-900 dark:text-white">
+                          {event.title}
+                        </span>
+                        <span className="mt-1 block text-[10px] text-slate-400">
+                          {event.time} · {event.location}
+                        </span>
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="py-7 text-center">
+                    <CalendarDays className="mx-auto h-7 w-7 text-slate-300 dark:text-slate-600" />
+                    <p className="mt-2 text-xs text-slate-200">No events scheduled</p>
+                    <p className="mt-1 text-[10px] text-slate-400">
+                      Select another day to explore the schedule.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-white/80 p-5 shadow-sm dark:border-emerald-950/60 dark:bg-slate-900/70 sm:p-6">
@@ -930,7 +933,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   return (
                     <g key={`${point.label}-${index}`}>
                       <circle cx={x} cy={y} r="6" fill="#ffffff" stroke="#059669" strokeWidth="4" />
-                      <text x={x} y="214" textAnchor="middle" className="fill-slate-500 text-[10px]">
+                      <text
+                        x={x}
+                        y="214"
+                        textAnchor="middle"
+                        className="fill-slate-500 text-[10px]"
+                      >
                         {point.label}
                       </text>
                       <title>{`${point.label}: LKR ${point.value.toLocaleString()}`}</title>

@@ -125,7 +125,9 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [resultSheet, setResultSheet] = useState<ExamResultSheet | null>(null);
   const [examSummary, setExamSummary] = useState<ExamSummary | null>(null);
   const [resultMarks, setResultMarks] = useState<Record<string, string>>({});
-  const [resultAttendance, setResultAttendance] = useState<Record<string, "PRESENT" | "ABSENT" | "">>({});
+  const [resultAttendance, setResultAttendance] = useState<
+    Record<string, "PRESENT" | "ABSENT" | "">
+  >({});
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsError, setResultsError] = useState<string | null>(null);
   const [editingExam, setEditingExam] = useState<BackendExam | null>(null);
@@ -271,7 +273,8 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       ]);
       setEditingExam(details);
       setFields(details);
-      const activeAttachment = attachments.find((attachment) => attachment.active) ?? attachments[0] ?? null;
+      const activeAttachment =
+        attachments.find((attachment) => attachment.active) ?? attachments[0] ?? null;
       setEditingAttachment(activeAttachment);
       if (activeAttachment) setStudentVisible(activeAttachment.studentVisible);
     } catch (requestError) {
@@ -940,7 +943,10 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                       min="0"
                       max={Number(resultsExam.totalMarks)}
                       value={resultMarks[result.studentId] ?? ""}
-                      disabled={resultsExam.status !== "MARKING" || resultAttendance[result.studentId] === "ABSENT"}
+                      disabled={
+                        resultsExam.status !== "MARKING" ||
+                        resultAttendance[result.studentId] === "ABSENT"
+                      }
                       onChange={(event) =>
                         setResultMarks((current) => ({
                           ...current,
@@ -996,32 +1002,68 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <label className="text-xs font-semibold text-slate-700">
                   Exam date
-                  <input type="date" value={editingExamDate} onChange={(event) => setEditingExamDate(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                  <input
+                    type="date"
+                    value={editingExamDate}
+                    onChange={(event) => setEditingExamDate(event.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"
+                  />
                 </label>
                 <label className="text-xs font-semibold text-slate-700">
                   Venue
-                  <input value={editingVenue} onChange={(event) => setEditingVenue(event.target.value)} placeholder="Room or online venue" className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                  <input
+                    value={editingVenue}
+                    onChange={(event) => setEditingVenue(event.target.value)}
+                    placeholder="Room or online venue"
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"
+                  />
                 </label>
                 <label className="text-xs font-semibold text-slate-700">
                   Start time
-                  <input type="time" value={editingStartTime.slice(0, 5)} onChange={(event) => setEditingStartTime(`${event.target.value}:00`)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                  <input
+                    type="time"
+                    value={editingStartTime.slice(0, 5)}
+                    onChange={(event) => setEditingStartTime(`${event.target.value}:00`)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"
+                  />
                 </label>
                 <label className="text-xs font-semibold text-slate-700">
                   End time
-                  <input type="time" value={editingEndTime.slice(0, 5)} onChange={(event) => setEditingEndTime(`${event.target.value}:00`)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                  <input
+                    type="time"
+                    value={editingEndTime.slice(0, 5)}
+                    onChange={(event) => setEditingEndTime(`${event.target.value}:00`)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"
+                  />
                 </label>
                 <label className="text-xs font-semibold text-slate-700">
                   Total marks
-                  <input type="number" min="1" value={editingTotalMarks} onChange={(event) => setEditingTotalMarks(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                  <input
+                    type="number"
+                    min="1"
+                    value={editingTotalMarks}
+                    onChange={(event) => setEditingTotalMarks(event.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"
+                  />
                 </label>
                 <label className="text-xs font-semibold text-slate-700">
                   Pass marks
-                  <input type="number" min="0" value={editingPassMarks} onChange={(event) => setEditingPassMarks(event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal" />
+                  <input
+                    type="number"
+                    min="0"
+                    value={editingPassMarks}
+                    onChange={(event) => setEditingPassMarks(event.target.value)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"
+                  />
                 </label>
               </div>
               <label className="block text-xs font-semibold text-slate-700">
                 Exam type
-                <select value={editingType} onChange={(event) => setEditingType(event.target.value as BackendExam["type"])} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal">
+                <select
+                  value={editingType}
+                  onChange={(event) => setEditingType(event.target.value as BackendExam["type"])}
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"
+                >
                   <option value="MIDTERM">Midterm</option>
                   <option value="FINAL">Final</option>
                   <option value="PRACTICAL">Practical</option>

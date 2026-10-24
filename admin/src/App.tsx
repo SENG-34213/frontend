@@ -354,8 +354,10 @@ export default function App() {
 
   useEffect(() => {
     if (!isAuthenticated || courses.length === 0) {
-      setAttendanceSessions([]);
-      setAttendanceError("");
+      queueMicrotask(() => {
+        setAttendanceSessions([]);
+        setAttendanceError("");
+      });
       return;
     }
 

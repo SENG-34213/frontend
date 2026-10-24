@@ -574,9 +574,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
         if (d < weekStart || d > weekEnd) return false;
       } else if (dateRangePreset === "THIS_MONTH") {
         if (
-          !e.date.startsWith(
-            `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
-          )
+          !e.date.startsWith(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)
         )
           return false;
       } else if (dateRangePreset === "CUSTOM") {
@@ -719,7 +717,9 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
       const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`;
       const today = new Date();
       const isToday =
-        currentYear === today.getFullYear() && currentMonth === today.getMonth() && i === today.getDate();
+        currentYear === today.getFullYear() &&
+        currentMonth === today.getMonth() &&
+        i === today.getDate();
       days.push({
         date: d,
         dateStr,

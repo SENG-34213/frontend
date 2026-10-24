@@ -510,7 +510,7 @@ export const MentifyAIAssistant: React.FC = () => {
               <span className="truncate">Connected to TiT AI · authorized admin tools enabled</span>
             </div>
             <span className="hidden shrink-0 text-[10px] text-slate-400 sm:block">
-                  Secure assistant session
+              Secure assistant session
             </span>
           </div>
 

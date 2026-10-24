@@ -618,9 +618,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800">
                 <div>
                   <h5 className="font-semibold text-slate-900 dark:text-white">Student results</h5>
-                  <p className="mt-1 text-slate-500">
-                    Latest submitted result for each student.
-                  </p>
+                  <p className="mt-1 text-slate-500">Latest submitted result for each student.</p>
                 </div>
                 <div className="flex items-center gap-2 text-slate-500">
                   <Users className="h-4 w-4" />
