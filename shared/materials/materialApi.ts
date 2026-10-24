@@ -50,6 +50,12 @@ function getBaseUrl(configuredBaseUrl?: string) {
   ).replace(/\/$/, "");
 }
 
+function apiUrl(baseUrl: string, path: string) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const apiPath = normalizedPath.replace(/^\/api(?=\/|$)/, "");
+  return `${baseUrl}${baseUrl.endsWith("/api") ? apiPath : normalizedPath}`;
+}
+
 function token() {
   if (typeof window === "undefined") return "";
 
@@ -76,7 +82,7 @@ function token() {
 async function request<T>(baseUrl: string, path: string, init: RequestInit = {}) {
   let response: Response;
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    response = await fetch(apiUrl(baseUrl, path), {
       ...init,
       headers: {
         ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
@@ -105,7 +111,7 @@ function uploadWithProgress(
 ) {
   return new Promise<Material>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${baseUrl}/api/v1/materials`);
+    xhr.open("POST", apiUrl(baseUrl, "/api/v1/materials"));
     if (token()) xhr.setRequestHeader("Authorization", `Bearer ${token()}`);
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));

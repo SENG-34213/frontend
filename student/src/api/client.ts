@@ -6,6 +6,12 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:
   "",
 );
 
+function apiUrl(path: string) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const apiPath = normalizedPath.replace(/^\/api(?=\/|$)/, "");
+  return `${API_BASE_URL}${API_BASE_URL.endsWith("/api") ? apiPath : normalizedPath}`;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -66,7 +72,7 @@ async function refreshSessionInternal(): Promise<AuthSession | null> {
     return null;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+  const response = await fetch(apiUrl("/api/v1/auth/refresh"), {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: current.refreshToken }),
@@ -119,7 +125,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(apiUrl(path), {
       ...requestInit,
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -153,7 +159,7 @@ export async function apiUpload<T>(
   const accessToken = getAccessToken();
   const headers = new Headers({ Accept: "application/json" });
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(apiUrl(path), {
     method: "POST",
     headers,
     body: formData,
@@ -175,7 +181,7 @@ export async function apiBlob(path: string, retryOnUnauthorized = true): Promise
   const accessToken = getAccessToken();
   const headers = new Headers({ Accept: "image/*" });
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-  const response = await fetch(`${API_BASE_URL}${path}`, { headers });
+  const response = await fetch(apiUrl(path), { headers });
   if (response.status === 401 && retryOnUnauthorized && (await refreshSession())) {
     return apiBlob(path, false);
   }

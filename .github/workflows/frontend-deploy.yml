@@ -1,0 +1,127 @@
+name: Frontend Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY_OWNER: ${{ secrets.DOCKERHUB_USERNAME }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  validate:
+    name: Validate frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install formatter dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Validate applications
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install and build applications
+        run: |
+          for app in admin teacher student; do
+            npm ci --prefix "$app"
+            npm run lint --prefix "$app"
+            npm run build --prefix "$app"
+          done
+
+  publish:
+    name: Publish ${{ matrix.app }} image
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: admin
+            image: mentify-admin
+            base_path: /admin
+          - app: teacher
+            image: mentify-teacher
+            base_path: /teacher
+          - app: student
+            image: mentify-student
+            base_path: /student
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.app }}/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=/api
+            NEXT_PUBLIC_WS_BASE_URL=/api/ws
+            NEXT_PUBLIC_APP_BASE_PATH=${{ matrix.base_path }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+  deploy:
+    name: Deploy to EC2
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+
+      - name: Install frontend Compose file on EC2
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" "mkdir -p /opt/mentify/frontend"
+          scp docker-compose.prod.yml \
+            "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/mentify/frontend/docker-compose.prod.yml"
+
+      - name: Pull and restart frontend containers
+        run: |
+          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" <<EOF
+          set -e
+          cd /opt/mentify/frontend
+          export IMAGE_TAG="${{ env.IMAGE_TAG }}"
+          export ADMIN_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-admin"
+          export TEACHER_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-teacher"
+          export STUDENT_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-student"
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d --remove-orphans
+          docker compose -f docker-compose.prod.yml ps
+          EOF
