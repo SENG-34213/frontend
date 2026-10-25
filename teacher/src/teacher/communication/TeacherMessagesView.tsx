@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Eye,
-  FileText,
-  Plus,
-  Search,
-  Send,
-  Settings,
-  Users,
-  X,
-} from "lucide-react";
+import { Eye, FileText, Plus, Search, Send, Settings, Users, X } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import type { Student } from "../types";
 import { useCommunicationRealtime } from "../api/communicationRealtime";
@@ -726,7 +717,12 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                             <span>{isMe ? "You" : messageSenderName(message)}</span>
                             <span>·</span>
                             <span>{formatTime(message.sentAt)}</span>
-                            {message.edited && <><span>·</span><span>edited</span></>}
+                            {message.edited && (
+                              <>
+                                <span>·</span>
+                                <span>edited</span>
+                              </>
+                            )}
                           </div>
                           <div
                             className={`max-w-lg p-3 rounded-xl text-xs leading-relaxed ${isMe ? "bg-indigo-600 text-white rounded-br-none shadow-xs" : "bg-slate-100 text-slate-900 rounded-bl-none"}`}

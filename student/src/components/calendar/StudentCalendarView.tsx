@@ -245,38 +245,36 @@ export const StudentCalendarView: React.FC = () => {
             .map(([value, label]) => {
               const isChecked = activeTypes.includes(value);
               return (
-              <button
-                key={value}
-                type="button"
-                onClick={() =>
-                  setActiveTypes((previous) =>
-                    isChecked
-                      ? previous.filter((type) => type !== value)
-                      : [...previous, value],
-                  )
-                }
-                className={`flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] transition-colors ${isChecked ? "bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-400 opacity-50 hover:opacity-100"}`}
-              >
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      value === "CLASS"
-                        ? "bg-indigo-500"
-                        : value === "ASSIGNMENT_DUE"
-                          ? "bg-amber-500"
-                          : value === "QUIZ"
-                            ? "bg-purple-500"
-                            : value === "EXAM"
-                              ? "bg-rose-500"
-                              : value === "ATTENDANCE"
-                                ? "bg-cyan-500"
-                                : "bg-emerald-500"
-                    }`}
-                  />
-                  {label}
-                </span>
-                {isChecked && <Check className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />}
-              </button>
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() =>
+                    setActiveTypes((previous) =>
+                      isChecked ? previous.filter((type) => type !== value) : [...previous, value],
+                    )
+                  }
+                  className={`flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] transition-colors ${isChecked ? "bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-400 opacity-50 hover:opacity-100"}`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        value === "CLASS"
+                          ? "bg-indigo-500"
+                          : value === "ASSIGNMENT_DUE"
+                            ? "bg-amber-500"
+                            : value === "QUIZ"
+                              ? "bg-purple-500"
+                              : value === "EXAM"
+                                ? "bg-rose-500"
+                                : value === "ATTENDANCE"
+                                  ? "bg-cyan-500"
+                                  : "bg-emerald-500"
+                      }`}
+                    />
+                    {label}
+                  </span>
+                  {isChecked && <Check className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />}
+                </button>
               );
             })}
         </div>
@@ -693,7 +691,10 @@ export const StudentCalendarView: React.FC = () => {
               {(selectedCourseName || selectedCourseCode) && (
                 <div className="space-y-1 border-t border-slate-100 pt-3 dark:border-slate-800">
                   <p>
-                    Course: <span className="font-semibold">{selectedCourseName || selectedCourseCode}</span>
+                    Course:{" "}
+                    <span className="font-semibold">
+                      {selectedCourseName || selectedCourseCode}
+                    </span>
                   </p>
                   {selectedCourseCode && selectedCourseName && (
                     <p>
@@ -701,7 +702,8 @@ export const StudentCalendarView: React.FC = () => {
                     </p>
                   )}
                   <p>
-                    Assigned teacher: <span className="font-semibold">{selectedTeacherName || "Not provided"}</span>
+                    Assigned teacher:{" "}
+                    <span className="font-semibold">{selectedTeacherName || "Not provided"}</span>
                   </p>
                 </div>
               )}

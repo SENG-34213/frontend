@@ -350,7 +350,8 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
               <div className="text-right">
                 <span className="text-xs text-slate-400 block">Class Enrollment</span>
                 <span className="text-lg font-bold text-white font-mono tabular-nums">
-                  {studentState.isLoading ? "—" : enrolledStudents.length} / {displayCourse.maxCapacity}
+                  {studentState.isLoading ? "—" : enrolledStudents.length} /{" "}
+                  {displayCourse.maxCapacity}
                 </span>
               </div>
               <StatusBadge status={displayCourse.status} />

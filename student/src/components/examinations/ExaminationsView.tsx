@@ -268,7 +268,9 @@ export const ExaminationsView: React.FC = () => {
         {filteredExams.length === 0 && (
           <EmptyState
             icon={Calendar}
-            title={examinations.length === 0 ? "No examinations found" : "No exams match your filters"}
+            title={
+              examinations.length === 0 ? "No examinations found" : "No exams match your filters"
+            }
             description={
               examinations.length === 0
                 ? "Examinations for your enrolled courses will appear here."

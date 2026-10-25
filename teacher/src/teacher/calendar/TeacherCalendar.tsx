@@ -359,7 +359,8 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
     selectedEvent?.courseTitle || selectedEventCourse?.title || selectedEventCourse?.courseName;
   const selectedCourseCode = selectedEvent?.courseCode || selectedEventCourse?.code;
   const selectedTeacher = instructors?.[0];
-  const selectedTeacherName = selectedEvent?.instructorName || selectedEventCourse?.teacherName || selectedTeacher?.name;
+  const selectedTeacherName =
+    selectedEvent?.instructorName || selectedEventCourse?.teacherName || selectedTeacher?.name;
   const selectedTeacherEmail = selectedEvent?.instructorEmail || selectedTeacher?.email;
 
   useEffect(() => {
@@ -2364,40 +2365,38 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 {selectedEvent.canCancel !== false && (
-                <button
-                  type="button"
-                  disabled={
-                    pendingEventActionId === selectedEvent.id ||
-                    selectedEvent.status === "CANCELLED" ||
-                    !selectedEvent.canCancel
-                  }
-                  onClick={() => void handleCancelEvent(selectedEvent)}
-                  title={
-                    selectedEvent.status === "CANCELLED"
-                      ? "Event is already cancelled"
-                      : "Cancel event"
-                  }
-                  className="flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
-                >
-                  <CircleX className="h-3.5 w-3.5" />
-                  <span>
-                    {pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}
-                  </span>
-                </button>
+                  <button
+                    type="button"
+                    disabled={
+                      pendingEventActionId === selectedEvent.id ||
+                      selectedEvent.status === "CANCELLED" ||
+                      !selectedEvent.canCancel
+                    }
+                    onClick={() => void handleCancelEvent(selectedEvent)}
+                    title={
+                      selectedEvent.status === "CANCELLED"
+                        ? "Event is already cancelled"
+                        : "Cancel event"
+                    }
+                    className="flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
+                  >
+                    <CircleX className="h-3.5 w-3.5" />
+                    <span>
+                      {pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}
+                    </span>
+                  </button>
                 )}
                 {selectedEvent.canDelete !== false && (
-                <button
-                  type="button"
-                  disabled={
-                    pendingEventActionId === selectedEvent.id || !selectedEvent.canDelete
-                  }
-                  onClick={() => void handleDeleteEvent(selectedEvent)}
-                  title="Delete event"
-                  aria-label={`Delete ${selectedEvent.title}`}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-rose-950/40"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                  <button
+                    type="button"
+                    disabled={pendingEventActionId === selectedEvent.id || !selectedEvent.canDelete}
+                    onClick={() => void handleDeleteEvent(selectedEvent)}
+                    title="Delete event"
+                    aria-label={`Delete ${selectedEvent.title}`}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-rose-950/40"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 )}
               </div>
 

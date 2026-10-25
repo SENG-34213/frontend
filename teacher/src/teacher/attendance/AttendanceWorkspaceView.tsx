@@ -169,7 +169,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
   const selectedStudentHistory = useMemo(() => {
     if (!selectedStudentId) return [];
     const history = selectedCourseSessions.flatMap((session) =>
-        (session.records ?? [])
+      (session.records ?? [])
         .filter((record) => record.studentId === selectedStudentId)
         .map((record) => ({ session, record })),
     );

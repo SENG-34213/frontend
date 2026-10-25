@@ -25,12 +25,11 @@ const StudentImageAttachment: React.FC<{
   onOpen: () => void;
 }> = ({ groupId, messageId, attachment, onOpen }) => {
   const [url, setUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(attachment.id));
 
   useEffect(() => {
     let active = true;
     if (!attachment.id) {
-      setLoading(false);
       return;
     }
     getCommunicationAttachmentDownload(groupId, messageId, attachment.id)

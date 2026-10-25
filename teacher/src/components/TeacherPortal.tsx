@@ -217,7 +217,7 @@ export default function App() {
           // During roster loading, do not expose the backend's raw count.
           enrolledCount: teacherStudents.isLoading
             ? 0
-            : validStudentCountByCourse.get(backendCourse.id) ?? 0,
+            : (validStudentCountByCourse.get(backendCourse.id) ?? 0),
         })),
       );
     }

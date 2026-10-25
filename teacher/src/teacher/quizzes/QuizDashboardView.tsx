@@ -1532,7 +1532,9 @@ function QuizResultsPanel({
   studentNumbers,
 }: QuizResultsPanelProps) {
   const resultRows = results?.results ?? [];
-  const availableResultRows = resultRows.filter((result) => Boolean(studentNumbers[result.studentId]));
+  const availableResultRows = resultRows.filter((result) =>
+    Boolean(studentNumbers[result.studentId]),
+  );
   const passedCount = availableResultRows.filter((result) => result.passed).length;
   const average = availableResultRows.length
     ? Math.round(
@@ -1540,7 +1542,9 @@ function QuizResultsPanel({
           availableResultRows.length,
       )
     : 0;
-  const selectedResult = availableResultRows.find((result) => result.studentId === selectedStudentId);
+  const selectedResult = availableResultRows.find(
+    (result) => result.studentId === selectedStudentId,
+  );
 
   if (isLoading) {
     return <div className="p-10 text-center text-xs text-slate-500">Loading student results…</div>;
