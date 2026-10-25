@@ -58,6 +58,7 @@ function toNotificationItem(notification: BackendNotification): NotificationItem
                           : "dashboard";
   return {
     id: notification.id,
+    type,
     title: notification.title,
     message: notification.message,
     category,

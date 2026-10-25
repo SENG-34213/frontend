@@ -17,6 +17,7 @@ export interface BaseUser {
   createdAt: string;
   avatarUrl?: string;
   lastLogin?: string;
+  accountLocked?: boolean;
 }
 
 export interface StudentProfile extends BaseUser {
@@ -152,6 +153,7 @@ export interface Course {
 export interface EnrollmentRecord {
   id: string;
   studentId: string;
+  studentNumber?: string;
   studentName: string;
   studentEmail: string;
   courseId: string;
@@ -320,6 +322,7 @@ export type EventVisibility =
 
 export interface NotificationItem {
   id: string;
+  type?: string;
   title: string;
   message: string;
   category: "REGISTRATION" | "ACADEMIC" | "SECURITY" | "SYSTEM";

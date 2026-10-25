@@ -3,6 +3,7 @@ import type { ApiResponse } from "../auth/authTypes";
 
 export type BackendNotification = {
   id: string;
+  sourceService?: string;
   type?: string;
   title: string;
   message: string;

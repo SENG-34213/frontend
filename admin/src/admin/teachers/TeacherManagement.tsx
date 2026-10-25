@@ -15,11 +15,16 @@ import {
   RefreshCw,
   Trash2,
   Award,
+  Unlock,
+  Ban,
+  Eye,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { DetailDrawer } from "../components/DetailDrawer";
+import { ConfirmationDialog } from "../components/ConfirmationDialog";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 import { TeacherProfile, Course } from "../types";
 import type { RegisterTeacherRequest } from "../api/usersApi";
 
@@ -29,6 +34,9 @@ interface TeacherManagementProps {
   onAddTeacher: (teacher: TeacherProfile) => void;
   onRegisterTeacher: (request: RegisterTeacherRequest) => Promise<TeacherProfile>;
   onResendInvitation: (email: string, role: string) => Promise<void>;
+  onUpdateUserStatus: (userId: string, active: boolean) => Promise<void>;
+  onDeleteUser: (userId: string) => Promise<void>;
+  onUnlockUser: (userId: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -38,6 +46,9 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   onAddTeacher,
   onRegisterTeacher,
   onResendInvitation,
+  onUpdateUserStatus,
+  onDeleteUser,
+  onUnlockUser,
   showRegistrationWizardDirectly = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,6 +58,30 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
   const [createdTeacherCode, setCreatedTeacherCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+  const [unlockingUserId, setUnlockingUserId] = useState<string | null>(null);
+  const [mutatingUserId, setMutatingUserId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TeacherProfile | null>(null);
+
+  const handleStatusChange = async (userId: string, active: boolean) => {
+    setMutatingUserId(userId);
+    try {
+      await onUpdateUserStatus(userId, active);
+    } finally {
+      setMutatingUserId(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const teacher = deleteTarget;
+    setMutatingUserId(teacher.id);
+    try {
+      await onDeleteUser(teacher.id);
+      setDeleteTarget(null);
+    } finally {
+      setMutatingUserId(null);
+    }
+  };
 
   const handleResend = async (email: string, role: string) => {
     setResendingEmail(email);
@@ -54,6 +89,15 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
       await onResendInvitation(email, role);
     } finally {
       setResendingEmail(null);
+    }
+  };
+
+  const handleUnlock = async (userId: string) => {
+    setUnlockingUserId(userId);
+    try {
+      await onUnlockUser(userId);
+    } finally {
+      setUnlockingUserId(null);
     }
   };
 
@@ -227,74 +271,143 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredTeachers.map((teacher) => (
-                <tr
-                  key={teacher.id}
-                  className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  <td className="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">
-                    {teacher.teacherCode}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <UserAvatar
-                        name={`${teacher.firstName} ${teacher.lastName}`}
-                        avatarUrl={teacher.avatarUrl}
-                        size="md"
-                      />
-                      <div>
-                        <span className="font-semibold text-slate-900 dark:text-white block">
-                          {teacher.firstName} {teacher.lastName}
-                        </span>
-                        <span className="text-slate-400">{teacher.email}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 max-w-xs">
-                    <div className="flex flex-wrap gap-1">
-                      {teacher.specializations.map((spec, idx) => (
-                        <span
-                          key={idx}
-                          className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300"
-                        >
-                          {spec}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-slate-500 tabular-nums">{teacher.hireDate}</td>
-                  <td className="py-3 px-4 tabular-nums font-medium text-slate-700 dark:text-slate-300">
-                    {teacher.assignedCourseCount} active
-                  </td>
-                  <td className="py-3 px-4">
-                    <StatusBadge status={teacher.status} />
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setSelectedTeacher(teacher)}
-                        className="px-2 py-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-medium"
-                      >
-                        Inspect
-                      </button>
-                      {teacher.status === "INVITED" && (
-                        <button
-                          disabled={resendingEmail === teacher.email}
-                          onClick={() => void handleResend(teacher.email, "TEACHER")}
-                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
-                        >
-                          {resendingEmail === teacher.email ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Send className="w-3 h-3" />
-                          )}
-                          {resendingEmail === teacher.email ? "Sending..." : "Resend"}
-                        </button>
-                      )}
-                    </div>
+              {filteredTeachers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <EmptyState
+                      compact
+                      icon={Briefcase}
+                      title="No teachers found"
+                      description="No teacher records match the selected filters."
+                      className="border-0 py-0"
+                    />
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredTeachers.map((teacher) => (
+                  <tr
+                    key={teacher.id}
+                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">
+                      {teacher.teacherCode}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          name={`${teacher.firstName} ${teacher.lastName}`}
+                          avatarUrl={teacher.avatarUrl}
+                          size="md"
+                        />
+                        <div>
+                          <span className="font-semibold text-slate-900 dark:text-white block">
+                            {teacher.firstName} {teacher.lastName}
+                          </span>
+                          <span className="text-slate-400">{teacher.email}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 max-w-xs">
+                      <div className="flex flex-wrap gap-1">
+                        {teacher.specializations.map((spec, idx) => (
+                          <span
+                            key={idx}
+                            className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300"
+                          >
+                            {spec}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-500 tabular-nums">{teacher.hireDate}</td>
+                    <td className="py-3 px-4 tabular-nums font-medium text-slate-700 dark:text-slate-300">
+                      {teacher.assignedCourseCount} active
+                    </td>
+                    <td className="py-3 px-4">
+                      <StatusBadge status={teacher.status} />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedTeacher(teacher)}
+                          className="group relative rounded p-1.5 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                          title="View teacher details"
+                          aria-label={`View details for ${teacher.firstName} ${teacher.lastName}`}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                            View details
+                          </span>
+                        </button>
+                        {teacher.status === "INVITED" && (
+                          <button
+                            disabled={resendingEmail === teacher.email}
+                            onClick={() => void handleResend(teacher.email, "TEACHER")}
+                            className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
+                          >
+                            {resendingEmail === teacher.email ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Send className="w-3 h-3" />
+                            )}
+                            {resendingEmail === teacher.email ? "Sending..." : "Resend"}
+                          </button>
+                        )}
+                        {teacher.accountLocked && (
+                          <button
+                            disabled={unlockingUserId === teacher.id}
+                            onClick={() => void handleUnlock(teacher.id)}
+                            className="group relative rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-60 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            title="Unlock account immediately"
+                            aria-label={`Unlock ${teacher.firstName} ${teacher.lastName}`}
+                          >
+                            <Unlock
+                              className={`h-3.5 w-3.5 ${unlockingUserId === teacher.id ? "animate-pulse" : ""}`}
+                            />
+                            <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                              Unlock account
+                            </span>
+                          </button>
+                        )}
+                        {(teacher.status === "ACTIVE" || teacher.status === "SUSPENDED") && (
+                          <button
+                            disabled={mutatingUserId === teacher.id}
+                            onClick={() =>
+                              void handleStatusChange(teacher.id, teacher.status === "SUSPENDED")
+                            }
+                            className="group relative rounded p-1.5 text-amber-600 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-60 dark:text-amber-400 dark:hover:bg-amber-950/40"
+                            title={
+                              teacher.status === "ACTIVE" ? "Suspend account" : "Activate account"
+                            }
+                            aria-label={
+                              teacher.status === "ACTIVE"
+                                ? `Suspend ${teacher.firstName} ${teacher.lastName}`
+                                : `Activate ${teacher.firstName} ${teacher.lastName}`
+                            }
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                            <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                              {teacher.status === "ACTIVE" ? "Suspend account" : "Activate account"}
+                            </span>
+                          </button>
+                        )}
+                        <button
+                          disabled={mutatingUserId === teacher.id}
+                          onClick={() => setDeleteTarget(teacher)}
+                          className="group relative rounded p-1.5 text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                          title="Delete user"
+                          aria-label={`Delete ${teacher.firstName} ${teacher.lastName}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                            Delete user
+                          </span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -796,6 +909,24 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
           </div>
         </DetailDrawer>
       )}
+      <ConfirmationDialog
+        isOpen={!!deleteTarget}
+        title="Delete teacher account?"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete ${deleteTarget.firstName} ${deleteTarget.lastName}? This action cannot be undone.`
+            : ""
+        }
+        consequences={[
+          "The teacher will no longer be able to sign in.",
+          "The teacher profile will be permanently deleted.",
+          "Course history and related records may remain in other services.",
+        ]}
+        confirmText={mutatingUserId === deleteTarget?.id ? "Deleting…" : "Delete teacher"}
+        variant="danger"
+        onConfirm={() => void handleDelete()}
+        onCancel={() => (mutatingUserId ? undefined : setDeleteTarget(null))}
+      />
     </div>
   );
 };

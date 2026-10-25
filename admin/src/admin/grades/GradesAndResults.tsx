@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { ClipboardList, Search } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import type { Course, GradeRecord } from "../types";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface GradesAndResultsProps {
   grades: GradeRecord[];
@@ -171,12 +172,19 @@ export const GradesAndResults: React.FC<GradesAndResultsProps> = ({
               ))}
               {filteredGrades.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
-                    {loading
-                      ? "Loading published results…"
-                      : grades.length === 0
-                        ? "No published results are available for these courses yet."
-                        : "No results match the selected filters."}
+                  <td colSpan={6} className="px-4 py-4">
+                    <EmptyState
+                      icon={ClipboardList}
+                      compact
+                      title={loading ? "Loading results" : "No results found"}
+                      description={
+                        loading
+                          ? "Published student results are being loaded."
+                          : grades.length === 0
+                            ? "No published results are available for these courses yet."
+                            : "No results match the selected filters."
+                      }
+                    />
                   </td>
                 </tr>
               )}

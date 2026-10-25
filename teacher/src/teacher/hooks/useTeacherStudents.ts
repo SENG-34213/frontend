@@ -76,36 +76,46 @@ export function useTeacherStudents(
         const profilesById = new Map<string, BackendStudentProfile>(
           profiles.map((profile) => [profile.id, profile]),
         );
+        // A roster identity without a resolvable profile or actual student
+        // number is not a usable student entry for the teacher portal.
+        const availableStudentIds = studentIds.filter((studentId) => {
+          const profile = profilesById.get(studentId);
+          return Boolean(profile?.studentNumber?.trim());
+        });
         const enrolledCourseIds = new Map<string, string[]>();
 
         rosterResults.forEach(({ course, studentIds: ids }) => {
-          ids.forEach((studentId) => {
-            const current = enrolledCourseIds.get(studentId) ?? [];
-            enrolledCourseIds.set(studentId, Array.from(new Set([...current, course.id])));
-          });
+          ids
+            .filter((studentId) => availableStudentIds.includes(studentId))
+            .forEach((studentId) => {
+              const current = enrolledCourseIds.get(studentId) ?? [];
+              enrolledCourseIds.set(studentId, Array.from(new Set([...current, course.id])));
+            });
         });
 
         const attendanceResults = await Promise.all(
           rosterResults.flatMap(({ course, studentIds: ids }) =>
-            ids.map(async (studentId) => {
-              try {
-                const summary = await getStudentAttendanceSummary(
-                  studentId,
-                  course.id,
-                  controller.signal,
-                );
-                const rate = Number(summary?.attendancePercentage);
-                const absences = Number(summary?.absentCount);
-                return {
-                  studentId,
-                  rate: Number.isFinite(rate) ? rate : null,
-                  absences: Number.isFinite(absences) ? absences : undefined,
-                };
-              } catch (requestError) {
-                if (controller.signal.aborted) throw requestError;
-                return { studentId, rate: null, absences: undefined };
-              }
-            }),
+            ids
+              .filter((studentId) => availableStudentIds.includes(studentId))
+              .map(async (studentId) => {
+                try {
+                  const summary = await getStudentAttendanceSummary(
+                    studentId,
+                    course.id,
+                    controller.signal,
+                  );
+                  const rate = Number(summary?.attendancePercentage);
+                  const absences = Number(summary?.absentCount);
+                  return {
+                    studentId,
+                    rate: Number.isFinite(rate) ? rate : null,
+                    absences: Number.isFinite(absences) ? absences : undefined,
+                  };
+                } catch (requestError) {
+                  if (controller.signal.aborted) throw requestError;
+                  return { studentId, rate: null, absences: undefined };
+                }
+              }),
           ),
         );
         const attendanceByStudent = new Map<string, { rates: number[]; absences: number }>();
@@ -116,7 +126,7 @@ export function useTeacherStudents(
           attendanceByStudent.set(studentId, current);
         });
 
-        const directoryStudents: Student[] = studentIds.map((studentId) => {
+        const directoryStudents: Student[] = availableStudentIds.map((studentId) => {
           const profile = profilesById.get(studentId);
           const attendance = attendanceByStudent.get(studentId);
           const attendanceRate = attendance?.rates.length
@@ -128,7 +138,9 @@ export function useTeacherStudents(
           const name = profile?.name?.trim() || "Unavailable";
           return {
             id: studentId,
-            studentId: profile?.studentNumber || studentId,
+            // Keep the internal identity in `id` for API requests, but never
+            // expose it as the student's display ID.
+            studentId: profile!.studentNumber!,
             name,
             email: profile?.email || "Unavailable",
             avatar: profile?.avatar,

@@ -157,6 +157,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const [courseFilter, setCourseFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [examSearch, setExamSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   const gradeOptions = useMemo(
     () =>
@@ -183,14 +184,15 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       const matchesGrade = gradeFilter === "all" || course?.gradeName?.trim() === gradeFilter;
       const matchesCourse = courseFilter === "all" || exam.courseId === courseFilter;
       const matchesStatus = statusFilter === "all" || exam.status === statusFilter;
+      const matchesDate = !dateFilter || exam.scheduledDate === dateFilter;
       const matchesSearch =
         !query ||
         [exam.title, exam.courseCode, course?.courseName, course?.subject, course?.gradeName]
           .filter(Boolean)
           .some((value) => value!.toLowerCase().includes(query));
-      return matchesGrade && matchesCourse && matchesStatus && matchesSearch;
+      return matchesGrade && matchesCourse && matchesStatus && matchesDate && matchesSearch;
     });
-  }, [backendCourses, courseFilter, examSearch, exams, gradeFilter, statusFilter]);
+  }, [backendCourses, courseFilter, dateFilter, examSearch, exams, gradeFilter, statusFilter]);
 
   useEffect(() => {
     if (
@@ -880,6 +882,13 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
             </option>
           ))}
         </select>
+        <input
+          type="date"
+          aria-label="Filter exams by date"
+          value={dateFilter}
+          onChange={(event) => setDateFilter(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+        />
         <input
           type="search"
           aria-label="Search exams"

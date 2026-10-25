@@ -27,6 +27,7 @@ interface BackendUser {
   accountStatus: string;
   createdAt?: string;
   lastLogin?: string | null;
+  accountLocked?: boolean;
   studentProfile?: {
     studentId?: string;
     grade?: string;
@@ -121,6 +122,7 @@ function commonUser(user: BackendUser) {
     status: accountStatus(user.accountStatus),
     createdAt: user.createdAt || "",
     lastLogin: user.lastLogin || undefined,
+    accountLocked: user.accountLocked === true,
     avatarUrl: user.studentProfile?.avatarUrl || user.teacherProfile?.avatarUrl,
     addressLine1: user.address?.addressLine1 || "",
     addressLine2: user.address?.addressLine2 || "",
@@ -135,7 +137,10 @@ function mapStudent(user: BackendUser): StudentProfile {
   return {
     ...commonUser(user),
     role: "STUDENT",
-    studentId: profile?.studentId || user.id,
+    // The database user UUID is an internal identity and must never be shown
+    // as the student's ID. Student IDs are generated in the profile, e.g.
+    // `TIT-09-03`.
+    studentId: profile?.studentId?.trim() || "Student ID unavailable",
     grade: profile?.grade || "Not assigned",
     guardianName: profile?.guardianName || "Not recorded",
     guardianPhone: profile?.guardianPhone || "Not recorded",
@@ -296,6 +301,12 @@ export async function updateUserStatus(userId: string, active: boolean) {
   return apiRequest(`/api/v1/admin/users/${userId}/status`, {
     method: "PATCH",
     body: { active },
+  });
+}
+
+export async function unlockUserAccount(userId: string) {
+  return apiRequest(`/api/v1/admin/users/${userId}/unlock`, {
+    method: "POST",
   });
 }
 

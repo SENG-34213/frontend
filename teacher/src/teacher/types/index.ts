@@ -14,7 +14,6 @@ export type NavigationTab =
   | "grades"
   | "analytics"
   | "messages"
-  | "ai-assistant"
   | "profile"
   | "settings";
 
@@ -298,6 +297,7 @@ export interface ConversationThread {
 
 export interface NotificationItem {
   id: string;
+  type?: string;
   title: string;
   message: string;
   category: "submission" | "exam" | "enrollment" | "message" | "system";

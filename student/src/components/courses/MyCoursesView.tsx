@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import type { Course } from "../../types";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 const getTeachingProgress = (course: Course): number => {
   const lessons = (Array.isArray(course.modules) ? course.modules : []).flatMap((module) =>
@@ -184,14 +185,16 @@ export const MyCoursesView: React.FC = () => {
 
       {/* Course List / Grid */}
       {filteredCourses.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
-          <BookOpen className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
-          <h3 className="mt-3 font-display text-sm font-bold text-slate-900 dark:text-white">
-            No courses match your filter
-          </h3>
-          <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-            Try adjusting your search query or status filter.
-          </p>
+        <div>
+          <EmptyState
+            icon={BookOpen}
+            title={courses.length === 0 ? "No courses found" : "No courses match your filter"}
+            description={
+              courses.length === 0
+                ? "Enrolled courses will appear here when they are assigned to your account."
+                : "Try adjusting your search query or status filter."
+            }
+          />
           <button
             onClick={() => {
               setSearchQuery("");

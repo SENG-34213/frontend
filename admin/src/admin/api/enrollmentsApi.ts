@@ -46,12 +46,17 @@ export function mapEnrollmentRecords(
   courses: Course[],
 ): EnrollmentRecord[] {
   return enrollments.flatMap((enrollment) => {
-    const student = students.find((item) => item.id === enrollment.studentId);
+    const student = students.find(
+      (item) => item.id === enrollment.studentId || item.keycloakUserId === enrollment.studentId,
+    );
+    // Do not expose orphaned enrollment identities in admin course rosters.
+    if (!student?.studentId?.trim()) return [];
     return enrollment.courseIds.map((courseId) => {
       const course = courses.find((item) => item.id === courseId);
       return {
         id: `${enrollment.id}:${courseId}`,
         studentId: enrollment.studentId,
+        studentNumber: student.studentId,
         studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown student",
         studentEmail: student?.email || "",
         courseId,

@@ -41,6 +41,7 @@ import {
   type TeacherQuizResults,
 } from "../api/quizApi";
 import { useTeacherQuizzes } from "../hooks/useTeacherQuizzes";
+import { getStudentProfiles } from "../api/studentApi";
 import { StatusBadge } from "../components/StatusBadge";
 import { QuestionBuilderModal } from "./QuestionBuilderModal";
 import { CreateQuizModal } from "./CreateQuizModal";
@@ -52,7 +53,6 @@ interface QuizDashboardViewProps {
   teacherCourses: Course[];
   onOpenCreateQuiz: () => void;
   onNavigate: (tab: NavigationTab) => void;
-  onOpenAIWithPrompt: (prompt: string) => void;
 }
 
 export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
@@ -84,8 +84,35 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
   const [isResultsLoading, setIsResultsLoading] = useState(false);
   const [resultsError, setResultsError] = useState<string | null>(null);
   const [selectedStudentResultId, setSelectedStudentResultId] = useState<string | null>(null);
+  const [studentNumbers, setStudentNumbers] = useState<Record<string, string>>({});
   const [questionPage, setQuestionPage] = useState(0);
   const questionsPerPage = 5;
+
+  useEffect(() => {
+    const studentIds = Array.from(
+      new Set((quizResults?.results ?? []).map((result) => result.studentId).filter(Boolean)),
+    );
+    if (studentIds.length === 0) {
+      setStudentNumbers({});
+      return;
+    }
+    const controller = new AbortController();
+    getStudentProfiles(studentIds, controller.signal)
+      .then((profiles) => {
+        if (controller.signal.aborted) return;
+        setStudentNumbers(
+          Object.fromEntries(
+            profiles
+              .filter((profile) => profile.studentNumber)
+              .map((profile) => [profile.id, profile.studentNumber as string]),
+          ),
+        );
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setStudentNumbers({});
+      });
+    return () => controller.abort();
+  }, [quizResults]);
 
   const loadTodayAnalytics = useCallback(async (signal?: AbortSignal) => {
     setAnalyticsLoading(true);
@@ -1018,6 +1045,7 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                     error={resultsError}
                     selectedStudentId={selectedStudentResultId}
                     onSelectStudent={setSelectedStudentResultId}
+                    studentNumbers={studentNumbers}
                   />
                 )}
                 {quizPanel === "overview" && <QuizOverviewPanel quiz={selectedQuiz} />}
@@ -1270,6 +1298,7 @@ interface QuizResultsPanelProps {
   error: string | null;
   selectedStudentId: string | null;
   onSelectStudent: (studentId: string | null) => void;
+  studentNumbers: Record<string, string>;
 }
 
 function QuizOverviewPanel({ quiz }: { quiz: Quiz }) {
@@ -1500,16 +1529,22 @@ function QuizResultsPanel({
   error,
   selectedStudentId,
   onSelectStudent,
+  studentNumbers,
 }: QuizResultsPanelProps) {
   const resultRows = results?.results ?? [];
-  const passedCount = resultRows.filter((result) => result.passed).length;
-  const average = resultRows.length
+  const availableResultRows = resultRows.filter((result) =>
+    Boolean(studentNumbers[result.studentId]),
+  );
+  const passedCount = availableResultRows.filter((result) => result.passed).length;
+  const average = availableResultRows.length
     ? Math.round(
-        resultRows.reduce((total, result) => total + Number(result.percentage ?? 0), 0) /
-          resultRows.length,
+        availableResultRows.reduce((total, result) => total + Number(result.percentage ?? 0), 0) /
+          availableResultRows.length,
       )
     : 0;
-  const selectedResult = resultRows.find((result) => result.studentId === selectedStudentId);
+  const selectedResult = availableResultRows.find(
+    (result) => result.studentId === selectedStudentId,
+  );
 
   if (isLoading) {
     return <div className="p-10 text-center text-xs text-slate-500">Loading student results…</div>;
@@ -1529,7 +1564,7 @@ function QuizResultsPanel({
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <Users className="h-4 w-4 text-indigo-600" />
-          <p className="mt-3 text-xl font-bold text-slate-900">{resultRows.length}</p>
+          <p className="mt-3 text-xl font-bold text-slate-900">{availableResultRows.length}</p>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
             Submitted
           </p>
@@ -1544,7 +1579,7 @@ function QuizResultsPanel({
         <div className="rounded-xl border border-violet-100 bg-violet-50 p-3">
           <BarChart3 className="h-4 w-4 text-violet-600" />
           <p className="mt-3 text-xl font-bold text-violet-700">
-            {resultRows.length ? `${average}%` : "—"}
+            {availableResultRows.length ? `${average}%` : "—"}
           </p>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-600/70">
             Average
@@ -1552,7 +1587,7 @@ function QuizResultsPanel({
         </div>
       </div>
 
-      {resultRows.length === 0 ? (
+      {availableResultRows.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
           <ClipboardCheck className="mx-auto h-8 w-8 text-slate-300" />
           <p className="mt-2 text-sm font-semibold text-slate-700">No submitted answers yet</p>
@@ -1569,7 +1604,7 @@ function QuizResultsPanel({
             <span>Submitted</span>
           </div>
           <div className="divide-y divide-slate-100">
-            {resultRows.map((result) => {
+            {availableResultRows.map((result) => {
               const percentage = Number(result.percentage ?? 0);
               const selected = result.studentId === selectedStudentId;
               return (
@@ -1584,7 +1619,7 @@ function QuizResultsPanel({
                       {result.studentName || "Student"}
                     </span>
                     <span className="block truncate text-[10px] text-slate-400">
-                      {result.studentId}
+                      {studentNumbers[result.studentId] || "Student ID unavailable"}
                     </span>
                   </span>
                   <span className="text-xs font-bold text-slate-700">

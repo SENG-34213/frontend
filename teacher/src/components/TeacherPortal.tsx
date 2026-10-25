@@ -26,7 +26,6 @@ import { AttendanceWorkspaceView } from "../teacher/attendance/AttendanceWorkspa
 import { MaterialLibraryView } from "../teacher/materials/MaterialLibraryView";
 import { TeacherCalendarView } from "../teacher/calendar/TeacherCalendarView";
 import { TeacherMessagesView } from "../teacher/communication/TeacherMessagesView";
-import { MentifyAIWorkspaceView } from "../teacher/ai-assistant/MentifyAIWorkspaceView";
 import { TeacherAnalyticsView } from "../teacher/analytics/TeacherAnalyticsView";
 import { NotificationCenterView } from "../teacher/notifications/NotificationCenterView";
 import { TeacherProfileView } from "../teacher/profile/TeacherProfileView";
@@ -61,8 +60,6 @@ export default function App() {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("mentify_teacher_theme") === "dark";
   });
-  const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const historyReadyRef = useRef(false);
   const browserBackRef = useRef(false);
 
@@ -88,7 +85,6 @@ export default function App() {
       "grades",
       "analytics",
       "messages",
-      "ai-assistant",
       "profile",
       "settings",
     ]);
@@ -145,7 +141,6 @@ export default function App() {
   // Deep view states
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<Course | null>(null);
   const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("");
-  const [aiPreloadedPrompt, setAiPreloadedPrompt] = useState<string>("");
   const shellData = useTeacherShellData(Boolean(session));
   const teacherCourses = useTeacherCourses(Boolean(session));
   const teacherStudents = useTeacherStudents(Boolean(session), teacherCourses.courses);
@@ -173,7 +168,7 @@ export default function App() {
         if (!controller.signal.aborted) setDashboardData(null);
       });
     return () => controller.abort();
-  }, [session, workspaceRefreshKey]);
+  }, [session]);
   useEffect(() => {
     if (restoreStartedRef.current) return;
     restoreStartedRef.current = true;
@@ -205,9 +200,34 @@ export default function App() {
       return;
     }
     if (!teacherCourses.isLoading) {
-      setCourses(teacherCourses.courses.map(mapBackendCourse));
+      const validStudentCountByCourse = new Map<string, number>();
+      teacherStudents.students.forEach((student) => {
+        student.enrolledCourseIds.forEach((courseId) => {
+          validStudentCountByCourse.set(
+            courseId,
+            (validStudentCountByCourse.get(courseId) ?? 0) + 1,
+          );
+        });
+      });
+
+      setCourses(
+        teacherCourses.courses.map((backendCourse) => ({
+          ...mapBackendCourse(backendCourse),
+          // Use only students with a resolved profile and real student ID.
+          // During roster loading, do not expose the backend's raw count.
+          enrolledCount: teacherStudents.isLoading
+            ? 0
+            : (validStudentCountByCourse.get(backendCourse.id) ?? 0),
+        })),
+      );
     }
-  }, [teacherCourses.courses, teacherCourses.error, teacherCourses.isLoading]);
+  }, [
+    teacherCourses.courses,
+    teacherCourses.error,
+    teacherCourses.isLoading,
+    teacherStudents.isLoading,
+    teacherStudents.students,
+  ]);
 
   useEffect(() => {
     const handleExpiredSession = () => {
@@ -242,18 +262,7 @@ export default function App() {
         if (!controller.signal.aborted) setSearchAssignments([]);
       });
     return () => controller.abort();
-  }, [isSearchOpen, teacherCourses.courses, workspaceRefreshKey]);
-
-  const handleRefreshWorkspace = () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    shellData.retry();
-    teacherCourses.retry();
-    teacherStudents.retry();
-    recentNotifications.retry();
-    setWorkspaceRefreshKey((current) => current + 1);
-    window.setTimeout(() => setIsRefreshing(false), 800);
-  };
+  }, [isSearchOpen, teacherCourses.courses]);
 
   // Navigation handler
   const handleNavigate = (tab: NavigationTab, param?: string) => {
@@ -270,11 +279,6 @@ export default function App() {
     setCurrentTab("grading-workspace");
   };
 
-  const handleOpenAIWithPrompt = (prompt: string) => {
-    setAiPreloadedPrompt(prompt);
-    setCurrentTab("ai-assistant");
-  };
-
   const handleOpenQuickCreate = (type: QuickCreateType) => {
     setQuickCreateType(type);
     setIsQuickCreateOpen(true);
@@ -282,6 +286,11 @@ export default function App() {
 
   const handleItemCreated = (type: QuickCreateType, item: any) => {
     if (type === "course") {
+      const isPublished = item?.isPublished === true || item?.courseStatus === "PUBLISHED";
+      if (!isPublished) {
+        setCurrentTab("courses");
+        return;
+      }
       const newCourse: Course = mapBackendCourse(item as BackendCourse);
       setCourses([newCourse, ...courses]);
       setSelectedCourseForDetail(newCourse);
@@ -411,8 +420,6 @@ export default function App() {
           onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode((current) => !current)}
-          onRefresh={handleRefreshWorkspace}
-          isRefreshing={isRefreshing}
           teacher={teacherProfile}
           onLogout={async () => {
             await logoutTeacher();
@@ -422,7 +429,7 @@ export default function App() {
         />
 
         {/* View Routing */}
-        <main key={workspaceRefreshKey} className="flex-1 p-4 lg:p-6 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
           {shellData.notificationError && (
             <div
               role="status"
@@ -437,7 +444,6 @@ export default function App() {
               teacher={teacherProfile}
               onNavigate={handleNavigate}
               onGradeAssignment={handleOpenGradeAssignment}
-              onOpenAIWithPrompt={handleOpenAIWithPrompt}
               recentNotifications={recentNotifications.notifications}
               notificationsLoading={recentNotifications.isLoading}
             />
@@ -499,7 +505,6 @@ export default function App() {
             <AssignmentDashboardView
               onGradeAssignment={handleOpenGradeAssignment}
               onOpenCreateAssignment={() => handleOpenQuickCreate("assignment")}
-              onNavigate={handleNavigate}
               backendCourses={teacherCourses.courses}
               refreshToken={assignmentRefreshToken}
             />
@@ -518,7 +523,6 @@ export default function App() {
               teacherCourses={courses}
               onOpenCreateQuiz={() => handleOpenQuickCreate("quiz")}
               onNavigate={handleNavigate}
-              onOpenAIWithPrompt={handleOpenAIWithPrompt}
             />
           )}
 
@@ -561,10 +565,6 @@ export default function App() {
             />
           )}
 
-          {currentTab === "ai-assistant" && (
-            <MentifyAIWorkspaceView initialPrompt={aiPreloadedPrompt} />
-          )}
-
           {currentTab === "analytics" && (
             <TeacherAnalyticsView onNavigate={handleNavigate} courses={teacherCourses.courses} />
           )}
@@ -587,6 +587,7 @@ export default function App() {
           {currentTab === "settings" && (
             <TeacherSettingsView
               teacher={teacherProfile}
+              courses={courses}
               isDarkMode={isDarkMode}
               onToggleTheme={() => setIsDarkMode((current) => !current)}
               onLogout={async () => {

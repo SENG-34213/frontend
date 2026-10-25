@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { Course, EnrollmentRecord, Grade, StudentProfile } from "../types";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface EnrollmentManagementProps {
   enrollments: EnrollmentRecord[];
@@ -34,6 +35,15 @@ function normalizedGrade(value?: string) {
 
 function studentName(student: StudentProfile) {
   return `${student.firstName} ${student.lastName}`.trim();
+}
+
+function isPublishedCourse(course: Course) {
+  return (
+    course.isPublished === true ||
+    course.courseStatus === "PUBLISHED" ||
+    course.status === "ACTIVE" ||
+    course.status === "PUBLISHED"
+  );
 }
 
 export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
@@ -90,9 +100,10 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
       selectedGrade
         ? courses.filter(
             (course) =>
-              course.gradeId === selectedGrade.id ||
-              normalizedGrade(course.gradeName || course.grade) ===
-                normalizedGrade(selectedGrade.name),
+              isPublishedCourse(course) &&
+              (course.gradeId === selectedGrade.id ||
+                normalizedGrade(course.gradeName || course.grade) ===
+                  normalizedGrade(selectedGrade.name)),
           )
         : [],
     [courses, selectedGrade],
@@ -383,9 +394,12 @@ export const EnrollmentManagement: React.FC<EnrollmentManagementProps> = ({
               </div>
               <div className="max-h-[440px] space-y-2 overflow-y-auto pr-1">
                 {filteredStudents.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-xs text-slate-500 dark:border-slate-700">
-                    No students found for this grade.
-                  </div>
+                  <EmptyState
+                    icon={Users}
+                    compact
+                    title="No students found"
+                    description="No student records match this grade or search filter."
+                  />
                 ) : (
                   filteredStudents.map((student) => {
                     const selected = student.id === selectedStudentId;

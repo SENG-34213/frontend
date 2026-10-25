@@ -35,7 +35,13 @@ export function useTeacherCourses(enabled: boolean): TeacherCoursesState {
     getTeacherCourses(controller.signal)
       .then((courses) => {
         if (controller.signal.aborted) return;
-        setState({ courses, isLoading: false, error: null });
+        setState({
+          courses: courses.filter(
+            (course) => course.isPublished === true || course.courseStatus === "PUBLISHED",
+          ),
+          isLoading: false,
+          error: null,
+        });
       })
       .catch((requestError: unknown) => {
         if (controller.signal.aborted) return;

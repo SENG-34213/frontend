@@ -310,6 +310,7 @@ export interface Announcement {
 
 export interface NotificationItem {
   id: string;
+  eventType?: string;
   title: string;
   description: string;
   timestamp: string;

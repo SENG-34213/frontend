@@ -13,7 +13,6 @@ import {
   GraduationCap,
   Layers3,
   PieChart,
-  Sparkles,
 } from "lucide-react";
 import { NavigationTab, NotificationItem, TeacherProfile } from "../types";
 import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
@@ -23,7 +22,6 @@ interface DashboardViewProps {
   teacher: TeacherProfile;
   onNavigate: (tab: NavigationTab, param?: string) => void;
   onGradeAssignment: (assignmentId: string) => void;
-  onOpenAIWithPrompt: (prompt: string) => void;
   recentNotifications: NotificationItem[];
   notificationsLoading: boolean;
 }
@@ -241,7 +239,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   teacher,
   onNavigate,
   onGradeAssignment,
-  onOpenAIWithPrompt,
   recentNotifications,
   notificationsLoading,
 }) => {
@@ -607,42 +604,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               ))
             )}
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-950 p-6 text-white shadow-xl">
-          <Sparkles className="absolute -right-4 -top-4 h-28 w-28 text-white/10" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-indigo-200">
-              <Sparkles className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em]">TiT AI</span>
-            </div>
-            <h2 className="mt-4 text-xl font-bold">Turn course data into your next move.</h2>
-            <p className="mt-2 text-xs leading-5 text-indigo-100/80">
-              Generate focused teaching actions using the performance data already on your
-              dashboard.
-            </p>
-            <div className="mt-5 space-y-2">
-              {performanceCourses.slice(0, 2).map((course) => (
-                <button
-                  key={course.courseId}
-                  onClick={() =>
-                    onOpenAIWithPrompt(
-                      `Review ${course.courseName} student performance and suggest next teaching actions`,
-                    )
-                  }
-                  className="flex w-full items-center justify-between rounded-xl bg-white/10 px-3 py-2.5 text-left text-[11px] text-indigo-50 hover:bg-white/15"
-                >
-                  <span className="truncate">Analyze {course.courseName}</span>
-                  <ArrowRight className="h-3 w-3 shrink-0" />
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => onNavigate("ai-assistant")}
-              className="mt-5 text-xs font-semibold text-white"
-            >
-              Open AI studio <ArrowRight className="ml-1 inline h-3 w-3" />
-            </button>
           </div>
         </div>
       </section>

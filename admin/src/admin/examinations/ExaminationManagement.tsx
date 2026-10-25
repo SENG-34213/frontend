@@ -17,6 +17,7 @@ export const ExaminationManagement: React.FC<ExaminationManagementProps> = ({
   const [gradeFilter, setGradeFilter] = useState("ALL");
   const [courseFilter, setCourseFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dateFilter, setDateFilter] = useState("");
 
   const gradeNames = useMemo(
     () => Array.from(new Set(courses.map((course) => course.grade).filter(Boolean))).sort(),
@@ -35,7 +36,8 @@ export const ExaminationManagement: React.FC<ExaminationManagementProps> = ({
           .some((value) => value!.toLowerCase().includes(query))) &&
       (gradeFilter === "ALL" || course?.grade === gradeFilter) &&
       (courseFilter === "ALL" || exam.courseId === courseFilter) &&
-      (statusFilter === "ALL" || exam.status === statusFilter)
+      (statusFilter === "ALL" || exam.status === statusFilter) &&
+      (!dateFilter || exam.examDate === dateFilter)
     );
   });
 
@@ -79,6 +81,13 @@ export const ExaminationManagement: React.FC<ExaminationManagementProps> = ({
             </option>
           ))}
         </select>
+        <input
+          type="date"
+          aria-label="Filter examinations by date"
+          value={dateFilter}
+          onChange={(event) => setDateFilter(event.target.value)}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+        />
         <select
           aria-label="Filter examinations by course"
           value={courseFilter}

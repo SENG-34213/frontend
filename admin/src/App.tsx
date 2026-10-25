@@ -65,6 +65,9 @@ import {
   registerStudent,
   registerTeacher,
   resendUserInvitation,
+  updateUserStatus,
+  deleteUser,
+  unlockUserAccount,
 } from "./admin/api/usersApi";
 import { fetchRegistrationOverview } from "./admin/api/dashboardApi";
 import { formatNotificationTime } from "../../shared/notifications/notificationFormat";
@@ -652,6 +655,7 @@ export default function App() {
         setNotifications(
           items.map((item) => ({
             id: item.id,
+            type: item.type,
             title: item.title,
             message: item.message,
             category: notificationCategory(item.type),
@@ -789,6 +793,63 @@ export default function App() {
         "error",
         "Invitation not sent",
         error instanceof Error ? error.message : "Please try again shortly.",
+      );
+    }
+  };
+
+  const handleUnlockUser = async (userId: string) => {
+    try {
+      await unlockUserAccount(userId);
+      addToast("success", "Account unlocked", "The user can sign in again immediately.");
+    } catch (error) {
+      addToast(
+        "error",
+        "Unlock failed",
+        error instanceof Error ? error.message : "Unable to unlock this account.",
+      );
+      throw error;
+    }
+  };
+
+  const handleUpdateUserStatus = async (userId: string, active: boolean) => {
+    try {
+      await updateUserStatus(userId, active);
+      const status = active ? "ACTIVE" : "SUSPENDED";
+      setStudents((previous) =>
+        previous.map((user) => (user.id === userId ? { ...user, status } : user)),
+      );
+      setTeachers((previous) =>
+        previous.map((user) => (user.id === userId ? { ...user, status } : user)),
+      );
+      setAdministrators((previous) =>
+        previous.map((user) => (user.id === userId ? { ...user, status } : user)),
+      );
+      addToast(
+        "success",
+        active ? "Account activated" : "Account suspended",
+        "The account status was updated successfully.",
+      );
+    } catch (error) {
+      addToast(
+        "error",
+        "Account status update failed",
+        error instanceof Error ? error.message : "Unable to update this account.",
+      );
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteUser(userId);
+      setStudents((previous) => previous.filter((user) => user.id !== userId));
+      setTeachers((previous) => previous.filter((user) => user.id !== userId));
+      setAdministrators((previous) => previous.filter((user) => user.id !== userId));
+      addToast("success", "User deleted", "The user account was removed successfully.");
+    } catch (error) {
+      addToast(
+        "error",
+        "User deletion failed",
+        error instanceof Error ? error.message : "Unable to delete this user.",
       );
     }
   };
@@ -1137,6 +1198,9 @@ export default function App() {
           onRegisterStudent={handleRegisterStudent}
           onCreateEnrollment={handleCreateEnrollment}
           onResendInvitation={handleResendInvitation}
+          onUpdateUserStatus={handleUpdateUserStatus}
+          onDeleteUser={handleDeleteUser}
+          onUnlockUser={handleUnlockUser}
           showRegistrationWizardDirectly={openStudentWizard}
         />
       )}
@@ -1148,6 +1212,9 @@ export default function App() {
           onAddTeacher={handleAddTeacher}
           onRegisterTeacher={handleRegisterTeacher}
           onResendInvitation={handleResendInvitation}
+          onUpdateUserStatus={handleUpdateUserStatus}
+          onDeleteUser={handleDeleteUser}
+          onUnlockUser={handleUnlockUser}
           showRegistrationWizardDirectly={openTeacherWizard}
         />
       )}
@@ -1159,6 +1226,9 @@ export default function App() {
           onAddAdministrator={handleAddAdministrator}
           onRegisterAdministrator={handleRegisterAdministrator}
           onResendInvitation={handleResendInvitation}
+          onUpdateUserStatus={handleUpdateUserStatus}
+          onDeleteUser={handleDeleteUser}
+          onUnlockUser={handleUnlockUser}
           showRegistrationWizardDirectly={openAdminWizard}
         />
       )}

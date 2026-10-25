@@ -11,25 +11,28 @@ import {
   Search,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const ExaminationsView: React.FC = () => {
   const { examinations, setSelectedExamId, setCurrentView } = useStudent();
   const [courseFilter, setCourseFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [expandedExamId, setExpandedExamId] = useState<string | null>(null);
 
   const filteredExams = useMemo(() => {
     const query = search.trim().toLowerCase();
     return examinations.filter((exam) => {
       const matchesCourse = courseFilter === "all" || exam.courseId === courseFilter;
+      const matchesDate = !dateFilter || exam.scheduledDate === dateFilter;
       const matchesSearch =
         !query ||
         [exam.title, exam.courseCode, exam.courseTitle, exam.type].some((value) =>
           value.toLowerCase().includes(query),
         );
-      return matchesCourse && matchesSearch;
+      return matchesCourse && matchesDate && matchesSearch;
     });
-  }, [courseFilter, examinations, search]);
+  }, [courseFilter, dateFilter, examinations, search]);
 
   const handleStartExam = (id: string) => {
     setSelectedExamId(id);
@@ -48,7 +51,7 @@ export const ExaminationsView: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900">
           <Search className="h-4 w-4 shrink-0 text-slate-400" />
           <input
@@ -76,6 +79,13 @@ export const ExaminationsView: React.FC = () => {
             </option>
           ))}
         </select>
+        <input
+          type="date"
+          aria-label="Filter examinations by date"
+          value={dateFilter}
+          onChange={(event) => setDateFilter(event.target.value)}
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+        />
       </div>
 
       {/* Security & Proctor Policy Notice */}
@@ -256,11 +266,17 @@ export const ExaminationsView: React.FC = () => {
           );
         })}
         {filteredExams.length === 0 && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">
-            {examinations.length === 0
-              ? "No examinations are available for your enrolled courses yet."
-              : "No exams match your search or course filter."}
-          </div>
+          <EmptyState
+            icon={Calendar}
+            title={
+              examinations.length === 0 ? "No examinations found" : "No exams match your filters"
+            }
+            description={
+              examinations.length === 0
+                ? "Examinations for your enrolled courses will appear here."
+                : "Try adjusting your search, course, or date filter."
+            }
+          />
         )}
       </div>
     </div>

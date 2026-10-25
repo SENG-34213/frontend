@@ -1,26 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  BellRing,
-  CheckCheck,
-  Download,
-  FileText,
-  Mic,
-  Plus,
-  Search,
-  Send,
-  Settings,
-  Square,
-  UserPlus,
-  Users,
-  X,
-} from "lucide-react";
+import { Eye, FileText, Plus, Search, Send, Settings, Users, X } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import type { Student } from "../types";
 import { useCommunicationRealtime } from "../api/communicationRealtime";
 import {
-  addStudentToCommunicationGroup,
   archiveCommunicationGroup,
   createCommunicationGroup,
   deleteCommunicationMessage,
@@ -33,6 +18,7 @@ import {
   unarchiveCommunicationGroup,
   updateCommunicationGroup,
   updateCommunicationMessage,
+  type CommunicationAttachment,
   type CommunicationGroup,
   type CommunicationGroupMember,
   type CommunicationMessage,
@@ -59,8 +45,117 @@ function initials(name: string) {
 }
 
 function formatTime(value?: string) {
-  return value ? new Date(value).toLocaleString() : "No messages";
+  return value
+    ? new Date(value).toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      })
+    : "No messages";
 }
+
+function mergeMessages(...messageLists: CommunicationMessage[][]) {
+  const unique = new Map<string, CommunicationMessage>();
+  messageLists.flat().forEach((message) => {
+    const existing = unique.get(message.id);
+    unique.set(
+      message.id,
+      existing
+        ? {
+            ...existing,
+            ...message,
+            // Realtime events can omit attachments. Keep the complete
+            // attachment list returned by the REST response.
+            attachments: message.attachments?.length
+              ? message.attachments
+              : (existing.attachments ?? []),
+          }
+        : message,
+    );
+  });
+  return Array.from(unique.values()).sort(
+    (left, right) => new Date(left.sentAt).getTime() - new Date(right.sentAt).getTime(),
+  );
+}
+
+const ChatAttachmentPreview: React.FC<{
+  groupId: string;
+  messageId: string;
+  attachment: CommunicationAttachment;
+  onOpen: () => void;
+}> = ({ groupId, messageId, attachment, onOpen }) => {
+  const [url, setUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setUrl(null);
+    setError(false);
+    getCommunicationAttachmentDownload(groupId, messageId, attachment.id)
+      .then((download) => {
+        if (!controller.signal.aborted) setUrl(download?.downloadUrl || null);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setError(true);
+      });
+    return () => controller.abort();
+  }, [attachment.id, groupId, messageId]);
+
+  if (error) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center gap-2 rounded-lg bg-black/10 px-2.5 py-2 text-left text-[11px] hover:bg-black/20"
+      >
+        <FileText className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 flex-1 truncate">{attachment.originalFilename}</span>
+        <Eye className="h-3.5 w-3.5 shrink-0" />
+      </button>
+    );
+  }
+
+  if (!url) {
+    return (
+      <div className="rounded-lg bg-black/10 px-2.5 py-2 text-[11px] opacity-75">
+        Loading preview for {attachment.originalFilename}...
+      </div>
+    );
+  }
+
+  if (attachment.contentType.startsWith("image/")) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="block max-w-full overflow-hidden rounded-lg"
+      >
+        <img
+          src={url}
+          alt={attachment.originalFilename}
+          className="max-h-56 max-w-full rounded-lg object-contain"
+        />
+      </button>
+    );
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="flex w-full items-center gap-2 rounded-lg bg-black/10 px-2.5 py-2 text-left text-[11px] hover:bg-black/20"
+    >
+      <FileText className="h-4 w-4 shrink-0" />
+      <span className="min-w-0 flex-1 truncate">{attachment.originalFilename}</span>
+      <span className="shrink-0 opacity-75">{Math.ceil(attachment.fileSize / 1024)} KB</span>
+      <Eye className="h-3.5 w-3.5 shrink-0" />
+    </a>
+  );
+};
 
 export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   backendCourses,
@@ -79,23 +174,12 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   );
   const [inputText, setInputText] = useState("");
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const recordingChunksRef = useRef<Blob[]>([]);
   const messageListRef = useRef<HTMLDivElement | null>(null);
-  const [activeTab, setActiveTab] = useState<"direct" | "announcements">("direct");
   const [search, setSearch] = useState("");
-  const [announcementText, setAnnouncementText] = useState("");
-  const [announcementAttachments, setAnnouncementAttachments] = useState<File[]>([]);
-  const [announcementTarget, setAnnouncementTarget] = useState("");
-  const [announcementSuccess, setAnnouncementSuccess] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [createCourseId, setCreateCourseId] = useState(backendCourses[0]?.id ?? "");
   const [createGroupName, setCreateGroupName] = useState("");
   const [createGroupDescription, setCreateGroupDescription] = useState("");
-  const [studentToAdd, setStudentToAdd] = useState("");
-  const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMessageLoading, setIsMessageLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -104,6 +188,11 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   const [actionError, setActionError] = useState<string | null>(null);
   const [editingMessage, setEditingMessage] = useState<CommunicationMessage | null>(null);
   const [deletingMessage, setDeletingMessage] = useState<CommunicationMessage | null>(null);
+  const [preview, setPreview] = useState<{
+    attachment: CommunicationAttachment;
+    url: string;
+  } | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [groupSettingsName, setGroupSettingsName] = useState("");
@@ -131,8 +220,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     (message) => {
       setMessagesByGroup((current) => {
         const existing = current[message.groupId] ?? [];
-        if (existing.some((item) => item.id === message.id)) return current;
-        return { ...current, [message.groupId]: [...existing, message] };
+        const merged = mergeMessages(existing, [message]);
+        if (merged.length === existing.length) return current;
+        return { ...current, [message.groupId]: merged };
       });
     },
   );
@@ -145,58 +235,6 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     });
     return () => window.cancelAnimationFrame(frame);
   }, [selectedGroupId, activeMessages.length, isMessageLoading]);
-
-  useEffect(() => {
-    if (!isRecording) return;
-    const timer = window.setInterval(() => setRecordingSeconds((value) => value + 1), 1000);
-    return () => window.clearInterval(timer);
-  }, [isRecording]);
-
-  useEffect(
-    () => () => recorderRef.current?.stream.getTracks().forEach((track) => track.stop()),
-    [],
-  );
-
-  async function toggleVoiceRecording() {
-    if (isRecording) {
-      recorderRef.current?.stop();
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setActionError("Voice recording is not supported by this browser.");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg"].find((type) =>
-        MediaRecorder.isTypeSupported(type),
-      );
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      recordingChunksRef.current = [];
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) recordingChunksRef.current.push(event.data);
-      };
-      recorder.onstop = () => {
-        const type = recorder.mimeType || "audio/webm";
-        const extension = type.includes("ogg") ? "ogg" : "webm";
-        const voiceFile = new File(recordingChunksRef.current, `voice-message.${extension}`, {
-          type,
-        });
-        setPendingAttachments((files) => [...files, voiceFile]);
-        stream.getTracks().forEach((track) => track.stop());
-        recorderRef.current = null;
-        setIsRecording(false);
-        setRecordingSeconds(0);
-      };
-      recorderRef.current = recorder;
-      recorder.start();
-      setRecordingSeconds(0);
-      setIsRecording(true);
-      setActionError(null);
-    } catch {
-      setActionError("Microphone access is required to record a voice message.");
-    }
-  }
 
   useEffect(() => {
     setCreateCourseId((current) =>
@@ -219,7 +257,6 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
             ? current
             : (loadedGroups[0]?.id ?? ""),
         );
-        setAnnouncementTarget((current) => current || loadedGroups[0]?.courseId || "");
       })
       .catch((requestError: unknown) => {
         if (!controller.signal.aborted) {
@@ -249,13 +286,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         if (controller.signal.aborted) return;
         setMessagesByGroup((current) => {
           const realtimeMessages = current[selectedGroupId] ?? [];
-          const historyIds = new Set(messagePage.content.map((message) => message.id));
           return {
             ...current,
-            [selectedGroupId]: [
-              ...messagePage.content,
-              ...realtimeMessages.filter((message) => !historyIds.has(message.id)),
-            ],
+            [selectedGroupId]: mergeMessages(messagePage.content, realtimeMessages),
           };
         });
         setMembersByGroup((current) => ({ ...current, [selectedGroupId]: members }));
@@ -296,7 +329,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         if (!message) throw new Error("Your message could not be sent.");
         setMessagesByGroup((current) => ({
           ...current,
-          [activeGroup.id]: [...(current[activeGroup.id] ?? []), message],
+          [activeGroup.id]: mergeMessages(current[activeGroup.id] ?? [], [message]),
         }));
       }
       setInputText("");
@@ -312,20 +345,27 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     }
   }
 
-  async function openAttachment(message: CommunicationMessage, attachmentId: string) {
+  async function previewAttachment(
+    message: CommunicationMessage,
+    attachment: CommunicationAttachment,
+  ) {
     if (!activeGroup) return;
+    setIsPreviewLoading(true);
+    setActionError(null);
     try {
       const download = await getCommunicationAttachmentDownload(
         activeGroup.id,
         message.id,
-        attachmentId,
+        attachment.id,
       );
-      if (!download?.downloadUrl) throw new Error("The attachment could not be opened.");
-      window.open(download.downloadUrl, "_blank", "noopener,noreferrer");
+      if (!download?.downloadUrl) throw new Error("The attachment could not be previewed.");
+      setPreview({ attachment, url: download.downloadUrl });
     } catch (requestError) {
       setActionError(
-        requestError instanceof Error ? requestError.message : "Attachment could not be opened.",
+        requestError instanceof Error ? requestError.message : "Attachment could not be previewed.",
       );
+    } finally {
+      setIsPreviewLoading(false);
     }
   }
 
@@ -478,83 +518,13 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     }
   }
 
-  async function handleAddStudent() {
-    if (!activeGroup || !studentToAdd) return;
-    setIsAddingStudent(true);
-    setActionError(null);
-    try {
-      const member = await addStudentToCommunicationGroup(activeGroup.id, studentToAdd);
-      if (member) {
-        setMembersByGroup((current) => ({
-          ...current,
-          [activeGroup.id]: [...(current[activeGroup.id] ?? []), member],
-        }));
-      }
-      setStudentToAdd("");
-    } catch (requestError) {
-      setActionError(
-        requestError instanceof Error ? requestError.message : "Student could not be added.",
-      );
-    } finally {
-      setIsAddingStudent(false);
-    }
-  }
-
-  async function handlePublishAnnouncement(event: React.FormEvent) {
-    event.preventDefault();
-    const group = groups.find((item) => item.courseId === announcementTarget);
-    if (!group || (!announcementText.trim() && announcementAttachments.length === 0)) {
-      setActionError("Select a course with an available communication group.");
-      return;
-    }
-    setIsSending(true);
-    try {
-      const content = announcementText.trim();
-      const attachmentIds: string[] = [];
-      for (const file of announcementAttachments) {
-        const attachment = await uploadCommunicationAttachment(group.id, file);
-        if (!attachment) throw new Error("An announcement attachment could not be uploaded.");
-        attachmentIds.push(attachment.id);
-      }
-      if (attachmentIds.length > 0 || !realtime.sendMessage(group.id, content)) {
-        const message = await sendCommunicationMessage(group.id, content, attachmentIds);
-        if (!message) throw new Error("The announcement could not be sent.");
-        setMessagesByGroup((current) => ({
-          ...current,
-          [group.id]: [...(current[group.id] ?? []), message],
-        }));
-      }
-      setAnnouncementSuccess(true);
-      setAnnouncementText("");
-      setAnnouncementAttachments([]);
-      setTimeout(() => setAnnouncementSuccess(false), 2200);
-    } catch (requestError) {
-      setActionError(
-        requestError instanceof Error ? requestError.message : "Announcement could not be sent.",
-      );
-    } finally {
-      setIsSending(false);
-    }
-  }
-
   return (
     <div className="h-[calc(100vh-5rem)] flex flex-col bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs -m-4 lg:-m-6">
       <div className="h-14 bg-slate-50 border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex items-center p-1 bg-slate-200/80 rounded-lg text-xs">
-            <button
-              onClick={() => setActiveTab("direct")}
-              className={`px-3 py-1 font-semibold rounded-md transition-colors ${activeTab === "direct" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"}`}
-            >
-              Direct &amp; Group Messages
-            </button>
-            <button
-              onClick={() => setActiveTab("announcements")}
-              className={`px-3 py-1 font-semibold rounded-md transition-colors ${activeTab === "announcements" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"}`}
-            >
-              Course Broadcast Announcements
-            </button>
-          </div>
+          <span className="px-3 py-1 text-xs font-semibold text-slate-700">
+            Direct &amp; Group Messages
+          </span>
         </div>
         <span className="text-xs text-slate-400 font-mono hidden sm:inline">
           TiT Messaging · Secure
@@ -567,7 +537,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         </div>
       )}
 
-      {activeTab === "direct" ? (
+      <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex overflow-hidden">
           <aside className="w-80 border-r border-slate-200 flex flex-col shrink-0 bg-slate-50/40">
             <div className="p-3 border-b border-slate-200 flex items-center gap-2">
@@ -743,33 +713,31 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                           key={message.id}
                           className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                         >
-                          <span className="text-[10px] text-slate-400 mb-1 px-1">
-                            {isMe ? "You" : messageSenderName(message)} ·{" "}
-                            {formatTime(message.sentAt)}
-                            {message.edited ? " · edited" : ""}
-                          </span>
+                          <div className="flex items-center gap-2 mb-1 text-[10px] text-slate-400">
+                            <span>{isMe ? "You" : messageSenderName(message)}</span>
+                            <span>·</span>
+                            <span>{formatTime(message.sentAt)}</span>
+                            {message.edited && (
+                              <>
+                                <span>·</span>
+                                <span>edited</span>
+                              </>
+                            )}
+                          </div>
                           <div
                             className={`max-w-lg p-3 rounded-xl text-xs leading-relaxed ${isMe ? "bg-indigo-600 text-white rounded-br-none shadow-xs" : "bg-slate-100 text-slate-900 rounded-bl-none"}`}
                           >
                             {message.deletedForEveryone ? "Message deleted" : message.content}
                             {!message.deletedForEveryone && message.attachments?.length > 0 && (
                               <div className="mt-2 space-y-1.5 border-t border-white/20 pt-2">
-                                {message.attachments.map((attachment) => (
-                                  <button
-                                    key={attachment.id}
-                                    type="button"
-                                    onClick={() => void openAttachment(message, attachment.id)}
-                                    className="flex w-full items-center gap-2 rounded-md bg-black/10 px-2 py-1.5 text-left hover:bg-black/20"
-                                  >
-                                    <FileText className="h-4 w-4 shrink-0" />
-                                    <span className="min-w-0 flex-1 truncate">
-                                      {attachment.originalFilename}
-                                    </span>
-                                    <span className="shrink-0 text-[10px] opacity-75">
-                                      {Math.ceil(attachment.fileSize / 1024)} KB
-                                    </span>
-                                    <Download className="h-3.5 w-3.5 shrink-0" />
-                                  </button>
+                                {message.attachments.map((attachment, attachmentIndex) => (
+                                  <ChatAttachmentPreview
+                                    key={`${message.id}-${attachment.id}-${attachmentIndex}`}
+                                    groupId={message.groupId}
+                                    messageId={message.id}
+                                    attachment={attachment}
+                                    onOpen={() => void previewAttachment(message, attachment)}
+                                  />
                                 ))}
                               </div>
                             )}
@@ -799,38 +767,6 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     })
                   )}
                 </div>
-                {activeGroup.status !== "ARCHIVED" && students.length > 0 && (
-                  <div className="border-t border-slate-100 px-3 py-2 flex items-center gap-2">
-                    <UserPlus className="h-3.5 w-3.5 text-slate-400" />
-                    <select
-                      value={studentToAdd}
-                      onChange={(event) => setStudentToAdd(event.target.value)}
-                      className="min-w-0 flex-1 rounded border border-slate-200 px-2 py-1 text-[11px]"
-                    >
-                      <option value="">Add enrolled student...</option>
-                      {students
-                        .filter(
-                          (student) =>
-                            !membersByGroup[activeGroup.id]?.some(
-                              (member) => member.userId === student.id,
-                            ),
-                        )
-                        .map((student) => (
-                          <option key={student.id} value={student.id}>
-                            {student.name} ({student.email})
-                          </option>
-                        ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => void handleAddStudent()}
-                      disabled={!studentToAdd || isAddingStudent}
-                      className="rounded bg-slate-900 px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
-                    >
-                      Add
-                    </button>
-                  </div>
-                )}
                 <form
                   onSubmit={handleSendMessage}
                   className="p-3 border-t border-slate-200 bg-white flex items-center gap-2"
@@ -840,21 +776,6 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                     onChange={setPendingAttachments}
                     disabled={activeGroup.status === "ARCHIVED" || isSending}
                   />
-                  <button
-                    type="button"
-                    onClick={() => void toggleVoiceRecording()}
-                    disabled={activeGroup.status === "ARCHIVED" || isSending}
-                    title={isRecording ? "Stop recording" : "Record voice message"}
-                    aria-label={isRecording ? "Stop recording" : "Record voice message"}
-                    className={`relative shrink-0 rounded-lg p-2 ${isRecording ? "bg-rose-100 text-rose-600" : "text-slate-400 hover:bg-slate-100 hover:text-indigo-600"}`}
-                  >
-                    {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                    {isRecording && (
-                      <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] text-rose-600">
-                        {recordingSeconds}s
-                      </span>
-                    )}
-                  </button>
                   <input
                     disabled={activeGroup.status === "ARCHIVED" || isSending}
                     type="text"
@@ -1021,68 +942,74 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
             )}
           </main>
         </div>
-      ) : (
-        <div className="p-8 max-w-3xl mx-auto space-y-6 flex-1 overflow-y-auto">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Send Course Broadcast</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Announcements are sent as messages to the selected course communication group.
-            </p>
+      </div>
+      {preview && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[min(90vh,48rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {preview.attachment.originalFilename}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {Math.ceil(preview.attachment.fileSize / 1024)} KB · Document preview
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.open(preview.url, "_blank", "noopener,noreferrer")}
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Open full view
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Close attachment preview"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="min-h-64 flex-1 overflow-auto bg-slate-100 p-4">
+              {preview.attachment.contentType === "application/pdf" ? (
+                <iframe
+                  src={preview.url}
+                  title={preview.attachment.originalFilename}
+                  className="h-[min(70vh,38rem)] w-full rounded-lg border border-slate-200 bg-white"
+                />
+              ) : preview.attachment.contentType.startsWith("image/") ? (
+                <img
+                  src={preview.url}
+                  alt={preview.attachment.originalFilename}
+                  className="mx-auto max-h-[min(70vh,38rem)] max-w-full rounded-lg object-contain"
+                />
+              ) : preview.attachment.contentType.startsWith("video/") ? (
+                <video
+                  src={preview.url}
+                  controls
+                  className="mx-auto max-h-[min(70vh,38rem)] max-w-full"
+                />
+              ) : preview.attachment.contentType.startsWith("audio/") ? (
+                <div className="flex min-h-64 items-center justify-center">
+                  <audio src={preview.url} controls />
+                </div>
+              ) : (
+                <div className="flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+                  <FileText className="h-10 w-10 text-indigo-500" />
+                  <p className="text-sm font-semibold text-slate-800">
+                    {preview.attachment.originalFilename}
+                  </p>
+                  <p className="max-w-sm text-xs text-slate-500">
+                    This document type cannot be rendered directly in the browser. Open the full
+                    view to preview or download it.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-          {announcementSuccess && (
-            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-              <CheckCheck className="w-4 h-4 text-emerald-600" />
-              <span>Announcement published to the course group!</span>
-            </div>
-          )}
-          <form onSubmit={handlePublishAnnouncement} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Target Course
-              </label>
-              <select
-                value={announcementTarget}
-                onChange={(event) => setAnnouncementTarget(event.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
-              >
-                {availableCourses.length === 0 ? (
-                  <option value="">No courses available</option>
-                ) : (
-                  availableCourses.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.courseName}
-                      {course.courseCode ? ` · ${course.courseCode}` : ""}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Announcement Content
-              </label>
-              <textarea
-                rows={5}
-                value={announcementText}
-                onChange={(event) => setAnnouncementText(event.target.value)}
-                placeholder="Write your announcement regarding schedule adjustments, midterm preparations, or office hour updates..."
-                required
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
-              />
-            </div>
-            <CommunicationAttachmentPicker
-              files={announcementAttachments}
-              onChange={setAnnouncementAttachments}
-              disabled={isSending}
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1.5"
-            >
-              <BellRing className="w-3.5 h-3.5" />
-              <span>Publish Course Announcement</span>
-            </button>
-          </form>
         </div>
       )}
       <TextInputModal

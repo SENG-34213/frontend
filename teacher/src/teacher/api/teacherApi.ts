@@ -48,6 +48,15 @@ export function updateTeacherProfile(payload: UpdateTeacherProfilePayload) {
   return updateTeacher("/api/v1/users/teachers/me", payload);
 }
 
+export async function uploadTeacherProfileImage(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiRequest<ApiResponse<{ storageKey: string; contentType: string }>>(
+    "/api/v1/profile-images",
+    { method: "POST", body: formData },
+  );
+}
+
 export async function getTeacherShellData(signal?: AbortSignal): Promise<TeacherShellData> {
   const [userResult, notificationsResult] = await Promise.allSettled([
     getCurrentTeacher(),

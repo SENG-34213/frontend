@@ -30,6 +30,7 @@ export interface UpdateCurrentAdminProfileRequest {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
+  avatarUrl?: string;
 }
 
 export async function getCurrentAdminProfile() {
@@ -45,4 +46,13 @@ export async function updateCurrentAdminProfile(payload: UpdateCurrentAdminProfi
   });
   if (!response.data) throw new Error(response.message || "Updated profile was not returned.");
   return response.data;
+}
+
+export async function uploadAdminProfileImage(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiRequest<ApiResponse<{ storageKey: string; contentType: string }>>(
+    "/api/v1/profile-images",
+    { method: "POST", body: formData },
+  );
 }

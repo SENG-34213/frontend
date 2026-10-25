@@ -5,7 +5,6 @@ import {
   Plus,
   Calendar,
   Bell,
-  Sparkles,
   ChevronDown,
   ChevronRight,
   BookOpen,
@@ -21,7 +20,6 @@ import {
   ExternalLink,
   Sun,
   Moon,
-  RefreshCw,
 } from "lucide-react";
 import { NavigationTab, TeacherProfile } from "../types";
 import { QuickCreateType } from "./QuickCreateModal";
@@ -37,8 +35,6 @@ interface TeacherNavbarProps {
   unreadNotificationsCount: number;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  onRefresh: () => void;
-  isRefreshing: boolean;
   onLogout: () => void | Promise<void>;
 }
 
@@ -58,7 +54,6 @@ const tabTitles: Record<NavigationTab, { title: string; category: string }> = {
   grades: { title: "Gradebook & Final Results", category: "Assessments" },
   analytics: { title: "Teaching Analytics & Insights", category: "Insights" },
   messages: { title: "Student & Faculty Messages", category: "Communication" },
-  "ai-assistant": { title: "TiT AI Teaching Assistant", category: "AI Intelligence" },
   profile: { title: "Teacher Profile", category: "Account" },
   settings: { title: "Account Settings & Preferences", category: "Account" },
 };
@@ -73,8 +68,6 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
   unreadNotificationsCount,
   isDarkMode,
   onToggleTheme,
-  onRefresh,
-  isRefreshing,
   onLogout,
 }) => {
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
@@ -260,19 +253,6 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           <Calendar className="w-4 h-4" />
         </button>
 
-        {/* TiT AI Shortcut */}
-        <button
-          onClick={() => onNavigate("ai-assistant")}
-          className={`p-2 rounded-lg transition-colors ${
-            currentTab === "ai-assistant"
-              ? "text-violet-700 bg-violet-100"
-              : "text-violet-600 hover:bg-violet-50"
-          }`}
-          title="Open TiT AI Assistant"
-        >
-          <Sparkles className="w-4 h-4" />
-        </button>
-
         {/* Notifications Shortcut */}
         <button
           onClick={() => onNavigate("notifications")}
@@ -301,19 +281,6 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           ) : (
             <Moon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
           )}
-        </button>
-
-        {/* Refresh current workspace data */}
-        <button
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-700 shadow-xs transition-colors hover:bg-slate-100 disabled:cursor-wait disabled:opacity-70 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-          title="Refresh current page data"
-          aria-label="Refresh current page data"
-        >
-          <RefreshCw
-            className={`h-4 w-4 text-indigo-600 dark:text-indigo-400 ${isRefreshing ? "animate-spin" : ""}`}
-          />
         </button>
 
         <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block" />
