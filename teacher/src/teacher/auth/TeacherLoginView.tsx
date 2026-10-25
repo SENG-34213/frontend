@@ -19,6 +19,7 @@ export function TeacherLoginView({ onLogin }: Props) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const isTemporarilyLocked = /too many unsuccessful|temporarily locked/i.test(error);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,9 +127,32 @@ export function TeacherLoginView({ onLogin }: Props) {
             {error && (
               <div
                 role="alert"
-                className="mb-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2.5 text-xs font-medium text-rose-700"
+                className={`mb-4 rounded-lg border px-3 py-2.5 text-xs ${isTemporarilyLocked ? "border-amber-200 bg-amber-50 text-amber-800" : "border-rose-100 bg-rose-50 font-medium text-rose-700"}`}
               >
-                {error}
+                {isTemporarilyLocked ? (
+                  <div className="flex items-start gap-2.5">
+                    <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                    <div>
+                      <p className="font-semibold">Account temporarily locked</p>
+                      <p className="mt-1 leading-5">
+                        Too many unsuccessful attempts. Try again after 15 minutes or reset your
+                        password now.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setError("");
+                          setShowForgotPassword(true);
+                        }}
+                        className="mt-2 font-semibold text-amber-900 underline underline-offset-2"
+                      >
+                        Reset password
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  error
+                )}
               </div>
             )}
             <form className="space-y-4" onSubmit={handleSubmit}>

@@ -18,7 +18,7 @@ import {
   Sun,
   UserRound,
 } from "lucide-react";
-import type { TeacherProfile } from "../types";
+import type { Course, TeacherProfile } from "../types";
 import { changeTeacherPassword, getCurrentTeacher } from "../api/auth";
 import { updateCurrentTeacher } from "../api/teacherApi";
 import {
@@ -46,6 +46,7 @@ type SettingsTab =
 
 interface TeacherSettingsViewProps {
   teacher: TeacherProfile;
+  courses?: Course[];
   onLogout: () => Promise<void>;
   isDarkMode: boolean;
   onToggleTheme: () => void;
@@ -90,6 +91,7 @@ const PreferenceToggle: React.FC<{ checked: boolean; onChange: () => void }> = (
 
 export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({
   teacher,
+  courses = [],
   onLogout,
   isDarkMode,
   onToggleTheme,
@@ -511,49 +513,40 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({
                       Your professional identity shown across courses and communication.
                     </p>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <span className="text-[11px] font-semibold text-slate-400">Name</span>
-                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                        {displayName}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-semibold text-slate-400">
-                        Institutional email
+                  <div>
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        Assigned courses
                       </span>
-                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                        {email}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-semibold text-slate-400">Title</span>
-                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                        {teacher.title || currentTeacher?.teacherProfile?.title || "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-semibold text-slate-400">Department</span>
-                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                        {teacher.department ||
-                          currentTeacher?.teacherProfile?.department ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-semibold text-slate-400">
-                        Office location
+                      <span className="text-[11px] font-semibold text-indigo-600">
+                        {courses.length} course{courses.length === 1 ? "" : "s"}
                       </span>
-                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                        {teacher.officeLocation || "Not provided"}
-                      </p>
                     </div>
-                    <div>
-                      <span className="text-[11px] font-semibold text-slate-400">Office hours</span>
-                      <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                        {teacher.officeHours || "Not provided"}
-                      </p>
-                    </div>
+                    {courses.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+                        No assigned courses found.
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {courses.map((course) => (
+                          <div
+                            key={course.id}
+                            className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+                          >
+                            <p className="font-mono text-[10px] font-bold uppercase tracking-wide text-indigo-600">
+                              {course.code || "Course"}
+                            </p>
+                            <p className="mt-1 truncate text-sm font-semibold text-slate-900 dark:text-white">
+                              {course.title}
+                            </p>
+                            <p className="mt-1 text-[11px] text-slate-500">
+                              {course.enrolledCount} enrolled student
+                              {course.enrolledCount === 1 ? "" : "s"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-indigo-800 dark:border-indigo-900/50 dark:bg-indigo-950/20 dark:text-indigo-200">
                     Profile editing remains available in the Teacher Profile workspace so this

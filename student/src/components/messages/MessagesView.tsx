@@ -1,9 +1,83 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Download, FileText, Search, Send, User } from "lucide-react";
+import { Download, Eye, FileText, Search, Send, User } from "lucide-react";
 import { getCommunicationAttachmentDownload } from "../../api/student";
 import { useStudent } from "../../context/StudentContext";
 import type { Message } from "../../types";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
+
+function formatMessageTime(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+const StudentImageAttachment: React.FC<{
+  groupId: string;
+  messageId: string;
+  attachment: NonNullable<Message["attachments"]>[number];
+  onOpen: () => void;
+}> = ({ groupId, messageId, attachment, onOpen }) => {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (!attachment.id) {
+      setLoading(false);
+      return;
+    }
+    getCommunicationAttachmentDownload(groupId, messageId, attachment.id)
+      .then((response) => {
+        if (active) setUrl(String(response.data?.downloadUrl || ""));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [attachment.id, groupId, messageId]);
+
+  if (loading) {
+    return (
+      <div className="mt-2 rounded-lg bg-black/10 px-2.5 py-2 text-[11px]">Loading image...</div>
+    );
+  }
+  if (url && attachment.contentType?.startsWith("image/")) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="mt-2 block max-w-full overflow-hidden rounded-lg"
+      >
+        <img
+          src={url}
+          alt={attachment.name}
+          className="max-h-56 max-w-full rounded-lg object-contain"
+        />
+      </button>
+    );
+  }
+  return (
+    <a
+      href={url || undefined}
+      target="_blank"
+      rel="noreferrer"
+      className="mt-2 flex w-full items-center gap-2 rounded-lg bg-black/10 px-2.5 py-2 text-left hover:bg-black/20"
+    >
+      <FileText className="h-4 w-4 shrink-0" />
+      <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+      <Eye className="h-3.5 w-3.5 shrink-0" />
+    </a>
+  );
+};
 
 const VoiceAttachment: React.FC<{
   groupId: string;
@@ -104,7 +178,7 @@ export const MessagesView: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Messages & Course Communication
@@ -182,7 +256,7 @@ export const MessagesView: React.FC = () => {
                           {conv.participantName}
                         </h4>
                         <span className="text-[10px] text-slate-400 shrink-0">
-                          {conv.lastMessageTime}
+                          {formatMessageTime(conv.lastMessageTime)}
                         </span>
                       </div>
                       <p className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
@@ -252,7 +326,7 @@ export const MessagesView: React.FC = () => {
                   <div className="flex items-center gap-2 mb-1 text-[10px] text-slate-400">
                     <span>{msg.senderName}</span>
                     <span>·</span>
-                    <span>{msg.timestamp}</span>
+                    <span>{formatMessageTime(msg.timestamp)}</span>
                   </div>
                   <div
                     className={`max-w-md rounded-2xl p-4 text-xs leading-relaxed ${
@@ -263,6 +337,7 @@ export const MessagesView: React.FC = () => {
                   >
                     {msg.text && <div>{msg.text}</div>}
                     {msg.attachments?.map((attachment) => {
+                      const isImage = attachment.contentType?.startsWith("image/");
                       const isAudio = attachment.contentType?.startsWith("audio/");
                       return isAudio ? (
                         <VoiceAttachment
@@ -270,6 +345,14 @@ export const MessagesView: React.FC = () => {
                           groupId={activeConv.id}
                           messageId={msg.id}
                           attachment={attachment}
+                        />
+                      ) : isImage ? (
+                        <StudentImageAttachment
+                          key={attachment.id || attachment.name}
+                          groupId={activeConv.id}
+                          messageId={msg.id}
+                          attachment={attachment}
+                          onOpen={() => void openAttachment(msg.id, attachment.id)}
                         />
                       ) : (
                         <button
@@ -357,7 +440,9 @@ export const MessagesView: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] text-slate-400">{ann.timestamp}</span>
+                <span className="text-[11px] text-slate-400">
+                  {formatMessageTime(ann.timestamp)}
+                </span>
               </div>
 
               <div>

@@ -715,7 +715,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-3 px-4 font-semibold">Course & Subject</th>
                 <th className="py-3 px-4 font-semibold">Grade Level</th>
-                <th className="py-3 px-4 font-semibold">Inherited Monthly Tuition</th>
                 <th className="py-3 px-4 font-semibold">Assigned Faculty</th>
                 <th className="py-3 px-4 font-semibold">Delivery Mode</th>
                 <th className="py-3 px-4 font-semibold">Catalog Status</th>
@@ -726,7 +725,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredCourses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     <BookOpen className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                     <p className="font-medium text-slate-700 dark:text-slate-300">
                       No courses found
@@ -748,8 +747,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   const isPublishedCourse =
                     course.isPublished ??
                     (course.status === "PUBLISHED" || course.status === "ACTIVE");
-                  const feeValue = course.gradeMonthlyFee ?? course.courseFeeMonthly ?? 5000;
-                  const feeCurrency = course.gradeCurrencyCode || "LKR";
 
                   return (
                     <tr
@@ -794,27 +791,6 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                           <GraduationCap className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                           <span>{gradeNameForCourse(course)}</span>
                         </span>
-                      </td>
-
-                      {/* Inherited Monthly Fee from Grade */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="inline-flex flex-col">
-                          <div className="flex items-baseline gap-1 text-slate-900 dark:text-white font-bold tabular-nums">
-                            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
-                              {feeCurrency}
-                            </span>
-                            <span>
-                              {feeValue.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-normal">/ mo</span>
-                          </div>
-                          <span className="text-[10px] text-slate-400">
-                            Tier: {gradeNameForCourse(course)}
-                          </span>
-                        </div>
                       </td>
 
                       {/* Faculty */}
@@ -951,12 +927,12 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
                 {/* LEFT COLUMN: Structured Form Inputs (Span 7) */}
-                <div className="lg:col-span-7 space-y-6 text-xs">
-                  {/* SECTION 1: COURSE IDENTITY */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                <div className="lg:col-span-7 flex flex-col space-y-6 text-xs">
+                  {/* SECTION 2: COURSE IDENTITY — displayed after academic assignment */}
+                  <div className="order-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
                     <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
-                        1
+                        2
                       </span>
                       <h4 className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
                         Course Identity & Classification
@@ -1066,13 +1042,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         {/* Thumbnail Square Box */}
                         <label className="group relative w-24 h-16 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 transition-colors">
                           {thumbnailImage ? (
-                            <img
-                              src={thumbnailImage}
+                            <CourseThumbnailImage
+                              source={thumbnailImage}
                               alt="Thumbnail preview"
                               className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = "none";
-                              }}
                             />
                           ) : (
                             <div className="flex flex-col items-center gap-1 text-slate-400">
@@ -1175,11 +1148,11 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     </div>
                   </div>
 
-                  {/* SECTION 2: ACADEMIC HIERARCHY & FACULTY */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                  {/* SECTION 1: ACADEMIC HIERARCHY & FACULTY */}
+                  <div className="order-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
                     <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
-                        2
+                        1
                       </span>
                       <h4 className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
                         Academic Hierarchy & Faculty Assignment
@@ -1286,7 +1259,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   </div>
 
                   {/* SECTION 3: SYLLABUS & DESCRIPTION */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                  <div className="order-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2">
                         <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
@@ -1343,7 +1316,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   </div>
 
                   {/* SECTION 4: DELIVERY & PUBLICATION GOVERNANCE */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
+                  <div className="order-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
                     <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
                         4
@@ -1488,13 +1461,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                       {/* Image header */}
                       <div className="relative h-36 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                         {thumbnailImage ? (
-                          <img
-                            src={thumbnailImage}
+                          <CourseThumbnailImage
+                            source={thumbnailImage}
                             alt="Preview"
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = "none";
-                            }}
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 flex items-center justify-center text-white font-extrabold text-3xl">
@@ -1713,33 +1683,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   </div>
                 )}
 
-                {/* Status & Pricing Card */}
-                <div className="p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/30 flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] text-indigo-600 dark:text-indigo-400 uppercase font-semibold block">
-                      Inherited Monthly Tuition Standard
-                    </span>
-                    <div className="flex items-baseline gap-1 mt-0.5">
-                      <span className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
-                        {(
-                          selectedCourse.gradeMonthlyFee ??
-                          selectedCourse.courseFeeMonthly ??
-                          0
-                        ).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                      <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase">
-                        {selectedCourse.gradeCurrencyCode || "LKR"}
-                      </span>
-                      <span className="text-xs text-slate-400">/ month</span>
-                    </div>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block">
-                      Configured via Grade Level ({gradeNameForCourse(selectedCourse)})
-                    </span>
-                  </div>
-
+                {/* Course Status */}
+                <div className="p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/30 flex items-center justify-end">
                   <div className="space-y-1 text-right">
                     <StatusBadge
                       status={
@@ -1892,7 +1837,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                           {enr.studentName}
                         </span>
                         <span className="font-mono text-[10px] text-slate-400">
-                          {enr.studentId}
+                          {enr.studentNumber || "Student ID unavailable"}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">

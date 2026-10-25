@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 const clamp = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
 const boundedPercentage = (value: unknown): number | null => {
@@ -351,7 +352,12 @@ export const StudentDashboard: React.FC = () => {
           </div>
           <div className="mt-5 space-y-4">
             {enrolledCourses.length === 0 ? (
-              <p className="py-10 text-center text-xs text-slate-400">No active courses found.</p>
+              <EmptyState
+                icon={BookOpen}
+                compact
+                title="No active courses"
+                description="Your active courses will appear here when they are assigned."
+              />
             ) : (
               enrolledCourses.slice(0, 6).map((course) => (
                 <div key={course.id}>
@@ -499,7 +505,12 @@ export const StudentDashboard: React.FC = () => {
           </div>
           <div className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
             {deadlines.length === 0 ? (
-              <p className="py-8 text-center text-xs text-slate-400">You are all caught up.</p>
+              <EmptyState
+                icon={CheckCircle2}
+                compact
+                title="You are all caught up"
+                description="There are no upcoming academic actions right now."
+              />
             ) : (
               deadlines.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-4 py-4">
@@ -551,7 +562,12 @@ export const StudentDashboard: React.FC = () => {
           </div>
           <div className="mt-5 space-y-4">
             {attendanceSummaries.length === 0 ? (
-              <p className="py-8 text-center text-xs text-slate-400">No attendance records yet.</p>
+              <EmptyState
+                icon={CalendarDays}
+                compact
+                title="No attendance records"
+                description="Attendance information will appear after your sessions are recorded."
+              />
             ) : (
               attendanceSummaries.slice(0, 4).map((summary) => {
                 const course = courses.find((item) => item.id === summary.courseId);

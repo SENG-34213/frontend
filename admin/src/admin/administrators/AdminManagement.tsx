@@ -14,12 +14,18 @@ import {
   X,
   Send,
   RefreshCw,
+  Unlock,
+  Ban,
+  Trash2,
+  Eye,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { RoleBadge } from "../components/RoleBadge";
 import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { DetailDrawer } from "../components/DetailDrawer";
+import { ConfirmationDialog } from "../components/ConfirmationDialog";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 import { AdministratorProfile, AdminRole } from "../types";
 import type { RegisterAdministratorRequest } from "../api/usersApi";
 
@@ -29,6 +35,9 @@ interface AdminManagementProps {
   onAddAdministrator: (admin: AdministratorProfile) => void;
   onRegisterAdministrator: (request: RegisterAdministratorRequest) => Promise<AdministratorProfile>;
   onResendInvitation: (email: string, role: string) => Promise<void>;
+  onUpdateUserStatus: (userId: string, active: boolean) => Promise<void>;
+  onDeleteUser: (userId: string) => Promise<void>;
+  onUnlockUser: (userId: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -38,6 +47,9 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   onAddAdministrator,
   onRegisterAdministrator,
   onResendInvitation,
+  onUpdateUserStatus,
+  onDeleteUser,
+  onUnlockUser,
   showRegistrationWizardDirectly = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,6 +59,30 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
   const [createdAdminCode, setCreatedAdminCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+  const [unlockingUserId, setUnlockingUserId] = useState<string | null>(null);
+  const [mutatingUserId, setMutatingUserId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdministratorProfile | null>(null);
+
+  const handleStatusChange = async (userId: string, active: boolean) => {
+    setMutatingUserId(userId);
+    try {
+      await onUpdateUserStatus(userId, active);
+    } finally {
+      setMutatingUserId(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const administrator = deleteTarget;
+    setMutatingUserId(administrator.id);
+    try {
+      await onDeleteUser(administrator.id);
+      setDeleteTarget(null);
+    } finally {
+      setMutatingUserId(null);
+    }
+  };
 
   const handleResend = async (email: string, role: string) => {
     setResendingEmail(email);
@@ -54,6 +90,15 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       await onResendInvitation(email, role);
     } finally {
       setResendingEmail(null);
+    }
+  };
+
+  const handleUnlock = async (userId: string) => {
+    setUnlockingUserId(userId);
+    try {
+      await onUnlockUser(userId);
+    } finally {
+      setUnlockingUserId(null);
     }
   };
 
@@ -231,63 +276,135 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredAdmins.map((admin) => (
-                <tr
-                  key={admin.id}
-                  className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  <td className="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">
-                    {admin.adminCode}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <UserAvatar name={`${admin.firstName} ${admin.lastName}`} size="md" />
-                      <div>
-                        <span className="font-semibold text-slate-900 dark:text-white block">
-                          {admin.firstName} {admin.lastName}
-                        </span>
-                        <span className="text-slate-400">{admin.email}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <RoleBadge role={admin.role} />
-                  </td>
-                  <td className="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">
-                    {admin.department}
-                  </td>
-                  <td className="py-3 px-4">
-                    <StatusBadge status={admin.status} />
-                  </td>
-                  <td className="py-3 px-4 text-slate-500 tabular-nums">
-                    {new Date(admin.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => setSelectedAdmin(admin)}
-                        className="px-2 py-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-medium"
-                      >
-                        Inspect
-                      </button>
-                      {admin.status === "INVITED" && (
-                        <button
-                          disabled={resendingEmail === admin.email}
-                          onClick={() => void handleResend(admin.email, "ADMIN")}
-                          className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
-                        >
-                          {resendingEmail === admin.email ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Send className="w-3 h-3" />
-                          )}
-                          {resendingEmail === admin.email ? "Sending..." : "Resend"}
-                        </button>
-                      )}
-                    </div>
+              {filteredAdmins.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <EmptyState
+                      compact
+                      icon={ShieldCheck}
+                      title="No administrators found"
+                      description="No administrator records match the selected filters."
+                      className="border-0 py-0"
+                    />
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredAdmins.map((admin) => (
+                  <tr
+                    key={admin.id}
+                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="py-3 px-4 font-mono font-medium text-slate-700 dark:text-slate-300">
+                      {admin.adminCode}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar name={`${admin.firstName} ${admin.lastName}`} size="md" />
+                        <div>
+                          <span className="font-semibold text-slate-900 dark:text-white block">
+                            {admin.firstName} {admin.lastName}
+                          </span>
+                          <span className="text-slate-400">{admin.email}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <RoleBadge role={admin.role} />
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300 font-medium">
+                      {admin.department}
+                    </td>
+                    <td className="py-3 px-4">
+                      <StatusBadge status={admin.status} />
+                    </td>
+                    <td className="py-3 px-4 text-slate-500 tabular-nums">
+                      {new Date(admin.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedAdmin(admin)}
+                          className="group relative rounded p-1.5 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                          title="View administrator details"
+                          aria-label={`View details for ${admin.firstName} ${admin.lastName}`}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                            View details
+                          </span>
+                        </button>
+                        {admin.status === "INVITED" && (
+                          <button
+                            disabled={resendingEmail === admin.email}
+                            onClick={() => void handleResend(admin.email, "ADMIN")}
+                            className="px-2 py-1 rounded text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-medium flex items-center gap-1 disabled:cursor-wait disabled:opacity-60"
+                          >
+                            {resendingEmail === admin.email ? (
+                              <RefreshCw className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Send className="w-3 h-3" />
+                            )}
+                            {resendingEmail === admin.email ? "Sending..." : "Resend"}
+                          </button>
+                        )}
+                        {admin.accountLocked && (
+                          <button
+                            disabled={unlockingUserId === admin.id}
+                            onClick={() => void handleUnlock(admin.id)}
+                            className="group relative rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-60 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            title="Unlock account immediately"
+                            aria-label={`Unlock ${admin.firstName} ${admin.lastName}`}
+                          >
+                            <Unlock
+                              className={`h-3.5 w-3.5 ${unlockingUserId === admin.id ? "animate-pulse" : ""}`}
+                            />
+                            <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                              Unlock account
+                            </span>
+                          </button>
+                        )}
+                        {admin.role !== "SUPER_ADMIN" &&
+                          (admin.status === "ACTIVE" || admin.status === "SUSPENDED") && (
+                            <button
+                              disabled={mutatingUserId === admin.id}
+                              onClick={() =>
+                                void handleStatusChange(admin.id, admin.status === "SUSPENDED")
+                              }
+                              className="group relative rounded p-1.5 text-amber-600 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-60 dark:text-amber-400 dark:hover:bg-amber-950/40"
+                              title={
+                                admin.status === "ACTIVE" ? "Suspend account" : "Activate account"
+                              }
+                              aria-label={
+                                admin.status === "ACTIVE"
+                                  ? `Suspend ${admin.firstName} ${admin.lastName}`
+                                  : `Activate ${admin.firstName} ${admin.lastName}`
+                              }
+                            >
+                              <Ban className="h-3.5 w-3.5" />
+                              <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                                {admin.status === "ACTIVE" ? "Suspend account" : "Activate account"}
+                              </span>
+                            </button>
+                          )}
+                        {admin.role !== "SUPER_ADMIN" && (
+                          <button
+                            disabled={mutatingUserId === admin.id}
+                            onClick={() => setDeleteTarget(admin)}
+                            className="group relative rounded p-1.5 text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                            title="Delete user"
+                            aria-label={`Delete ${admin.firstName} ${admin.lastName}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                              Delete user
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -586,6 +703,24 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
           </div>
         </DetailDrawer>
       )}
+      <ConfirmationDialog
+        isOpen={!!deleteTarget}
+        title="Delete administrator account?"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete ${deleteTarget.firstName} ${deleteTarget.lastName}? This action cannot be undone.`
+            : ""
+        }
+        consequences={[
+          "The administrator will no longer be able to sign in.",
+          "The administrator profile will be permanently deleted.",
+          "Existing audit history may remain for compliance purposes.",
+        ]}
+        confirmText={mutatingUserId === deleteTarget?.id ? "Deleting…" : "Delete administrator"}
+        variant="danger"
+        onConfirm={() => void handleDelete()}
+        onCancel={() => (mutatingUserId ? undefined : setDeleteTarget(null))}
+      />
     </div>
   );
 };

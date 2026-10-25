@@ -348,6 +348,20 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   const [pendingEventActionId, setPendingEventActionId] = useState<string | null>(null);
   const [eventActionError, setEventActionError] = useState<string | null>(null);
 
+  const selectedEventCourse = selectedEvent
+    ? courses.find(
+        (course) =>
+          course.id === selectedEvent.courseId ||
+          (!!selectedEvent.courseCode && course.code === selectedEvent.courseCode),
+      )
+    : undefined;
+  const selectedCourseName =
+    selectedEvent?.courseTitle || selectedEventCourse?.title || selectedEventCourse?.courseName;
+  const selectedCourseCode = selectedEvent?.courseCode || selectedEventCourse?.code;
+  const selectedTeacher = instructors?.[0];
+  const selectedTeacherName = selectedEvent?.instructorName || selectedEventCourse?.teacherName || selectedTeacher?.name;
+  const selectedTeacherEmail = selectedEvent?.instructorEmail || selectedTeacher?.email;
+
   useEffect(() => {
     const hasOverlay = isMobileFilterOpen || Boolean(selectedEvent) || isAddEditModalOpen;
     if (!hasOverlay) return;
@@ -2287,7 +2301,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             </div>
 
             {/* Course Information Section */}
-            {selectedEvent.courseCode && (
+            {(selectedCourseName || selectedCourseCode) && (
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Academic Course Syllabus
@@ -2295,10 +2309,10 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                      {selectedEvent.courseTitle || selectedEvent.courseCode}
+                      {selectedCourseName || selectedCourseCode}
                     </h4>
                     <span className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">
-                      Module Code: {selectedEvent.courseCode}
+                      Course Code: {selectedCourseCode || "Not provided"}
                     </span>
                   </div>
                 </div>
@@ -2306,7 +2320,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             )}
 
             {/* Teacher / Instructor Section */}
-            {selectedEvent.instructorName && (
+            {selectedTeacherName && (selectedEvent.courseId || selectedEvent.courseCode) && (
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Assigned Faculty Lead / Proctor
@@ -2314,17 +2328,17 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
-                      {selectedEvent.instructorName[0]}
+                      {selectedTeacherName[0]}
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                        {selectedEvent.instructorName}
+                        {selectedTeacherName}
                       </h4>
                       <span className="text-[11px] text-slate-400 flex items-center gap-1">
                         <Mail className="w-3 h-3" />
                         <span>
-                          {selectedEvent.instructorEmail ||
-                            `${selectedEvent.instructorName.toLowerCase().replace(/[^a-z]/g, "")}@mentify.edu`}
+                          {selectedTeacherEmail ||
+                            `${selectedTeacherName.toLowerCase().replace(/[^a-z]/g, "")}@mentify.edu`}
                         </span>
                       </span>
                     </div>
@@ -2349,20 +2363,19 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             {/* Actions Bar */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
+                {selectedEvent.canCancel !== false && (
                 <button
                   type="button"
                   disabled={
                     pendingEventActionId === selectedEvent.id ||
                     selectedEvent.status === "CANCELLED" ||
-                    selectedEvent.canCancel === false
+                    !selectedEvent.canCancel
                   }
                   onClick={() => void handleCancelEvent(selectedEvent)}
                   title={
                     selectedEvent.status === "CANCELLED"
                       ? "Event is already cancelled"
-                      : selectedEvent.canCancel === false
-                        ? "You cannot cancel this event"
-                        : "Cancel event"
+                      : "Cancel event"
                   }
                   className="flex items-center gap-1.5 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-900 dark:text-amber-300 dark:hover:bg-amber-950/40"
                 >
@@ -2371,22 +2384,21 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     {pendingEventActionId === selectedEvent.id ? "Saving…" : "Cancel Event"}
                   </span>
                 </button>
+                )}
+                {selectedEvent.canDelete !== false && (
                 <button
                   type="button"
                   disabled={
-                    pendingEventActionId === selectedEvent.id || selectedEvent.canDelete === false
+                    pendingEventActionId === selectedEvent.id || !selectedEvent.canDelete
                   }
                   onClick={() => void handleDeleteEvent(selectedEvent)}
-                  title={
-                    selectedEvent.canDelete === false
-                      ? "You cannot delete this event"
-                      : "Delete event"
-                  }
+                  title="Delete event"
                   aria-label={`Delete ${selectedEvent.title}`}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-rose-950/40"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+                )}
               </div>
 
               <div className="flex items-center gap-2">

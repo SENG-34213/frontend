@@ -335,6 +335,18 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
+  const selectedEventCourse = selectedEvent
+    ? courses.find(
+        (course) =>
+          course.id === selectedEvent.courseId ||
+          (!!selectedEvent.courseCode && course.code === selectedEvent.courseCode),
+      )
+    : undefined;
+  const selectedCourseName =
+    selectedEvent?.courseTitle || selectedEventCourse?.title || selectedEventCourse?.courseName;
+  const selectedCourseCode = selectedEvent?.courseCode || selectedEventCourse?.code;
+  const selectedTeacherName = selectedEvent?.instructorName || selectedEventCourse?.teacherName;
+
   // ----------------------------------------------------
   // ADD / EDIT FORM STATE WITH VALIDATION
   // ----------------------------------------------------
@@ -2221,7 +2233,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
             </div>
 
             {/* Course Information Section */}
-            {selectedEvent.courseCode && (
+            {(selectedCourseName || selectedCourseCode) && (
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Academic Course Syllabus
@@ -2229,10 +2241,10 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                      {selectedEvent.courseTitle || selectedEvent.courseCode}
+                      {selectedCourseName || selectedCourseCode}
                     </h4>
                     <span className="font-mono text-[11px] text-indigo-600 dark:text-indigo-400">
-                      Module Code: {selectedEvent.courseCode}
+                      Course Code: {selectedCourseCode || "Not provided"}
                     </span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono">
@@ -2243,7 +2255,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
             )}
 
             {/* Teacher / Instructor Section */}
-            {selectedEvent.instructorName && (
+            {selectedTeacherName && (
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Assigned Faculty Lead / Proctor
@@ -2251,17 +2263,17 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
-                      {selectedEvent.instructorName[0]}
+                      {selectedTeacherName[0]}
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                        {selectedEvent.instructorName}
+                        {selectedTeacherName}
                       </h4>
                       <span className="text-[11px] text-slate-400 flex items-center gap-1">
                         <Mail className="w-3 h-3" />
                         <span>
                           {selectedEvent.instructorEmail ||
-                            `${selectedEvent.instructorName.toLowerCase().replace(/[^a-z]/g, "")}@mentify.edu`}
+                            `${selectedTeacherName.toLowerCase().replace(/[^a-z]/g, "")}@mentify.edu`}
                         </span>
                       </span>
                     </div>

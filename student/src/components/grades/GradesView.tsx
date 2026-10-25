@@ -1,10 +1,12 @@
 import React from "react";
-import { CheckCircle2, Search } from "lucide-react";
+import { CheckCircle2, ClipboardList, Filter, Search } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 export const GradesView: React.FC = () => {
   const { courses, assignments, quizzes, examinations } = useStudent();
   const [courseFilter, setCourseFilter] = React.useState("all");
+  const [categoryFilter, setCategoryFilter] = React.useState("all");
   const [search, setSearch] = React.useState("");
   const enrolledCourses = courses.filter((course) => course.enrolled);
   const resultRows = [
@@ -53,13 +55,14 @@ export const GradesView: React.FC = () => {
   ];
   const filteredResults = resultRows.filter((result) => {
     const matchesCourse = courseFilter === "all" || result.courseId === courseFilter;
+    const matchesCategory = categoryFilter === "all" || result.category === categoryFilter;
     const query = search.trim().toLowerCase();
     const matchesSearch =
       !query ||
       [result.title, result.courseCode, result.category].some((value) =>
         value.toLowerCase().includes(query),
       );
-    return matchesCourse && matchesSearch;
+    return matchesCourse && matchesCategory && matchesSearch;
   });
   const averagePercentage = resultRows.length
     ? resultRows.reduce(
@@ -136,7 +139,7 @@ export const GradesView: React.FC = () => {
           </span>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 dark:border-slate-700">
             <Search className="h-4 w-4 shrink-0 text-slate-400" />
             <input
@@ -160,6 +163,20 @@ export const GradesView: React.FC = () => {
               </option>
             ))}
           </select>
+          <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 dark:border-slate-700">
+            <Filter className="h-4 w-4 shrink-0 text-slate-400" />
+            <select
+              aria-label="Filter results by category"
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              className="w-full bg-transparent py-2 text-xs text-slate-700 outline-none dark:text-slate-200"
+            >
+              <option value="all">All categories</option>
+              <option value="Assignment">Assignments</option>
+              <option value="Quiz">Quizzes</option>
+              <option value="Examination">Examinations</option>
+            </select>
+          </label>
         </div>
 
         <div className="overflow-x-auto">
@@ -201,10 +218,17 @@ export const GradesView: React.FC = () => {
               ))}
               {filteredResults.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
-                    {resultRows.length === 0
-                      ? "No published assignment, quiz, or exam results yet."
-                      : "No results match the selected filters."}
+                  <td colSpan={7} className="px-4 py-4">
+                    <EmptyState
+                      icon={ClipboardList}
+                      compact
+                      title={resultRows.length === 0 ? "No results yet" : "No results found"}
+                      description={
+                        resultRows.length === 0
+                          ? "Published assignment, quiz, and exam results will appear here."
+                          : "No results match the selected filters."
+                      }
+                    />
                   </td>
                 </tr>
               )}

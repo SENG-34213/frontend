@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ImagePlus } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { RoleBadge } from "../components/RoleBadge";
 import { StatusBadge } from "../components/StatusBadge";
@@ -7,6 +7,7 @@ import { UserAvatar } from "../components/UserAvatar";
 import { AdminRole } from "../types";
 import {
   getCurrentAdminProfile,
+  uploadAdminProfileImage,
   updateCurrentAdminProfile,
   type CurrentAdminProfile,
 } from "../api/profileApi";
@@ -24,6 +25,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -80,6 +82,41 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose a valid image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Profile images must be smaller than 5 MB.");
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const response = await uploadAdminProfileImage(file);
+      const storageKey = response.data?.storageKey;
+      if (!storageKey) throw new Error("The profile image reference was not returned.");
+      const updatedProfile = await updateCurrentAdminProfile({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phoneNumber: phone.trim() || undefined,
+        avatarUrl: storageKey,
+      });
+      setProfile(updatedProfile);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Profile image upload failed.",
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const fullName = profile ? `${profile.firstName} ${profile.lastName}` : "Admin profile";
   const address = profile?.address
     ? [
@@ -124,7 +161,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left Profile Card */}
           <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center space-y-4">
-            <UserAvatar name={fullName} size="xl" />
+            <UserAvatar name={fullName} avatarUrl={profile?.avatarUrl} size="xl" />
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white">{fullName}</h3>
               <p className="text-xs text-slate-400 mt-0.5">{profile?.email || "—"}</p>
@@ -152,6 +189,18 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
                 <span className="font-mono text-slate-600 dark:text-slate-400">mentify</span>
               </div>
             </div>
+
+            <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+              <ImagePlus className="h-3.5 w-3.5" />
+              {isUploading ? "Uploading..." : "Upload profile image"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="sr-only"
+                disabled={isUploading}
+                onChange={handleImageUpload}
+              />
+            </label>
           </div>
 
           {/* Right Details & Edit Form */}

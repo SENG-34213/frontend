@@ -18,11 +18,16 @@ import {
   Send,
   RefreshCw,
   Loader2,
+  Unlock,
+  Trash2,
+  Ban,
+  Eye,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { StatusBadge } from "../components/StatusBadge";
 import { UserAvatar } from "../components/UserAvatar";
 import { DetailDrawer } from "../components/DetailDrawer";
+import { ConfirmationDialog } from "../components/ConfirmationDialog";
 import {
   StudentProfile,
   EnrollmentRecord,
@@ -45,6 +50,9 @@ interface StudentManagementProps {
   onRegisterStudent: (request: RegisterStudentRequest) => Promise<StudentProfile>;
   onCreateEnrollment: (studentId: string, courseIds: string[]) => Promise<unknown>;
   onResendInvitation: (email: string, role: string) => Promise<void>;
+  onUpdateUserStatus: (userId: string, active: boolean) => Promise<void>;
+  onDeleteUser: (userId: string) => Promise<void>;
+  onUnlockUser: (userId: string) => Promise<void>;
   showRegistrationWizardDirectly?: boolean;
 }
 
@@ -59,6 +67,9 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   onRegisterStudent,
   onCreateEnrollment,
   onResendInvitation,
+  onUpdateUserStatus,
+  onDeleteUser,
+  onUnlockUser,
   showRegistrationWizardDirectly = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,6 +91,30 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
   const [enrollmentError, setEnrollmentError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+  const [unlockingUserId, setUnlockingUserId] = useState<string | null>(null);
+  const [mutatingUserId, setMutatingUserId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<StudentProfile | null>(null);
+
+  const handleStatusChange = async (userId: string, active: boolean) => {
+    setMutatingUserId(userId);
+    try {
+      await onUpdateUserStatus(userId, active);
+    } finally {
+      setMutatingUserId(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const student = deleteTarget;
+    setMutatingUserId(student.id);
+    try {
+      await onDeleteUser(student.id);
+      setDeleteTarget(null);
+    } finally {
+      setMutatingUserId(null);
+    }
+  };
 
   const handleResend = async (email: string, role: string) => {
     setResendingEmail(email);
@@ -87,6 +122,15 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       await onResendInvitation(email, role);
     } finally {
       setResendingEmail(null);
+    }
+  };
+
+  const handleUnlock = async (userId: string) => {
+    setUnlockingUserId(userId);
+    try {
+      await onUnlockUser(userId);
+    } finally {
+      setUnlockingUserId(null);
     }
   };
 
@@ -411,9 +455,14 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                             setSelectedStudent(stu);
                             setDetailTab("overview");
                           }}
-                          className="px-2 py-1 rounded text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 font-medium"
+                          className="group relative rounded p-1.5 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                          title="View student details"
+                          aria-label={`View details for ${stu.firstName} ${stu.lastName}`}
                         >
-                          View Details
+                          <Eye className="h-3.5 w-3.5" />
+                          <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                            View details
+                          </span>
                         </button>
                         {stu.status === "INVITED" && (
                           <button
@@ -429,6 +478,54 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                             {resendingEmail === stu.email ? "Sending..." : "Resend"}
                           </button>
                         )}
+                        {stu.accountLocked && (
+                          <button
+                            disabled={unlockingUserId === stu.id}
+                            onClick={() => void handleUnlock(stu.id)}
+                            className="group relative rounded p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-60 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            title="Unlock account immediately"
+                            aria-label={`Unlock ${stu.firstName} ${stu.lastName}`}
+                          >
+                            <Unlock
+                              className={`h-3.5 w-3.5 ${unlockingUserId === stu.id ? "animate-pulse" : ""}`}
+                            />
+                            <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                              Unlock account
+                            </span>
+                          </button>
+                        )}
+                        {stu.status === "ACTIVE" || stu.status === "SUSPENDED" ? (
+                          <button
+                            disabled={mutatingUserId === stu.id}
+                            onClick={() =>
+                              void handleStatusChange(stu.id, stu.status === "SUSPENDED")
+                            }
+                            className="group relative rounded p-1.5 text-amber-600 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-60 dark:text-amber-400 dark:hover:bg-amber-950/40"
+                            title={stu.status === "ACTIVE" ? "Suspend account" : "Activate account"}
+                            aria-label={
+                              stu.status === "ACTIVE"
+                                ? `Suspend ${stu.firstName} ${stu.lastName}`
+                                : `Activate ${stu.firstName} ${stu.lastName}`
+                            }
+                          >
+                            <Ban className="h-3.5 w-3.5" />
+                            <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                              {stu.status === "ACTIVE" ? "Suspend account" : "Activate account"}
+                            </span>
+                          </button>
+                        ) : null}
+                        <button
+                          disabled={mutatingUserId === stu.id}
+                          onClick={() => setDeleteTarget(stu)}
+                          className="group relative rounded p-1.5 text-rose-600 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-60 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                          title="Delete user"
+                          aria-label={`Delete ${stu.firstName} ${stu.lastName}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span className="pointer-events-none absolute bottom-full right-0 z-20 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                            Delete user
+                          </span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -1186,6 +1283,24 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
           </div>
         </DetailDrawer>
       )}
+      <ConfirmationDialog
+        isOpen={!!deleteTarget}
+        title="Delete student account?"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete ${deleteTarget.firstName} ${deleteTarget.lastName}? This action cannot be undone.`
+            : ""
+        }
+        consequences={[
+          "The student will no longer be able to sign in.",
+          "The student profile will be permanently deleted.",
+          "Historical academic records may remain in related services.",
+        ]}
+        confirmText={mutatingUserId === deleteTarget?.id ? "Deleting…" : "Delete student"}
+        variant="danger"
+        onConfirm={() => void handleDelete()}
+        onCancel={() => (mutatingUserId ? undefined : setDeleteTarget(null))}
+      />
     </div>
   );
 };

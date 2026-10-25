@@ -433,6 +433,7 @@ function toNotification(value: JsonRecord): NotificationItem {
                         : "dashboard";
   return {
     id: idOf(value.id),
+    eventType: type,
     title: idOf(value.title),
     description: idOf(value.message || value.description),
     timestamp: formatNotificationTime(idOf(value.occurredAt || value.createdAt)),
@@ -558,10 +559,10 @@ function toConversation(
   return {
     id: idOf(value.id),
     participantId: idOf(value.id),
+    // Keep the conversation title identical to the teacher portal by using
+    // the communication group's backend name as the primary label.
     participantName:
-      readableName(course?.instructor.name) ||
-      readableName(value.name) ||
-      readableName(course?.title, "Course instructor"),
+      readableName(value.name) || readableName(course?.title, "Course communication group"),
     participantTitle: course?.title || idOf(value.description),
     participantAvatar: "",
     studentMessagingEnabled: value.studentMessagingEnabled !== false,

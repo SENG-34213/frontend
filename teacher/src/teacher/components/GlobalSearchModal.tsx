@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, BookOpen, FileText, X, ArrowRight, Sparkles } from "lucide-react";
+import { Search, BookOpen, FileText, X, ArrowRight } from "lucide-react";
 import { Course, NavigationTab, Student } from "../types";
 import type { BackendAssignment } from "../api/assignmentApi";
 import { searchTeacherWorkspace, type TeacherSearchResult } from "../api/teacherSearchApi";
@@ -153,28 +153,6 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
               </div>
             </div>
           )}
-          {/* Quick AI Suggestion */}
-          <div
-            onClick={() => {
-              onNavigate("ai-assistant");
-              onClose();
-            }}
-            className="flex items-center justify-between p-2.5 rounded-lg bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-100 cursor-pointer transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-indigo-600 text-white flex items-center justify-center">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-indigo-900">Ask TiT AI</p>
-                <p className="text-xs text-indigo-700/80">
-                  Draft lesson plans, generate quiz questions, or summarize content
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-indigo-600" />
-          </div>
-
           {/* Courses */}
           {localSearchEnabled && filteredCourses.length > 0 && (
             <div>

@@ -125,6 +125,14 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
     });
     return map;
   }, [students]);
+  const visibleRecords = useMemo(
+    () =>
+      records.filter((record) => {
+        const student = studentById.get(record.studentId);
+        return Boolean(student && student.studentId !== "Not available");
+      }),
+    [records, studentById],
+  );
   const selectedCourseSessions = sessions.filter(
     (session) => session.courseId === selectedCourseId,
   );
@@ -161,18 +169,18 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
   const selectedStudentHistory = useMemo(() => {
     if (!selectedStudentId) return [];
     const history = selectedCourseSessions.flatMap((session) =>
-      (session.records ?? [])
+        (session.records ?? [])
         .filter((record) => record.studentId === selectedStudentId)
         .map((record) => ({ session, record })),
     );
     if (selectedSession) {
-      const currentRecord = records.find((record) => record.studentId === selectedStudentId);
+      const currentRecord = visibleRecords.find((record) => record.studentId === selectedStudentId);
       if (currentRecord && !history.some(({ session }) => session.id === selectedSession.id)) {
         history.push({ session: selectedSession, record: currentRecord });
       }
     }
     return history.sort((a, b) => b.session.attendanceDate.localeCompare(a.session.attendanceDate));
-  }, [records, selectedCourseSessions, selectedSession, selectedStudentId]);
+  }, [records, selectedCourseSessions, selectedSession, selectedStudentId, visibleRecords]);
   const selectedStudentName =
     selectedStudentHistory[0]?.record.studentName?.trim() ||
     studentNameById.get(selectedStudentId ?? "") ||
@@ -827,7 +835,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   </button>
                 </div>
               </div>
-              {records.length === 0 ? (
+              {visibleRecords.length === 0 ? (
                 <div className="p-10 text-center text-sm text-slate-500">
                   No student attendance records found.
                 </div>
@@ -845,7 +853,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {records.map((record, index) => (
+                      {visibleRecords.map((record, index) => (
                         <tr
                           key={record.id}
                           onClick={() => setSelectedStudentId(record.studentId)}
@@ -871,7 +879,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                             </div>
                           </td>
                           <td className="px-4 py-3.5 font-medium text-slate-500">
-                            {record.studentId}
+                            {studentById.get(record.studentId)?.studentId || "Not available"}
                           </td>
                           <td className="px-4 py-3.5">
                             <div
@@ -1329,7 +1337,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {records.map((record) => (
+                  {visibleRecords.map((record) => (
                     <tr key={record.id} className="hover:bg-slate-50/60">
                       <td className="px-5 py-3.5 font-semibold text-slate-900">
                         Student name unavailable

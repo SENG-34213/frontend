@@ -10,6 +10,7 @@ import {
   Search,
   SlidersHorizontal,
   X,
+  Check,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { CalendarEvent } from "../../types";
@@ -67,13 +68,26 @@ export const StudentCalendarView: React.FC = () => {
   const { calendarEvents, refreshCalendarEvents, courses } = useStudent();
   const [view, setView] = useState<CalendarView>("month");
   const [cursor, setCursor] = useState(() => new Date());
-  const [typeFilter, setTypeFilter] = useState("ALL");
+  const [activeTypes, setActiveTypes] = useState<string[]>(
+    Object.keys(typeLabels).filter((type) => type !== "ALL"),
+  );
   const [courseFilter, setCourseFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const selectedEventCourse = selectedEvent
+    ? courses.find(
+        (course) =>
+          course.id === selectedEvent.courseId ||
+          (!!selectedEvent.courseCode && course.code === selectedEvent.courseCode),
+      )
+    : undefined;
+  const selectedCourseName = selectedEvent?.courseTitle || selectedEventCourse?.title;
+  const selectedCourseCode = selectedEvent?.courseCode || selectedEventCourse?.code;
+  const selectedTeacherName = selectedEventCourse?.instructor?.name;
 
   const range = useMemo(() => {
     if (view === "day") {
@@ -98,11 +112,11 @@ export const StudentCalendarView: React.FC = () => {
     let active = true;
     refreshCalendarEvents(dateTime(range.start), dateTime(range.end), {
       type:
-        typeFilter === "ASSIGNMENT_DUE"
-          ? "ASSIGNMENT"
-          : typeFilter === "ALL"
-            ? undefined
-            : typeFilter,
+        activeTypes.length === 1
+          ? activeTypes[0] === "ASSIGNMENT_DUE"
+            ? "ASSIGNMENT"
+            : activeTypes[0]
+          : undefined,
       courseId: courseFilter === "ALL" ? undefined : courseFilter,
     })
       .catch((reason) => {
@@ -115,12 +129,12 @@ export const StudentCalendarView: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [courseFilter, range, refreshCalendarEvents, typeFilter]);
+  }, [activeTypes, courseFilter, range, refreshCalendarEvents]);
 
   const visibleEvents = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return calendarEvents.filter((event) => {
-      const matchesType = typeFilter === "ALL" || event.type === typeFilter;
+      const matchesType = activeTypes.includes(event.type);
       const matchesSearch =
         !query ||
         [event.title, event.courseCode, event.courseTitle, event.location, event.description]
@@ -128,7 +142,7 @@ export const StudentCalendarView: React.FC = () => {
           .some((value) => value!.toLowerCase().includes(query));
       return matchesType && matchesSearch;
     });
-  }, [calendarEvents, searchQuery, typeFilter]);
+  }, [activeTypes, calendarEvents, searchQuery]);
   const monthLabel = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(
     cursor,
   );
@@ -168,7 +182,7 @@ export const StudentCalendarView: React.FC = () => {
     view === "month"
       ? monthLabel
       : view === "week"
-        ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} â€“ ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+        ? `${weekDays[0].toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${weekDays[6].toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
         : view === "day"
           ? cursor.toLocaleDateString(undefined, {
               weekday: "long",
@@ -178,9 +192,12 @@ export const StudentCalendarView: React.FC = () => {
             })
           : "Upcoming schedule";
   const eventsFor = (key: string) => visibleEvents.filter((event) => eventDate(event) === key);
-  const hasFilters = typeFilter !== "ALL" || courseFilter !== "ALL" || searchQuery.length > 0;
+  const hasFilters =
+    activeTypes.length !== Object.keys(typeLabels).length - 1 ||
+    courseFilter !== "ALL" ||
+    searchQuery.length > 0;
   const clearFilters = () => {
-    setTypeFilter("ALL");
+    setActiveTypes(Object.keys(typeLabels).filter((type) => type !== "ALL"));
     setCourseFilter("ALL");
     setSearchQuery("");
   };
@@ -225,22 +242,43 @@ export const StudentCalendarView: React.FC = () => {
         <div className="space-y-1">
           {Object.entries(typeLabels)
             .filter(([value]) => value !== "ALL")
-            .map(([value, label]) => (
+            .map(([value, label]) => {
+              const isChecked = activeTypes.includes(value);
+              return (
               <button
                 key={value}
                 type="button"
-                onClick={() => setTypeFilter(typeFilter === value ? "ALL" : value)}
-                className={`flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] ${typeFilter === value ? "bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/60"}`}
+                onClick={() =>
+                  setActiveTypes((previous) =>
+                    isChecked
+                      ? previous.filter((type) => type !== value)
+                      : [...previous, value],
+                  )
+                }
+                className={`flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] transition-colors ${isChecked ? "bg-slate-100 font-medium text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-400 opacity-50 hover:opacity-100"}`}
               >
                 <span className="flex items-center gap-1.5">
                   <span
-                    className={`h-2 w-2 rounded-full ${typeColors[value]?.split(" ")[2] || "bg-indigo-500"}`}
+                    className={`h-2 w-2 rounded-full ${
+                      value === "CLASS"
+                        ? "bg-indigo-500"
+                        : value === "ASSIGNMENT_DUE"
+                          ? "bg-amber-500"
+                          : value === "QUIZ"
+                            ? "bg-purple-500"
+                            : value === "EXAM"
+                              ? "bg-rose-500"
+                              : value === "ATTENDANCE"
+                                ? "bg-cyan-500"
+                                : "bg-emerald-500"
+                    }`}
                   />
                   {label}
                 </span>
-                {typeFilter === value && <span className="text-indigo-600">âœ“</span>}
+                {isChecked && <Check className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />}
               </button>
-            ))}
+              );
+            })}
         </div>
       </div>
     </div>
@@ -343,9 +381,9 @@ export const StudentCalendarView: React.FC = () => {
                 {courses.find((course) => course.id === courseFilter)?.title || "Selected course"}
               </span>
             )}
-            {typeFilter !== "ALL" && (
+            {activeTypes.length !== Object.keys(typeLabels).length - 1 && (
               <span className="rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] text-violet-700 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-300">
-                Type: {typeLabels[typeFilter]}
+                Categories: {activeTypes.map((type) => typeLabels[type]).join(", ") || "None"}
               </span>
             )}
             {searchQuery && (
@@ -646,16 +684,26 @@ export const StudentCalendarView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-slate-400" />
                 {selectedEvent.startTime || "All day"}
-                {selectedEvent.endTime ? ` â€“ ${selectedEvent.endTime}` : ""}
+                {selectedEvent.endTime ? ` - ${selectedEvent.endTime}` : ""}
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-slate-400" />
                 {selectedEvent.location || "No location provided"}
               </div>
-              {selectedEvent.courseCode && (
-                <p>
-                  Course: <span className="font-semibold">{selectedEvent.courseCode}</span>
-                </p>
+              {(selectedCourseName || selectedCourseCode) && (
+                <div className="space-y-1 border-t border-slate-100 pt-3 dark:border-slate-800">
+                  <p>
+                    Course: <span className="font-semibold">{selectedCourseName || selectedCourseCode}</span>
+                  </p>
+                  {selectedCourseCode && selectedCourseName && (
+                    <p>
+                      Course code: <span className="font-semibold">{selectedCourseCode}</span>
+                    </p>
+                  )}
+                  <p>
+                    Assigned teacher: <span className="font-semibold">{selectedTeacherName || "Not provided"}</span>
+                  </p>
+                </div>
               )}
               <p className="border-t border-slate-100 pt-3 leading-relaxed dark:border-slate-800">
                 {selectedEvent.description || "No additional details were provided."}

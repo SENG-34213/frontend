@@ -350,7 +350,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
               <div className="text-right">
                 <span className="text-xs text-slate-400 block">Class Enrollment</span>
                 <span className="text-lg font-bold text-white font-mono tabular-nums">
-                  {displayCourse.enrolledCount} / {displayCourse.maxCapacity}
+                  {studentState.isLoading ? "—" : enrolledStudents.length} / {displayCourse.maxCapacity}
                 </span>
               </div>
               <StatusBadge status={displayCourse.status} />
@@ -435,7 +435,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <span className="text-xs font-semibold">Course Enrollment</span>
                   </div>
                   <p className="text-sm font-bold text-slate-900">
-                    {displayCourse.enrolledCount} students
+                    {studentState.isLoading ? "—" : enrolledStudents.length} students
                   </p>
                   <p className="text-xs text-slate-500">Roster data from the course service.</p>
                 </div>
@@ -612,7 +612,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">
-                  {enrolledStudents.length} students officially enrolled for Fall 2026.
+                  {enrolledStudents.length} available students officially enrolled for Fall 2026.
                 </span>
                 <button
                   onClick={() => onNavigate("students")}
