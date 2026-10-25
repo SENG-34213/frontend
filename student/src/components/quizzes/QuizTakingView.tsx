@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import {
-  Clock,
-  AlertTriangle,
-  Flag,
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  HelpCircle,
-} from "lucide-react";
+import { Clock, Flag, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { QuizResultModal } from "./QuizResultModal";
 import type { QuizAnswerReview } from "../../types";
@@ -41,6 +33,7 @@ export const QuizTakingView: React.FC = () => {
     answers: QuizAnswerReview[];
   } | null>(null);
   const startedQuizIdRef = useRef<string | null>(null);
+  const attemptPromiseRef = useRef<Promise<{ attemptId: string; startedAt?: string }> | null>(null);
   const detailsRefreshAttemptedRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -64,10 +57,14 @@ export const QuizTakingView: React.FC = () => {
       };
     }
 
-    if (startedQuizIdRef.current === quiz.id) return;
-    startedQuizIdRef.current = quiz.id;
+    if (startedQuizIdRef.current !== quiz.id) {
+      startedQuizIdRef.current = quiz.id;
+      attemptPromiseRef.current = startQuizAttempt(quiz.id);
+    }
+    const attemptPromise = attemptPromiseRef.current;
+    if (!attemptPromise) return;
     let active = true;
-    startQuizAttempt(quiz.id)
+    attemptPromise
       .then(({ attemptId: id, startedAt }) => {
         if (!active) return;
         setAttemptId(id);
@@ -86,7 +83,7 @@ export const QuizTakingView: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [quiz?.id, quiz?.questions.length, refreshWorkspace, selectedQuizId, showToast]);
+  }, [quiz, refreshWorkspace, selectedQuizId, showToast, startQuizAttempt, setCurrentView]);
 
   const handleAutoSubmit = useCallback(async () => {
     if (!quiz || !attemptId) return;

@@ -55,3 +55,46 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  browser:
+    name: Browser user flows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            student/package-lock.json
+            teacher/package-lock.json
+            admin/package-lock.json
+
+      - name: Install Playwright dependencies
+        run: npm ci
+
+      - name: Install app dependencies
+        run: |
+          npm ci --prefix student
+          npm ci --prefix teacher
+          npm ci --prefix admin
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser user flows
+        run: npm run test:e2e
+
+      - name: Upload browser test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
