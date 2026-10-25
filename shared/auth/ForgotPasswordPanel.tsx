@@ -139,9 +139,6 @@ export function ForgotPasswordPanel({
         <div className="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-indigo-500 text-xl font-bold shadow-lg shadow-indigo-950/30">
-              M
-            </span>
             <div>
               <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
@@ -169,9 +166,6 @@ export function ForgotPasswordPanel({
       <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 text-lg font-bold text-white">
-              M
-            </span>
             <div>
               <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">

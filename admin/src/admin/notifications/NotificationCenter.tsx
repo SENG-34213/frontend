@@ -80,11 +80,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       <PageHeader
         title="Notification Center"
         description="System dispatch audit, security alerts, registration webhooks, and academic events."
-        breadcrumbs={[
-          { label: "Admin" },
-          { label: "Platform Operations" },
-          { label: "Notifications" },
-        ]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Notifications" }]}
         actions={
           <button
             onClick={onMarkAllRead}

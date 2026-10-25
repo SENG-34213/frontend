@@ -174,22 +174,22 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         className={`flex items-center justify-between h-16 border-b border-slate-200 dark:border-slate-800 shrink-0 ${compact ? "px-3" : "px-5"}`}
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
-            M
-          </div>
-          {!compact && (
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white">
-                  TiT
-                </span>
+          <img src="/tit-favicon.svg" alt="TiT" className="h-9 w-9 shrink-0 rounded-lg" />
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white">
+                TiT
+              </span>
+              {!compact && (
                 <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                   Admin
                 </span>
-              </div>
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">Enterprise Workspace</p>
+              )}
             </div>
-          )}
+            {!compact && (
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">Enterprise Workspace</p>
+            )}
+          </div>
         </div>
 
         {onToggleCollapse && !isOpenMobile && (
@@ -222,7 +222,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               {role === "SUPER_ADMIN" ? "Super Admin Mode" : "Admin Mode"}
             </span>
           </div>
-          <span className="text-[10px] font-medium text-slate-500 tabular-nums">Keycloak RBAC</span>
         </div>
       )}
 
@@ -308,23 +307,28 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         })}
       </div>
 
-      {/* Footer Info */}
-      <div className="p-3 border-t border-slate-200 dark:border-slate-800 shrink-0">
-        <div
-          className={`flex items-center gap-3 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 ${compact ? "justify-center" : ""}`}
+      {/* Profile Footer */}
+      <div className="border-t border-slate-200 p-3 dark:border-slate-800 shrink-0">
+        <button
+          type="button"
+          onClick={() => onNavigate("profile")}
+          className={`flex w-full items-center gap-3 rounded-lg bg-slate-50 p-2 text-left transition-colors hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 ${compact ? "justify-center" : ""}`}
+          aria-label="Open profile"
         >
-          <div className="w-8 h-8 rounded-full bg-indigo-600 text-white font-semibold text-xs flex items-center justify-center shrink-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-semibold text-white">
             AM
           </div>
           {!compact && (
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+              <p className="truncate text-xs font-semibold text-slate-900 dark:text-white">
                 Alex Mercer
               </p>
-              <p className="text-[11px] text-slate-400 truncate">alex.mercer@mentify.edu</p>
+              <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                Administrator
+              </p>
             </div>
           )}
-        </div>
+        </button>
       </div>
     </div>
   );

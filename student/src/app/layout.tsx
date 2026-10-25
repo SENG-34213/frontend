@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "TiT · Student Portal",
   description: "Next-generation connected student learning portal for TiT LMS",
+  icons: {
+    icon: "/tit-favicon.svg",
+    shortcut: "/tit-favicon.svg",
+  },
 };
 
 export default function RootLayout({

@@ -18,7 +18,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  LogOut,
   X,
 } from "lucide-react";
 import { NavigationTab, TeacherProfile } from "../types";
@@ -65,7 +64,6 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   studentCount,
   pendingSubmissionsCount,
   unreadNotificationsCount,
-  onLogout,
 }) => {
   const teacherInitials = teacher.name
     .split(" ")
@@ -146,20 +144,20 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       {/* Brand & Workspace Header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 shrink-0">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0">
-            M
-          </div>
-          {!isCollapsed && (
-            <div className="truncate">
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-slate-900 tracking-tight text-sm">TiT</span>
+          <img src="/tit-favicon.svg" alt="TiT" className="h-9 w-9 shrink-0 rounded-lg" />
+          <div className="truncate">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-slate-900 tracking-tight text-sm">TiT</span>
+              {!isCollapsed && (
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">
                   Teacher
                 </span>
-              </div>
-              <p className="text-[11px] text-slate-400 truncate">Faculty Workspace</p>
+              )}
             </div>
-          )}
+            {!isCollapsed && (
+              <p className="text-[11px] text-slate-400 truncate">Faculty Workspace</p>
+            )}
+          </div>
         </div>
 
         {/* Collapse toggle (desktop) or close (mobile) */}
@@ -247,29 +245,22 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
 
       {/* Teacher Profile Footer Card */}
       <div className="p-3 border-t border-slate-200 shrink-0">
-        <div
+        <button
+          type="button"
           onClick={() => handleItemClick("profile")}
-          className={`flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors ${
+          className={`flex w-full items-center gap-3 rounded-lg bg-slate-50 p-2 text-left transition-colors hover:bg-slate-100 ${
             isCollapsed ? "justify-center" : ""
           }`}
+          aria-label="Open profile"
         >
-          <TeacherAvatar name={teacher.name} avatarUrl={teacher.avatarUrl} className="w-8 h-8" />
+          <TeacherAvatar name={teacher.name} avatarUrl={teacher.avatarUrl} className="w-9 h-9" />
           {!isCollapsed && (
-            <div className="truncate flex-1">
-              <p className="text-xs font-semibold text-slate-900 truncate">{teacher.name}</p>
-              <p className="text-[11px] text-slate-500 font-mono truncate">{teacher.teacherCode}</p>
+            <div className="min-w-0 flex-1 truncate">
+              <p className="truncate text-xs font-semibold text-slate-900">{teacher.name}</p>
+              <p className="truncate text-[11px] text-slate-500">Teacher · {teacher.teacherCode}</p>
             </div>
           )}
-        </div>
-        {!isCollapsed && (
-          <button
-            onClick={() => void onLogout()}
-            className="mt-2 w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        )}
+        </button>
       </div>
     </div>
   );
