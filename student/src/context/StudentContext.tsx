@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import {
   StudentView,
   StudentProfile,
@@ -201,13 +201,13 @@ export const StudentProvider: React.FC<{
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
-  const showToast = (message: string) => {
+  const showToast = useCallback((message: string) => {
     setToastMessage(message);
     window.setTimeout(
       () => setToastMessage((current) => (current === message ? null : current)),
       4000,
     );
-  };
+  }, []);
   const clearToast = () => setToastMessage(null);
   useEffect(() => {
     const root = document.documentElement;
@@ -271,7 +271,7 @@ export const StudentProvider: React.FC<{
     return () => {
       active = false;
     };
-  }, [refreshWorkspace]);
+  }, [refreshWorkspace, showToast]);
 
   // Keep the workspace current while the student portal is open. This covers
   // content created by teachers/admins in another application tab or session.
@@ -413,31 +413,34 @@ export const StudentProvider: React.FC<{
       showToast(error instanceof Error ? error.message : "Assignment submission failed.");
     }
   };
-  const startQuizAttempt = async (quizId: string) => {
-    const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
-    const storedAttempt = window.localStorage.getItem(storageKey);
-    if (storedAttempt) {
-      try {
-        const parsed = JSON.parse(storedAttempt);
-        if (parsed && typeof parsed === "object" && parsed.attemptId) {
-          return parsed as { attemptId: string; startedAt?: string };
+  const startQuizAttempt = useCallback(
+    async (quizId: string) => {
+      const storageKey = `student:quiz-attempt:${profile.id}:${quizId}`;
+      const storedAttempt = window.localStorage.getItem(storageKey);
+      if (storedAttempt) {
+        try {
+          const parsed = JSON.parse(storedAttempt);
+          if (parsed && typeof parsed === "object" && parsed.attemptId) {
+            return parsed as { attemptId: string; startedAt?: string };
+          }
+          window.localStorage.removeItem(storageKey);
+        } catch {
+          window.localStorage.removeItem(storageKey);
         }
-        window.localStorage.removeItem(storageKey);
-      } catch {
-        window.localStorage.removeItem(storageKey);
       }
-    }
-    const response = await startQuizAttemptApi(quizId);
-    const attemptId = String(response.data?.attemptId || "");
-    if (!attemptId) throw new Error("The backend did not return a quiz attempt id.");
-    const attempt = { attemptId, startedAt: response.data?.startedAt };
-    window.localStorage.setItem(storageKey, JSON.stringify(attempt));
-    // Do not block the quiz screen on a full workspace refresh. The attempt
-    // is already created and can start immediately; refresh the list in the
-    // background so attempt counts stay current after the quiz is opened.
-    void refreshWorkspace().catch(() => undefined);
-    return attempt;
-  };
+      const response = await startQuizAttemptApi(quizId);
+      const attemptId = String(response.data?.attemptId || "");
+      if (!attemptId) throw new Error("The backend did not return a quiz attempt id.");
+      const attempt = { attemptId, startedAt: response.data?.startedAt };
+      window.localStorage.setItem(storageKey, JSON.stringify(attempt));
+      // Do not block the quiz screen on a full workspace refresh. The attempt
+      // is already created and can start immediately; refresh the list in the
+      // background so attempt counts stay current after the quiz is opened.
+      void refreshWorkspace().catch(() => undefined);
+      return attempt;
+    },
+    [profile.id, refreshWorkspace],
+  );
   const saveQuizAnswer = async (
     attemptId: string,
     questionId: string,
