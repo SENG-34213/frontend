@@ -123,7 +123,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       category: "Academic Management",
     },
     { id: "materials", title: "Learning Materials (AWS S3)", category: "Platform Operations" },
-    { id: "calendar", title: "Operations Calendar", category: "Platform Operations" },
+    { id: "calendar", title: "Academic Calendar & Schedule", category: "Overview" },
     { id: "communication", title: "Broadcast Communication", category: "Platform Operations" },
     { id: "ai-assistant", title: "TiT AI Admin Assistant", category: "Platform Operations" },
     { id: "reports", title: "Institutional Reports & Exports", category: "Platform Operations" },

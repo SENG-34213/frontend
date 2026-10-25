@@ -100,11 +100,10 @@ export default function App() {
   useEffect(() => {
     if (!historyReadyRef.current) {
       const url = new URL(window.location.href);
-      const urlTab = url.searchParams.get("tab");
-      if (!urlTab) {
-        url.searchParams.set("tab", currentTab);
-        window.history.replaceState({ portal: "teacher", tab: currentTab }, "", url);
-      }
+      // Keep legacy ?tab=... links working, but remove the implementation detail
+      // from the visible URL after the initial view has been resolved.
+      url.searchParams.delete("tab");
+      window.history.replaceState({ portal: "teacher", tab: currentTab }, "", url);
       historyReadyRef.current = true;
       return;
     }
@@ -115,8 +114,8 @@ export default function App() {
     }
 
     const url = new URL(window.location.href);
-    if (url.searchParams.get("tab") === currentTab) return;
-    url.searchParams.set("tab", currentTab);
+    if (window.history.state?.tab === currentTab) return;
+    url.searchParams.delete("tab");
     window.history.pushState({ portal: "teacher", tab: currentTab }, "", url);
   }, [currentTab]);
 
@@ -127,6 +126,11 @@ export default function App() {
       const nextTab = stateTab || urlTab;
       if (!nextTab) return;
       browserBackRef.current = true;
+      if (urlTab) {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("tab");
+        window.history.replaceState({ portal: "teacher", tab: nextTab }, "", cleanUrl);
+      }
       setCurrentTab(nextTab as NavigationTab);
       window.scrollTo({ top: 0, behavior: "smooth" });
     };

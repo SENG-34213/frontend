@@ -9,7 +9,6 @@ permissions:
   contents: read
 
 env:
-  REGISTRY_OWNER: ${{ secrets.DOCKERHUB_USERNAME }}
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -26,24 +25,26 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install formatter dependencies
+      - name: Install root dependencies
         run: npm ci
 
       - name: Check formatting
         run: npm run format:check
 
-      - name: Validate applications
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install and build applications
+      - name: Install, lint, and build applications
         run: |
+          set -euo pipefail
           for app in admin teacher student; do
             npm ci --prefix "$app"
             npm run lint --prefix "$app"
             npm run build --prefix "$app"
           done
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright browser tests
+        run: npm run test:e2e
 
   publish:
     name: Publish ${{ matrix.app }} image
@@ -105,23 +106,63 @@ jobs:
           ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
       - name: Install frontend Compose file on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
-          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" "mkdir -p /opt/mentify/frontend"
-          scp docker-compose.prod.yml \
-            "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/opt/mentify/frontend/docker-compose.prod.yml"
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          ssh -o BatchMode=yes -o ConnectTimeout=15 "$EC2_USERNAME@$EC2_HOST" \
+            "mkdir -p /opt/mentify/frontend"
+          scp -o BatchMode=yes -o ConnectTimeout=15 docker-compose.prod.yml \
+            "$EC2_USERNAME@$EC2_HOST:/opt/mentify/frontend/docker-compose.prod.yml"
 
-      - name: Pull and restart frontend containers
+      - name: Pull and recreate frontend containers
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          ssh "${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}" <<EOF
-          set -e
+          set -euo pipefail
+          printf '%s' "$DOCKERHUB_TOKEN" | ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            "$EC2_USERNAME@$EC2_HOST" \
+            "docker login --username '$DOCKERHUB_USERNAME' --password-stdin"
+
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=6 \
+            "$EC2_USERNAME@$EC2_HOST" <<EOF
+          set -euo pipefail
           cd /opt/mentify/frontend
           export IMAGE_TAG="${{ env.IMAGE_TAG }}"
-          export ADMIN_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-admin"
-          export TEACHER_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-teacher"
-          export STUDENT_IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/mentify-student"
+          export ADMIN_IMAGE="$DOCKERHUB_USERNAME/mentify-admin"
+          export TEACHER_IMAGE="$DOCKERHUB_USERNAME/mentify-teacher"
+          export STUDENT_IMAGE="$DOCKERHUB_USERNAME/mentify-student"
           docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml up -d
+          docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
           docker compose -f docker-compose.prod.yml ps
           EOF
+
+      - name: Verify production routes
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          set -euo pipefail
+          check_http_200() {
+            local path="$1"
+            local code
+            code="$(curl --location --silent --show-error --retry 20 --retry-delay 5 --retry-all-errors \
+              --output /dev/null --write-out '%{http_code}' "http://$EC2_HOST$path")"
+            echo "$path -> HTTP $code"
+            test "$code" = "200"
+          }
+
+          check_http_200 /admin/
+          check_http_200 /teacher/
+          check_http_200 /student/

@@ -923,12 +923,12 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     <div className="space-y-5">
       {/* Top Header */}
       <PageHeader
-        title="Academic Operations Calendar"
+        title="Academic Calendar & Schedule"
         description="Master timetable and facility scheduling for examinations, lectures, assignment cutoffs, and faculty councils."
         breadcrumbs={[
-          { label: "Admin" },
-          { label: "Platform Operations" },
-          { label: "Academic Calendar" },
+          { label: "TiT" },
+          { label: "Overview" },
+          { label: "Academic Calendar & Schedule" },
         ]}
         actions={
           <div className="flex items-center gap-2">
