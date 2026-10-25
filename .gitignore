@@ -17,3 +17,5 @@ out/
 .DS_Store
 *.log
 *.tsbuildinfo
+playwright-report/
+test-results/
