@@ -499,7 +499,6 @@ export default function App() {
             <AssignmentDashboardView
               onGradeAssignment={handleOpenGradeAssignment}
               onOpenCreateAssignment={() => handleOpenQuickCreate("assignment")}
-              onNavigate={handleNavigate}
               backendCourses={teacherCourses.courses}
               refreshToken={assignmentRefreshToken}
             />

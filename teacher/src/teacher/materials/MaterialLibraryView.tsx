@@ -117,14 +117,83 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
       setLoading(true);
       setError(null);
       try {
-        setPage(await getMaterials(filters, signal));
+        const assignedCourseIds = backendCourses
+          .map((course) => course.id)
+          .filter((courseId): courseId is string => Boolean(courseId));
+        const courseIds = filters.courseId
+          ? assignedCourseIds.filter((courseId) => courseId === filters.courseId)
+          : assignedCourseIds;
+
+        if (!courseIds.length) {
+          setPage({ ...emptyPage, size: filters.size || emptyPage.size });
+          return;
+        }
+
+        const { page: requestedPage, size: requestedSize, sort: _sort, ...queryFilters } = filters;
+        const materialsByCourse = await Promise.all(
+          courseIds.map(async (courseId) => {
+            const materials: Material[] = [];
+            let pageNumber = 0;
+
+            do {
+              const result = await getMaterials(
+                {
+                  ...queryFilters,
+                  courseId,
+                  page: pageNumber,
+                  // Fetch every page for each assigned course, then paginate the
+                  // combined result so one course cannot hide another course's materials.
+                  size: 100,
+                },
+                signal,
+              );
+              materials.push(...result.content);
+              if (result.last || !result.content.length) break;
+              pageNumber += 1;
+            } while (!signal?.aborted);
+
+            return materials;
+          }),
+        );
+
+        const allMaterials = materialsByCourse.flat();
+        const sort = filters.sort || "createdAt,desc";
+        const [sortField, direction] = sort.split(",");
+        const multiplier = direction === "asc" ? 1 : -1;
+        allMaterials.sort((left, right) => {
+          if (sortField === "title,asc" || sortField === "title") {
+            return left.title.localeCompare(right.title) * multiplier;
+          }
+          if (sortField === "fileSize") {
+            return (left.fileSize - right.fileSize) * multiplier;
+          }
+          return (
+            (new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()) * multiplier
+          );
+        });
+
+        const size = requestedSize || emptyPage.size;
+        const pageNumber = requestedPage || 0;
+        const start = pageNumber * size;
+        const content = allMaterials.slice(start, start + size);
+        setPage({
+          content,
+          totalElements: allMaterials.length,
+          totalPages: Math.ceil(allMaterials.length / size),
+          size,
+          number: pageNumber,
+          first: pageNumber === 0,
+          last: start + size >= allMaterials.length,
+          numberOfElements: content.length,
+          empty: content.length === 0,
+        });
       } catch (err) {
         if (!signal?.aborted) setError(materialError(err));
       } finally {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [filters],
+    [backendCourses, filters],
   );
   useEffect(() => {
     const controller = new AbortController();

@@ -1026,7 +1026,9 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
               courseTitle: courseMap.get(material.courseId)?.title || "",
             }))
         : []),
-    ].filter((material, index, all) => all.findIndex((item) => item.id === material.id) === index),
+    ]
+      .filter((material) => Boolean(material.courseId) && enrolledIds.has(material.courseId))
+      .filter((material, index, all) => all.findIndex((item) => item.id === material.id) === index),
     calendarEvents:
       calendarResponse.status === "fulfilled"
         ? listOf<JsonRecord>(calendarResponse.value).map((item) => {

@@ -42,7 +42,6 @@ import { EmptyState } from "../../../../shared/ui/EmptyState";
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
   onOpenCreateAssignment: () => void;
-  onNavigate: (tab: NavigationTab) => void;
   backendCourses?: BackendCourse[];
   refreshToken?: number;
 }
@@ -708,7 +707,6 @@ const toAssignment = (item: BackendAssignment, courses: BackendCourse[]): Assign
 export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = ({
   onGradeAssignment,
   onOpenCreateAssignment,
-  onNavigate,
   backendCourses = [],
   refreshToken = 0,
 }) => {
@@ -877,13 +875,6 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onNavigate("grading-workspace")}
-            className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors flex items-center gap-1.5"
-          >
-            <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
-            <span>Grading Workspace</span>
-          </button>
           <button
             onClick={onOpenCreateAssignment}
             className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
