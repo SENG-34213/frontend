@@ -109,7 +109,11 @@ export const Sidebar: React.FC = () => {
           onClick={() => setCurrentView("dashboard")}
           className="flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-1"
         >
-          <img src="/tit-favicon.svg" alt="TiT" className="h-9 w-9 shrink-0 rounded-lg" />
+          <img
+            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
+            alt="TiT"
+            className="h-9 w-9 shrink-0 rounded-lg"
+          />
           <div className="flex flex-col">
             <span className="font-display text-base font-bold tracking-tight text-slate-900 dark:text-white">
               TiT

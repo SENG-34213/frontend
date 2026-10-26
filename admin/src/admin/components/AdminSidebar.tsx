@@ -174,7 +174,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         className={`flex items-center justify-between h-16 border-b border-slate-200 dark:border-slate-800 shrink-0 ${compact ? "px-3" : "px-5"}`}
       >
         <div className="flex items-center gap-2.5">
-          <img src="/tit-favicon.svg" alt="TiT" className="h-9 w-9 shrink-0 rounded-lg" />
+          <img
+            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
+            alt="TiT"
+            className="h-9 w-9 shrink-0 rounded-lg"
+          />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white">

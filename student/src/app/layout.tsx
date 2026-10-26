@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const appBasePath = process.env.NEXT_PUBLIC_APP_BASE_PATH || "";
+
 export const metadata: Metadata = {
   title: "TiT · Student Portal",
   description: "Next-generation connected student learning portal for TiT LMS",
   icons: {
-    icon: "/tit-favicon.svg",
-    shortcut: "/tit-favicon.svg",
+    icon: `${appBasePath}/tit-favicon.svg`,
+    shortcut: `${appBasePath}/tit-favicon.svg`,
   },
 };
 
