@@ -38,6 +38,8 @@ type AttendanceWorkspaceViewProps = {
   courses: Course[];
   backendCourses: BackendCourse[];
   students: Student[];
+  selectedSessionId?: string | null;
+  onSessionChange?: (sessionId: string | null) => void;
 };
 type EditableRecord = BackendAttendanceRecord & { remarks: string };
 
@@ -80,6 +82,8 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
   courses,
   backendCourses,
   students,
+  selectedSessionId,
+  onSessionChange,
 }) => {
   const [sessions, setSessions] = useState<BackendAttendanceSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<BackendAttendanceSession | null>(null);
@@ -230,8 +234,12 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
       setSessions(nextSessions);
       const first =
         nextSessions.find((session) => session.courseId === selectedCourseId) ?? nextSessions[0];
-      if (first) await selectSession(first.id, nextSessions);
-      else {
+      if (first) {
+        const requestedSession = selectedSessionId
+          ? nextSessions.find((session) => session.id === selectedSessionId)
+          : null;
+        await selectSession((requestedSession ?? first).id, nextSessions, false);
+      } else {
         setSelectedSession(null);
         setRecords([]);
       }
@@ -246,9 +254,10 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
     }
   }
 
-  async function selectSession(sessionId: string, availableSessions = sessions) {
+  async function selectSession(sessionId: string, availableSessions = sessions, syncUrl = true) {
     const summary = availableSessions.find((session) => session.id === sessionId);
     if (!summary) return;
+    if (syncUrl) onSessionChange?.(summary.id);
     setIsDetailLoading(true);
     setError(null);
     try {
@@ -277,7 +286,7 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
     return () => controller.abort();
     // The teacher course list is the data dependency for this workspace.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backendCourses]);
+  }, [backendCourses, selectedSessionId]);
 
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();

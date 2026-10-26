@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarCheck2,
@@ -18,6 +18,8 @@ interface AttendanceManagementProps {
   courses: Course[];
   grades: Grade[];
   error?: string;
+  selectedSessionId?: string | null;
+  onSessionChange?: (sessionId: string | null) => void;
 }
 
 function normalizedGrade(value?: string) {
@@ -37,11 +39,30 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
   courses,
   grades,
   error,
+  selectedSessionId,
+  onSessionChange,
 }) => {
   const [selectedGradeId, setSelectedGradeId] = useState("ALL");
   const [selectedCourseId, setSelectedCourseId] = useState("ALL");
   const [selectedSession, setSelectedSession] = useState<AttendanceSession | null>(null);
   const [studentSearch, setStudentSearch] = useState("");
+
+  useEffect(() => {
+    if (!selectedSessionId) {
+      // The selected record is externalized in the URL; clear the local modal when that URL segment is removed.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedSession(null);
+      return;
+    }
+    const session = sessions.find((item) => item.id === selectedSessionId);
+    if (session) {
+      // Restore the modal from a deep-linked attendance URL after session data arrives.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedSession(session);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStudentSearch("");
+    }
+  }, [selectedSessionId, sessions]);
 
   const selectedGrade = grades.find((grade) => grade.id === selectedGradeId);
   const availableCourses = useMemo(
@@ -279,12 +300,14 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
                       onClick={() => {
                         setSelectedSession(session);
                         setStudentSearch("");
+                        onSessionChange?.(session.id);
                       }}
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") {
                           event.preventDefault();
                           setSelectedSession(session);
                           setStudentSearch("");
+                          onSessionChange?.(session.id);
                         }
                       }}
                       className="cursor-pointer transition-colors hover:bg-slate-50/60 focus:bg-indigo-50/60 focus:outline-none dark:hover:bg-slate-800/40 dark:focus:bg-indigo-950/30"
@@ -329,7 +352,10 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setSelectedSession(null);
+            if (event.target === event.currentTarget) {
+              setSelectedSession(null);
+              onSessionChange?.(null);
+            }
           }}
         >
           <section
@@ -359,7 +385,10 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
               <button
                 type="button"
                 aria-label="Close attendance details"
-                onClick={() => setSelectedSession(null)}
+                onClick={() => {
+                  setSelectedSession(null);
+                  onSessionChange?.(null);
+                }}
                 className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               >
                 <X className="h-5 w-5" />

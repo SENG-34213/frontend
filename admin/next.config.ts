@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   basePath: process.env.NEXT_PUBLIC_APP_BASE_PATH || "",
+  async rewrites() {
+    return [{ source: "/:path*", destination: "/" }];
+  },
   experimental: { externalDir: true },
   turbopack: { root: path.resolve(projectDirectory, "..") },
 };

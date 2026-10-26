@@ -76,6 +76,11 @@ import { deleteCourse, fetchCourses, updateCourse } from "./admin/api/coursesApi
 import { fetchCourseExaminations } from "./admin/api/examinationsApi";
 import { fetchAdminCourseGradebook } from "./admin/api/gradebookApi";
 import {
+  getPortalPath,
+  getPortalPathSegments,
+  getRouteFromPortalPath,
+} from "../../shared/navigation/portalNavigation";
+import {
   createEnrollment,
   deleteEnrollment,
   fetchEnrollments,
@@ -151,6 +156,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
+  const [attendanceSessionId, setAttendanceSessionId] = useState<string | null>(null);
   const [role, setRole] = useState<AdminRole>("SUPER_ADMIN");
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -288,17 +294,23 @@ export default function App() {
       "profile",
     ]);
     const storedRoute = window.sessionStorage.getItem(ADMIN_ROUTE_STORAGE_KEY);
-    const urlRoute = new URLSearchParams(window.location.search).get("route");
+    const legacyUrlRoute = new URLSearchParams(window.location.search).get("route");
+    const pathRoute = getRouteFromPortalPath(window.location.pathname, validRoutes);
+    const pathSegments = getPortalPathSegments(window.location.pathname);
     // The route is restored from browser storage after hydration.
     const restoredRoute =
-      urlRoute && validRoutes.has(urlRoute as AdminRoute)
-        ? urlRoute
+      pathRoute ||
+      (legacyUrlRoute && validRoutes.has(legacyUrlRoute as AdminRoute)
+        ? legacyUrlRoute
         : storedRoute === "users"
           ? "dashboard"
-          : storedRoute;
+          : storedRoute);
     if (restoredRoute) {
       const routeRestore = window.setTimeout(() => {
         setCurrentRoute(restoredRoute as AdminRoute);
+        setAttendanceSessionId(
+          restoredRoute === "attendance" && pathSegments[1] ? pathSegments[1] : null,
+        );
       }, 0);
       return () => window.clearTimeout(routeRestore);
     }
@@ -309,10 +321,16 @@ export default function App() {
 
     if (!routeHistoryReadyRef.current) {
       const url = new URL(window.location.href);
-      if (!url.searchParams.has("route")) {
-        url.searchParams.set("route", currentRoute);
-        window.history.replaceState({ portal: "admin", route: currentRoute }, "", url);
-      }
+      url.searchParams.delete("route");
+      url.pathname =
+        currentRoute === "attendance" && attendanceSessionId
+          ? `${getPortalPath(currentRoute)}/${encodeURIComponent(attendanceSessionId)}`
+          : getPortalPath(currentRoute);
+      window.history.replaceState(
+        { portal: "admin", route: currentRoute, attendanceSessionId },
+        "",
+        url,
+      );
       routeHistoryReadyRef.current = true;
       return;
     }
@@ -323,19 +341,66 @@ export default function App() {
     }
 
     const url = new URL(window.location.href);
-    if (url.searchParams.get("route") === currentRoute) return;
-    url.searchParams.set("route", currentRoute);
-    window.history.pushState({ portal: "admin", route: currentRoute }, "", url);
-  }, [currentRoute, isAuthReady]);
+    const targetPath =
+      currentRoute === "attendance" && attendanceSessionId
+        ? `${getPortalPath(currentRoute)}/${encodeURIComponent(attendanceSessionId)}`
+        : getPortalPath(currentRoute);
+    if (url.pathname === targetPath && !url.searchParams.has("route")) return;
+    url.searchParams.delete("route");
+    url.pathname = targetPath;
+    window.history.pushState(
+      { portal: "admin", route: currentRoute, attendanceSessionId },
+      "",
+      url,
+    );
+  }, [attendanceSessionId, currentRoute, isAuthReady]);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const stateRoute = typeof event.state?.route === "string" ? event.state.route : null;
-      const urlRoute = new URLSearchParams(window.location.search).get("route");
-      const nextRoute = stateRoute || urlRoute;
+      const validRoutes = new Set<AdminRoute>([
+        "dashboard",
+        "analytics",
+        "notifications",
+        "students",
+        "teachers",
+        "administrators",
+        "registrations",
+        "courses",
+        "enrollments",
+        "academic",
+        "assignments",
+        "quizzes",
+        "examinations",
+        "grades",
+        "results",
+        "attendance",
+        "materials",
+        "marketplace",
+        "calendar",
+        "communication",
+        "ai-assistant",
+        "reports",
+        "audit",
+        "settings",
+        "profile",
+      ]);
+      const pathRoute = getRouteFromPortalPath(window.location.pathname, validRoutes);
+      const pathSegments = getPortalPathSegments(window.location.pathname);
+      const legacyRoute = new URLSearchParams(window.location.search).get("route");
+      const nextRoute = stateRoute || pathRoute || legacyRoute;
       if (!nextRoute) return;
       routeBrowserBackRef.current = true;
+      if (legacyRoute) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("route");
+        url.pathname = getPortalPath(nextRoute);
+        window.history.replaceState({ portal: "admin", route: nextRoute }, "", url);
+      }
       setCurrentRoute(nextRoute as AdminRoute);
+      setAttendanceSessionId(
+        nextRoute === "attendance" && pathSegments[1] ? pathSegments[1] : null,
+      );
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
     window.addEventListener("popstate", handlePopState);
@@ -1150,6 +1215,7 @@ export default function App() {
       currentRoute={currentRoute}
       onNavigate={(r) => {
         setCurrentRoute(r);
+        if (r !== "attendance") setAttendanceSessionId(null);
         setOpenStudentWizard(false);
         setOpenTeacherWizard(false);
         setOpenAdminWizard(false);
@@ -1310,6 +1376,8 @@ export default function App() {
           courses={courses}
           grades={gradesList}
           error={attendanceError}
+          selectedSessionId={attendanceSessionId}
+          onSessionChange={(sessionId) => setAttendanceSessionId(sessionId)}
         />
       )}
 
