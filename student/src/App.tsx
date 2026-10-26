@@ -28,6 +28,7 @@ import { ProfileView } from "./components/profile/ProfileView";
 import { SettingsView } from "./components/profile/SettingsView";
 import { X, AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { getPortalPath, getRouteFromPortalPath } from "../../shared/navigation/portalNavigation";
+import { installNumberInputBehavior } from "../../shared/forms/numberInputBehavior";
 
 const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const { currentView, isSidebarCollapsed, toastMessage, clearToast, setCurrentView } =
@@ -244,6 +245,8 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
 };
 
 export default function App() {
+  useEffect(() => installNumberInputBehavior(), []);
+
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);

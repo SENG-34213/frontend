@@ -1,5 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertCircle, Calendar, CheckCircle2, Clock, Layers, Plus, Trash2, X } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Layers,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Course } from "../types";
 import {
   createQuiz,
@@ -49,6 +60,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   const [maxAttempts, setMaxAttempts] = useState(1);
   const [showResultImmediately, setShowResultImmediately] = useState(true);
   const [questions, setQuestions] = useState<DraftQuestion[]>([blankQuestion()]);
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [draftQuizId, setDraftQuizId] = useState<string | null>(null);
@@ -66,6 +78,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     setMaxAttempts(1);
     setShowResultImmediately(true);
     setQuestions([blankQuestion()]);
+    setActiveQuestionIndex(0);
     setError("");
     setDraftQuizId(null);
   }, [isOpen, courses]);
@@ -81,6 +94,16 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
         questionIndex === index ? { ...question, ...update } : question,
       ),
     );
+  };
+
+  const addQuestion = () => {
+    setQuestions((current) => [...current, blankQuestion()]);
+    setActiveQuestionIndex(questions.length);
+  };
+
+  const removeQuestion = (index: number) => {
+    setQuestions((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setActiveQuestionIndex((current) => Math.max(0, Math.min(current, questions.length - 2)));
   };
 
   const validateSettings = () => {
@@ -213,59 +236,58 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-xs p-4">
-      <div className="w-full max-w-4xl max-h-[92vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5">
+      <div className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/40 sm:px-6">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-900">Create New Academic Quiz</h2>
-              <span className="rounded border border-indigo-100 bg-indigo-50 px-2 py-0.5 text-[10px] font-mono font-bold text-indigo-700">
-                CreateQuizRequest
-              </span>
-            </div>
-            <p className="text-xs text-slate-500">
-              Build an automated grading assessment aligned to the backend quiz contract.
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400">
+              New assessment
+            </p>
+            <h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">Create a quiz</h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Set the quiz details, then add questions and publish when ready.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            aria-label="Close quiz creation"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="flex border-b border-slate-200 px-6">
+        <div className="flex border-b border-slate-200 px-5 dark:border-slate-800 sm:px-6">
           {(
             [
-              ["config", "1. Quiz Settings & Constraints"],
-              ["questions", "2. Question Bank"],
+              ["config", "1. Details"],
+              ["questions", "2. Questions"],
             ] as const
           ).map(([value, label]) => (
             <button
               key={value}
               onClick={() => setStep(value)}
-              className={`border-b-2 px-4 py-3 text-xs font-semibold ${step === value ? "border-indigo-600 text-indigo-700" : "border-transparent text-slate-400"}`}
+              className={`border-b-2 px-4 py-3 text-xs font-semibold transition-colors ${step === value ? "border-indigo-600 text-indigo-700 dark:text-indigo-400" : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"}`}
             >
               {label}
             </button>
           ))}
         </div>
-        <div className="overflow-y-auto p-6">
+        <div className="overflow-y-auto bg-slate-50/40 p-5 dark:bg-slate-950/20 sm:p-6">
           {error && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <div className="mb-4 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-300">
               <AlertCircle className="h-4 w-4" />
               {error}
             </div>
           )}
           {step === "config" ? (
-            <div className="space-y-5">
+            <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Course
                   <select
                     value={courseId}
                     onChange={(event) => setCourseId(event.target.value)}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
                     <option value="">Select course</option>
                     {courses.map((course) => (
@@ -275,32 +297,32 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                     ))}
                   </select>
                 </label>
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Quiz Title
                   <input
                     maxLength={150}
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     placeholder="e.g. AVL Trees Concept Check"
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                   <span className="mt-1 block text-right text-[10px] font-normal text-slate-400">
                     {title.length}/150
                   </span>
                 </label>
               </div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Description
                 <textarea
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   rows={3}
                   placeholder="Describe the learning objective and assessment scope..."
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
               </label>
               <div className="grid gap-4 sm:grid-cols-3">
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <Clock className="mr-1 inline h-3.5 w-3.5" />
                   Duration (minutes)
                   <input
@@ -308,10 +330,10 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                     min={1}
                     value={durationMinutes}
                     onChange={(event) => setDurationMinutes(Number(event.target.value))}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </label>
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />
                   Pass Mark
                   <input
@@ -319,10 +341,10 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                     min={0}
                     value={passMark}
                     onChange={(event) => setPassMark(Number(event.target.value))}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </label>
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <Layers className="mr-1 inline h-3.5 w-3.5" />
                   Max Attempts
                   <input
@@ -330,7 +352,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                     min={1}
                     value={maxAttempts}
                     onChange={(event) => setMaxAttempts(Number(event.target.value))}
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </label>
               </div>
@@ -356,7 +378,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                   />
                 </label>
               </div>
-              <label className="flex items-center gap-2 text-xs text-slate-700">
+              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
                 <input
                   type="checkbox"
                   checked={showResultImmediately}
@@ -368,96 +390,194 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {questions.map((question, index) => (
-                <div key={index} className="rounded-xl border border-slate-200 p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800">Question {index + 1}</span>
-                    {questions.length > 1 && (
-                      <button
-                        onClick={() =>
-                          setQuestions((current) =>
-                            current.filter((_, itemIndex) => itemIndex !== index),
-                          )
-                        }
-                        className="text-xs text-rose-600"
-                      >
-                        <Trash2 className="mr-1 inline h-3.5 w-3.5" />
-                        Remove
-                      </button>
-                    )}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">Question builder</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Move between questions without losing your work.
+                    </p>
                   </div>
-                  <textarea
-                    rows={2}
-                    value={question.questionText}
-                    onChange={(event) =>
-                      updateQuestion(index, { questionText: event.target.value })
-                    }
-                    placeholder="Question Prompt"
-                    className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                  />
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {question.options.map((option, optionIndex) => (
-                      <div key={optionIndex} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name={`correct-${index}`}
-                          checked={question.correctOption === optionIndex}
-                          onChange={() => updateQuestion(index, { correctOption: optionIndex })}
-                        />
-                        <input
-                          value={option}
-                          onChange={(event) =>
-                            updateQuestion(index, {
-                              options: question.options.map((item, itemIndex) =>
-                                itemIndex === optionIndex ? event.target.value : item,
-                              ),
-                            })
-                          }
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-[120px_1fr]">
-                    <input
-                      type="number"
-                      min={1}
-                      value={question.marks}
-                      onChange={(event) =>
-                        updateQuestion(index, { marks: Number(event.target.value) })
-                      }
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      placeholder="Marks"
-                    />
-                    <input
-                      value={question.explanation}
-                      onChange={(event) =>
-                        updateQuestion(index, { explanation: event.target.value })
-                      }
-                      className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      placeholder="Pedagogical Explanation (Shown in Review)"
-                    />
-                  </div>
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                    {questions.length} question{questions.length === 1 ? "" : "s"}
+                  </span>
                 </div>
-              ))}
-              <button
-                onClick={() => setQuestions((current) => [...current, blankQuestion()])}
-                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700"
-              >
-                <Plus className="h-4 w-4" />
-                Add Question
-              </button>
-              <div className="rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800">
+
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+                    style={{ width: `${((activeQuestionIndex + 1) / questions.length) * 100}%` }}
+                  />
+                </div>
+
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="Question navigator">
+                  {questions.map((item, index) => {
+                    const isComplete = Boolean(
+                      item.questionText.trim() && item.options.every((option) => option.trim()),
+                    );
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setActiveQuestionIndex(index)}
+                        aria-label={`Open question ${index + 1}`}
+                        className={`relative flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg border px-2 text-xs font-bold transition ${activeQuestionIndex === index ? "border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-500/30" : "border-slate-200 bg-slate-50 text-slate-500 hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-indigo-700"}`}
+                      >
+                        {index + 1}
+                        {isComplete && activeQuestionIndex !== index && (
+                          <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900" />
+                        )}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={addQuestion}
+                    className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-indigo-300 px-2 text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-950/50"
+                    aria-label="Add question"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {(() => {
+                const question = questions[activeQuestionIndex];
+                const index = activeQuestionIndex;
+                return (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white">
+                            Question {index + 1} of {questions.length}
+                          </p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                            Choose one correct answer
+                          </p>
+                        </div>
+                      </div>
+                      {questions.length > 1 && (
+                        <button
+                          onClick={() => removeQuestion(index)}
+                          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                        >
+                          <Trash2 className="mr-1 inline h-3.5 w-3.5" />
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Question prompt
+                      <textarea
+                        rows={3}
+                        value={question.questionText}
+                        onChange={(event) => updateQuestion(index, { questionText: event.target.value })}
+                        placeholder="Write a clear question for your students..."
+                        className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                      />
+                    </label>
+
+                    <div className="mt-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Answer choices</p>
+                        <p className="text-[10px] text-slate-400">Select the correct answer</p>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {question.options.map((option, optionIndex) => {
+                          const isCorrect = question.correctOption === optionIndex;
+                          return (
+                            <label
+                              key={optionIndex}
+                              className={`flex cursor-pointer items-center gap-2 rounded-xl border p-2 transition ${isCorrect ? "border-emerald-300 bg-emerald-50/70 dark:border-emerald-800 dark:bg-emerald-950/30" : "border-slate-200 bg-slate-50/70 hover:border-indigo-200 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-indigo-800"}`}
+                            >
+                              <input
+                                type="radio"
+                                name={`correct-${index}`}
+                                checked={isCorrect}
+                                onChange={() => updateQuestion(index, { correctOption: optionIndex })}
+                                className="h-4 w-4 accent-emerald-600"
+                              />
+                              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${isCorrect ? "bg-emerald-600 text-white" : "bg-white text-slate-500 dark:bg-slate-700 dark:text-slate-300"}`}>
+                                {String.fromCharCode(65 + optionIndex)}
+                              </span>
+                              <input
+                                value={option}
+                                onChange={(event) =>
+                                  updateQuestion(index, {
+                                    options: question.options.map((item, itemIndex) =>
+                                      itemIndex === optionIndex ? event.target.value : item,
+                                    ),
+                                  })
+                                }
+                                aria-label={`Answer choice ${String.fromCharCode(65 + optionIndex)}`}
+                                className="min-w-0 flex-1 bg-transparent px-1 py-1 text-xs text-slate-800 outline-none dark:text-slate-100"
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-[120px_1fr]">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Marks
+                        <input
+                          type="number"
+                          min={1}
+                          value={question.marks}
+                          onChange={(event) => updateQuestion(index, { marks: Number(event.target.value) })}
+                          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                        />
+                      </label>
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Explanation <span className="font-normal text-slate-400">(optional)</span>
+                        <input
+                          value={question.explanation}
+                          onChange={(event) => updateQuestion(index, { explanation: event.target.value })}
+                          placeholder="Explain the answer for review..."
+                          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+                      <button
+                        disabled={index === 0}
+                        onClick={() => setActiveQuestionIndex((current) => Math.max(0, current - 1))}
+                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (index === questions.length - 1) addQuestion();
+                          else setActiveQuestionIndex((current) => current + 1);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700"
+                      >
+                        {index === questions.length - 1 ? "Add next question" : "Next question"}
+                        {index === questions.length - 1 ? <Plus className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2.5 text-xs text-indigo-800 dark:border-indigo-900/70 dark:bg-indigo-950/50 dark:text-indigo-200">
                 {questions.length} question{questions.length === 1 ? "" : "s"} · {totalMarks} total
                 marks · exactly one correct answer per question
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between border-t border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900 sm:px-6">
           <button
             onClick={onClose}
-            className="rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-3 py-2 text-xs text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Cancel
           </button>
@@ -465,7 +585,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
             {step === "questions" && (
               <button
                 onClick={() => setStep("config")}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Back
               </button>
@@ -490,7 +610,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                 <button
                   disabled={busy}
                   onClick={() => void submit(false)}
-                  className="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-700 disabled:opacity-50"
+                  className="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-950/50"
                 >
                   Save as Draft
                 </button>

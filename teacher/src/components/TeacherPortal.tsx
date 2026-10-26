@@ -49,8 +49,11 @@ import {
   getPortalPathSegments,
   getRouteFromPortalPath,
 } from "../../../shared/navigation/portalNavigation";
+import { installNumberInputBehavior } from "../../../shared/forms/numberInputBehavior";
 
 export default function App() {
+  useEffect(() => installNumberInputBehavior(), []);
+
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);

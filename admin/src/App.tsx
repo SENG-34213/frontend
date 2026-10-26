@@ -80,6 +80,7 @@ import {
   getPortalPathSegments,
   getRouteFromPortalPath,
 } from "../../shared/navigation/portalNavigation";
+import { installNumberInputBehavior } from "../../shared/forms/numberInputBehavior";
 import {
   createEnrollment,
   deleteEnrollment,
@@ -153,6 +154,8 @@ function notificationRoute(type?: string): AdminRoute {
 }
 
 export default function App() {
+  useEffect(() => installNumberInputBehavior(), []);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");

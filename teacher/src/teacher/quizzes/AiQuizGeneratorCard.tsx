@@ -26,14 +26,12 @@ import { AiQuizCardSliderModal } from "./AiQuizCardSliderModal";
 
 interface AiQuizGeneratorCardProps {
   courses: Course[];
-  onClose: () => void;
   onQuizCreated: (quiz: BackendQuiz) => void;
 }
 type DraftQuestion = AiQuizDraft["questions"][number];
 
 export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
   courses,
-  onClose,
   onQuizCreated,
 }) => {
   const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
@@ -212,37 +210,6 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
             setIsSliderOpen(false);
           }}
         />
-      )}
-      {!draft && (
-        <div className="bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 px-6 py-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15">
-                <Sparkles className="h-5 w-5 text-amber-300" />
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-base font-bold tracking-tight text-white sm:text-lg">
-                    AI Quiz Generator
-                  </h2>
-                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/25 px-2 py-0.5 text-[10px] font-mono text-emerald-100">
-                    Ready to build
-                  </span>
-                </div>
-                <p className="mt-0.5 text-xs text-indigo-100/90">
-                  Upload course documents to formulate structured multiple-choice questions with 4–5
-                  distractors and pedagogical rationales.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="rounded-lg bg-white/10 p-1.5 text-white/90 hover:bg-white/20"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
       )}
       <div className="p-6">
         {error && (
