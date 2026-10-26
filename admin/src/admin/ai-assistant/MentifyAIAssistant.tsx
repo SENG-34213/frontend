@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
+  BarChart3,
+  BookOpen,
+  CalendarDays,
   Check,
+  ClipboardCheck,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -17,6 +21,7 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  Users,
   X,
   Zap,
 } from "lucide-react";
@@ -507,7 +512,7 @@ export const MentifyAIAssistant: React.FC = () => {
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
                 <ShieldCheck className="h-3 w-3" />
               </span>
-              <span className="truncate">Connected to TiT AI · authorized admin tools enabled</span>
+              <span className="truncate">Your assistant is ready to help</span>
             </div>
             <span className="hidden shrink-0 text-[10px] text-slate-400 sm:block">
               Secure assistant session
@@ -687,7 +692,7 @@ export const MentifyAIAssistant: React.FC = () => {
               </button>
             </form>
             <p className="mx-auto mt-2 max-w-4xl text-[10px] text-slate-400">
-              Enter to send · Shift + Enter for a new line · Responses use your authorized admin
+              Enter to send · Shift + Enter for a new line · Responses are based on your platform
               data
             </p>
           </div>
@@ -703,29 +708,40 @@ export const MentifyAIAssistant: React.FC = () => {
             </div>
             <div className="space-y-4">
               <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                <p className="text-[10px] font-bold uppercase text-slate-400">Connection</p>
+                <p className="text-[10px] font-bold uppercase text-slate-400">Status</p>
                 <p className="mt-2 flex items-center gap-2 text-xs font-semibold text-emerald-600">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Assistant available
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Ready to help
                 </p>
-                <p className="mt-1 text-[11px] text-slate-500">POST /api/ai/chat</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-                <p className="text-[10px] font-bold uppercase text-slate-400">
-                  Authorized capabilities
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                    Admin access
+                  </p>
+                  <ShieldCheck className="h-4 w-4 text-indigo-500" />
+                </div>
+                <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">
+                  Ask about the areas available in your administration workspace.
                 </p>
-                <div className="mt-2 space-y-2 text-xs text-slate-600 dark:text-slate-300">
-                  <p className="flex gap-2">
-                    <ShieldCheck className="h-4 w-4 text-indigo-500" />
-                    Student and course queries
-                  </p>
-                  <p className="flex gap-2">
-                    <FileText className="h-4 w-4 text-indigo-500" />
-                    Academic analytics
-                  </p>
-                  <p className="flex gap-2">
-                    <MessageSquare className="h-4 w-4 text-indigo-500" />
-                    Conversation history
-                  </p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[
+                    { label: "People", icon: Users },
+                    { label: "Courses", icon: BookOpen },
+                    { label: "Enrollments", icon: ClipboardCheck },
+                    { label: "Assessments", icon: FileText },
+                    { label: "Attendance", icon: CalendarDays },
+                    { label: "Insights", icon: BarChart3 },
+                    { label: "Messages", icon: MessageSquare },
+                    { label: "Schedules", icon: CalendarDays },
+                  ].map(({ label, icon: Icon }) => (
+                    <div
+                      key={label}
+                      className="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-2 text-[11px] font-medium text-slate-600 dark:bg-slate-800/70 dark:text-slate-300"
+                    >
+                      <Icon className="h-3.5 w-3.5 text-indigo-500" />
+                      {label}
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3 dark:border-indigo-900 dark:bg-indigo-950/30">
@@ -733,7 +749,8 @@ export const MentifyAIAssistant: React.FC = () => {
                   Data privacy
                 </p>
                 <p className="mt-1 text-[11px] leading-5 text-indigo-700/80 dark:text-indigo-300/80">
-                  Only tools authorized for your admin role are available to the assistant.
+                  Your conversations stay within the information available to your administrator
+                  workspace.
                 </p>
               </div>
             </div>

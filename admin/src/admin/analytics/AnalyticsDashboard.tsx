@@ -135,7 +135,7 @@ export const AnalyticsDashboard: React.FC = () => {
     <div className="space-y-6">
       <PageHeader
         title="Institutional Analytics & Reporting"
-        description="Cross-service operational intelligence from the live Analytics Service."
+        description="Clear insights from your institution's latest activity."
         breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Analytics" }]}
         actions={
           <button

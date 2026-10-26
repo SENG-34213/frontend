@@ -102,7 +102,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Learning Material Management (AWS S3)"
+        title="Learning Material Management"
         description="Inspect cloud storage asset repositories, upload pedagogical media, and verify student access integrity."
         breadcrumbs={[
           { label: "Admin" },
@@ -129,7 +129,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-900 dark:text-white">
-                AWS S3 Storage Cluster
+                Secure learning storage
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 mentify-course-assets-prod
@@ -274,9 +274,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Upload Learning Material
                 </h3>
-                <p className="text-xs text-slate-500">
-                  Direct upload via AWS S3 Pre-signed URL protocol
-                </p>
+                <p className="text-xs text-slate-500">Files are uploaded securely</p>
               </div>
               <button
                 onClick={() => setIsUploadOpen(false)}
@@ -382,7 +380,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
         >
           <div className="space-y-4 text-xs">
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
-              <span className="text-slate-400 block text-[11px]">AWS S3 URI:</span>
+              <span className="text-slate-400 block text-[11px]">File location:</span>
               <p className="font-mono text-slate-900 dark:text-white break-all bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-100 dark:border-slate-800">
                 s3://mentify-course-assets-prod/{previewMaterial.s3Key}
               </p>

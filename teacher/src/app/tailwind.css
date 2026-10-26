@@ -32,8 +32,27 @@
 
 /* Keep teacher screens on the same slate palette as the admin workspace. */
 @layer utilities {
+  .dark .attendance-month-label {
+    color: #000000 !important;
+  }
+
+  .dark input,
+  .dark select,
+  .dark textarea {
+    color: #e2e8f0;
+    color-scheme: dark;
+  }
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #64748b;
+  }
   .dark .bg-white {
     background-color: #0f172a;
+  }
+  .dark .bg-white\/80,
+  .dark .bg-white\/90,
+  .dark .bg-white\/95 {
+    background-color: rgb(15 23 42 / 0.95);
   }
   .dark .bg-slate-50 {
     background-color: #020617;
@@ -47,8 +66,23 @@
   .dark .bg-slate-200 {
     background-color: #334155;
   }
+  .dark .bg-slate-50\/60,
+  .dark .bg-slate-50\/70,
+  .dark .bg-slate-50\/80 {
+    background-color: rgb(15 23 42 / 0.6);
+  }
+  .dark [class*="bg-slate-50/"] {
+    background-color: rgb(15 23 42 / 0.6);
+  }
+  .dark .bg-slate-100\/50,
+  .dark .bg-slate-100\/70 {
+    background-color: rgb(30 41 59 / 0.7);
+  }
   .dark .bg-indigo-50 {
     background-color: rgb(49 46 129 / 0.35);
+  }
+  .dark [class*="bg-indigo-50/"] {
+    background-color: rgb(49 46 129 / 0.3);
   }
   .dark .bg-indigo-50\/70 {
     background-color: rgb(49 46 129 / 0.25);
@@ -86,6 +120,15 @@
   .dark .text-slate-400 {
     color: #64748b;
   }
+  .dark .text-slate-300 {
+    color: #cbd5e1;
+  }
+  .dark .text-gray-500 {
+    color: #94a3b8;
+  }
+  .dark .text-gray-600 {
+    color: #cbd5e1;
+  }
   .dark .text-indigo-700 {
     color: #a5b4fc;
   }
@@ -107,6 +150,16 @@
   .dark .border-slate-100 {
     border-color: #1e293b;
   }
+  .dark .border-slate-300 {
+    border-color: #475569;
+  }
+  .dark .border-gray-200 {
+    border-color: #334155;
+  }
+  .dark .divide-slate-200 > :not(:last-child),
+  .dark .divide-gray-200 > :not(:last-child) {
+    border-color: #334155;
+  }
   .dark .border-indigo-100 {
     border-color: #3730a3;
   }
@@ -124,6 +177,9 @@
   }
   .dark .hover\:bg-slate-200:hover {
     background-color: #334155;
+  }
+  .dark .hover\:bg-white:hover {
+    background-color: #1e293b;
   }
   .dark .hover\:text-slate-800:hover {
     color: #e2e8f0;

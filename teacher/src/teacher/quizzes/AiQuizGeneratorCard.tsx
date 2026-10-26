@@ -225,11 +225,8 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                   <h2 className="text-base font-bold tracking-tight text-white sm:text-lg">
                     AI Quiz Generator
                   </h2>
-                  <span className="rounded-full border border-white/25 bg-white/20 px-2 py-0.5 text-[10px] font-mono text-white">
-                    multipart/form-data
-                  </span>
                   <span className="rounded-full border border-emerald-400/30 bg-emerald-400/25 px-2 py-0.5 text-[10px] font-mono text-emerald-100">
-                    assignment-service
+                    Ready to build
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-indigo-100/90">
@@ -324,7 +321,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                           Click to browse or drag and drop course documents here
                         </p>
                         <p className="mt-1 text-[11px] text-slate-400">
-                          Multipart upload processed by TiT assignment-service
+                          Your document will be processed securely
                         </p>
                       </div>
                     )}
@@ -461,7 +458,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
                   <div>
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <span className="rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-violet-800">
-                        {draft.provider || "TiT AI"}
+                        {draft.provider || "Question builder"}
                       </span>
                       <span className="rounded-full border border-indigo-200 bg-indigo-100 px-2 py-0.5 text-[10px] font-mono font-bold text-indigo-800">
                         {courses.find((course) => course.id === courseId)?.code || "Course"}
@@ -536,7 +533,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
             <div className="flex flex-col justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-md border border-violet-200 bg-violet-100 px-2.5 py-1 text-xs font-mono font-bold text-violet-800">
-                  {draft.provider || "TiT AI"}
+                  {draft.provider || "Question builder"}
                 </span>
                 <span className="rounded-md border border-indigo-200 bg-indigo-100 px-2.5 py-1 text-xs font-mono font-bold text-indigo-800">
                   Difficulty: {draft.difficulty}

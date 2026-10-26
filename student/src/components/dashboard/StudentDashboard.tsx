@@ -550,7 +550,7 @@ export const StudentDashboard: React.FC = () => {
                 Attendance health
               </h2>
               <p className="mt-1 text-xs text-slate-500">
-                Course-level attendance from the attendance service.
+                Course-level attendance from your enrolled courses.
               </p>
             </div>
             <button

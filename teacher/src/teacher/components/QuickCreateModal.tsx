@@ -27,6 +27,7 @@ import {
 } from "../api/courseContentApi";
 import { createExam } from "../api/examApi";
 import { createCalendarEvent, type CalendarEventType } from "../api/calendarApi";
+import { formatTeacherError } from "../utils/userFacingError";
 
 export type QuickCreateType =
   | "course"
@@ -287,7 +288,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       } catch (requestError) {
         setIsSubmitting(false);
         setFormError(
-          requestError instanceof Error ? requestError.message : "Course could not be created.",
+          formatTeacherError(requestError, "Course could not be created.", {
+            courseName: courseTitle,
+          }),
         );
         return;
       }

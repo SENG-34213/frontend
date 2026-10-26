@@ -64,7 +64,6 @@ export function AdminLoginView({ onLogin }: Props) {
         <div className="relative">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 Administration Workspace
               </p>
@@ -97,7 +96,6 @@ export function AdminLoginView({ onLogin }: Props) {
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <div>
-              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Admin Portal
               </p>
@@ -206,7 +204,7 @@ export function AdminLoginView({ onLogin }: Props) {
                 disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700"
               >
-                {isSubmitting ? "Signing in…" : "Sign in to TiT"}
+                {isSubmitting ? "Signing in…" : "Sign in to your workspace"}
                 {!isSubmitting && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>

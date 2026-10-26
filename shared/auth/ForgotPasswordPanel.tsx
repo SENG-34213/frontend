@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getPasswordRules, isStrongPassword, passwordStrength } from "./passwordValidation";
 
 type ResetStep = "email" | "otp" | "password";
@@ -14,6 +14,63 @@ type Props = {
 };
 
 const OTP_EXPIRY_MINUTES = 10;
+
+type VerificationCodeInputProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function VerificationCodeInput({ value, onChange }: VerificationCodeInputProps) {
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const digits = Array.from({ length: 6 }, (_, index) => value[index] ?? "");
+
+  function updateDigit(index: number, nextValue: string) {
+    const digit = nextValue.replace(/\D/g, "").slice(-1);
+    const nextDigits = [...digits];
+    nextDigits[index] = digit;
+    onChange(nextDigits.join(""));
+    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
+  }
+
+  function handleKeyDown(index: number, event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Backspace" && !digits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+    if (event.key === "ArrowLeft" && index > 0) inputRefs.current[index - 1]?.focus();
+    if (event.key === "ArrowRight" && index < 5) inputRefs.current[index + 1]?.focus();
+  }
+
+  function handlePaste(event: React.ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault();
+    const pastedCode = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    onChange(pastedCode);
+    inputRefs.current[Math.min(pastedCode.length, 5)]?.focus();
+  }
+
+  return (
+    <div className="flex justify-center gap-2 sm:gap-3" role="group" aria-label="6-digit verification code">
+      {digits.map((digit, index) => (
+        <input
+          key={index}
+          ref={(element) => {
+            inputRefs.current[index] = element;
+          }}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={1}
+          value={digit}
+          onChange={(event) => updateDigit(index, event.target.value)}
+          onKeyDown={(event) => handleKeyDown(index, event)}
+          onPaste={handlePaste}
+          className="h-12 w-10 rounded-xl border border-slate-200 bg-white text-center text-xl font-bold text-slate-800 shadow-sm outline-none transition focus:border-indigo-500 focus:bg-indigo-50/40 focus:ring-4 focus:ring-indigo-100 sm:h-14 sm:w-12 sm:text-2xl"
+          aria-label={`Verification code digit ${index + 1}`}
+          autoComplete={index === 0 ? "one-time-code" : "off"}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function ForgotPasswordPanel({
   roleLabel,
@@ -54,7 +111,7 @@ export function ForgotPasswordPanel({
   async function handleRequestCode(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!email.trim()) {
-      setError("Enter the email address connected to your TiT account.");
+      setError("Enter the email address connected to your learning account.");
       return;
     }
     setError("");
@@ -133,14 +190,19 @@ export function ForgotPasswordPanel({
         : "Secure your account";
 
   return (
-    <main className="min-h-screen bg-slate-50 lg:grid lg:grid-cols-[1.05fr_0.95fr]">
+    <main
+      className="min-h-screen bg-slate-50 font-sans lg:grid lg:grid-cols-[1.05fr_0.95fr]"
+      style={{
+        fontFamily:
+          '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      }}
+    >
       <section className="relative hidden overflow-hidden bg-indigo-950 px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-20">
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
         <div className="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-lg font-bold tracking-tight">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 {roleLabel} Workspace
               </p>
@@ -167,7 +229,6 @@ export function ForgotPasswordPanel({
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <div>
-              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Account Recovery
               </p>
@@ -245,20 +306,12 @@ export function ForgotPasswordPanel({
 
             {step === "otp" && (
               <form className="space-y-4" onSubmit={handleVerifyCode}>
-                <label className="block text-xs font-semibold text-slate-700">
-                  6-digit verification code
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="mt-2 block h-14 w-full rounded-lg border border-slate-200 px-3 text-center text-2xl font-bold tracking-[0.45em] text-slate-800 outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50"
-                    autoComplete="one-time-code"
-                    placeholder="000000"
-                  />
-                </label>
+                <div>
+                  <p className="mb-3 text-center text-xs font-semibold text-slate-700">
+                    Enter your 6-digit verification code
+                  </p>
+                  <VerificationCodeInput value={otp} onChange={setOtp} />
+                </div>
                 <div className="flex items-center justify-between text-xs text-slate-500">
                   <span>
                     {secondsLeft > 0

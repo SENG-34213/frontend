@@ -18,12 +18,11 @@ import {
   Settings,
   LogOut,
   ExternalLink,
-  Sun,
-  Moon,
 } from "lucide-react";
 import { NavigationTab, TeacherProfile } from "../types";
 import { QuickCreateType } from "./QuickCreateModal";
 import { TeacherAvatar } from "./TeacherAvatar";
+import { ThemeToggle } from "../../../../shared/theme/ThemeToggle";
 
 interface TeacherNavbarProps {
   currentTab: NavigationTab;
@@ -117,7 +116,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
             onClick={() => onNavigate("dashboard")}
             className="hover:text-slate-900 dark:hover:text-white cursor-pointer font-medium"
           >
-            TiT
+            Home
           </span>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="text-slate-400 dark:text-slate-500">{currentMeta.category}</span>
@@ -269,19 +268,7 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
           )}
         </button>
 
-        {/* Theme Toggle */}
-        <button
-          onClick={onToggleTheme}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-xs"
-          title={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
-          aria-label={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
-        >
-          {isDarkMode ? (
-            <Sun className="w-3.5 h-3.5 text-amber-500" />
-          ) : (
-            <Moon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          )}
-        </button>
+        <ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} />
 
         <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 

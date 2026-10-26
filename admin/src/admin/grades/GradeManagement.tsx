@@ -1080,7 +1080,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
                 <span className="text-xs text-slate-400">/ month per course</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                Configured via Grade Management service. Inherited by all courses enrolled under{" "}
+                Configured via grade management. Inherited by all courses enrolled under{" "}
                 {selectedGrade.name}.
               </p>
             </div>

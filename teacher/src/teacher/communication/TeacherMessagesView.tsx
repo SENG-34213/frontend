@@ -23,6 +23,7 @@ import {
   type CommunicationGroupMember,
   type CommunicationMessage,
 } from "../api/communicationApi";
+import { formatTeacherError } from "../utils/userFacingError";
 import { CommunicationAttachmentPicker } from "../components/CommunicationAttachmentPicker";
 import { ConfirmModal, TextInputModal } from "../components/ActionModal";
 
@@ -245,36 +246,60 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   }, [availableCourses]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    setIsLoading(true);
-    setError(null);
-    getCommunicationGroups(controller.signal)
-      .then((loadedGroups) => {
-        if (controller.signal.aborted) return;
+    let disposed = false;
+    let requestInFlight = false;
+
+    const loadGroups = async (showLoading: boolean) => {
+      if (disposed || requestInFlight || document.visibilityState !== "visible") return;
+      requestInFlight = true;
+      const controller = new AbortController();
+      if (showLoading) {
+        setIsLoading(true);
+        setError(null);
+      }
+      try {
+        const loadedGroups = await getCommunicationGroups(controller.signal);
+        if (disposed) return;
         setGroups(loadedGroups);
         setSelectedGroupId((current) =>
           loadedGroups.some((group) => group.id === current)
             ? current
             : (loadedGroups[0]?.id ?? ""),
         );
-      })
-      .catch((requestError: unknown) => {
-        if (!controller.signal.aborted) {
+      } catch (requestError: unknown) {
+        if (!disposed && showLoading) {
           setError(
             requestError instanceof Error
               ? requestError.message
               : "Communication groups failed to load.",
           );
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false);
-      });
-    return () => controller.abort();
+      } finally {
+        if (showLoading && !disposed) setIsLoading(false);
+        requestInFlight = false;
+      }
+    };
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") void loadGroups(false);
+    };
+
+    void loadGroups(true);
+    const intervalId = window.setInterval(() => void loadGroups(false), 15_000);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
   }, []);
 
   useEffect(() => {
     if (!selectedGroupId) return;
+    let disposed = false;
     const controller = new AbortController();
     setIsMessageLoading(true);
     setActionError(null);
@@ -301,9 +326,25 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setIsMessageLoading(false);
+        if (!controller.signal.aborted && !disposed) setIsMessageLoading(false);
       });
-    return () => controller.abort();
+
+    const memberRefreshId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      getCommunicationGroupMembers(selectedGroupId)
+        .then((members) => {
+          if (!disposed) {
+            setMembersByGroup((current) => ({ ...current, [selectedGroupId]: members }));
+          }
+        })
+        .catch(() => undefined);
+    }, 15_000);
+
+    return () => {
+      disposed = true;
+      controller.abort();
+      window.clearInterval(memberRefreshId);
+    };
   }, [selectedGroupId]);
 
   async function handleSendMessage(event: React.FormEvent) {
@@ -513,7 +554,9 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       setIsCreateGroupOpen(false);
     } catch (requestError) {
       setActionError(
-        requestError instanceof Error ? requestError.message : "Group could not be created.",
+        formatTeacherError(requestError, "Group could not be created.", {
+          courseName: course.courseName,
+        }),
       );
     }
   }
@@ -526,9 +569,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
             Direct &amp; Group Messages
           </span>
         </div>
-        <span className="text-xs text-slate-400 font-mono hidden sm:inline">
-          TiT Messaging · Secure
-        </span>
+        <span className="text-xs text-slate-400 font-mono hidden sm:inline">Secure messaging</span>
       </div>
 
       {(error || actionError || realtime.error) && (

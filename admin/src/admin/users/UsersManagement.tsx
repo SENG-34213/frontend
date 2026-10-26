@@ -167,7 +167,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
     <div className="space-y-6">
       <PageHeader
         title="All Users Management"
-        description="Unified institutional directory across Spring Boot identity providers and Keycloak realms."
+        description="Unified institutional directory for managing people and access."
         breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "All Users" }]}
         actions={
           <div className="flex items-center gap-2">
@@ -189,7 +189,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
 
       {isLoading && (
         <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs text-indigo-700">
-          Loading users from the TiT backend…
+          Loading users…
         </div>
       )}
 
@@ -392,8 +392,8 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
           confirmDialog.action === "DELETE"
             ? "This permanently removes the user account, profile, address, and linked sign-in account. This action cannot be undone."
             : confirmDialog.action === "DEACTIVATE"
-              ? "Suspending this user account will revoke active Keycloak session tokens and temporarily disable access to TiT portals and LMS coursework."
-              : "Re-activating this user account will restore Keycloak authentication privileges and grant immediate access back to their assigned courses and records."
+              ? "Suspending this account will temporarily prevent access to the learning portals and coursework."
+              : "Re-activating this account will restore access to assigned courses and records."
         }
         consequences={
           confirmDialog.action === "DELETE"
@@ -404,14 +404,11 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
               ]
             : confirmDialog.action === "DEACTIVATE"
               ? [
-                  "Immediate termination of active JWT tokens across all microservices",
-                  "User will not be able to log in to Student or Teacher portals",
-                  "Course enrollments and historical assignment data remain intact in PostgreSQL",
+                  "The user will no longer be able to sign in",
+                  "User will not be able to access the Student or Teacher portals",
+                  "Course enrollments and assignment history remain intact",
                 ]
-              : [
-                  "Keycloak user status updated to enabled",
-                  "User can immediately sign in with existing credentials",
-                ]
+              : ["User account unlocked", "User can immediately sign in with existing credentials"]
         }
         confirmText={
           confirmDialog.action === "DELETE"

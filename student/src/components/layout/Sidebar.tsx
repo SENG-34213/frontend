@@ -104,10 +104,12 @@ export const Sidebar: React.FC = () => {
       }`}
     >
       {/* Brand Header */}
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
+      <div
+        className={`relative flex h-16 shrink-0 items-center border-b border-slate-200 dark:border-slate-800 ${isSidebarCollapsed ? "justify-center px-2" : "justify-between px-4"}`}
+      >
         <button
           onClick={() => setCurrentView("dashboard")}
-          className="flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-1"
+          className={`flex items-center gap-3 rounded-lg p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isSidebarCollapsed ? "justify-center" : ""}`}
         >
           <img
             src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
@@ -115,9 +117,6 @@ export const Sidebar: React.FC = () => {
             className="h-9 w-9 shrink-0 rounded-lg"
           />
           <div className="flex flex-col">
-            <span className="font-display text-base font-bold tracking-tight text-slate-900 dark:text-white">
-              TiT
-            </span>
             {!isSidebarCollapsed && (
               <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
                 Student Portal
@@ -129,7 +128,7 @@ export const Sidebar: React.FC = () => {
         <button
           onClick={toggleSidebar}
           aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden md:flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+          className={`hidden h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white md:flex ${isSidebarCollapsed ? "absolute right-2" : ""}`}
         >
           {isSidebarCollapsed ? (
             <ChevronRight className="h-4 w-4" />

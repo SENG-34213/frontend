@@ -650,13 +650,13 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
                         >
                           <span className="flex min-w-0 items-center gap-3">
                             <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
-                              <span className="text-[9px] font-bold uppercase">
+                              <span className="attendance-month-label text-[9px] font-bold uppercase text-slate-900 dark:text-black">
                                 {new Date(`${session.attendanceDate}T00:00:00`).toLocaleDateString(
                                   undefined,
                                   { month: "short" },
                                 )}
                               </span>
-                              <span className="text-sm font-bold leading-none">
+                              <span className="text-sm font-bold leading-none text-red-600 dark:text-red-600">
                                 {new Date(`${session.attendanceDate}T00:00:00`).getDate()}
                               </span>
                             </span>

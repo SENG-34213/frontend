@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import {
   resetStudentPassword,
   loginStudent,
@@ -63,7 +63,6 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
         <div className="relative">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-lg font-bold">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
                 Student Learning Portal
               </p>
@@ -95,7 +94,6 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <div>
-              <p className="text-base font-bold text-slate-900">TiT</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
                 Student Portal
               </p>
@@ -213,21 +211,11 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
                 disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-60"
               >
-                {isSubmitting ? "Signing in…" : "Sign in to TiT"}
+                {isSubmitting ? "Signing in…" : "Sign in to your workspace"}
                 {!isSubmitting && <ArrowRight className="h-4 w-4" />}
               </button>
             </form>
-            <div className="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/70 p-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-800">
-                <Sparkles className="h-4 w-4" /> Local development account
-              </div>
-              <p className="mt-1 text-[11px] leading-5 text-indigo-700/80">
-                Use the credentials issued by your institution.
-              </p>
-            </div>
-            <p className="mt-6 text-center text-[11px] text-slate-400">
-              Secure student workspace · TiT authentication
-            </p>
+            <p className="mt-6 text-center text-[11px] text-slate-400">Secure student workspace</p>
           </div>
         </div>
       </section>

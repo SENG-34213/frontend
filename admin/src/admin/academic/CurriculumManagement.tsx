@@ -162,7 +162,7 @@ export const CurriculumManagement: React.FC<CurriculumManagementProps> = ({ cour
     <div className="space-y-6">
       <PageHeader
         title="Modules & Lessons Explorer"
-        description="Explore live curriculum data by grade, course domain, and course. Modules, lessons, and learning materials come from the academic content service."
+        description="Explore curriculum data by grade, course domain, and course."
         breadcrumbs={[
           { label: "Admin" },
           { label: "Academic Management" },

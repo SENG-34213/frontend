@@ -926,7 +926,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
         title="Academic Calendar & Schedule"
         description="Master timetable and facility scheduling for examinations, lectures, assignment cutoffs, and faculty councils."
         breadcrumbs={[
-          { label: "TiT" },
+          { label: "Home" },
           { label: "Overview" },
           { label: "Academic Calendar & Schedule" },
         ]}
@@ -999,7 +999,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
         <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center justify-between text-xs text-rose-800 dark:text-rose-300">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>Failed to synchronize calendar sync stream with Keycloak SSO.</span>
+            <span>Calendar updates are temporarily unavailable. Please try again shortly.</span>
           </div>
           <button
             onClick={() => setHasSimulatedError(false)}

@@ -89,7 +89,7 @@ export const QuizResultModal: React.FC<QuizResultModalProps> = ({
 
         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
           {isPassed
-            ? "Outstanding work! Your results have been officially recorded in your TiT gradebook."
+            ? "Outstanding work! Your results have been officially recorded in your gradebook."
             : "Your result has been recorded. Review the course material before your next attempt."}
         </p>
 

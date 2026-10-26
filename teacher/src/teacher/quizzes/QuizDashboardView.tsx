@@ -1075,7 +1075,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
                           No questions configured yet
                         </p>
                         <p className="text-xs text-slate-500 mt-1">
-                          Click &quot;Add Question&quot; above or use TiT AI to generate questions.
+                          Click &quot;Add Question&quot; above or use the question builder to
+                          generate questions.
                         </p>
                       </div>
                     ) : (
@@ -1714,8 +1715,8 @@ function quizToSliderDraft(quiz: Quiz): AiQuizDraft {
     difficulty: "MEDIUM",
     questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",
     creationMethod: "AI_GENERATED",
-    provider: "TiT Assessment Engine",
-    model: "assignment-service",
+    provider: "Automated question builder",
+    model: "Question builder",
     questions: quiz.questions.map((question, index) => ({
       questionText: question.question,
       questionType: "MULTIPLE_CHOICE_SINGLE_ANSWER",

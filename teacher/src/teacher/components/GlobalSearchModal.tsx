@@ -250,7 +250,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
 
         <div className="px-4 py-2 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span>Tip: Jump directly between views with the left sidebar or quick shortcuts.</span>
-          <span className="font-mono text-[11px]">TiT Enterprise v2.4</span>
+          <span className="text-[11px]">Teaching workspace</span>
         </div>
       </div>
     </div>
