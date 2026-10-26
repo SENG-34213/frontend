@@ -201,6 +201,7 @@ export function AdminLoginView({ onLogin }: Props) {
               </div>
               <button
                 type="submit"
+                aria-label={isSubmitting ? "Signing in…" : "Sign in to TiT"}
                 disabled={isSubmitting}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700"
               >
