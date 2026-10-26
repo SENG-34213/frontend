@@ -144,7 +144,11 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       {/* Brand & Workspace Header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 shrink-0">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <img src="/tit-favicon.svg" alt="TiT" className="h-9 w-9 shrink-0 rounded-lg" />
+          <img
+            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
+            alt="TiT"
+            className="h-9 w-9 shrink-0 rounded-lg"
+          />
           <div className="truncate">
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-slate-900 tracking-tight text-sm">TiT</span>
