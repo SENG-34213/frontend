@@ -48,7 +48,11 @@ function VerificationCodeInput({ value, onChange }: VerificationCodeInputProps) 
   }
 
   return (
-    <div className="flex justify-center gap-2 sm:gap-3" role="group" aria-label="6-digit verification code">
+    <div
+      className="flex justify-center gap-2 sm:gap-3"
+      role="group"
+      aria-label="6-digit verification code"
+    >
       {digits.map((digit, index) => (
         <input
           key={index}

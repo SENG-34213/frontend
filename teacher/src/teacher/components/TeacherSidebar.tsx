@@ -145,7 +145,9 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
       <div
         className={`relative flex h-16 items-center border-b border-slate-200 shrink-0 ${isCollapsed ? "justify-center px-2" : "justify-between px-4"}`}
       >
-        <div className={`flex items-center gap-2.5 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
+        <div
+          className={`flex items-center gap-2.5 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}
+        >
           <img
             src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
             alt="TiT"

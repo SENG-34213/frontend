@@ -393,7 +393,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">Question builder</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">
+                      Question builder
+                    </p>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       Move between questions without losing your work.
                     </p>
@@ -410,7 +412,10 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                   />
                 </div>
 
-                <div className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="Question navigator">
+                <div
+                  className="mt-4 flex gap-2 overflow-x-auto pb-1"
+                  aria-label="Question navigator"
+                >
                   {questions.map((item, index) => {
                     const isComplete = Boolean(
                       item.questionText.trim() && item.options.every((option) => option.trim()),
@@ -474,7 +479,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                       <textarea
                         rows={3}
                         value={question.questionText}
-                        onChange={(event) => updateQuestion(index, { questionText: event.target.value })}
+                        onChange={(event) =>
+                          updateQuestion(index, { questionText: event.target.value })
+                        }
                         placeholder="Write a clear question for your students..."
                         className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                       />
@@ -482,7 +489,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
 
                     <div className="mt-4">
                       <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Answer choices</p>
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          Answer choices
+                        </p>
                         <p className="text-[10px] text-slate-400">Select the correct answer</p>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
@@ -497,10 +506,14 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                                 type="radio"
                                 name={`correct-${index}`}
                                 checked={isCorrect}
-                                onChange={() => updateQuestion(index, { correctOption: optionIndex })}
+                                onChange={() =>
+                                  updateQuestion(index, { correctOption: optionIndex })
+                                }
                                 className="h-4 w-4 accent-emerald-600"
                               />
-                              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${isCorrect ? "bg-emerald-600 text-white" : "bg-white text-slate-500 dark:bg-slate-700 dark:text-slate-300"}`}>
+                              <span
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${isCorrect ? "bg-emerald-600 text-white" : "bg-white text-slate-500 dark:bg-slate-700 dark:text-slate-300"}`}
+                              >
                                 {String.fromCharCode(65 + optionIndex)}
                               </span>
                               <input
@@ -528,7 +541,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                           type="number"
                           min={1}
                           value={question.marks}
-                          onChange={(event) => updateQuestion(index, { marks: Number(event.target.value) })}
+                          onChange={(event) =>
+                            updateQuestion(index, { marks: Number(event.target.value) })
+                          }
                           className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                         />
                       </label>
@@ -536,7 +551,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                         Explanation <span className="font-normal text-slate-400">(optional)</span>
                         <input
                           value={question.explanation}
-                          onChange={(event) => updateQuestion(index, { explanation: event.target.value })}
+                          onChange={(event) =>
+                            updateQuestion(index, { explanation: event.target.value })
+                          }
                           placeholder="Explain the answer for review..."
                           className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                         />
@@ -546,7 +563,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                     <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
                       <button
                         disabled={index === 0}
-                        onClick={() => setActiveQuestionIndex((current) => Math.max(0, current - 1))}
+                        onClick={() =>
+                          setActiveQuestionIndex((current) => Math.max(0, current - 1))
+                        }
                         className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -560,7 +579,11 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                         className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700"
                       >
                         {index === questions.length - 1 ? "Add next question" : "Next question"}
-                        {index === questions.length - 1 ? <Plus className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        {index === questions.length - 1 ? (
+                          <Plus className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
                       </button>
                     </div>
                   </div>
