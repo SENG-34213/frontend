@@ -44,6 +44,11 @@ import { mapBackendCourse, type BackendCourse } from "../teacher/api/courseApi";
 import { useTeacherStudents } from "../teacher/hooks/useTeacherStudents";
 import { getCourseAssignments, type BackendAssignment } from "../teacher/api/assignmentApi";
 import { getTeacherDashboard, type TeacherDashboardData } from "../teacher/api/dashboardApi";
+import {
+  getPortalPath,
+  getPortalPathSegments,
+  getRouteFromPortalPath,
+} from "../../../shared/navigation/portalNavigation";
 
 export default function App() {
   const [session, setSession] = useState<AuthSession | null>(null);
@@ -51,6 +56,7 @@ export default function App() {
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
   const restoreStartedRef = useRef(false);
   const [currentTab, setCurrentTab] = useState<NavigationTab>("dashboard");
+  const [attendanceSessionId, setAttendanceSessionId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -89,8 +95,13 @@ export default function App() {
       "settings",
     ]);
     const urlTab = new URLSearchParams(window.location.search).get("tab");
+    const pathTab = getRouteFromPortalPath(window.location.pathname, validTabs);
+    const pathSegments = getPortalPathSegments(window.location.pathname);
     const savedTab = window.localStorage.getItem("teacher-current-tab");
-    if (urlTab && validTabs.has(urlTab as NavigationTab)) {
+    if (pathTab && validTabs.has(pathTab as NavigationTab)) {
+      setCurrentTab(pathTab as NavigationTab);
+      setAttendanceSessionId(pathTab === "attendance" ? (pathSegments[1] ?? null) : null);
+    } else if (urlTab && validTabs.has(urlTab as NavigationTab)) {
       setCurrentTab(urlTab as NavigationTab);
     } else if (savedTab && validTabs.has(savedTab as NavigationTab)) {
       setCurrentTab(savedTab as NavigationTab);
@@ -100,10 +111,16 @@ export default function App() {
   useEffect(() => {
     if (!historyReadyRef.current) {
       const url = new URL(window.location.href);
-      // Keep legacy ?tab=... links working, but remove the implementation detail
-      // from the visible URL after the initial view has been resolved.
       url.searchParams.delete("tab");
-      window.history.replaceState({ portal: "teacher", tab: currentTab }, "", url);
+      url.pathname =
+        currentTab === "attendance" && attendanceSessionId
+          ? `${getPortalPath(currentTab)}/${encodeURIComponent(attendanceSessionId)}`
+          : getPortalPath(currentTab);
+      window.history.replaceState(
+        { portal: "teacher", tab: currentTab, attendanceSessionId },
+        "",
+        url,
+      );
       historyReadyRef.current = true;
       return;
     }
@@ -114,24 +131,59 @@ export default function App() {
     }
 
     const url = new URL(window.location.href);
-    if (window.history.state?.tab === currentTab) return;
+    const targetPath =
+      currentTab === "attendance" && attendanceSessionId
+        ? `${getPortalPath(currentTab)}/${encodeURIComponent(attendanceSessionId)}`
+        : getPortalPath(currentTab);
+    if (url.pathname === targetPath && !url.searchParams.has("tab")) return;
     url.searchParams.delete("tab");
-    window.history.pushState({ portal: "teacher", tab: currentTab }, "", url);
-  }, [currentTab]);
+    url.pathname = targetPath;
+    window.history.pushState({ portal: "teacher", tab: currentTab, attendanceSessionId }, "", url);
+  }, [attendanceSessionId, currentTab]);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const stateTab = typeof event.state?.tab === "string" ? event.state.tab : null;
       const urlTab = new URLSearchParams(window.location.search).get("tab");
-      const nextTab = stateTab || urlTab;
+      const validTabs = new Set<NavigationTab>([
+        "dashboard",
+        "calendar",
+        "notifications",
+        "courses",
+        "curriculum",
+        "students",
+        "attendance",
+        "materials",
+        "assignments",
+        "grading-workspace",
+        "quizzes",
+        "exams",
+        "grades",
+        "analytics",
+        "messages",
+        "profile",
+        "settings",
+      ]);
+      const pathTab = getRouteFromPortalPath(window.location.pathname, validTabs);
+      const pathSegments = getPortalPathSegments(window.location.pathname);
+      const nextTab = stateTab || pathTab || urlTab;
       if (!nextTab) return;
       browserBackRef.current = true;
       if (urlTab) {
         const cleanUrl = new URL(window.location.href);
         cleanUrl.searchParams.delete("tab");
-        window.history.replaceState({ portal: "teacher", tab: nextTab }, "", cleanUrl);
+        cleanUrl.pathname =
+          nextTab === "attendance" && pathSegments[1]
+            ? `${getPortalPath(nextTab)}/${encodeURIComponent(pathSegments[1])}`
+            : getPortalPath(nextTab);
+        window.history.replaceState(
+          { portal: "teacher", tab: nextTab, attendanceSessionId: pathSegments[1] ?? null },
+          "",
+          cleanUrl,
+        );
       }
       setCurrentTab(nextTab as NavigationTab);
+      setAttendanceSessionId(nextTab === "attendance" ? (pathSegments[1] ?? null) : null);
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
     window.addEventListener("popstate", handlePopState);
@@ -274,6 +326,7 @@ export default function App() {
       setSelectedCourseForDetail(null);
     }
     setCurrentTab(tab);
+    setAttendanceSessionId(tab === "attendance" ? (param ?? null) : null);
     window.localStorage.setItem("teacher-current-tab", tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -548,6 +601,8 @@ export default function App() {
               courses={courses}
               backendCourses={teacherCourses.courses}
               students={teacherStudents.students}
+              selectedSessionId={attendanceSessionId}
+              onSessionChange={(sessionId) => setAttendanceSessionId(sessionId)}
             />
           )}
 

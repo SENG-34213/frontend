@@ -27,6 +27,7 @@ import { NotificationsView } from "./components/notifications/NotificationsView"
 import { ProfileView } from "./components/profile/ProfileView";
 import { SettingsView } from "./components/profile/SettingsView";
 import { X, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { getPortalPath, getRouteFromPortalPath } from "../../shared/navigation/portalNavigation";
 
 const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
   const { currentView, isSidebarCollapsed, toastMessage, clearToast, setCurrentView } =
@@ -59,11 +60,19 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
 
     if (!historyReadyRef.current) {
       const urlView = new URLSearchParams(window.location.search).get("view");
-      if (urlView && validViews.has(urlView) && urlView !== currentView) {
+      const pathView = getRouteFromPortalPath(
+        window.location.pathname,
+        new Set([...validViews, "courses"]),
+      );
+      const resolvedPathView = pathView === "courses" ? "my-courses" : pathView;
+      if (resolvedPathView && resolvedPathView !== currentView) {
+        setCurrentView(resolvedPathView as Parameters<typeof setCurrentView>[0]);
+      } else if (urlView && validViews.has(urlView) && urlView !== currentView) {
         setCurrentView(urlView as Parameters<typeof setCurrentView>[0]);
       } else {
         const url = new URL(window.location.href);
-        url.searchParams.set("view", currentView);
+        url.searchParams.delete("view");
+        url.pathname = getPortalPath(currentView, { "my-courses": "courses" });
         window.history.replaceState({ portal: "student", view: currentView }, "", url);
       }
       historyReadyRef.current = true;
@@ -76,8 +85,10 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     }
 
     const url = new URL(window.location.href);
-    if (url.searchParams.get("view") === currentView) return;
-    url.searchParams.set("view", currentView);
+    const targetPath = getPortalPath(currentView, { "my-courses": "courses" });
+    if (url.pathname === targetPath && !url.searchParams.has("view")) return;
+    url.searchParams.delete("view");
+    url.pathname = targetPath;
     window.history.pushState({ portal: "student", view: currentView }, "", url);
   }, [currentView, setCurrentView]);
 
@@ -85,9 +96,33 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     const handlePopState = (event: PopStateEvent) => {
       const stateView = typeof event.state?.view === "string" ? event.state.view : null;
       const urlView = new URLSearchParams(window.location.search).get("view");
-      const nextView = stateView || urlView;
+      const pathView = getRouteFromPortalPath(
+        window.location.pathname,
+        new Set([
+          "dashboard",
+          "courses",
+          "enrollments",
+          "materials",
+          "assignments",
+          "quizzes",
+          "examinations",
+          "grades",
+          "calendar",
+          "messages",
+          "notifications",
+          "profile",
+          "settings",
+        ]),
+      );
+      const nextView = stateView || (pathView === "courses" ? "my-courses" : pathView) || urlView;
       if (!nextView) return;
       browserBackRef.current = true;
+      if (urlView || pathView) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("view");
+        url.pathname = getPortalPath(nextView, { "my-courses": "courses" });
+        window.history.replaceState({ portal: "student", view: nextView }, "", url);
+      }
       setCurrentView(nextView as Parameters<typeof setCurrentView>[0]);
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
