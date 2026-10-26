@@ -39,6 +39,8 @@ export interface Course {
   id: string;
   code: string;
   title: string;
+  gradeId?: string;
+  gradeName?: string;
   courseThumbnail?: string;
   description: string;
   category: string;
@@ -166,6 +168,7 @@ export interface Quiz {
   id: string;
   courseId: string;
   courseCode: string;
+  courseTitle?: string;
   title: string;
   description: string;
   durationMinutes: number;

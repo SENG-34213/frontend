@@ -143,7 +143,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
       {isSaved && (
         <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Profile contact preferences successfully saved in PostgreSQL identity store.</span>
+          <span>Profile contact preferences saved successfully.</span>
         </div>
       )}
 
@@ -185,7 +185,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Keycloak Realm:</span>
+                <span className="text-slate-400">Account access:</span>
                 <span className="font-mono text-slate-600 dark:text-slate-400">mentify</span>
               </div>
             </div>

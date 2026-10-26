@@ -3,8 +3,6 @@ import {
   Search,
   Calendar,
   Bell,
-  Sun,
-  Moon,
   Menu,
   ChevronRight,
   User,
@@ -16,6 +14,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { StudentView } from "../../types";
+import { ThemeToggle } from "../../../../shared/theme/ThemeToggle";
 
 interface TopNavbarProps {
   onMobileMenuOpen: () => void;
@@ -64,7 +63,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
   const profileRef = useRef<HTMLDivElement>(null);
 
   const unreadNotifs = notifications.filter((n) => !n.read);
-  const viewInfo = VIEW_TITLES[currentView] || { title: "Portal", category: "TiT" };
+  const viewInfo = VIEW_TITLES[currentView] || { title: "Portal", category: "Workspace" };
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -100,7 +99,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
             onClick={() => setCurrentView("dashboard")}
             className="hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
-            TiT
+            Home
           </button>
           <ChevronRight className="h-3 w-3 text-slate-400" />
           <span className="hidden sm:inline text-slate-600 dark:text-slate-300">
@@ -235,14 +234,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ onMobileMenuOpen, onLogout
           )}
         </div>
 
-        {/* Theme Toggle Button */}
-        <button
-          onClick={toggleTheme}
-          aria-label={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
-        >
-          {theme === "light" ? <Moon className="h-4.5 w-4.5" /> : <Sun className="h-4.5 w-4.5" />}
-        </button>
+        <ThemeToggle isDarkMode={theme === "dark"} onToggle={toggleTheme} />
 
         {/* Profile Avatar & Dropdown */}
         <div className="relative" ref={profileRef}>

@@ -74,7 +74,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   currentRoute,
   onNavigate,
   role,
-  pendingInvitationsCount = 12,
+  pendingInvitationsCount = 0,
   unreadNotificationsCount = 2,
   isOpenMobile = false,
   onCloseMobile,
@@ -171,9 +171,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 select-none">
       {/* Brand Header */}
       <div
-        className={`flex items-center justify-between h-16 border-b border-slate-200 dark:border-slate-800 shrink-0 ${compact ? "px-3" : "px-5"}`}
+        className={`relative flex h-16 items-center border-b border-slate-200 dark:border-slate-800 shrink-0 ${compact ? "justify-center px-2" : "justify-between px-5"}`}
       >
-        <div className="flex items-center gap-2.5">
+        <div className={`flex items-center gap-2.5 ${compact ? "justify-center" : ""}`}>
           <img
             src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
             alt="TiT"
@@ -181,9 +181,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           />
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white">
-                TiT
-              </span>
               {!compact && (
                 <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                   Admin
@@ -199,7 +196,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {onToggleCollapse && !isOpenMobile && (
           <button
             onClick={onToggleCollapse}
-            className="hidden md:block p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className={`hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 md:block ${compact ? "absolute right-2" : ""}`}
             title={compact ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={compact ? "Expand sidebar" : "Collapse sidebar"}
           >

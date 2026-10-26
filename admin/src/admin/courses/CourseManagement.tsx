@@ -366,8 +366,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
       (teacher) => teacherAssignmentId(teacher) === formData.assignedTeacherId,
     );
     if (!formData.assignedTeacherId || !selectedTeacher?.keycloakUserId) {
-      errors.assignedTeacherId =
-        "Select a teacher with a valid Keycloak identity before creating the course";
+      errors.assignedTeacherId = "Select a teacher before creating the course";
     }
 
     setFormErrors(errors);
@@ -634,9 +633,8 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                 Grade Requirement Notice
               </p>
               <p className="text-amber-700 dark:text-amber-400 mt-0.5">
-                Every course in the TiT backend must link to an existing Grade ID to inherit its
-                monthly fee. Please define at least one Grade level before creating new academic
-                courses.
+                Every course must link to an existing grade to inherit its monthly fee. Please
+                define at least one Grade level before creating new academic courses.
               </p>
             </div>
           </div>
@@ -1857,7 +1855,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               <div className="space-y-2">
                 {courseMaterials.length === 0 ? (
                   <p className="py-8 text-center text-slate-400">
-                    No learning materials uploaded to AWS S3 yet.
+                    No learning materials uploaded yet.
                   </p>
                 ) : (
                   courseMaterials.map((mat) => (

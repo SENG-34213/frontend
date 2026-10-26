@@ -1047,7 +1047,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
         <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center justify-between text-xs text-rose-800 dark:text-rose-300">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>Failed to synchronize calendar sync stream with Keycloak SSO.</span>
+            <span>Calendar updates are temporarily unavailable. Please try again shortly.</span>
           </div>
           <button
             onClick={() => setHasSimulatedError(false)}
@@ -2296,7 +2296,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   <span>{selectedEvent.location}</span>
                 </div>
                 <span className="text-[10.5px] text-slate-400 block">
-                  Seating Capacity: Seating capacity is not provided by the calendar service.
+                  Seating Capacity: Seating capacity has not been provided.
                 </span>
               </div>
             </div>

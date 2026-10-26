@@ -142,8 +142,12 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
   const sidebarContent = (
     <div className="h-full flex flex-col bg-white border-r border-slate-200 selection:bg-indigo-100">
       {/* Brand & Workspace Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 shrink-0">
-        <div className="flex items-center gap-2.5 overflow-hidden">
+      <div
+        className={`relative flex h-16 items-center border-b border-slate-200 shrink-0 ${isCollapsed ? "justify-center px-2" : "justify-between px-4"}`}
+      >
+        <div
+          className={`flex items-center gap-2.5 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}
+        >
           <img
             src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
             alt="TiT"
@@ -151,7 +155,6 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           />
           <div className="truncate">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-slate-900 tracking-tight text-sm">TiT</span>
               {!isCollapsed && (
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">
                   Teacher
@@ -168,7 +171,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
         <div className="hidden lg:block">
           <button
             onClick={onToggleCollapse}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+            className={`rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 ${isCollapsed ? "absolute right-2" : ""}`}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (

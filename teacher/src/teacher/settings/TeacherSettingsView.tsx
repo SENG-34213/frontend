@@ -33,6 +33,7 @@ import {
   updateCommunicationGroup,
   type CommunicationGroup,
 } from "../api/communicationApi";
+import { formatTeacherError } from "../utils/userFacingError";
 import { getSession } from "../auth/authStorage";
 
 type SettingsTab =
@@ -284,7 +285,9 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({
       showNotice("Course communication group saved.");
     } catch (requestError) {
       setError(
-        requestError instanceof Error ? requestError.message : "Unable to save group settings.",
+        formatTeacherError(requestError, "Unable to save group settings.", {
+          courseName: selectedGroup?.courseName,
+        }),
       );
     } finally {
       setIsGroupSaving(false);

@@ -42,7 +42,7 @@ export const AuditAndActivity: React.FC<AuditAndActivityProps> = ({ logs }) => {
     <div className="space-y-6">
       <PageHeader
         title="Audit Logs & Activity"
-        description="Immutable compliance event stream across Keycloak Auth, AWS S3 Material Service, and AI inference executions."
+        description="A clear record of important activity across the learning platform."
         breadcrumbs={[
           { label: "Admin" },
           { label: "Administration" },
@@ -69,11 +69,11 @@ export const AuditAndActivity: React.FC<AuditAndActivityProps> = ({ logs }) => {
           className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
         >
           <option value="ALL">All Event Services</option>
-          <option value="USER_REGISTRATION">User Registration Service</option>
-          <option value="KEYCLOAK_AUTH">Keycloak Auth Realm</option>
-          <option value="MATERIAL_SERVICE">AWS S3 Material Service</option>
-          <option value="AI_SERVICE">TiT AI Service</option>
-          <option value="COURSE_MANAGEMENT">Course Service</option>
+          <option value="USER_REGISTRATION">User registration</option>
+          <option value="KEYCLOAK_AUTH">Account access</option>
+          <option value="MATERIAL_SERVICE">Learning materials</option>
+          <option value="AI_SERVICE">Automated assistance</option>
+          <option value="COURSE_MANAGEMENT">Course management</option>
         </select>
       </div>
 

@@ -45,6 +45,7 @@ interface AdminLayoutProps {
   onDismissToast: (id: string) => void;
   onQuickAction: (action: string) => void;
   onLogout: () => void;
+  pendingInvitationsCount: number;
   children: React.ReactNode;
 }
 
@@ -60,6 +61,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onDismissToast,
   onQuickAction,
   onLogout,
+  pendingInvitationsCount,
   children,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -122,13 +124,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       title: "Attendance Management & Sessions",
       category: "Academic Management",
     },
-    { id: "materials", title: "Learning Materials (AWS S3)", category: "Platform Operations" },
+    { id: "materials", title: "Learning Materials", category: "Platform Operations" },
     { id: "calendar", title: "Academic Calendar & Schedule", category: "Overview" },
     { id: "communication", title: "Broadcast Communication", category: "Platform Operations" },
     { id: "ai-assistant", title: "TiT AI Admin Assistant", category: "Platform Operations" },
     { id: "reports", title: "Institutional Reports & Exports", category: "Platform Operations" },
     { id: "audit", title: "System Audit Logs & Security Stream", category: "Administration" },
-    { id: "settings", title: "Platform & Keycloak Settings", category: "Administration" },
+    { id: "settings", title: "Platform Settings", category: "Administration" },
     { id: "profile", title: "Alex Mercer Profile", category: "Administration" },
   ];
 
@@ -149,7 +151,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         currentRoute={currentRoute}
         onNavigate={onNavigate}
         role={role}
-        pendingInvitationsCount={12}
+        pendingInvitationsCount={pendingInvitationsCount}
         unreadNotificationsCount={notifications.filter((n) => !n.read).length}
         isOpenMobile={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}

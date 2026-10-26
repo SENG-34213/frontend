@@ -80,6 +80,7 @@ import {
   getPortalPathSegments,
   getRouteFromPortalPath,
 } from "../../shared/navigation/portalNavigation";
+import { installNumberInputBehavior } from "../../shared/forms/numberInputBehavior";
 import {
   createEnrollment,
   deleteEnrollment,
@@ -153,6 +154,8 @@ function notificationRoute(type?: string): AdminRoute {
 }
 
 export default function App() {
+  useEffect(() => installNumberInputBehavior(), []);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>("dashboard");
@@ -848,7 +851,7 @@ export default function App() {
         actorRole: role,
         category: "KEYCLOAK_AUTH",
         action: "RESEND_INVITATION",
-        details: `Dispatched Keycloak credential email to ${email}`,
+        details: `Dispatched account activation email to ${email}`,
         ipAddress: "192.168.10.45",
         payloadJson: JSON.stringify({ email, targetRole, realm: "mentify-prod" }, null, 2),
       };
@@ -1100,11 +1103,7 @@ export default function App() {
 
   const handleUploadMaterial = (newMat: LearningMaterial) => {
     setMaterials((prev) => [newMat, ...prev]);
-    addToast(
-      "success",
-      "Material Uploaded",
-      `Synchronized ${newMat.title} to AWS S3 bucket repository.`,
-    );
+    addToast("success", "Material Uploaded", `${newMat.title} was uploaded successfully.`);
   };
 
   const handleAddEvent = async (request: Parameters<typeof createCalendarEvent>[0]) => {
@@ -1230,6 +1229,7 @@ export default function App() {
       onDismissToast={handleDismissToast}
       onQuickAction={handleQuickAction}
       onLogout={handleLogout}
+      pendingInvitationsCount={kpis.pendingInvitations}
     >
       {/* Route Views */}
       {currentRoute === "dashboard" && (

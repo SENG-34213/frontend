@@ -1591,7 +1591,7 @@ function PreviewModal({
               <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                 <div>
                   <span className="block text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                    TiT Educational Material Viewer
+                    Educational Material Viewer
                   </span>
                   <h2 className="mt-1 text-base font-bold sm:text-lg">{material.title}</h2>
                 </div>

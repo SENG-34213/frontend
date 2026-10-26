@@ -3,8 +3,6 @@ import {
   Search,
   Bell,
   Sparkles,
-  Sun,
-  Moon,
   ChevronDown,
   UserPlus,
   GraduationCap,
@@ -22,6 +20,7 @@ import { AdminRole, NotificationItem } from "../types";
 import { AdminRoute } from "./AdminSidebar";
 import { UserAvatar } from "./UserAvatar";
 import type { CurrentAdminProfile } from "../api/profileApi";
+import { ThemeToggle } from "../../../../shared/theme/ThemeToggle";
 
 interface AdminNavbarProps {
   currentRoute: AdminRoute;
@@ -329,25 +328,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
           )}
         </div>
 
-        {/* Theme Toggle Button */}
-        <button
-          onClick={onToggleTheme}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-xs"
-          title={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
-          aria-label={isDarkMode ? "Switch to Light Theme" : "Switch to Dark Theme"}
-        >
-          {isDarkMode ? (
-            <>
-              <Sun className="w-3.5 h-3.5 text-amber-500" />
-              <span className="hidden sm:inline">Light Mode</span>
-            </>
-          ) : (
-            <>
-              <Moon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span className="hidden sm:inline">Dark Mode</span>
-            </>
-          )}
-        </button>
+        <ThemeToggle isDarkMode={isDarkMode} onToggle={onToggleTheme} />
 
         {/* User Profile Dropdown */}
         <div className="relative" ref={userMenuRef}>

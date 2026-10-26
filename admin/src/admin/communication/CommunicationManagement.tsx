@@ -39,7 +39,7 @@ export const CommunicationManagement: React.FC = () => {
       id: "ann-2",
       title: "Scheduled LMS System Maintenance Window",
       content:
-        "Keycloak SSO authentication realm will perform routine certificate rotation on Sunday at 02:00 AM UTC. No coursework disruption expected.",
+        "A planned security update will run on Sunday at 02:00 AM UTC. No coursework disruption is expected.",
       audience: "All Users",
       author: "Alex Mercer (Platform Operations)",
       date: "Oct 14, 2026 · 04:15 PM",

@@ -704,7 +704,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     </p>
                   </div>
                   <div className="text-xs text-slate-600">
-                    Question paper blueprint will be finalized in the TiT Examination Vault 48 hours
+                    Question paper blueprint will be finalized in the examination workspace 48 hours
                     prior to start.
                   </div>
                 </div>

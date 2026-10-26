@@ -438,7 +438,9 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                   <p className="text-sm font-bold text-slate-900">
                     {studentState.isLoading ? "—" : enrolledStudents.length} students
                   </p>
-                  <p className="text-xs text-slate-500">Roster data from the course service.</p>
+                  <p className="text-xs text-slate-500">
+                    Current students enrolled in this course.
+                  </p>
                 </div>
               </div>
 

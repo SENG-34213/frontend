@@ -5,6 +5,8 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:
   /\/$/,
   "",
 );
+const UUID_PATTERN =
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 
 function apiUrl(path: string) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -52,7 +54,7 @@ function safeErrorMessage(body: any, status: number): string {
       ? "The service is temporarily unavailable. Please try again shortly."
       : "Something went wrong. Please try again later.";
   }
-  return raw || `Request failed with status ${status}`;
+  return raw.replace(UUID_PATTERN, "the selected record") || `Request failed with status ${status}`;
 }
 
 let refreshSessionPromise: Promise<AuthSession | null> | null = null;
