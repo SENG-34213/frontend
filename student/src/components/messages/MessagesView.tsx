@@ -1,5 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Download, Eye, FileText, Search, Send, User } from "lucide-react";
+import {
+  Download,
+  Eye,
+  FileText,
+  Megaphone,
+  MessageSquare,
+  Search,
+  Send,
+  User,
+} from "lucide-react";
 import { getCommunicationAttachmentDownload } from "../../api/student";
 import { useStudent } from "../../context/StudentContext";
 import type { Message } from "../../types";
@@ -175,46 +184,44 @@ export const MessagesView: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Messages & Course Communication
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Communicate directly with course professors, teaching assistants, and view official
-            lecture announcements
-          </p>
+    <div className="flex h-[calc(100dvh-7rem)] min-h-0 w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      {/* Compact communication header, matching the teacher portal workspace. */}
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-6 dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+            Messages &amp; Course Communication
+          </h2>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 text-xs font-semibold dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-2xs dark:bg-slate-800">
           <button
+            type="button"
             onClick={() => setActiveTab("MESSAGES")}
-            className={`rounded-lg px-3.5 py-1.5 transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
               activeTab === "MESSAGES"
-                ? "bg-indigo-600 text-white shadow-2xs"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                ? "bg-indigo-600 text-white"
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >
-            Course Groups
+            <MessageSquare className="h-3.5 w-3.5" /> Messages
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("ANNOUNCEMENTS")}
-            className={`rounded-lg px-3.5 py-1.5 transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
               activeTab === "ANNOUNCEMENTS"
-                ? "bg-indigo-600 text-white shadow-2xs"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                ? "bg-indigo-600 text-white"
+                : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"
             }`}
           >
-            Announcements ({announcements.length})
+            <Megaphone className="h-3.5 w-3.5" /> Announcements ({announcements.length})
           </button>
         </div>
+        <span className="hidden text-xs font-mono text-slate-400 sm:inline">Secure messaging</span>
       </div>
 
       {activeTab === "MESSAGES" ? (
-        <div className="grid h-[calc(100dvh-11rem)] min-h-[580px] grid-cols-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900 lg:min-h-0 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[18rem_minmax(0,1fr)]">
           {/* Conversation Sidebar (1 col) */}
           <div className="flex min-h-0 flex-col border-r border-slate-200 dark:border-slate-800">
             <div className="border-b border-slate-100 p-3 dark:border-slate-800">
@@ -415,7 +422,7 @@ export const MessagesView: React.FC = () => {
         </div>
       ) : (
         /* Announcements View */
-        <div className="space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50 p-6 pr-5 dark:bg-slate-950/30">
           {!announcements.length && (
             <EmptyState
               compact

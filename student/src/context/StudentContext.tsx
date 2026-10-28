@@ -186,7 +186,7 @@ export const StudentProvider: React.FC<{
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messagePages, setMessagePages] = useState<Record<string, number>>({});
-  const announcements: Announcement[] = [];
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [attendanceSummaries, setAttendanceSummaries] = useState<AttendanceSummary[]>([]);
@@ -248,6 +248,7 @@ export const StudentProvider: React.FC<{
       setMaterials(workspace.materials);
       setCalendarEvents(workspace.calendarEvents);
       setNotifications(workspace.notifications);
+      setAnnouncements(workspace.announcements);
       setUnreadNotificationCount(workspace.unreadNotificationCount);
       setAttendanceSummaries(workspace.attendanceSummaries);
       setConversations(workspace.conversations);

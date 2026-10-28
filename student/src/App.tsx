@@ -209,7 +209,11 @@ const MainLayout: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       >
         <TopNavbar onMobileMenuOpen={() => setMobileMenuOpen(true)} onLogout={onLogout} />
 
-        <main className="flex-1 px-4 py-6 sm:px-8 max-w-7xl w-full mx-auto">
+        <main
+          className={`flex-1 w-full px-4 py-6 sm:px-8 mx-auto ${
+            currentView === "messages" ? "max-w-none" : "max-w-7xl"
+          }`}
+        >
           {renderCurrentView()}
         </main>
       </div>

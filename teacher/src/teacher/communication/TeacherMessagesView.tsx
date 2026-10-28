@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, FileText, Plus, Search, Send, Settings, Users, X } from "lucide-react";
+import {
+  Bell,
+  Eye,
+  FileText,
+  Megaphone,
+  Plus,
+  Search,
+  Send,
+  Settings,
+  Users,
+  X,
+} from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import type { Student } from "../types";
 import { useCommunicationRealtime } from "../api/communicationRealtime";
@@ -26,6 +37,9 @@ import {
 import { formatTeacherError } from "../utils/userFacingError";
 import { CommunicationAttachmentPicker } from "../components/CommunicationAttachmentPicker";
 import { ConfirmModal, TextInputModal } from "../components/ActionModal";
+import { EmptyState } from "../../../../shared/ui/EmptyState";
+import { getAnnouncements, type BackendAnnouncement } from "../api/notificationApi";
+import { formatNotificationTime } from "../../../../shared/notifications/notificationFormat";
 
 interface TeacherMessagesViewProps {
   backendCourses: BackendCourse[];
@@ -166,6 +180,10 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
   teacherProfileId,
 }) => {
   const [groups, setGroups] = useState<CommunicationGroup[]>([]);
+  const [activeSection, setActiveSection] = useState<"MESSAGES" | "ANNOUNCEMENTS">("MESSAGES");
+  const [announcements, setAnnouncements] = useState<BackendAnnouncement[]>([]);
+  const [isAnnouncementLoading, setIsAnnouncementLoading] = useState(false);
+  const [announcementError, setAnnouncementError] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [messagesByGroup, setMessagesByGroup] = useState<Record<string, CommunicationMessage[]>>(
     {},
@@ -286,6 +304,50 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
 
     void loadGroups(true);
     const intervalId = window.setInterval(() => void loadGroups(false), 15_000);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    let disposed = false;
+    let requestInFlight = false;
+
+    const loadAnnouncements = async (showLoading: boolean) => {
+      if (disposed || requestInFlight || document.visibilityState !== "visible") return;
+      requestInFlight = true;
+      const controller = new AbortController();
+      if (showLoading) {
+        setIsAnnouncementLoading(true);
+        setAnnouncementError(null);
+      }
+      try {
+        const items = await getAnnouncements(0, 100, controller.signal);
+        if (!disposed) setAnnouncements(items);
+      } catch (requestError: unknown) {
+        if (!disposed && showLoading) {
+          setAnnouncementError(
+            requestError instanceof Error ? requestError.message : "Announcements failed to load.",
+          );
+        }
+      } finally {
+        if (showLoading && !disposed) setIsAnnouncementLoading(false);
+        requestInFlight = false;
+      }
+    };
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") void loadAnnouncements(false);
+    };
+
+    void loadAnnouncements(true);
+    const intervalId = window.setInterval(() => void loadAnnouncements(false), 15_000);
     document.addEventListener("visibilitychange", handleVisibilityOrFocus);
     window.addEventListener("focus", handleVisibilityOrFocus);
 
@@ -569,16 +631,32 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
             Direct &amp; Group Messages
           </span>
         </div>
+        <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setActiveSection("MESSAGES")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold ${activeSection === "MESSAGES" ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-slate-100"}`}
+          >
+            <Bell className="h-3.5 w-3.5" /> Messages
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection("ANNOUNCEMENTS")}
+            className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold ${activeSection === "ANNOUNCEMENTS" ? "bg-indigo-600 text-white" : "text-slate-500 hover:bg-slate-100"}`}
+          >
+            <Megaphone className="h-3.5 w-3.5" /> Announcements
+          </button>
+        </div>
         <span className="text-xs text-slate-400 font-mono hidden sm:inline">Secure messaging</span>
       </div>
 
-      {(error || actionError || realtime.error) && (
+      {(error || actionError || realtime.error || announcementError) && (
         <div className="border-b border-rose-200 bg-rose-50 px-4 py-2 text-xs text-rose-700">
-          {error || actionError || realtime.error}
+          {error || actionError || realtime.error || announcementError}
         </div>
       )}
 
-      <div className="flex-1 flex overflow-hidden">
+      {activeSection === "MESSAGES" ? (
         <div className="flex-1 flex overflow-hidden">
           <aside className="w-80 border-r border-slate-200 flex flex-col shrink-0 bg-slate-50/40">
             <div className="p-3 border-b border-slate-200 flex items-center gap-2">
@@ -983,7 +1061,57 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
             )}
           </main>
         </div>
-      </div>
+      ) : (
+        <section className="flex-1 overflow-y-auto bg-slate-50 p-6">
+          <div className="mx-auto max-w-4xl space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Announcements</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Institutional announcements shared with teaching faculty.
+              </p>
+            </div>
+            {isAnnouncementLoading ? (
+              <p className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+                Loading announcements...
+              </p>
+            ) : announcements.length === 0 ? (
+              <EmptyState
+                compact
+                title="No announcements"
+                description="There are no announcements available right now."
+              />
+            ) : (
+              announcements.map((announcement) => (
+                <article
+                  key={announcement.id}
+                  className="space-y-3 rounded-xl border border-slate-200 bg-white p-5 shadow-2xs"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div>
+                      <div className="mb-1 flex items-center gap-2">
+                        <Megaphone className="h-4 w-4 text-indigo-600" />
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
+                          {announcement.audience === "ALL" ? "All users" : "Teaching faculty"}
+                        </span>
+                        {announcement.priority === "URGENT" && (
+                          <span className="rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-600">
+                            Urgent
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-900">{announcement.title}</h3>
+                    </div>
+                    <span className="text-[11px] text-slate-400">
+                      {formatNotificationTime(announcement.publishedAt || announcement.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-600">{announcement.content}</p>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
+      )}
       {preview && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
           <div className="flex max-h-[min(90vh,48rem)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
