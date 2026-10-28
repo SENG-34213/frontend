@@ -13,6 +13,20 @@ export type BackendNotification = {
   emailStatus?: string;
 };
 
+export type BackendAnnouncement = {
+  id: string;
+  title: string;
+  content: string;
+  audience?: "ALL" | "STUDENT" | "TEACHER" | "ADMIN";
+  priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  publishAt?: string | null;
+  expiresAt?: string | null;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  read?: boolean;
+};
+
 export type NotificationPage = {
   notifications: BackendNotification[];
   page: number;
@@ -67,4 +81,16 @@ export async function deleteNotification(notificationId: string) {
       method: "DELETE",
     },
   );
+}
+
+export async function getAnnouncements(page = 0, size = 100, signal?: AbortSignal) {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  const response = await apiRequest<ApiResponse<{ content: BackendAnnouncement[] }>>(
+    `/api/v1/notifications/announcements?${params.toString()}`,
+    { signal },
+  );
+  if (!response.data || !Array.isArray(response.data.content)) {
+    throw new Error(response.message || "The announcement service returned an invalid response.");
+  }
+  return response.data.content;
 }

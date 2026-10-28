@@ -1,6 +1,7 @@
 import { apiBlob, apiRequest, apiUpload } from "./client";
 import type {
   Assignment,
+  Announcement,
   AttendanceSummary,
   CalendarEvent,
   Course,
@@ -21,6 +22,31 @@ type ApiEnvelope<T> = { data?: T; message?: string };
 // return different envelopes while the contract is being consolidated.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type JsonRecord = Record<string, any>;
+
+type BackendAnnouncement = {
+  id: string;
+  title: string;
+  content: string;
+  priority?: string;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  read?: boolean;
+};
+
+function toAnnouncement(value: BackendAnnouncement): Announcement {
+  const priority = String(value.priority || "NORMAL").toUpperCase();
+  return {
+    id: idOf(value.id),
+    courseCode: "ALL",
+    courseTitle: "Institutional Announcement",
+    instructorName: "Institutional Communications",
+    instructorAvatar: "",
+    title: value.title,
+    content: value.content,
+    timestamp: idOf(value.publishedAt || value.createdAt),
+    priority: priority === "URGENT" ? "URGENT" : "NORMAL",
+  };
+}
 
 function dataOf<T>(response: ApiEnvelope<T> | T): T {
   return (
@@ -589,6 +615,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     calendarResponse,
     notificationResponse,
     unreadNotificationResponse,
+    announcementResponse,
     examResponse,
     upcomingExamResponse,
   ] = await Promise.allSettled([
@@ -599,6 +626,7 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
     apiRequest<unknown>("/api/v1/calendar/upcoming?limit=100"),
     apiRequest<unknown>("/api/v1/notifications?size=100"),
     apiRequest<unknown>("/api/v1/notifications/unread-count"),
+    apiRequest<unknown>("/api/v1/notifications/announcements?size=100"),
     apiRequest<unknown>("/api/v1/exams/me"),
     apiRequest<unknown>("/api/v1/exams/me/upcoming"),
   ]);
@@ -1042,6 +1070,10 @@ export async function loadStudentWorkspace(user: StudentUserSummary) {
       notificationResponse.status === "fulfilled"
         ? listOf<JsonRecord>(notificationResponse.value).map(toNotification)
         : [],
+    announcements:
+      announcementResponse.status === "fulfilled"
+        ? listOf<BackendAnnouncement>(announcementResponse.value).map(toAnnouncement)
+        : [],
     unreadNotificationCount:
       unreadNotificationResponse.status === "fulfilled"
         ? Number(dataOf<unknown>(unreadNotificationResponse.value) ?? 0)
@@ -1244,6 +1276,12 @@ export async function getUnreadNotificationCount() {
 
 export async function deleteNotification(id: string) {
   return apiRequest<unknown>(`/api/v1/notifications/${id}`, { method: "DELETE" });
+}
+
+export async function markAnnouncementRead(id: string) {
+  return apiRequest<unknown>(`/api/v1/notifications/announcements/${encodeURIComponent(id)}/read`, {
+    method: "PATCH",
+  });
 }
 
 export async function listCommunicationGroups() {
