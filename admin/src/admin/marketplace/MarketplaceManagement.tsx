@@ -215,7 +215,11 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
       <PageHeader
         title="Marketplace Management"
         description="Create, classify, price, and publish trusted digital learning resources for students."
-        breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Marketplace" }]}
+        breadcrumbs={[
+          { label: "Admin" },
+          { label: "Platform Operations" },
+          { label: "Marketplace" },
+        ]}
         actions={
           <button
             type="button"
@@ -426,7 +430,9 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                   >
                     {label(product.status)}
                   </span>
-                  <div className={`flex items-center gap-1 ${viewMode === "grid" ? "justify-end border-t border-slate-100 pt-3 dark:border-slate-800" : "justify-start md:justify-end"}`}>
+                  <div
+                    className={`flex items-center gap-1 ${viewMode === "grid" ? "justify-end border-t border-slate-100 pt-3 dark:border-slate-800" : "justify-start md:justify-end"}`}
+                  >
                     <button
                       onClick={() => {
                         setEditing(product);

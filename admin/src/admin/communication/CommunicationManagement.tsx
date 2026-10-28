@@ -38,7 +38,9 @@ export const CommunicationManagement: React.FC = () => {
   const [newPriority, setNewPriority] = useState<AnnouncementPriority>("NORMAL");
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<BackendAnnouncement | null>(null);
-  const [deletingAnnouncement, setDeletingAnnouncement] = useState<BackendAnnouncement | null>(null);
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState<BackendAnnouncement | null>(
+    null,
+  );
   const [isPublishing, setIsPublishing] = useState(false);
 
   const loadAnnouncements = async () => {
@@ -114,7 +116,9 @@ export const CommunicationManagement: React.FC = () => {
       setAnnouncements((current) => current.filter((item) => item.id !== announcement.id));
       setDeletingAnnouncement(null);
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete announcement.");
+      setError(
+        deleteError instanceof Error ? deleteError.message : "Unable to delete announcement.",
+      );
     }
   };
 
@@ -153,7 +157,9 @@ export const CommunicationManagement: React.FC = () => {
 
       {/* Announcements List */}
       <div className="space-y-4">
-        {isLoading && <div className="p-8 text-center text-sm text-slate-500">Loading announcements…</div>}
+        {isLoading && (
+          <div className="p-8 text-center text-sm text-slate-500">Loading announcements…</div>
+        )}
         {!isLoading && !announcements.length && !error && (
           <div className="p-8 text-center text-sm text-slate-500">No announcements yet.</div>
         )}

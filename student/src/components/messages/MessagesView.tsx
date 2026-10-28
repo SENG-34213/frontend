@@ -1,5 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Download, Eye, FileText, Megaphone, MessageSquare, Search, Send, User } from "lucide-react";
+import {
+  Download,
+  Eye,
+  FileText,
+  Megaphone,
+  MessageSquare,
+  Search,
+  Send,
+  User,
+} from "lucide-react";
 import { getCommunicationAttachmentDownload } from "../../api/student";
 import { useStudent } from "../../context/StudentContext";
 import type { Message } from "../../types";

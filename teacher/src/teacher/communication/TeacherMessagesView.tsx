@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Eye, FileText, Megaphone, Plus, Search, Send, Settings, Users, X } from "lucide-react";
+import {
+  Bell,
+  Eye,
+  FileText,
+  Megaphone,
+  Plus,
+  Search,
+  Send,
+  Settings,
+  Users,
+  X,
+} from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import type { Student } from "../types";
 import { useCommunicationRealtime } from "../api/communicationRealtime";
@@ -322,9 +333,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
       } catch (requestError: unknown) {
         if (!disposed && showLoading) {
           setAnnouncementError(
-            requestError instanceof Error
-              ? requestError.message
-              : "Announcements failed to load.",
+            requestError instanceof Error ? requestError.message : "Announcements failed to load.",
           );
         }
       } finally {
