@@ -188,9 +188,9 @@ export const MessagesView: React.FC = () => {
       {/* Compact communication header, matching the teacher portal workspace. */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-6 dark:border-slate-800 dark:bg-slate-900/80">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+          <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
             Messages &amp; Course Communication
-          </span>
+          </h2>
         </div>
 
         <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-2xs dark:bg-slate-800">
