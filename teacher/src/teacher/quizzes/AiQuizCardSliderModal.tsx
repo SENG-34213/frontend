@@ -63,6 +63,7 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
   const [description, setDescription] = useState(initialDescription);
   const [duration, setDuration] = useState(initialDuration);
   const [passMark, setPassMark] = useState(initialPassMark);
+  const [passMarkManuallyEdited, setPassMarkManuallyEdited] = useState(false);
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(initialEndTime);
   const [maxAttempts, setMaxAttempts] = useState(initialMaxAttempts);
@@ -72,6 +73,18 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
   const [error, setError] = useState("");
   const question = questions[currentIndex];
   const totalMarks = questions.reduce((sum, item) => sum + Number(item.marks || 0), 0);
+
+  useEffect(() => {
+    if (!passMarkManuallyEdited) {
+      setPassMark(Math.round(totalMarks * 0.8 * 100) / 100);
+    }
+  }, [totalMarks, passMarkManuallyEdited]);
+
+  const durationFromSchedule = (start: string, end: string) => {
+    if (!start || !end) return;
+    const minutes = Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+    if (Number.isFinite(minutes) && minutes > 0) setDuration(minutes);
+  };
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -255,7 +268,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                   type="number"
                   min={0}
                   value={passMark}
-                  onChange={(event) => setPassMark(Number(event.target.value))}
+                  onChange={(event) => {
+                    setPassMarkManuallyEdited(true);
+                    setPassMark(Number(event.target.value));
+                  }}
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
               </label>
@@ -283,7 +299,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                 <input
                   type="datetime-local"
                   value={startTime}
-                  onChange={(event) => setStartTime(event.target.value)}
+                  onChange={(event) => {
+                    setStartTime(event.target.value);
+                    durationFromSchedule(event.target.value, endTime);
+                  }}
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
               </label>
@@ -292,7 +311,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                 <input
                   type="datetime-local"
                   value={endTime}
-                  onChange={(event) => setEndTime(event.target.value)}
+                  onChange={(event) => {
+                    setEndTime(event.target.value);
+                    durationFromSchedule(startTime, event.target.value);
+                  }}
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
               </label>

@@ -1347,7 +1347,8 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           initialDescription={sliderPreviewQuiz.description}
           initialDuration={sliderPreviewQuiz.durationMinutes}
           initialPassMark={
-            sliderPreviewQuiz.passMark ?? Math.round(sliderPreviewQuiz.totalMarks * 0.6)
+            sliderPreviewQuiz.passMark ??
+            Math.round(sliderPreviewQuiz.totalMarks * 0.8 * 100) / 100
           }
           initialStartTime={sliderPreviewQuiz.startTime || ""}
           initialEndTime={sliderPreviewQuiz.endTime || ""}

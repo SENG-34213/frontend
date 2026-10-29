@@ -12,6 +12,7 @@ import { getModuleMaterials } from "../api/courseContentApi";
 import { useTeacherStudents } from "../hooks/useTeacherStudents";
 import { CourseThumbnailImage } from "../../components/CourseThumbnailImage";
 import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
+import { CreateQuizModal } from "../quizzes/CreateQuizModal";
 
 interface CourseDetailsViewProps {
   course: Course;
@@ -74,6 +75,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
   const [courseExamsLoading, setCourseExamsLoading] = useState(true);
   const [courseMaterialsLoading, setCourseMaterialsLoading] = useState(true);
   const [courseQuizzesError, setCourseQuizzesError] = useState<string | null>(null);
+  const [isCreateQuizOpen, setIsCreateQuizOpen] = useState(false);
   const [courseExamsError, setCourseExamsError] = useState<string | null>(null);
   const [courseMaterialsError, setCourseMaterialsError] = useState<string | null>(null);
   const [displayCourse, setDisplayCourse] = useState(course);
@@ -818,7 +820,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
 
           {/* 6. QUIZZES & EXAMS & GRADES TABS */}
           {(activeTab === "quizzes" || activeTab === "exams" || activeTab === "grades") && (
-            <div className="text-center py-8">
+            <div className={activeTab === "quizzes" ? "space-y-4 py-4" : "text-center py-8"}>
               {activeTab === "quizzes" || activeTab === "exams" ? (
                 <>
                   <p className="text-xs text-slate-500 mb-3">
@@ -838,16 +840,78 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                   Gradebook data is available in the dedicated grades module.
                 </p>
               )}
-              <button
-                onClick={() => onNavigate(activeTab as NavigationTab)}
-                className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs"
-              >
-                Open Full {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Dashboard
-              </button>
+              {activeTab === "quizzes" && (
+                <>
+                  {!courseQuizzesLoading && !courseQuizzesError && courseQuizzes.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-slate-200 py-8 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                      No quizzes have been created for this course yet.
+                    </div>
+                  )}
+                  {!courseQuizzesLoading && !courseQuizzesError && courseQuizzes.length > 0 && (
+                    <div className="space-y-2">
+                      {[...courseQuizzes]
+                        .sort((left, right) => {
+                          const leftTime = Date.parse(left.startTime || "");
+                          const rightTime = Date.parse(right.startTime || "");
+                          return (
+                            (Number.isFinite(leftTime) ? leftTime : Number.MAX_SAFE_INTEGER) -
+                            (Number.isFinite(rightTime) ? rightTime : Number.MAX_SAFE_INTEGER)
+                          );
+                        })
+                        .map((quiz) => (
+                          <div
+                            key={quiz.id}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left dark:border-slate-800 dark:bg-slate-900"
+                          >
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                {quiz.title}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {quiz.durationMinutes} min · {quiz.totalMarks} marks · {quiz.status}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => onNavigate("quizzes")}
+                              className="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-300"
+                            >
+                              View details
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setIsCreateQuizOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white shadow-xs hover:bg-indigo-700"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create Quiz
+                  </button>
+                </>
+              )}
+              {activeTab !== "quizzes" && (
+                <button
+                  onClick={() => onNavigate(activeTab as NavigationTab)}
+                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs"
+                >
+                  Open Full {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Dashboard
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
+      <CreateQuizModal
+        isOpen={isCreateQuizOpen}
+        courses={[displayCourse]}
+        initialCourseId={course.id}
+        onClose={() => setIsCreateQuizOpen(false)}
+        onQuizCreated={(quiz) => {
+          setCourseQuizzes((current) => [quiz, ...current.filter((item) => item.id !== quiz.id)]);
+          setIsCreateQuizOpen(false);
+        }}
+      />
     </div>
   );
 };
