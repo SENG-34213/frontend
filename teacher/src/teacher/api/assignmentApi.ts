@@ -58,6 +58,7 @@ export type AssignmentDraft = {
   allowLateSubmission: boolean;
   latePenaltyPercentage?: number;
   rubricItems?: { criterion: string; marks: number }[];
+  publishImmediately?: boolean;
 };
 
 export type AssignmentUpdateDraft = Omit<AssignmentDraft, "courseId" | "moduleId" | "lessonId">;
