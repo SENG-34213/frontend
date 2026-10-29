@@ -172,8 +172,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, publishImmediately = false) => {
+    e?.preventDefault();
     setIsSubmitting(true);
     setFormError("");
 
@@ -439,6 +439,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           rubricItems: rubricItems
             .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
             .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
+          publishImmediately,
         });
         const uploadResults = await Promise.allSettled(
           assignmentFiles.map((file) => uploadAssignmentAttachment(created.id, file)),
@@ -449,7 +450,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         const failedCount = uploadResults.length - uploadedCount;
         setIsSubmitting(false);
         setSuccessMsg(
-          `Assignment created${uploadedCount ? ` with ${uploadedCount} document${uploadedCount === 1 ? "" : "s"}` : ""}.`,
+          publishImmediately
+            ? `Assignment published${uploadedCount ? ` with ${uploadedCount} document${uploadedCount === 1 ? "" : "s"}` : ""}.`
+            : `Assignment saved as draft${uploadedCount ? ` with ${uploadedCount} document${uploadedCount === 1 ? "" : "s"}` : ""}.`,
         );
         setAssignmentFiles([]);
         onCreated(activeType, created);
@@ -483,6 +486,11 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
     setIsSubmitting(false);
     setFormError("This quick-create action is not available.");
+  };
+
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    void handleSubmit(event, submitter?.value === "publish");
   };
 
   const typesList: { id: QuickCreateType; label: string; icon: React.ElementType }[] = [
@@ -539,7 +547,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
         {/* Form Body */}
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleFormSubmit}
           className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6"
         >
           {successMsg ? (
@@ -1423,15 +1431,38 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
+                {activeType === "assignment" ? (
+                  <>
+                    <button
+                      type="submit"
+                      name="assignmentAction"
+                      value="draft"
+                      disabled={isSubmitting}
+                      className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      Save Draft
+                    </button>
+                    <button
+                      type="submit"
+                      name="assignmentAction"
+                      value="publish"
+                      disabled={isSubmitting}
+                      className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Saving..." : "Save & Publish"}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="submit"
                   disabled={isSubmitting}
                   className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {isSubmitting
-                    ? "Creating..."
-                    : `Create ${activeType.charAt(0).toUpperCase() + activeType.slice(1)}`}
-                </button>
+                  >
+                    {isSubmitting
+                      ? "Creating..."
+                      : `Create ${activeType.charAt(0).toUpperCase() + activeType.slice(1)}`}
+                  </button>
+                )}
               </div>
             </>
           )}

@@ -717,6 +717,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [publicationFilter, setPublicationFilter] = useState<"All" | "Published" | "Draft">("All");
   const [editingAssignment, setEditingAssignment] = useState<BackendAssignment | null>(null);
   const [deletingAssignment, setDeletingAssignment] = useState<Assignment | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
@@ -766,8 +767,13 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           (result) => !(result.reason instanceof ApiError && result.reason.status === 404),
         );
 
-        setBackendAssignments(loaded);
-        setAssignments(loaded.map((item) => toAssignment(item, backendCourses)));
+        const sorted = [...loaded].sort((left, right) => {
+          const leftTime = Date.parse(left.createdAt || left.publishedAt || left.updatedAt || "");
+          const rightTime = Date.parse(right.createdAt || right.publishedAt || right.updatedAt || "");
+          return rightTime - leftTime;
+        });
+        setBackendAssignments(sorted);
+        setAssignments(sorted.map((item) => toAssignment(item, backendCourses)));
 
         // A course can legitimately have no assignment resource yet. One failed
         // course must not hide assignments belonging to the other courses.
@@ -854,7 +860,14 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
       a.courseCode.toLowerCase().includes(search.toLowerCase());
     const matchesCourse = courseFilter === "All" || a.courseId === courseFilter;
     const matchesStatus = statusFilter === "All" || a.status === statusFilter;
-    return matchesSearch && matchesCourse && matchesStatus;
+    const matchesPublication =
+      publicationFilter === "All" ||
+      (publicationFilter === "Draft"
+        ? a.status === "Draft"
+        : publicationFilter === "Published"
+          ? a.status === "Active" || a.status === "Grading" || a.status === "Closed"
+          : true);
+    return matchesSearch && matchesCourse && matchesStatus && matchesPublication;
   });
 
   const totalSubmissions = assignments.reduce((acc, a) => acc + a.totalSubmissions, 0);
@@ -955,12 +968,27 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
             className="px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
           >
             <option value="All">All Statuses</option>
-            <option value="Draft">Draft</option>
             <option value="Active">Active</option>
             <option value="Grading">Grading</option>
             <option value="Closed">Closed</option>
           </select>
         </div>
+      </div>
+      <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 w-fit">
+        {(["All", "Published", "Draft"] as const).map((filter) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => setPublicationFilter(filter)}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              publicationFilter === filter
+                ? "bg-white text-indigo-700 shadow-xs"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            {filter === "All" ? "All Assignments" : filter}
+          </button>
+        ))}
       </div>
 
       {/* Assignments List */}
@@ -1076,9 +1104,10 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                         onClick={() => void handleStatusChange(asg, "publish")}
                         aria-label={`Publish ${asg.title}`}
                         title="Publish assignment"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-emerald-200 text-emerald-700 transition-colors hover:bg-emerald-50"
+                        className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md border border-emerald-200 px-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
                       >
                         <Send className="h-3.5 w-3.5" />
+                        <span>Publish</span>
                       </button>
                     )}
                     {asg.status === "Active" && (
