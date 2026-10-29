@@ -31,6 +31,7 @@ type DraftQuestion = {
 interface CreateQuizModalProps {
   isOpen: boolean;
   courses: Course[];
+  initialCourseId?: string;
   onClose: () => void;
   onQuizCreated: (quiz: BackendQuiz) => void;
 }
@@ -46,6 +47,7 @@ const blankQuestion = (): DraftQuestion => ({
 export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   isOpen,
   courses,
+  initialCourseId,
   onClose,
   onQuizCreated,
 }) => {
@@ -55,6 +57,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   const [description, setDescription] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [passMark, setPassMark] = useState(15);
+  const [passMarkManuallyEdited, setPassMarkManuallyEdited] = useState(false);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [maxAttempts, setMaxAttempts] = useState(1);
@@ -67,12 +70,13 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setCourseId(courses[0]?.id ?? "");
+    setCourseId(initialCourseId ?? courses[0]?.id ?? "");
     setStep("config");
     setTitle("");
     setDescription("");
     setDurationMinutes(30);
-    setPassMark(15);
+    setPassMark(0);
+    setPassMarkManuallyEdited(false);
     setStartTime("");
     setEndTime("");
     setMaxAttempts(1);
@@ -81,12 +85,34 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     setActiveQuestionIndex(0);
     setError("");
     setDraftQuizId(null);
-  }, [isOpen, courses]);
+  }, [isOpen, courses, initialCourseId]);
 
   const totalMarks = useMemo(
     () => questions.reduce((sum, question) => sum + Number(question.marks || 0), 0),
     [questions],
   );
+
+  useEffect(() => {
+    if (!passMarkManuallyEdited) {
+      setPassMark(Math.round(totalMarks * 0.8 * 100) / 100);
+    }
+  }, [totalMarks, passMarkManuallyEdited]);
+
+  const durationFromSchedule = (start: string, end: string) => {
+    if (!start || !end) return;
+    const minutes = Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+    if (Number.isFinite(minutes) && minutes > 0) setDurationMinutes(minutes);
+  };
+
+  const updateStartTime = (value: string) => {
+    setStartTime(value);
+    durationFromSchedule(value, endTime);
+  };
+
+  const updateEndTime = (value: string) => {
+    setEndTime(value);
+    durationFromSchedule(startTime, value);
+  };
 
   const updateQuestion = (index: number, update: Partial<DraftQuestion>) => {
     setQuestions((current) =>
@@ -340,7 +366,10 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                     type="number"
                     min={0}
                     value={passMark}
-                    onChange={(event) => setPassMark(Number(event.target.value))}
+                    onChange={(event) => {
+                      setPassMarkManuallyEdited(true);
+                      setPassMark(Number(event.target.value));
+                    }}
                     className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-normal text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   />
                 </label>
@@ -363,7 +392,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                   <input
                     type="datetime-local"
                     value={startTime}
-                    onChange={(event) => setStartTime(event.target.value)}
+                    onChange={(event) => updateStartTime(event.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
                   />
                 </label>
@@ -373,7 +402,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                   <input
                     type="datetime-local"
                     value={endTime}
-                    onChange={(event) => setEndTime(event.target.value)}
+                    onChange={(event) => updateEndTime(event.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
                   />
                 </label>
