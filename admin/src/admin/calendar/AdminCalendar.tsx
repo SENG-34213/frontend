@@ -133,15 +133,6 @@ const KNOWN_COURSES = [
   { code: "REGISTRAR", title: "Academic Registrar & Records", dept: "Administration" },
 ];
 
-const KNOWN_INSTRUCTORS = [
-  { name: "Dr. Sarah Chen", email: "sarah.chen@mentify.edu", dept: "Computer Science" },
-  { name: "Dr. Marcus Sterling", email: "marcus.sterling@mentify.edu", dept: "Mathematics" },
-  { name: "Prof. David Okafor", email: "david.okafor@mentify.edu", dept: "Physics" },
-  { name: "Dr. Priya Nambiar", email: "priya.nambiar@mentify.edu", dept: "Biology" },
-  { name: "Dr. Aravind Swaminathan", email: "aravind.s@mentify.edu", dept: "Chemistry" },
-  { name: "Alex Mercer", email: "alex.mercer@mentify.edu", dept: "Administration" },
-];
-
 const EVENT_TYPE_COLORS: Record<
   string,
   { bg: string; text: string; border: string; dot: string; label: string }
@@ -245,6 +236,32 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   const [localEvents, setLocalEvents] = useState<AcademicEvent[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSimulatedError, setHasSimulatedError] = useState(false);
+
+  const instructorOptions = useMemo(() => {
+    const instructors = new Map<string, { name: string; email: string; dept: string }>();
+    courses.forEach((course) => {
+      if (course.teacherName?.trim()) {
+        instructors.set(course.teacherName.trim(), {
+          name: course.teacherName.trim(),
+          email: "",
+          dept: course.category || "",
+        });
+      }
+    });
+    localEvents.forEach((event) => {
+      if (event.instructorName?.trim()) {
+        const key = event.instructorName.trim();
+        instructors.set(key, {
+          name: key,
+          email: event.instructorEmail || instructors.get(key)?.email || "",
+          dept: instructors.get(key)?.dept || "",
+        });
+      }
+    });
+    return Array.from(instructors.values()).sort((left, right) =>
+      left.name.localeCompare(right.name),
+    );
+  }, [courses, localEvents]);
 
   // Sync with prop changes
   useEffect(() => {
@@ -485,7 +502,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   // Instructor change in form: auto-populate instructorEmail
   const handleInstructorSelectionChange = (name: string) => {
     setFormInstructorName(name);
-    const found = KNOWN_INSTRUCTORS.find((i) => i.name === name);
+    const found = instructorOptions.find((i) => i.name === name);
     if (found) {
       setFormInstructorEmail(found.email);
     }
@@ -1325,9 +1342,9 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 onChange={(e) => setSelectedInstructor(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
               >
-                <option value="ALL">All Faculty Members ({KNOWN_INSTRUCTORS.length})</option>
-                {KNOWN_INSTRUCTORS.map((i) => (
-                  <option key={i.email} value={i.name}>
+                <option value="ALL">All Faculty Members ({instructorOptions.length})</option>
+                {instructorOptions.map((i) => (
+                  <option key={i.name} value={i.name}>
                     {i.name} ({i.dept})
                   </option>
                 ))}
@@ -2076,8 +2093,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
               >
                 <option value="ALL">All Faculty</option>
-                {KNOWN_INSTRUCTORS.map((i) => (
-                  <option key={i.email} value={i.name}>
+                {instructorOptions.map((i) => (
+                  <option key={i.name} value={i.name}>
                     {i.name}
                   </option>
                 ))}
@@ -2475,8 +2492,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                     onChange={(e) => handleInstructorSelectionChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
                   >
-                    {KNOWN_INSTRUCTORS.map((i) => (
-                      <option key={i.email} value={i.name}>
+                    {instructorOptions.map((i) => (
+                      <option key={i.name} value={i.name}>
                         {i.name} ({i.dept})
                       </option>
                     ))}
