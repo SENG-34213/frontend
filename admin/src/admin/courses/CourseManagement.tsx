@@ -685,7 +685,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           >
             <option value="ALL">All Modes</option>
             <option value="ONLINE">Online</option>
-            <option value="PHYSICAL">Physical / Campus</option>
+            <option value="PHYSICAL">Physical / Tuition Center</option>
           </select>
 
           {/* Publish status filter */}
@@ -818,7 +818,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                             <MapPin className="w-3 h-3" />
-                            <span>Campus Physical</span>
+                            <span>Tuition Center Physical</span>
                           </span>
                         )}
                       </td>
@@ -1353,13 +1353,13 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                             }`}
                           >
                             <MapPin className="w-3.5 h-3.5" />
-                            <span>Campus</span>
+                            <span>Tuition Center</span>
                           </button>
                         </div>
                         <span className="text-[10px] text-slate-400 block">
                           {formData.isOnline
                             ? "Virtual Zoom / Meet live classes"
-                            : "Physical in-person campus lectures"}
+                            : "Physical in-person tuition center lectures"}
                         </span>
                       </div>
 
@@ -1489,7 +1489,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                           ) : (
                             <span className="px-2 py-0.5 rounded-md bg-amber-500/90 text-white text-[10px] font-medium shadow-xs backdrop-blur-xs flex items-center gap-1">
                               <MapPin className="w-2.5 h-2.5" />
-                              <span>Campus</span>
+                              <span>Tuition Center</span>
                             </span>
                           )}
                         </div>

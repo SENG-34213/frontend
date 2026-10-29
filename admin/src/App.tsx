@@ -1395,6 +1395,8 @@ export default function App() {
         <AdminCalendar
           events={events}
           courses={courses}
+          teachers={teachers}
+          administrators={administrators}
           onAddEvent={handleAddEvent}
           onUpdateEvent={handleUpdateEvent}
           onCancelEvent={handleCancelEvent}

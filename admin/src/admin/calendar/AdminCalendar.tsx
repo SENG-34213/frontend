@@ -37,7 +37,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
-import { AcademicEvent, Course, EventVisibility } from "../types";
+import {
+  AcademicEvent,
+  AdministratorProfile,
+  Course,
+  EventVisibility,
+  TeacherProfile,
+} from "../types";
 import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 import {
   calendarEventsOverlap,
@@ -53,6 +59,8 @@ import type {
 interface AdminCalendarProps {
   events: AcademicEvent[];
   courses: Course[];
+  teachers: TeacherProfile[];
+  administrators: AdministratorProfile[];
   onAddEvent: (event: CalendarEventRequest) => Promise<void>;
   onUpdateEvent: (eventId: string, event: CalendarEventRequest) => Promise<void>;
   onCancelEvent: (eventId: string) => Promise<void>;
@@ -70,7 +78,7 @@ interface VenueStatus {
   type: string;
 }
 
-const CAMPUS_VENUES: VenueStatus[] = [
+const TUITION_VENUES: VenueStatus[] = [
   {
     id: "v-01",
     name: "Science Hall Auditorium B",
@@ -95,7 +103,7 @@ const CAMPUS_VENUES: VenueStatus[] = [
   {
     id: "v-04",
     name: "Newton Lecture Theater 201",
-    building: "Core Campus",
+    building: "Main Tuition Center",
     capacity: 150,
     type: "Lecture Theater",
   },
@@ -131,15 +139,6 @@ const KNOWN_COURSES = [
   { code: "CS-450", title: "Artificial Intelligence & Ethics", dept: "Computer Science" },
   { code: "SENATE", title: "Institutional Governance Council", dept: "Administration" },
   { code: "REGISTRAR", title: "Academic Registrar & Records", dept: "Administration" },
-];
-
-const KNOWN_INSTRUCTORS = [
-  { name: "Dr. Sarah Chen", email: "sarah.chen@mentify.edu", dept: "Computer Science" },
-  { name: "Dr. Marcus Sterling", email: "marcus.sterling@mentify.edu", dept: "Mathematics" },
-  { name: "Prof. David Okafor", email: "david.okafor@mentify.edu", dept: "Physics" },
-  { name: "Dr. Priya Nambiar", email: "priya.nambiar@mentify.edu", dept: "Biology" },
-  { name: "Dr. Aravind Swaminathan", email: "aravind.s@mentify.edu", dept: "Chemistry" },
-  { name: "Alex Mercer", email: "alex.mercer@mentify.edu", dept: "Administration" },
 ];
 
 const EVENT_TYPE_COLORS: Record<
@@ -227,6 +226,8 @@ const TIME_HOURS_GRID = [
 export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   events: initialEvents,
   courses,
+  teachers,
+  administrators,
   onAddEvent,
   onUpdateEvent,
   onCancelEvent,
@@ -245,6 +246,42 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   const [localEvents, setLocalEvents] = useState<AcademicEvent[]>(initialEvents);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSimulatedError, setHasSimulatedError] = useState(false);
+
+  const instructorOptions = useMemo(() => {
+    const instructors = new Map<string, { name: string; email: string; dept: string }>();
+    [...teachers, ...administrators].forEach((user) => {
+      const name = `${user.firstName} ${user.lastName}`.trim();
+      if (name) {
+        instructors.set(name, {
+          name,
+          email: user.email,
+          dept: "department" in user ? user.department || "" : "Teacher",
+        });
+      }
+    });
+    courses.forEach((course) => {
+      if (course.teacherName?.trim()) {
+        instructors.set(course.teacherName.trim(), {
+          name: course.teacherName.trim(),
+          email: "",
+          dept: course.category || "",
+        });
+      }
+    });
+    localEvents.forEach((event) => {
+      if (event.instructorName?.trim()) {
+        const key = event.instructorName.trim();
+        instructors.set(key, {
+          name: key,
+          email: event.instructorEmail || instructors.get(key)?.email || "",
+          dept: instructors.get(key)?.dept || "",
+        });
+      }
+    });
+    return Array.from(instructors.values()).sort((left, right) =>
+      left.name.localeCompare(right.name),
+    );
+  }, [administrators, courses, localEvents, teachers]);
 
   // Sync with prop changes
   useEffect(() => {
@@ -408,12 +445,23 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     setFormEndTime(times[1] || "10:30 AM");
 
     setFormLocation(evt.location);
-    setFormCourseCode(evt.courseCode || courseOptions[0]?.code || "");
-    setFormCourseTitle(evt.courseTitle || courseOptions[0]?.title || "");
+    const eventCourse = evt.courseId
+      ? courses.find((course) => course.id === evt.courseId || course.code === evt.courseCode)
+      : undefined;
+    setFormCourseCode(evt.courseId ? evt.courseCode || eventCourse?.code || "" : "");
+    setFormCourseTitle(evt.courseId ? evt.courseTitle || eventCourse?.title || "" : "");
     setFormInstructorName(evt.instructorName || "");
     setFormInstructorEmail(evt.instructorEmail || "");
     setFormDescription(evt.description || "");
-    setFormVisibility(evt.visibility || "PUBLIC_STUDENTS");
+    setFormVisibility(
+      evt.visibility === "ROLE"
+        ? evt.targetRole === "TEACHER"
+          ? "FACULTY_ONLY"
+          : "ADMIN_RESTRICTED"
+        : evt.visibility === "PRIVATE"
+          ? "ADMIN_RESTRICTED"
+          : "PUBLIC_STUDENTS",
+    );
     setFormStatus(evt.status || "SCHEDULED");
     setFormErrors({});
     setIsAddEditModalOpen(true);
@@ -485,7 +533,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   // Instructor change in form: auto-populate instructorEmail
   const handleInstructorSelectionChange = (name: string) => {
     setFormInstructorName(name);
-    const found = KNOWN_INSTRUCTORS.find((i) => i.name === name);
+    const found = instructorOptions.find((i) => i.name === name);
     if (found) {
       setFormInstructorEmail(found.email);
     }
@@ -1325,9 +1373,9 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 onChange={(e) => setSelectedInstructor(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
               >
-                <option value="ALL">All Faculty Members ({KNOWN_INSTRUCTORS.length})</option>
-                {KNOWN_INSTRUCTORS.map((i) => (
-                  <option key={i.email} value={i.name}>
+                <option value="ALL">All Faculty Members ({instructorOptions.length})</option>
+                {instructorOptions.map((i) => (
+                  <option key={i.name} value={i.name}>
                     {i.name} ({i.dept})
                   </option>
                 ))}
@@ -1488,8 +1536,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 onChange={(e) => setSelectedVenue(e.target.value)}
                 className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-[11.5px]"
               >
-                <option value="ALL">All Campus Facilities</option>
-                {CAMPUS_VENUES.map((v) => (
+                <option value="ALL">All Tuition Facilities</option>
+                {TUITION_VENUES.map((v) => (
                   <option key={v.id} value={v.name}>
                     {v.name}
                   </option>
@@ -1811,7 +1859,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                           No events scheduled for this day
                         </p>
                         <p className="text-[11px]">
-                          Campus venues are available for ad-hoc bookings.
+                          Tuition venues are available for ad-hoc bookings.
                         </p>
                       </div>
                     ) : (
@@ -2076,8 +2124,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
               >
                 <option value="ALL">All Faculty</option>
-                {KNOWN_INSTRUCTORS.map((i) => (
-                  <option key={i.email} value={i.name}>
+                {instructorOptions.map((i) => (
+                  <option key={i.name} value={i.name}>
                     {i.name}
                   </option>
                 ))}
@@ -2226,7 +2274,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 </div>
                 <span className="text-[10.5px] text-slate-400 block">
                   Seating Capacity:{" "}
-                  {CAMPUS_VENUES.find((v) => v.name === selectedEvent.location)?.capacity || 100}{" "}
+                  {TUITION_VENUES.find((v) => v.name === selectedEvent.location)?.capacity || 100}{" "}
                   seats
                 </span>
               </div>
@@ -2475,8 +2523,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                     onChange={(e) => handleInstructorSelectionChange(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
                   >
-                    {KNOWN_INSTRUCTORS.map((i) => (
-                      <option key={i.email} value={i.name}>
+                    {instructorOptions.map((i) => (
+                      <option key={i.name} value={i.name}>
                         {i.name} ({i.dept})
                       </option>
                     ))}
@@ -2537,18 +2585,18 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 <span className="text-rose-500 text-[11px] block">{formErrors.time}</span>
               )}
 
-              {/* Campus Venue Location & Visibility */}
+              {/* Tuition Venue Location & Visibility */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Campus Venue
+                    Tuition Venue
                   </label>
                   <select
                     value={formLocation}
                     onChange={(e) => setFormLocation(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
                   >
-                    {CAMPUS_VENUES.map((v) => (
+                    {TUITION_VENUES.map((v) => (
                       <option key={v.id} value={v.name}>
                         {v.name} (Cap: {v.capacity})
                       </option>

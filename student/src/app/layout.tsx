@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   title: "TiT · Student Portal",
   description: "Next-generation connected student learning portal for TiT LMS",
   icons: {
-    icon: `${appBasePath}/tit-favicon.svg`,
-    shortcut: `${appBasePath}/tit-favicon.svg`,
+    icon: `${appBasePath}/TiTJaffna-logo.jpeg`,
+    shortcut: `${appBasePath}/TiTJaffna-logo.jpeg`,
   },
 };
 

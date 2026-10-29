@@ -63,11 +63,14 @@ export function TeacherLoginView({ onLogin }: Props) {
         <div className="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
         <div className="relative">
           <div className="flex items-center gap-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-300">
-                Faculty Workspace
-              </p>
-            </div>
+            <img
+              src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/TiTJaffna-logo.jpeg`}
+              alt="TiT Jaffna Publication"
+              className="h-16 w-16 rounded-full object-cover"
+            />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
+              Teacher Portal
+            </span>
           </div>
           <div className="mt-24 max-w-xl">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-indigo-300">
@@ -95,11 +98,14 @@ export function TeacherLoginView({ onLogin }: Props) {
       <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600">
-                Teacher Portal
-              </p>
-            </div>
+            <img
+              src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/TiTJaffna-logo.jpeg`}
+              alt="TiT Jaffna Publication"
+              className="h-14 w-14 rounded-full object-cover"
+            />
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600">
+              Teacher Portal
+            </span>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-9">
             <div className="mb-7">

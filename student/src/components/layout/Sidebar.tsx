@@ -112,17 +112,15 @@ export const Sidebar: React.FC = () => {
           className={`flex items-center gap-3 rounded-lg p-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isSidebarCollapsed ? "justify-center" : ""}`}
         >
           <img
-            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
+            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/TiTJaffna-logo.jpeg`}
             alt="TiT"
-            className="h-9 w-9 shrink-0 rounded-lg"
+            className="h-10 w-10 shrink-0 rounded-full object-cover"
           />
-          <div className="flex flex-col">
-            {!isSidebarCollapsed && (
-              <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
-                Student Portal
-              </span>
-            )}
-          </div>
+          {!isSidebarCollapsed && (
+            <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+              Student Portal
+            </span>
+          )}
         </button>
 
         <button

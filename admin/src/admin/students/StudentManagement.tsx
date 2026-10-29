@@ -710,7 +710,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   </div>
                   <div>
                     <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                      School / Campus
+                      School / Tuition Center
                     </label>
                     <input
                       type="text"
@@ -730,7 +730,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       }
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     >
-                      <option value="IN_PERSON">In-Person Campus</option>
+                      <option value="IN_PERSON">In-Person Tuition Center</option>
                       <option value="HYBRID">Hybrid</option>
                       <option value="ONLINE">Fully Online LMS</option>
                     </select>
