@@ -446,9 +446,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
 
     setFormLocation(evt.location);
     const eventCourse = evt.courseId
-      ? courses.find(
-          (course) => course.id === evt.courseId || course.code === evt.courseCode,
-        )
+      ? courses.find((course) => course.id === evt.courseId || course.code === evt.courseCode)
       : undefined;
     setFormCourseCode(evt.courseId ? evt.courseCode || eventCourse?.code || "" : "");
     setFormCourseTitle(evt.courseId ? evt.courseTitle || eventCourse?.title || "" : "");
