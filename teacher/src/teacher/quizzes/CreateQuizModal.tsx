@@ -44,6 +44,12 @@ const blankQuestion = (): DraftQuestion => ({
   explanation: "",
 });
 
+const currentDateTimeInputValue = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 16);
+};
+
 export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   isOpen,
   courses,
@@ -138,6 +144,8 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     if (title.trim().length > 150) return "Quiz title cannot exceed 150 characters.";
     if (!Number.isInteger(durationMinutes) || durationMinutes < 1)
       return "Duration must be a positive whole number of minutes.";
+    if (startTime && new Date(startTime).getTime() < Date.now())
+      return "Quiz start time cannot be before the current date and time.";
     if (!Number.isInteger(passMark) || passMark < 0)
       return "Pass mark must be a whole number of 0 or greater.";
     if (!Number.isInteger(maxAttempts) || maxAttempts < 1)
@@ -391,6 +399,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                   Start Time
                   <input
                     type="datetime-local"
+                    min={currentDateTimeInputValue()}
                     value={startTime}
                     onChange={(event) => updateStartTime(event.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
