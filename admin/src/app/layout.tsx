@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   title: "TiT Admin Dashboard",
   description: "TiT platform administration workspace.",
   icons: {
-    icon: `${appBasePath}/tit-favicon.svg`,
-    shortcut: `${appBasePath}/tit-favicon.svg`,
+    icon: `${appBasePath}/TiTJaffna-logo.jpeg`,
+    shortcut: `${appBasePath}/TiTJaffna-logo.jpeg`,
   },
 };
 

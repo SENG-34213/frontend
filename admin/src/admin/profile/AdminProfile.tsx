@@ -273,7 +273,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
 
                 <div className="sm:col-span-2">
                   <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Campus Office / Physical Address
+                    Tuition Office / Physical Address
                   </label>
                   <input
                     type="text"

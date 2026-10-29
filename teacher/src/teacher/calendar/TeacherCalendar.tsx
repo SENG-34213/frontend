@@ -1539,7 +1539,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 onChange={(e) => setSelectedVenue(e.target.value)}
                 className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-[11.5px]"
               >
-                <option value="ALL">All Campus Facilities</option>
+                <option value="ALL">All Tuition Facilities</option>
                 {venueOptions.map((venue) => (
                   <option key={venue} value={venue}>
                     {venue}
@@ -1860,7 +1860,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                           No events scheduled for this day
                         </p>
                         <p className="text-[11px]">
-                          Campus venues are available for ad-hoc bookings.
+                          Tuition venues are available for ad-hoc bookings.
                         </p>
                       </div>
                     ) : (
@@ -2690,11 +2690,11 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   <span className="text-rose-500 text-[11px] block">{formErrors.time}</span>
                 )}
 
-                {/* Campus Venue Location & Visibility */}
+                {/* Tuition Venue Location & Visibility */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Campus Venue
+                      Tuition Venue
                     </label>
                     <input
                       type="text"

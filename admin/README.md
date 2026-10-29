@@ -57,7 +57,7 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
   - Storage cluster telemetry (`s3://mentify-course-assets-prod`) with file size metadata and S3 URI inspection.
   - Simulated pre-signed URL upload flow with file validation.
 - **Academic Calendar**: Month grid, week, day, and agenda views with event category filtering and event scheduling.
-- **Communication & Announcements**: Campus-wide broadcast composer with targeted audience selection and confirmed read receipts.
+- **Communication & Announcements**: Tuition-wide broadcast composer with targeted audience selection and confirmed read receipts.
 - **Notification Center**: Filterable operational alert feed for Registration webhooks, Keycloak security events, and academic schedules.
 
 ### 5. Intelligence & Administrative Governance
@@ -128,7 +128,7 @@ src/
 │   ├── attendance/         # Classroom and online roll-call logs
 │   ├── audit/              # Immutable audit trail & JSON inspector
 │   ├── calendar/           # Operations calendar (Month/Week/Agenda)
-│   ├── communication/      # Campus broadcast announcements
+│   ├── communication/      # Tuition broadcast announcements
 │   ├── components/         # Reusable design system components
 │   │   ├── AdminNavbar.tsx
 │   │   ├── AdminSidebar.tsx

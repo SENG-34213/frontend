@@ -232,7 +232,7 @@ export const CommunicationManagement: React.FC = () => {
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Campus Library Extended Hours for Finals Week"
+                  placeholder="e.g. Tuition center extended hours for finals week"
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
