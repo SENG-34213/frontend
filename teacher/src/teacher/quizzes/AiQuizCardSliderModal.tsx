@@ -42,6 +42,12 @@ interface Props {
   onQuizCreated: (quiz: BackendQuiz) => void;
 }
 
+const currentDateTimeInputValue = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 16);
+};
+
 export const AiQuizCardSliderModal: React.FC<Props> = ({
   draft,
   initialTitle,
@@ -109,6 +115,8 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
     if (!title.trim()) return "Quiz title is required.";
     if (title.length > 150) return "Quiz title cannot exceed 150 characters.";
     if (duration < 1) return "Quiz duration must be at least 1 minute.";
+    if (startTime && new Date(startTime).getTime() < Date.now())
+      return "Quiz start time cannot be before the current date and time.";
     if (!Number.isInteger(maxAttempts) || maxAttempts < 1)
       return "Maximum attempts must be a positive whole number.";
     if (startTime && endTime && new Date(startTime) >= new Date(endTime))
@@ -298,6 +306,7 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                 Start Date &amp; Time
                 <input
                   type="datetime-local"
+                  min={currentDateTimeInputValue()}
                   value={startTime}
                   onChange={(event) => {
                     setStartTime(event.target.value);
