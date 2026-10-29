@@ -93,8 +93,10 @@ export const QuizzesView: React.FC = () => {
         rightState === "upcoming" ? right.startTime || "" : right.dueDate || "",
       );
       if (leftState === "upcoming" && rightState === "upcoming") {
-        return (Number.isFinite(leftTimestamp) ? leftTimestamp : Number.MAX_SAFE_INTEGER) -
-          (Number.isFinite(rightTimestamp) ? rightTimestamp : Number.MAX_SAFE_INTEGER);
+        return (
+          (Number.isFinite(leftTimestamp) ? leftTimestamp : Number.MAX_SAFE_INTEGER) -
+          (Number.isFinite(rightTimestamp) ? rightTimestamp : Number.MAX_SAFE_INTEGER)
+        );
       }
       const normalizedLeft = Number.isFinite(leftTimestamp)
         ? leftTimestamp
@@ -459,7 +461,8 @@ export const QuizzesView: React.FC = () => {
               {quizState(instructionModalQuiz) === "upcoming" && (
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-center dark:border-indigo-900/70 dark:bg-indigo-950/40">
                   <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
-                    Waiting room opens {new Date(instructionModalQuiz.startTime || "").toLocaleString()}
+                    Waiting room opens{" "}
+                    {new Date(instructionModalQuiz.startTime || "").toLocaleString()}
                   </p>
                   <div className="mt-2 font-mono text-2xl font-bold tabular-nums text-indigo-700 dark:text-indigo-300">
                     {countdown(instructionModalQuiz)?.value || "00h 00m 00s"}
