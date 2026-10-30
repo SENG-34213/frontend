@@ -13,6 +13,7 @@ import {
   FileArchive,
   FileImage,
   FileText,
+  Type,
   FolderOpen,
   Grid,
   Info,
@@ -74,6 +75,8 @@ const types: [MaterialType, string][] = [
   ["VIDEO", "Video"],
   ["AUDIO", "Audio"],
   ["ARCHIVE", "Archive"],
+  ["TEXT", "Text file"],
+  ["OTHER", "Other file"],
 ];
 function bytes(value: number) {
   if (!value) return "0 B";
@@ -85,6 +88,7 @@ function typeIcon(type: MaterialType, className = "h-5 w-5") {
   if (type === "VIDEO" || type === "AUDIO") return <PlayCircle className={className} />;
   if (type === "IMAGE") return <FileImage className={className} />;
   if (type === "ARCHIVE") return <FileArchive className={className} />;
+  if (type === "TEXT") return <Type className={className} />;
   return type === "PDF" ? <FileText className={className} /> : <File className={className} />;
 }
 function statusClass(status: MaterialStatus) {
