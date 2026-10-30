@@ -4,11 +4,9 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  Search,
-  Filter,
   Calendar,
   ChevronRight,
-  Sparkles,
+  Search,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
