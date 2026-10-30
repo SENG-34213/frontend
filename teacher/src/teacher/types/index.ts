@@ -128,6 +128,7 @@ export interface Assignment {
   weightagePercent: number;
   allowedAttempts?: number;
   allowLateSubmission?: boolean;
+  latePenaltyPercentage?: number;
   status: "Active" | "Grading" | "Closed" | "Draft";
   totalSubmissions: number;
   gradedCount: number;
@@ -149,7 +150,11 @@ export interface StudentSubmission {
   feedback?: string;
   submittedContentText?: string;
   submittedFileName?: string;
+  submittedFileId?: string;
+  submittedFileContentType?: string;
   fileSizeBytes?: number;
+  isLate?: boolean;
+  gradeReleased?: boolean;
   codeSnippet?: string;
 }
 

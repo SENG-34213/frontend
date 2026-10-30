@@ -69,8 +69,15 @@ export const AssignmentDetailView: React.FC = () => {
     }
   };
 
+  const submissionClosed = new Date(assignment.dueDate).getTime() < Date.now()
+    && !assignment.allowLateSubmission;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submissionClosed) {
+      showToast("The submission deadline has passed and late submissions are not allowed.");
+      return;
+    }
     if (assignment.submissionType === "DOCUMENT" && uploadedFiles.length === 0) {
       showToast("Attach at least one document before submitting this assignment.");
       return;
@@ -280,6 +287,11 @@ export const AssignmentDetailView: React.FC = () => {
             </h3>
 
             {assignment.status === "PENDING" ? (
+              submissionClosed ? (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700">
+                  This assignment is past due. Late submissions are not allowed.
+                </div>
+              ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Drag and Drop File Upload Area */}
                 {assignment.submissionType === "DOCUMENT" && (
@@ -357,6 +369,7 @@ export const AssignmentDetailView: React.FC = () => {
                   {isSubmitting ? "Uploading & Verifying..." : "Submit Assignment for Grading"}
                 </button>
               </form>
+              ) )
             ) : (
               /* Already submitted review */
               <div className="space-y-4 text-xs">

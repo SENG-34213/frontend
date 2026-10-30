@@ -240,6 +240,7 @@ function toAssignment(value: JsonRecord, course?: Course): Assignment {
     description: idOf(value.description),
     instructions: idOf(value.instructions),
     submissionType: String(value.submissionType || "TEXT").toUpperCase() === "DOCUMENT" ? "DOCUMENT" : "TEXT",
+    allowLateSubmission: value.allowLateSubmission === true,
     dueDate: idOf(value.dueDate),
     maxScore: Number(value.maxMarks ?? value.maxScore ?? 0),
     status: mappedStatus as Assignment["status"],

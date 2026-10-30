@@ -87,6 +87,15 @@ export type BackendSubmission = {
   feedback?: string;
   gradedAt?: string;
   returnedAt?: string;
+  gradeReleased?: boolean;
+};
+
+export type SubmissionFile = {
+  id: string;
+  submissionId: string;
+  originalFilename: string;
+  contentType: string;
+  fileSize: number;
 };
 
 function unwrap<T>(response: ApiResponse<T>) {
@@ -212,6 +221,40 @@ export async function gradeSubmission(
     await apiRequest<ApiResponse<BackendSubmission>>(
       `/api/v1/submissions/${encodeURIComponent(submissionId)}/grade`,
       { method: "POST", body: payload },
+    ),
+  );
+}
+
+export async function getSubmissionFiles(submissionId: string, signal?: AbortSignal) {
+  const response = await apiRequest<ApiResponse<SubmissionFile[]>>(
+    `/api/v1/submissions/${encodeURIComponent(submissionId)}/files`,
+    { signal },
+  );
+  return response.data ?? [];
+}
+
+export async function getSubmissionFileDownload(submissionId: string, fileId: string) {
+  return unwrap(
+    await apiRequest<ApiResponse<{ downloadUrl?: string; content?: string }>>(
+      `/api/v1/submissions/${encodeURIComponent(submissionId)}/files/${encodeURIComponent(fileId)}/download`,
+    ),
+  );
+}
+
+export async function releaseSubmissionGrade(submissionId: string) {
+  return unwrap(
+    await apiRequest<ApiResponse<BackendSubmission>>(
+      `/api/v1/submissions/${encodeURIComponent(submissionId)}/release`,
+      { method: "POST" },
+    ),
+  );
+}
+
+export async function holdSubmissionGrade(submissionId: string) {
+  return unwrap(
+    await apiRequest<ApiResponse<BackendSubmission>>(
+      `/api/v1/submissions/${encodeURIComponent(submissionId)}/hold`,
+      { method: "POST" },
     ),
   );
 }
