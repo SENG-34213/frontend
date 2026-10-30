@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   title: "TiT Teacher Workspace",
   description: "A focused teaching workspace for courses, students, assessment, and insights.",
   icons: {
-    icon: `${appBasePath}/tit-favicon.svg`,
-    shortcut: `${appBasePath}/tit-favicon.svg`,
+    icon: `${appBasePath}/TiTJaffna-logo.jpeg`,
+    shortcut: `${appBasePath}/TiTJaffna-logo.jpeg`,
   },
 };
 

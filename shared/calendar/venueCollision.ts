@@ -19,7 +19,7 @@ type ProposedBooking = {
 };
 
 const NON_EXCLUSIVE_LOCATIONS = new Set([
-  "campus wide",
+  "tuition wide",
   "tit lms submission portal",
   "not specified",
   "online",

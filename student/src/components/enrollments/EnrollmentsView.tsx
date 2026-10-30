@@ -3,7 +3,6 @@ import {
   GraduationCap,
   BookOpen,
   Calendar,
-  CheckCircle2,
   Clock,
   Download,
   ExternalLink,
@@ -41,7 +40,7 @@ export const EnrollmentsView: React.FC = () => {
             My Academic Enrollments
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Institutional registration records, credit completion progress, and official course
+            Platform registration records, credit completion progress, and official course
             credentials
           </p>
         </div>
@@ -81,20 +80,6 @@ export const EnrollmentsView: React.FC = () => {
               }}
             />
           </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-xs font-medium">Cumulative GPA</span>
-            <CheckCircle2 className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="font-display text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
-              {profile.currentGpa ? profile.currentGpa.toFixed(2) : "—"}
-            </span>
-            <span className="text-xs text-emerald-600 font-semibold">Distinction</span>
-          </div>
-          <p className="text-xs text-slate-500">Academic Standing: Exemplary</p>
         </div>
       </div>
 
@@ -158,7 +143,7 @@ export const EnrollmentsView: React.FC = () => {
                     {course.title}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Faculty: {course.instructor.name} · {course.schedule}
+                    Teacher: {course.instructor.name} · {course.schedule}
                   </p>
                 </div>
               </div>

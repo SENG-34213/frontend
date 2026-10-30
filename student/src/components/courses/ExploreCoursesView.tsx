@@ -26,7 +26,7 @@ export const ExploreCoursesView: React.FC = () => {
     ...Array.from(new Set(courses.map((course) => course.category).filter(Boolean))).sort(),
   ];
 
-  // All courses available in the institutional catalog
+  // All courses available in the platform catalog
   const filteredCourses = courses.filter((c) => {
     const matchesSearch =
       c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -48,7 +48,7 @@ export const ExploreCoursesView: React.FC = () => {
           Explore Course Catalog
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Discover advanced engineering electives, specialized research tracks, and university
+          Discover advanced engineering electives, specialized research tracks, and tuition program
           degree requirements
         </p>
       </div>

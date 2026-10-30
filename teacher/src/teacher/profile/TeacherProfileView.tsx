@@ -6,6 +6,7 @@ import {
   uploadTeacherProfileImage,
 } from "../api/teacherApi";
 import type { TeacherUserSummary } from "../auth/authTypes";
+import { getSession, saveSession } from "../auth/authStorage";
 import { Course, NavigationTab, TeacherProfile } from "../types";
 import { TeacherAvatar } from "../components/TeacherAvatar";
 
@@ -72,19 +73,18 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
 
     setIsSaving(true);
     try {
-      const [updatedUser, updatedTeacher] = await Promise.all([
-        updateCurrentTeacher({
-          firstName: nameParts[0],
-          lastName: nameParts.slice(1).join(" ") || undefined,
-          phoneNumber: phone.trim() || undefined,
-        }),
-        updateTeacherProfile({
-          specializations: parsedSpecializations,
-          phoneNumber: phone.trim() || undefined,
-          bio: bio.trim() || undefined,
-          avatarUrl: avatarUrl.trim() || undefined,
-        }),
-      ]);
+      const normalizedPhone = phone.trim().replace(/[\s()-]/g, "");
+      const updatedUser = await updateCurrentTeacher({
+        firstName: nameParts[0],
+        lastName: nameParts.slice(1).join(" ") || undefined,
+        phoneNumber: normalizedPhone || undefined,
+      });
+      const updatedTeacher = await updateTeacherProfile({
+        specializations: parsedSpecializations,
+        phoneNumber: normalizedPhone || undefined,
+        bio: bio.trim() || undefined,
+        avatarUrl: avatarUrl.trim() || undefined,
+      });
 
       const mergedUser: TeacherUserSummary = {
         ...updatedUser,
@@ -95,6 +95,10 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
         .map((part) => part?.trim())
         .filter(Boolean)
         .join(" ");
+      const currentSession = getSession();
+      if (currentSession) {
+        saveSession({ ...currentSession, user: mergedUser });
+      }
       setProfile((current) => ({
         ...current,
         name: updatedName || current.name,
@@ -253,14 +257,16 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                 <label className="font-medium text-slate-700 dark:text-slate-300">
                   Phone Number
                   <input
+                    type="tel"
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
+                    placeholder="e.g. +94771234567"
                     className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   />
                 </label>
               </div>
               <label className="block font-medium text-slate-700 dark:text-slate-300">
-                Faculty Bio
+                Teacher Bio
                 <textarea
                   rows={4}
                   value={bio}
@@ -311,7 +317,7 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
                 </div>
               ))}
               <div className="rounded-xl bg-indigo-50 p-4 sm:col-span-2 dark:bg-indigo-950/30">
-                <p className="text-[10px] uppercase tracking-wider text-indigo-500">Faculty Bio</p>
+                <p className="text-[10px] uppercase tracking-wider text-indigo-500">Teacher Bio</p>
                 <p className="mt-1 leading-5 text-slate-700 dark:text-slate-200">
                   {profile.bio || "Not recorded"}
                 </p>

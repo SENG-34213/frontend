@@ -38,8 +38,8 @@ function toAnnouncement(value: BackendAnnouncement): Announcement {
   return {
     id: idOf(value.id),
     courseCode: "ALL",
-    courseTitle: "Institutional Announcement",
-    instructorName: "Institutional Communications",
+    courseTitle: "Platform Announcement",
+    instructorName: "Platform Communications",
     instructorAvatar: "",
     title: value.title,
     content: value.content,

@@ -138,3 +138,9 @@ export function updateMarketplaceStatus(id: string, status: MarketplaceStatus) {
     { method: "PATCH" },
   ).then(unwrap);
 }
+
+export function deleteMarketplaceProduct(id: string) {
+  return apiRequest<ApiResponse<null>>(`/api/v1/marketplace/admin/products/${id}`, {
+    method: "DELETE",
+  }).then((response) => response);
+}

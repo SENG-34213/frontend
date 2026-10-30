@@ -234,7 +234,7 @@ export const ExamTakingView: React.FC = () => {
                   Finalize Examination?
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Once submitted, your responses are sealed and routed to the faculty grading queue.
+                  Once submitted, your responses are sealed and routed to the teacher grading queue.
                 </p>
               </div>
             </div>

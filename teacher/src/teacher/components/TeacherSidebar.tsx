@@ -149,22 +149,15 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({
           className={`flex items-center gap-2.5 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}
         >
           <img
-            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
+            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/TiTJaffna-logo.jpeg`}
             alt="TiT"
-            className="h-9 w-9 shrink-0 rounded-lg"
+            className="h-10 w-10 shrink-0 rounded-full object-cover"
           />
-          <div className="truncate">
-            <div className="flex items-center gap-1.5">
-              {!isCollapsed && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">
-                  Teacher
-                </span>
-              )}
-            </div>
-            {!isCollapsed && (
-              <p className="text-[11px] text-slate-400 truncate">Faculty Workspace</p>
-            )}
-          </div>
+          {!isCollapsed && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700">
+              Teacher Portal
+            </span>
+          )}
         </div>
 
         {/* Collapse toggle (desktop) or close (mobile) */}

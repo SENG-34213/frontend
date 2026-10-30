@@ -358,10 +358,8 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
   const selectedCourseName =
     selectedEvent?.courseTitle || selectedEventCourse?.title || selectedEventCourse?.courseName;
   const selectedCourseCode = selectedEvent?.courseCode || selectedEventCourse?.code;
-  const selectedTeacher = instructors?.[0];
-  const selectedTeacherName =
-    selectedEvent?.instructorName || selectedEventCourse?.teacherName || selectedTeacher?.name;
-  const selectedTeacherEmail = selectedEvent?.instructorEmail || selectedTeacher?.email;
+  const selectedTeacherName = selectedEvent?.instructorName || selectedEventCourse?.teacherName;
+  const selectedTeacherEmail = selectedEvent?.instructorEmail;
 
   useEffect(() => {
     const hasOverlay = isMobileFilterOpen || Boolean(selectedEvent) || isAddEditModalOpen;
@@ -981,7 +979,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
       {/* Top Header */}
       <PageHeader
         title="Academic Operations Calendar"
-        description="Master timetable and facility scheduling for examinations, lectures, assignment cutoffs, and faculty councils."
+        description="Master timetable and facility scheduling for examinations, lectures, assignment cutoffs, and teacher councils."
         breadcrumbs={[
           { label: "Admin" },
           { label: "Platform Operations" },
@@ -1209,7 +1207,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   {selectedVisibility === "PUBLIC_STUDENTS"
                     ? "Public"
                     : selectedVisibility === "FACULTY_ONLY"
-                      ? "Faculty"
+                      ? "Teacher"
                       : "Admin"}
                 </span>
                 <button onClick={() => setSelectedVisibility("ALL")} className="hover:text-sky-900">
@@ -1376,7 +1374,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 onChange={(e) => setSelectedInstructor(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
               >
-                <option value="ALL">All Faculty Members ({instructors.length})</option>
+                <option value="ALL">All Teacher Members ({instructors.length})</option>
                 {instructors.map((i) => (
                   <option key={i.email} value={i.name}>
                     {i.name} ({i.dept})
@@ -1414,7 +1412,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
               >
                 <option value="ALL">All Audiences</option>
                 <option value="PUBLIC_STUDENTS">Public (Student Facing)</option>
-                <option value="FACULTY_ONLY">Faculty Only</option>
+                <option value="FACULTY_ONLY">Teacher Only</option>
                 <option value="ADMIN_RESTRICTED">Admin Restricted</option>
               </select>
             </div>
@@ -1539,7 +1537,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 onChange={(e) => setSelectedVenue(e.target.value)}
                 className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-[11.5px]"
               >
-                <option value="ALL">All Campus Facilities</option>
+                <option value="ALL">All Tuition Facilities</option>
                 {venueOptions.map((venue) => (
                   <option key={venue} value={venue}>
                     {venue}
@@ -1860,7 +1858,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                           No events scheduled for this day
                         </p>
                         <p className="text-[11px]">
-                          Campus venues are available for ad-hoc bookings.
+                          Tuition venues are available for ad-hoc bookings.
                         </p>
                       </div>
                     ) : (
@@ -1934,7 +1932,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                                 className="flex items-center gap-1 shrink-0"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {evt.canEdit !== false && (
+                                {evt.canEdit === true && (
                                   <button
                                     type="button"
                                     onClick={() => openEditModal(evt)}
@@ -2048,7 +2046,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                             className="flex items-center gap-2 shrink-0"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {evt.canEdit !== false && (
+                            {evt.canEdit === true && (
                               <button
                                 type="button"
                                 onClick={() => openEditModal(evt)}
@@ -2128,7 +2126,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                 onChange={(e) => setSelectedInstructor(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
               >
-                <option value="ALL">All Faculty</option>
+                <option value="ALL">All Teacher</option>
                 {instructors.map((i) => (
                   <option key={i.email} value={i.name}>
                     {i.name}
@@ -2166,7 +2164,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
               >
                 <option value="ALL">All Audiences</option>
                 <option value="PUBLIC_STUDENTS">Public (Students)</option>
-                <option value="FACULTY_ONLY">Faculty Only</option>
+                <option value="FACULTY_ONLY">Teacher Only</option>
                 <option value="ADMIN_RESTRICTED">Admin Restricted</option>
               </select>
             </div>
@@ -2213,7 +2211,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                       {selectedEvent.visibility === "PUBLIC_STUDENTS"
                         ? "Public"
                         : selectedEvent.visibility === "FACULTY_ONLY"
-                          ? "Faculty Only"
+                          ? "Teacher Only"
                           : "Admin Restricted"}
                     </span>
                   )}
@@ -2227,7 +2225,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
               </div>
 
               <div className="flex items-center gap-1">
-                {selectedEvent.canEdit !== false && (
+                {selectedEvent.canEdit === true && (
                   <button
                     onClick={() => openEditModal(selectedEvent)}
                     title="Edit Event"
@@ -2324,7 +2322,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             {selectedTeacherName && (selectedEvent.courseId || selectedEvent.courseCode) && (
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Assigned Faculty Lead / Proctor
+                  Assigned Teacher Lead / Proctor
                 </span>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -2337,14 +2335,11 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                       </h4>
                       <span className="text-[11px] text-slate-400 flex items-center gap-1">
                         <Mail className="w-3 h-3" />
-                        <span>
-                          {selectedTeacherEmail ||
-                            `${selectedTeacherName.toLowerCase().replace(/[^a-z]/g, "")}@mentify.edu`}
-                        </span>
+                        <span>{selectedTeacherEmail || "Email not available"}</span>
                       </span>
                     </div>
                   </div>
-                  <span className="text-[10.5px] text-slate-400">Verified Faculty</span>
+                  <span className="text-[10.5px] text-slate-400">Verified Teacher</span>
                 </div>
               </div>
             )}
@@ -2364,7 +2359,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
             {/* Actions Bar */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                {selectedEvent.canCancel !== false && (
+                {selectedEvent.canCancel === true && (
                   <button
                     type="button"
                     disabled={
@@ -2386,7 +2381,7 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                     </span>
                   </button>
                 )}
-                {selectedEvent.canDelete !== false && (
+                {selectedEvent.canDelete === true && (
                   <button
                     type="button"
                     disabled={pendingEventActionId === selectedEvent.id || !selectedEvent.canDelete}
@@ -2690,11 +2685,11 @@ export const TeacherCalendar: React.FC<TeacherCalendarProps> = ({
                   <span className="text-rose-500 text-[11px] block">{formErrors.time}</span>
                 )}
 
-                {/* Campus Venue Location & Visibility */}
+                {/* Tuition Venue Location & Visibility */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Campus Venue
+                      Tuition Venue
                     </label>
                     <input
                       type="text"

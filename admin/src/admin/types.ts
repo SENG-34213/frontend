@@ -265,6 +265,7 @@ export interface AttendanceSession {
   date: string;
   timeSlot: string;
   mode: "IN_PERSON" | "ONLINE" | "HYBRID";
+  status: "OPEN" | "COMPLETED" | "CANCELLED";
   totalStudents: number;
   presentCount: number;
   absentCount: number;

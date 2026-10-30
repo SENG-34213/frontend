@@ -124,7 +124,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       <div className="space-y-6">
         <PageHeader
           title="Administrator Management"
-          description="Institutional governance and administrative credentials provisioning."
+          description="Platform governance and administrative credentials provisioning."
           breadcrumbs={[{ label: "Admin" }, { label: "Administrators" }]}
         />
 
@@ -161,7 +161,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
       if (!formData.firstName.trim()) errors.firstName = "First name is required";
       if (!formData.lastName.trim()) errors.lastName = "Last name is required";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
-        errors.email = "Valid institutional admin email is required";
+        errors.email = "Valid platform admin email is required";
     }
     if (step === 2) {
       if (!formData.nic.trim()) errors.nic = "NIC identifier is required";
@@ -223,7 +223,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
     <div className="space-y-6">
       <PageHeader
         title="Administrator Management"
-        description="Institutional governance, administrator credential provisioning, and role delegation (SUPER_ADMIN Only)."
+        description="Platform governance, administrator credential provisioning, and role delegation (SUPER_ADMIN Only)."
         breadcrumbs={[
           { label: "Admin" },
           { label: "User Management" },
@@ -506,7 +506,7 @@ export const AdminManagement: React.FC<AdminManagementProps> = ({
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="e.g. ronald.sterling@mentify.edu"
+                      placeholder="e.g. madhavi.silva@example.com"
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                     {formErrors.email && (

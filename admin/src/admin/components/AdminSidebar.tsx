@@ -175,22 +175,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       >
         <div className={`flex items-center gap-2.5 ${compact ? "justify-center" : ""}`}>
           <img
-            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/tit-favicon.svg`}
+            src={`${process.env.NEXT_PUBLIC_APP_BASE_PATH || ""}/TiTJaffna-logo.jpeg`}
             alt="TiT"
-            className="h-9 w-9 shrink-0 rounded-lg"
+            className="h-10 w-10 shrink-0 rounded-full object-cover"
           />
-          <div>
-            <div className="flex items-center gap-1.5">
-              {!compact && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                  Admin
-                </span>
-              )}
-            </div>
-            {!compact && (
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">Enterprise Workspace</p>
-            )}
-          </div>
+          {!compact && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+              Admin Portal
+            </span>
+          )}
         </div>
 
         {onToggleCollapse && !isOpenMobile && (

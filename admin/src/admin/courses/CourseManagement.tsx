@@ -373,7 +373,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     return Object.keys(errors).length === 0;
   };
 
-  // Selected grade and faculty in real time
+  // Selected grade and teacher in real time
   const formSelectedGrade = grades.find((g) => g.id === formData.gradeId);
   const subjectDomainOptions = formSelectedGrade?.subjectDomains?.length
     ? formSelectedGrade.subjectDomains
@@ -398,8 +398,10 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     const teacher = teacherForCourse(course);
     return teacher
       ? `${teacher.firstName} ${teacher.lastName}`
-      : course.teacherName || "Unassigned faculty";
+      : course.teacherName || "Unassigned teacher";
   };
+
+  const teacherAvatarForCourse = (course: Course) => teacherForCourse(course)?.avatarUrl;
 
   // Submit the same form through the real Course Service API.
   const handleSubmit = async (e: React.FormEvent) => {
@@ -599,7 +601,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
     <div className="space-y-6">
       <PageHeader
         title="Course Management"
-        description="Comprehensive academic course catalogue, faculty allocations, delivery modes, and catalog governance."
+        description="Comprehensive academic course catalogue, teacher allocations, delivery modes, and catalog governance."
         breadcrumbs={[{ label: "Admin" }, { label: "Academic Management" }, { label: "Courses" }]}
         actions={
           <div className="flex items-center gap-2">
@@ -657,7 +659,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by course name, subject, faculty, or code..."
+            placeholder="Search by course name, subject, teacher, or code..."
             className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
@@ -685,7 +687,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           >
             <option value="ALL">All Modes</option>
             <option value="ONLINE">Online</option>
-            <option value="PHYSICAL">Physical / Campus</option>
+            <option value="PHYSICAL">Physical / Tuition Center</option>
           </select>
 
           {/* Publish status filter */}
@@ -713,7 +715,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
               <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-3 px-4 font-semibold">Course & Subject</th>
                 <th className="py-3 px-4 font-semibold">Grade Level</th>
-                <th className="py-3 px-4 font-semibold">Assigned Faculty</th>
+                <th className="py-3 px-4 font-semibold">Assigned Teacher</th>
                 <th className="py-3 px-4 font-semibold">Delivery Mode</th>
                 <th className="py-3 px-4 font-semibold">Catalog Status</th>
                 <th className="py-3 px-4 font-semibold">Enrolled</th>
@@ -791,10 +793,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </span>
                       </td>
 
-                      {/* Faculty */}
+                      {/* Teacher */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <UserAvatar name={teacherNameForCourse(course)} size="sm" />
+                          <UserAvatar
+                            name={teacherNameForCourse(course)}
+                            avatarUrl={teacherAvatarForCourse(course)}
+                            size="sm"
+                          />
                           <div>
                             <span className="font-medium text-slate-900 dark:text-white block">
                               {teacherNameForCourse(course)}
@@ -818,7 +824,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                             <MapPin className="w-3 h-3" />
-                            <span>Campus Physical</span>
+                            <span>Tuition Center Physical</span>
                           </span>
                         )}
                       </td>
@@ -903,7 +909,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     <span>{editingCourse ? "Edit Academic Course" : "Create Academic Course"}</span>
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Configure institutional curriculum attributes, grade assignment, and faculty
+                    Configure platform curriculum attributes, grade assignment, and teacher
                     ownership.
                   </p>
                 </div>
@@ -968,8 +974,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         </p>
                       ) : (
                         <span className="text-[10px] text-slate-400 mt-1 block">
-                          Official institutional course title as displayed in syllabus and
-                          transcripts.
+                          Official platform course title as displayed in syllabus and transcripts.
                         </span>
                       )}
                     </div>
@@ -1146,14 +1151,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                     </div>
                   </div>
 
-                  {/* SECTION 1: ACADEMIC HIERARCHY & FACULTY */}
+                  {/* SECTION 1: ACADEMIC HIERARCHY & TEACHERS */}
                   <div className="order-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-4 shadow-2xs">
                     <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
                       <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-mono text-[11px] font-bold flex items-center justify-center">
                         1
                       </span>
                       <h4 className="font-semibold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
-                        Academic Hierarchy & Faculty Assignment
+                        Academic Hierarchy & Teacher Assignment
                       </h4>
                     </div>
 
@@ -1218,14 +1223,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                         )}
                       </div>
 
-                      {/* Assigned Faculty Teacher */}
+                      {/* Assigned Teacher Teacher */}
                       <div>
                         <div className="flex items-center justify-between mb-1.5 h-4">
                           <label className="font-semibold text-slate-800 dark:text-slate-200">
-                            Lead Faculty Teacher <span className="text-rose-500">*</span>
+                            Lead Teacher Teacher <span className="text-rose-500">*</span>
                           </label>
                           <span className="text-[10px] text-slate-400">
-                            {teachers.length} faculty available
+                            {teachers.length} teacher available
                           </span>
                         </div>
                         <select
@@ -1239,7 +1244,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                               : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500/20 focus:border-indigo-500"
                           }`}
                         >
-                          <option value="">Select lead faculty teacher...</option>
+                          <option value="">Select lead teacher teacher...</option>
                           {teachers.map((t) => (
                             <option key={t.id} value={teacherAssignmentId(t)}>
                               {t.teacherCode} — {t.firstName} {t.lastName} ({t.email})
@@ -1353,13 +1358,13 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                             }`}
                           >
                             <MapPin className="w-3.5 h-3.5" />
-                            <span>Campus</span>
+                            <span>Tuition Center</span>
                           </button>
                         </div>
                         <span className="text-[10px] text-slate-400 block">
                           {formData.isOnline
                             ? "Virtual Zoom / Meet live classes"
-                            : "Physical in-person campus lectures"}
+                            : "Physical in-person tuition center lectures"}
                         </span>
                       </div>
 
@@ -1489,7 +1494,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                           ) : (
                             <span className="px-2 py-0.5 rounded-md bg-amber-500/90 text-white text-[10px] font-medium shadow-xs backdrop-blur-xs flex items-center gap-1">
                               <MapPin className="w-2.5 h-2.5" />
-                              <span>Campus</span>
+                              <span>Tuition Center</span>
                             </span>
                           )}
                         </div>
@@ -1512,15 +1517,16 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                               name={
                                 formSelectedTeacher
                                   ? `${formSelectedTeacher.firstName} ${formSelectedTeacher.lastName}`
-                                  : "Faculty"
+                                  : "Teacher"
                               }
+                              avatarUrl={formSelectedTeacher?.avatarUrl}
                               size="sm"
                             />
                             <div className="min-w-0">
                               <span className="text-xs font-semibold text-slate-900 dark:text-white block truncate">
                                 {formSelectedTeacher
                                   ? `${formSelectedTeacher.firstName} ${formSelectedTeacher.lastName}`
-                                  : "Assigned Faculty"}
+                                  : "Assigned Teacher"}
                               </span>
                               <span className="text-[10px] text-slate-400 block font-mono">
                                 {formSelectedTeacher?.teacherCode || "TCH-0000"}
@@ -1727,13 +1733,17 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
                   </div>
                 </div>
 
-                {/* Assigned Faculty Section */}
+                {/* Assigned Teacher Section */}
                 <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block">
-                    Assigned Lead Faculty
+                    Assigned Lead Teacher
                   </span>
                   <div className="flex items-center gap-3">
-                    <UserAvatar name={teacherNameForCourse(selectedCourse)} size="md" />
+                    <UserAvatar
+                      name={teacherNameForCourse(selectedCourse)}
+                      avatarUrl={teacherAvatarForCourse(selectedCourse)}
+                      size="md"
+                    />
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white block">
                         {teacherNameForCourse(selectedCourse)}

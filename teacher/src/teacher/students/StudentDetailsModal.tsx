@@ -123,7 +123,6 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
       .filter((item) => Number.isFinite(item));
     return values.length ? values.reduce((sum, item) => sum + item, 0) / values.length : null;
   };
-  const academicGpa = summaryAverage("gpa");
   const academicGradeAverage = summaryAverage("overallPercentage");
 
   const handleAddFeedback = (e: React.FormEvent) => {
@@ -185,7 +184,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             { id: "overview", label: "Academic Overview" },
             { id: "assignments", label: "Assignments", count: studentSubmissions.length },
             { id: "attendance", label: "Attendance" },
-            { id: "notes", label: "Faculty Feedback Log", count: feedbackList.length },
+            { id: "notes", label: "Teacher Feedback Log", count: feedbackList.length },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -212,18 +211,6 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             <div className="space-y-5">
               {/* Stat Cards */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase">
-                    Cumulative GPA
-                  </span>
-                  <div className="text-xl font-bold text-slate-900 font-mono mt-0.5">
-                    {academicLoading
-                      ? "Loading..."
-                      : academicGpa === null
-                        ? "Unavailable"
-                        : academicGpa.toFixed(2)}
-                  </div>
-                </div>
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 text-center">
                   <span className="text-[10px] font-semibold text-slate-400 uppercase">
                     Attendance Rate
@@ -314,7 +301,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
                 <div>
                   <h4 className="text-xs font-bold text-slate-900">Attendance Invariant</h4>
                   <p className="text-xs text-slate-500">
-                    Student exceeds minimum university threshold of 75.0%.
+                    Student exceeds minimum tuition program threshold of 75.0%.
                   </p>
                 </div>
                 <span className="text-lg font-bold font-mono text-emerald-600">
@@ -338,7 +325,7 @@ export const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({
             <div className="space-y-4">
               <form onSubmit={handleAddFeedback} className="space-y-2">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Add Faculty Guidance Note
+                  Add Teacher Guidance Note
                 </label>
                 <div className="flex gap-2">
                   <input
