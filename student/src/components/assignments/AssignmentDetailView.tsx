@@ -87,9 +87,15 @@ export const AssignmentDetailView: React.FC = () => {
       showToast(error instanceof Error ? error.message : "Document download is unavailable.");
     }
   };
+  const submissionClosed =
+    new Date(assignment.dueDate).getTime() < Date.now() && !assignment.allowLateSubmission;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submissionClosed) {
+      showToast("The submission deadline has passed and late submissions are not allowed.");
+      return;
+    }
     if (assignment.submissionType === "DOCUMENT" && uploadedFiles.length === 0) {
       showToast("Attach at least one document before submitting this assignment.");
       return;
@@ -299,83 +305,89 @@ export const AssignmentDetailView: React.FC = () => {
             </h3>
 
             {assignment.status === "PENDING" ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Drag and Drop File Upload Area */}
-                {assignment.submissionType === "DOCUMENT" && (
-                <label
-                  htmlFor="assignment-files"
-                  className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 p-6 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all dark:border-slate-700 dark:bg-slate-800/40"
-                >
-                  <input
-                    id="assignment-files"
-                    type="file"
-                    multiple
-                    className="sr-only"
-                    onChange={handleFileUpload}
-                  />
-                  <Upload className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mb-2" />
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Click to add code package or PDF report
-                  </p>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Document attachment required. Select at least one file to submit.
-                  </p>
-                </label>
-                )}
-
-                {/* Uploaded Files Preview */}
-                {uploadedFiles.length > 0 && (
-                  <div className="space-y-2">
-                    <span className="text-[11px] font-semibold text-slate-500">
-                      Attached Files ({uploadedFiles.length})
-                    </span>
-                    {uploadedFiles.map((f, i) => (
-                      <div
-                        key={f.name}
-                        className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 text-xs dark:border-slate-700 dark:bg-slate-800"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                          <span className="truncate font-medium">{f.name}</span>
-                          <span className="text-[10px] text-slate-400">{f.size}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(i)}
-                          className="text-slate-400 hover:text-rose-500"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Text answer */}
-                {assignment.submissionType !== "DOCUMENT" && (
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Text answer
-                  </label>
-                  <textarea
-                    rows={6}
-                    required
-                    value={submissionText}
-                    onChange={(e) => setSubmissionText(e.target.value)}
-                    placeholder="Write your answer..."
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  />
+              submissionClosed ? (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700">
+                  This assignment is past due. Late submissions are not allowed.
                 </div>
-                )}
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Drag and Drop File Upload Area */}
+                  {assignment.submissionType === "DOCUMENT" && (
+                    <label
+                      htmlFor="assignment-files"
+                      className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 p-6 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all dark:border-slate-700 dark:bg-slate-800/40"
+                    >
+                      <input
+                        id="assignment-files"
+                        type="file"
+                        multiple
+                        className="sr-only"
+                        onChange={handleFileUpload}
+                      />
+                      <Upload className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mb-2" />
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Click to add code package or PDF report
+                      </p>
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Document attachment required. Select at least one file to submit.
+                      </p>
+                    </label>
+                  )}
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full rounded-xl bg-indigo-600 py-2.5 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                >
-                  {isSubmitting ? "Uploading & Verifying..." : "Submit Assignment for Grading"}
-                </button>
-              </form>
+                  {/* Uploaded Files Preview */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-semibold text-slate-500">
+                        Attached Files ({uploadedFiles.length})
+                      </span>
+                      {uploadedFiles.map((f, i) => (
+                        <div
+                          key={f.name}
+                          className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 text-xs dark:border-slate-700 dark:bg-slate-800"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                            <span className="truncate font-medium">{f.name}</span>
+                            <span className="text-[10px] text-slate-400">{f.size}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(i)}
+                            className="text-slate-400 hover:text-rose-500"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Text answer */}
+                  {assignment.submissionType !== "DOCUMENT" && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Text answer
+                      </label>
+                      <textarea
+                        rows={6}
+                        required
+                        value={submissionText}
+                        onChange={(e) => setSubmissionText(e.target.value)}
+                        placeholder="Write your answer..."
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full rounded-xl bg-indigo-600 py-2.5 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Uploading & Verifying..." : "Submit Assignment for Grading"}
+                  </button>
+                </form>
+              )
             ) : (
               /* Already submitted review */
               <div className="space-y-4 text-xs">
