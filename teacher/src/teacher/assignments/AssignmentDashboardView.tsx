@@ -225,7 +225,7 @@ const AssignmentEditModal: React.FC<{
   isOpen: boolean;
   assignment: BackendAssignment | null;
   onClose: () => void;
-  onSave: (draft: AssignmentUpdateDraft) => void | Promise<void>;
+  onSave: (draft: AssignmentUpdateDraft, publishImmediately?: boolean) => void | Promise<void>;
 }> = ({ isOpen, assignment, onClose, onSave }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -280,7 +280,7 @@ const AssignmentEditModal: React.FC<{
 
   if (!isOpen || !assignment) return null;
 
-  const submit = async (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent<HTMLFormElement>, publishImmediately = false) => {
     event.preventDefault();
     if (!title.trim()) return setFormError("Assignment title is required.");
     if (!startDate || !dueDate || startDate > dueDate) {
@@ -305,12 +305,17 @@ const AssignmentEditModal: React.FC<{
         rubricItems: rubricItems
           .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
           .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
-      });
+      }, publishImmediately);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Assignment could not be updated.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    void submit(event, submitter?.value === "publish");
   };
 
   const fieldClass =
@@ -375,7 +380,7 @@ const AssignmentEditModal: React.FC<{
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs">
       <form
-        onSubmit={submit}
+        onSubmit={handleFormSubmit}
         className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -641,8 +646,21 @@ const AssignmentEditModal: React.FC<{
           >
             Cancel
           </button>
+          {assignment.status === "DRAFT" && (
+            <button
+              type="submit"
+              name="assignmentAction"
+              value="publish"
+              disabled={isSubmitting}
+              className="rounded-lg border border-indigo-200 px-4 py-2 text-xs font-semibold text-indigo-700 disabled:opacity-60"
+            >
+              Save & publish
+            </button>
+          )}
           <button
             type="submit"
+            name="assignmentAction"
+            value="draft"
             disabled={isSubmitting}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
           >
@@ -815,7 +833,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
-  const handleEdit = async (draft: AssignmentUpdateDraft) => {
+  const handleEdit = async (draft: AssignmentUpdateDraft, publishImmediately = false) => {
     const record = editingAssignment;
     if (!record) {
       setEditingAssignment(null);
@@ -823,12 +841,13 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
     try {
       const updated = await updateAssignment(record.id, draft);
+      const saved = publishImmediately ? await publishAssignment(record.id) : updated;
       setBackendAssignments((current) =>
-        current.map((entry) => (entry.id === updated.id ? updated : entry)),
+        current.map((entry) => (entry.id === saved.id ? saved : entry)),
       );
       setAssignments((current) =>
         current.map((entry) =>
-          entry.id === updated.id ? toAssignment(updated, backendCourses) : entry,
+          entry.id === saved.id ? toAssignment(saved, backendCourses) : entry,
         ),
       );
       setEditingAssignment(null);
