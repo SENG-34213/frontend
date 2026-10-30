@@ -18,6 +18,7 @@ export type BackendAssignment = {
   allowedAttempts?: number;
   allowLateSubmission: boolean;
   latePenaltyPercentage?: number;
+  submissionType?: "TEXT" | "DOCUMENT";
   status: BackendAssignmentStatus;
   publishedAt?: string;
   createdAt?: string;
@@ -57,6 +58,7 @@ export type AssignmentDraft = {
   allowedAttempts?: number;
   allowLateSubmission: boolean;
   latePenaltyPercentage?: number;
+  submissionType?: "TEXT" | "DOCUMENT";
   rubricItems?: { criterion: string; marks: number }[];
   publishImmediately?: boolean;
 };

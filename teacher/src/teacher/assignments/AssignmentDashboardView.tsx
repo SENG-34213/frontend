@@ -230,6 +230,7 @@ const AssignmentEditModal: React.FC<{
   const [maxMarks, setMaxMarks] = useState("100");
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
+  const [submissionType, setSubmissionType] = useState<"TEXT" | "DOCUMENT">("TEXT");
   const [rubricItems, setRubricItems] = useState<EditRubric[]>([]);
   const [attachments, setAttachments] = useState<AssignmentAttachment[]>([]);
   const [isStudentPreviewOpen, setIsStudentPreviewOpen] = useState(false);
@@ -248,6 +249,7 @@ const AssignmentEditModal: React.FC<{
     setMaxMarks(String(assignment.maxMarks));
     setAllowLateSubmission(Boolean(assignment.allowLateSubmission));
     setLatePenaltyPercentage(String(assignment.latePenaltyPercentage || 0));
+    setSubmissionType(assignment.submissionType === "DOCUMENT" ? "DOCUMENT" : "TEXT");
     setRubricItems(
       (assignment.rubricItems || []).map((item) => ({
         criterion: item.criterion,
@@ -298,6 +300,7 @@ const AssignmentEditModal: React.FC<{
         maxMarks: Number(maxMarks),
         allowLateSubmission,
         latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
+        submissionType,
         rubricItems: rubricItems
           .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
           .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
@@ -548,6 +551,17 @@ const AssignmentEditModal: React.FC<{
               <p className="text-[11px] font-normal text-slate-400">No documents attached yet.</p>
             )}
           </section>
+          <fieldset className="rounded-lg border border-slate-200 p-3">
+            <legend className="px-1 text-xs font-semibold text-slate-700">Submission required</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {(["TEXT", "DOCUMENT"] as const).map((option) => (
+                <label key={option} className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${submissionType === option ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                  <input type="radio" name="edit-submission-type" checked={submissionType === option} onChange={() => setSubmissionType(option)} className="sr-only" />
+                  {option === "TEXT" ? "Text answer" : "Document"}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2">
             <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
               <input

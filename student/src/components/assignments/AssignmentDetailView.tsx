@@ -71,8 +71,12 @@ export const AssignmentDetailView: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!submissionText.trim() && uploadedFiles.length === 0) {
-      showToast("Please enter answer notes or attach at least one file before submitting.");
+    if (assignment.submissionType === "DOCUMENT" && uploadedFiles.length === 0) {
+      showToast("Attach at least one document before submitting this assignment.");
+      return;
+    }
+    if (assignment.submissionType !== "DOCUMENT" && !submissionText.trim()) {
+      showToast("Enter your answer before submitting this assignment.");
       return;
     }
     setIsSubmitting(true);
@@ -278,6 +282,7 @@ export const AssignmentDetailView: React.FC = () => {
             {assignment.status === "PENDING" ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Drag and Drop File Upload Area */}
+                {assignment.submissionType === "DOCUMENT" && (
                 <label
                   htmlFor="assignment-files"
                   className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/70 p-6 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all dark:border-slate-700 dark:bg-slate-800/40"
@@ -294,9 +299,10 @@ export const AssignmentDetailView: React.FC = () => {
                     Click to add code package or PDF report
                   </p>
                   <p className="text-[10px] text-slate-400 mt-1">
-                    Select a file to attach to your submission.
+                    Document attachment required. Select at least one file to submit.
                   </p>
                 </label>
+                )}
 
                 {/* Uploaded Files Preview */}
                 {uploadedFiles.length > 0 && (
@@ -326,19 +332,22 @@ export const AssignmentDetailView: React.FC = () => {
                   </div>
                 )}
 
-                {/* Text Notes / Repository URL */}
+                {/* Text answer */}
+                {assignment.submissionType !== "DOCUMENT" && (
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Submission Notes / Git Repository Link
+                    Text answer
                   </label>
                   <textarea
-                    rows={4}
+                    rows={6}
+                    required
                     value={submissionText}
                     onChange={(e) => setSubmissionText(e.target.value)}
-                    placeholder="Enter git commit hash, repository link, or methodology notes for your grader..."
+                    placeholder="Write your answer..."
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   />
                 </div>
+                )}
 
                 <button
                   type="submit"
