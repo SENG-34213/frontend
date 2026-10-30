@@ -129,6 +129,8 @@ export interface Assignment {
   title: string;
   description: string;
   instructions: string;
+  submissionType?: "TEXT" | "DOCUMENT";
+  allowLateSubmission?: boolean;
   dueDate: string;
   maxScore: number;
   status: "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE" | "UNKNOWN";

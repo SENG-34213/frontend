@@ -54,7 +54,6 @@ const AssignmentStudentPreview: React.FC<{
   instructions: string;
   dueDate: string;
   maxMarks: string;
-  allowedAttempts: string;
   allowLateSubmission: boolean;
   latePenaltyPercentage: string;
   rubricItems: EditRubric[];
@@ -67,7 +66,6 @@ const AssignmentStudentPreview: React.FC<{
   instructions,
   dueDate,
   maxMarks,
-  allowedAttempts,
   allowLateSubmission,
   latePenaltyPercentage,
   rubricItems,
@@ -118,9 +116,6 @@ const AssignmentStudentPreview: React.FC<{
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
                 Due: {dueDate ? new Date(dueDate).toLocaleString() : "Not set"}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                {allowedAttempts || "1"} attempt{allowedAttempts === "1" ? "" : "s"}
               </span>
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
                 {allowLateSubmission
@@ -225,7 +220,7 @@ const AssignmentEditModal: React.FC<{
   isOpen: boolean;
   assignment: BackendAssignment | null;
   onClose: () => void;
-  onSave: (draft: AssignmentUpdateDraft) => void | Promise<void>;
+  onSave: (draft: AssignmentUpdateDraft, publishImmediately?: boolean) => void | Promise<void>;
 }> = ({ isOpen, assignment, onClose, onSave }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -233,9 +228,9 @@ const AssignmentEditModal: React.FC<{
   const [startDate, setStartDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [maxMarks, setMaxMarks] = useState("100");
-  const [allowedAttempts, setAllowedAttempts] = useState("1");
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
+  const [submissionType, setSubmissionType] = useState<"TEXT" | "DOCUMENT">("TEXT");
   const [rubricItems, setRubricItems] = useState<EditRubric[]>([]);
   const [attachments, setAttachments] = useState<AssignmentAttachment[]>([]);
   const [isStudentPreviewOpen, setIsStudentPreviewOpen] = useState(false);
@@ -252,9 +247,9 @@ const AssignmentEditModal: React.FC<{
     setStartDate(assignmentDateInput(assignment.startDate));
     setDueDate(assignmentDateInput(assignment.dueDate));
     setMaxMarks(String(assignment.maxMarks));
-    setAllowedAttempts(String(assignment.allowedAttempts || 1));
     setAllowLateSubmission(Boolean(assignment.allowLateSubmission));
     setLatePenaltyPercentage(String(assignment.latePenaltyPercentage || 0));
+    setSubmissionType(assignment.submissionType === "DOCUMENT" ? "DOCUMENT" : "TEXT");
     setRubricItems(
       (assignment.rubricItems || []).map((item) => ({
         criterion: item.criterion,
@@ -280,37 +275,49 @@ const AssignmentEditModal: React.FC<{
 
   if (!isOpen || !assignment) return null;
 
-  const submit = async (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent<HTMLFormElement>, publishImmediately = false) => {
     event.preventDefault();
     if (!title.trim()) return setFormError("Assignment title is required.");
     if (!startDate || !dueDate || startDate > dueDate) {
       return setFormError("The due date must be on or after the start date.");
     }
-    if (Number(maxMarks) < 1 || Number(allowedAttempts) < 1) {
-      return setFormError("Maximum marks and allowed attempts must be at least 1.");
+    if (Number(maxMarks) < 1) {
+      return setFormError("Maximum marks must be at least 1.");
+    }
+    const totalPercentage = rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0);
+    if (totalPercentage > 100) {
+      return setFormError("Rubric criteria percentages cannot exceed 100% in total.");
     }
     setIsSubmitting(true);
     setFormError("");
     try {
-      await onSave({
-        title: title.trim(),
-        description: description.trim(),
-        instructions: instructions.trim(),
-        startDate: `${startDate}:00`,
-        dueDate: `${dueDate}:00`,
-        maxMarks: Number(maxMarks),
-        allowedAttempts: Number(allowedAttempts),
-        allowLateSubmission,
-        latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
-        rubricItems: rubricItems
-          .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
-          .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
-      });
+      await onSave(
+        {
+          title: title.trim(),
+          description: description.trim(),
+          instructions: instructions.trim(),
+          startDate: `${startDate}:00`,
+          dueDate: `${dueDate}:00`,
+          maxMarks: Number(maxMarks),
+          allowLateSubmission,
+          latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
+          submissionType,
+          rubricItems: rubricItems
+            .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
+            .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
+        },
+        publishImmediately,
+      );
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Assignment could not be updated.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    void submit(event, submitter?.value === "publish");
   };
 
   const fieldClass =
@@ -375,7 +382,7 @@ const AssignmentEditModal: React.FC<{
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-xs">
       <form
-        onSubmit={submit}
+        onSubmit={handleFormSubmit}
         className="flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
@@ -444,16 +451,6 @@ const AssignmentEditModal: React.FC<{
                 min="1"
                 value={maxMarks}
                 onChange={(e) => setMaxMarks(e.target.value)}
-                className={fieldClass}
-              />
-            </label>
-            <label className="text-xs font-semibold text-slate-700">
-              Allowed attempts
-              <input
-                type="number"
-                min="1"
-                value={allowedAttempts}
-                onChange={(e) => setAllowedAttempts(e.target.value)}
                 className={fieldClass}
               />
             </label>
@@ -557,6 +554,28 @@ const AssignmentEditModal: React.FC<{
               <p className="text-[11px] font-normal text-slate-400">No documents attached yet.</p>
             )}
           </section>
+          <fieldset className="rounded-lg border border-slate-200 p-3">
+            <legend className="px-1 text-xs font-semibold text-slate-700">
+              Submission required
+            </legend>
+            <div className="grid grid-cols-2 gap-2">
+              {(["TEXT", "DOCUMENT"] as const).map((option) => (
+                <label
+                  key={option}
+                  className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${submissionType === option ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <input
+                    type="radio"
+                    name="edit-submission-type"
+                    checked={submissionType === option}
+                    onChange={() => setSubmissionType(option)}
+                    className="sr-only"
+                  />
+                  {option === "TEXT" ? "Text answer" : "Document"}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2">
             <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
               <input
@@ -591,6 +610,9 @@ const AssignmentEditModal: React.FC<{
                 + Add criterion
               </button>
             </div>
+            <p className="text-[11px] text-slate-500">
+              Total: {rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0)}% / 100%
+            </p>
             {rubricItems.map((item, index) => (
               <div key={index} className="flex flex-col gap-2 sm:flex-row">
                 <input
@@ -608,15 +630,23 @@ const AssignmentEditModal: React.FC<{
                 <input
                   type="number"
                   min="1"
-                  placeholder="Marks"
+                  max="100"
+                  placeholder="Percentage"
                   value={item.marks}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    const otherTotal = rubricItems.reduce(
+                      (sum, row, rowIndex) =>
+                        sum + (rowIndex === index ? 0 : Number(row.marks) || 0),
+                      0,
+                    );
+                    if (value < 0 || otherTotal + value > 100) return;
                     setRubricItems((items) =>
                       items.map((row, i) =>
                         i === index ? { ...row, marks: e.target.value } : row,
                       ),
-                    )
-                  }
+                    );
+                  }}
                   className={`${fieldClass} mt-0 sm:w-24`}
                 />
                 <button
@@ -641,8 +671,21 @@ const AssignmentEditModal: React.FC<{
           >
             Cancel
           </button>
+          {assignment.status === "DRAFT" && (
+            <button
+              type="submit"
+              name="assignmentAction"
+              value="publish"
+              disabled={isSubmitting}
+              className="rounded-lg border border-indigo-200 px-4 py-2 text-xs font-semibold text-indigo-700 disabled:opacity-60"
+            >
+              Save & publish
+            </button>
+          )}
           <button
             type="submit"
+            name="assignmentAction"
+            value="draft"
             disabled={isSubmitting}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
           >
@@ -657,7 +700,6 @@ const AssignmentEditModal: React.FC<{
           instructions={instructions}
           dueDate={dueDate}
           maxMarks={maxMarks}
-          allowedAttempts={allowedAttempts}
           allowLateSubmission={allowLateSubmission}
           latePenaltyPercentage={latePenaltyPercentage}
           rubricItems={rubricItems}
@@ -717,6 +759,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
   const [search, setSearch] = useState("");
   const [courseFilter, setCourseFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [publicationFilter, setPublicationFilter] = useState<"All" | "Published" | "Draft">("All");
   const [editingAssignment, setEditingAssignment] = useState<BackendAssignment | null>(null);
   const [deletingAssignment, setDeletingAssignment] = useState<Assignment | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
@@ -766,8 +809,15 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
           (result) => !(result.reason instanceof ApiError && result.reason.status === 404),
         );
 
-        setBackendAssignments(loaded);
-        setAssignments(loaded.map((item) => toAssignment(item, backendCourses)));
+        const sorted = [...loaded].sort((left, right) => {
+          const leftTime = Date.parse(left.createdAt || left.publishedAt || left.updatedAt || "");
+          const rightTime = Date.parse(
+            right.createdAt || right.publishedAt || right.updatedAt || "",
+          );
+          return rightTime - leftTime;
+        });
+        setBackendAssignments(sorted);
+        setAssignments(sorted.map((item) => toAssignment(item, backendCourses)));
 
         // A course can legitimately have no assignment resource yet. One failed
         // course must not hide assignments belonging to the other courses.
@@ -809,7 +859,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
   };
 
-  const handleEdit = async (draft: AssignmentUpdateDraft) => {
+  const handleEdit = async (draft: AssignmentUpdateDraft, publishImmediately = false) => {
     const record = editingAssignment;
     if (!record) {
       setEditingAssignment(null);
@@ -817,12 +867,13 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     }
     try {
       const updated = await updateAssignment(record.id, draft);
+      const saved = publishImmediately ? await publishAssignment(record.id) : updated;
       setBackendAssignments((current) =>
-        current.map((entry) => (entry.id === updated.id ? updated : entry)),
+        current.map((entry) => (entry.id === saved.id ? saved : entry)),
       );
       setAssignments((current) =>
         current.map((entry) =>
-          entry.id === updated.id ? toAssignment(updated, backendCourses) : entry,
+          entry.id === saved.id ? toAssignment(saved, backendCourses) : entry,
         ),
       );
       setEditingAssignment(null);
@@ -854,7 +905,14 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
       a.courseCode.toLowerCase().includes(search.toLowerCase());
     const matchesCourse = courseFilter === "All" || a.courseId === courseFilter;
     const matchesStatus = statusFilter === "All" || a.status === statusFilter;
-    return matchesSearch && matchesCourse && matchesStatus;
+    const matchesPublication =
+      publicationFilter === "All" ||
+      (publicationFilter === "Draft"
+        ? a.status === "Draft"
+        : publicationFilter === "Published"
+          ? a.status === "Active" || a.status === "Grading" || a.status === "Closed"
+          : true);
+    return matchesSearch && matchesCourse && matchesStatus && matchesPublication;
   });
 
   const totalSubmissions = assignments.reduce((acc, a) => acc + a.totalSubmissions, 0);
@@ -955,12 +1013,27 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
             className="px-2.5 py-1.5 text-xs text-slate-700 bg-white border border-slate-200 rounded-lg focus:outline-hidden"
           >
             <option value="All">All Statuses</option>
-            <option value="Draft">Draft</option>
             <option value="Active">Active</option>
             <option value="Grading">Grading</option>
             <option value="Closed">Closed</option>
           </select>
         </div>
+      </div>
+      <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1 w-fit">
+        {(["All", "Published", "Draft"] as const).map((filter) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => setPublicationFilter(filter)}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              publicationFilter === filter
+                ? "bg-white text-indigo-700 shadow-xs"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            {filter === "All" ? "All Assignments" : filter}
+          </button>
+        ))}
       </div>
 
       {/* Assignments List */}
@@ -1023,10 +1096,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
                     Due: {asg.dueDate} at {asg.dueTime}
                   </span>
-                  <span className="font-mono font-medium text-slate-700">
-                    {asg.maxMarks} marks · {asg.allowedAttempts || 1} attempt
-                    {asg.allowedAttempts === 1 ? "" : "s"}
-                  </span>
+                  <span className="font-mono font-medium text-slate-700">{asg.maxMarks} marks</span>
                 </div>
               </div>
 
@@ -1076,9 +1146,10 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                         onClick={() => void handleStatusChange(asg, "publish")}
                         aria-label={`Publish ${asg.title}`}
                         title="Publish assignment"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-emerald-200 text-emerald-700 transition-colors hover:bg-emerald-50"
+                        className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md border border-emerald-200 px-2 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50"
                       >
                         <Send className="h-3.5 w-3.5" />
+                        <span>Publish</span>
                       </button>
                     )}
                     {asg.status === "Active" && (
