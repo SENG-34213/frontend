@@ -16,7 +16,6 @@ import { SectionHeading } from "../components/ui/SectionHeading";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { Accordion } from "../components/ui/FeedbackStates";
-import heroStudentsImg from "../assets/images/mentify_students_hero_1792947128104.jpg";
 import { CourseCard } from "../components/courses/CourseCard";
 import { MaterialCard } from "../components/marketplace/MaterialCard";
 import { MOCK_FAQS } from "../data/mockData";
@@ -154,8 +153,8 @@ export const HomePage: React.FC<HomePageProps> = ({
               <div className="relative mx-auto max-w-lg lg:max-w-none">
                 <div className="relative rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-2xl bg-slate-900">
                   <img
-                    src={heroStudentsImg}
-                    alt="TiT Online Education students collaborating in modern study hall"
+                    src="/8c65cd81-7eec-4161-aa47-5b3a15fc7203.jpeg"
+                    alt="Students learning together in a modern study space"
                     className="w-full h-auto aspect-[4/3] object-cover rounded-3xl transition-transform duration-700 hover:scale-[1.01]"
                     loading="eager"
                   />
