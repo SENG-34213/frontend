@@ -291,20 +291,23 @@ const AssignmentEditModal: React.FC<{
     setIsSubmitting(true);
     setFormError("");
     try {
-      await onSave({
-        title: title.trim(),
-        description: description.trim(),
-        instructions: instructions.trim(),
-        startDate: `${startDate}:00`,
-        dueDate: `${dueDate}:00`,
-        maxMarks: Number(maxMarks),
-        allowLateSubmission,
-        latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
-        submissionType,
-        rubricItems: rubricItems
-          .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
-          .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
-      }, publishImmediately);
+      await onSave(
+        {
+          title: title.trim(),
+          description: description.trim(),
+          instructions: instructions.trim(),
+          startDate: `${startDate}:00`,
+          dueDate: `${dueDate}:00`,
+          maxMarks: Number(maxMarks),
+          allowLateSubmission,
+          latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
+          submissionType,
+          rubricItems: rubricItems
+            .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
+            .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
+        },
+        publishImmediately,
+      );
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Assignment could not be updated.");
     } finally {
@@ -552,11 +555,22 @@ const AssignmentEditModal: React.FC<{
             )}
           </section>
           <fieldset className="rounded-lg border border-slate-200 p-3">
-            <legend className="px-1 text-xs font-semibold text-slate-700">Submission required</legend>
+            <legend className="px-1 text-xs font-semibold text-slate-700">
+              Submission required
+            </legend>
             <div className="grid grid-cols-2 gap-2">
               {(["TEXT", "DOCUMENT"] as const).map((option) => (
-                <label key={option} className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${submissionType === option ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
-                  <input type="radio" name="edit-submission-type" checked={submissionType === option} onChange={() => setSubmissionType(option)} className="sr-only" />
+                <label
+                  key={option}
+                  className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${submissionType === option ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <input
+                    type="radio"
+                    name="edit-submission-type"
+                    checked={submissionType === option}
+                    onChange={() => setSubmissionType(option)}
+                    className="sr-only"
+                  />
                   {option === "TEXT" ? "Text answer" : "Document"}
                 </label>
               ))}
@@ -631,7 +645,7 @@ const AssignmentEditModal: React.FC<{
                       items.map((row, i) =>
                         i === index ? { ...row, marks: e.target.value } : row,
                       ),
-                    )
+                    );
                   }}
                   className={`${fieldClass} mt-0 sm:w-24`}
                 />
@@ -797,7 +811,9 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
 
         const sorted = [...loaded].sort((left, right) => {
           const leftTime = Date.parse(left.createdAt || left.publishedAt || left.updatedAt || "");
-          const rightTime = Date.parse(right.createdAt || right.publishedAt || right.updatedAt || "");
+          const rightTime = Date.parse(
+            right.createdAt || right.publishedAt || right.updatedAt || "",
+          );
           return rightTime - leftTime;
         });
         setBackendAssignments(sorted);
@@ -1080,9 +1096,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
                     Due: {asg.dueDate} at {asg.dueTime}
                   </span>
-                  <span className="font-mono font-medium text-slate-700">
-                    {asg.maxMarks} marks
-                  </span>
+                  <span className="font-mono font-medium text-slate-700">{asg.maxMarks} marks</span>
                 </div>
               </div>
 

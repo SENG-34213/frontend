@@ -95,7 +95,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentLessons, setAssignmentLessons] = useState<CourseContentLesson[]>([]);
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
-  const [assignmentSubmissionType, setAssignmentSubmissionType] = useState<"TEXT" | "DOCUMENT">("TEXT");
+  const [assignmentSubmissionType, setAssignmentSubmissionType] = useState<"TEXT" | "DOCUMENT">(
+    "TEXT",
+  );
   const [rubricItems, setRubricItems] = useState<Array<{ criterion: string; marks: string }>>([]);
   const [assignmentFiles, setAssignmentFiles] = useState<File[]>([]);
   const [lessonContentType, setLessonContentType] = useState("Lecture");
@@ -804,10 +806,15 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                   </div>
 
                   <fieldset className="rounded-lg border border-slate-200 p-3">
-                    <legend className="px-1 text-xs font-semibold text-slate-700">Submission required</legend>
+                    <legend className="px-1 text-xs font-semibold text-slate-700">
+                      Submission required
+                    </legend>
                     <div className="grid grid-cols-2 gap-2">
                       {(["TEXT", "DOCUMENT"] as const).map((submissionType) => (
-                        <label key={submissionType} className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${assignmentSubmissionType === submissionType ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                        <label
+                          key={submissionType}
+                          className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${assignmentSubmissionType === submissionType ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                        >
                           <input
                             type="radio"
                             name="assignment-submission-type"
@@ -875,8 +882,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       </p>
                     )}
                     <p className="text-[11px] text-slate-500">
-                      Total: {rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0)}%
-                      / 100%
+                      Total: {rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0)}
+                      % / 100%
                     </p>
                     {rubricItems.map((item, index) => (
                       <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -911,7 +918,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                               items.map((row, rowIndex) =>
                                 rowIndex === index ? { ...row, marks: e.target.value } : row,
                               ),
-                            )
+                            );
                           }}
                           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 sm:w-20"
                           aria-label="Rubric percentage"
@@ -1492,8 +1499,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 ) : (
                   <button
                     type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
                     {isSubmitting
                       ? "Creating..."

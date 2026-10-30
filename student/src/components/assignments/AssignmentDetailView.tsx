@@ -369,7 +369,7 @@ export const AssignmentDetailView: React.FC = () => {
                   {isSubmitting ? "Uploading & Verifying..." : "Submit Assignment for Grading"}
                 </button>
               </form>
-              ) )
+              )
             ) : (
               /* Already submitted review */
               <div className="space-y-4 text-xs">

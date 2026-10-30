@@ -83,7 +83,7 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
           ? "Graded"
           : "Submitted",
     score: item.marks,
-      isReturned: item.status === "RETURNED",
+    isReturned: item.status === "RETURNED",
     isLate: item.isLate,
     gradeReleased: item.gradeReleased,
     maxMarks,
@@ -138,27 +138,31 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
         const mapped = backendSubmissions.map((submission) =>
           mapBackendSubmission(submission, backendAssignment?.maxMarks ?? 100),
         );
-        const duePassed = backendAssignment?.dueDate ? new Date(backendAssignment.dueDate).getTime() < Date.now() : false;
+        const duePassed = backendAssignment?.dueDate
+          ? new Date(backendAssignment.dueDate).getTime() < Date.now()
+          : false;
         if (duePassed && backendAssignment?.courseId) {
-          void getCourseStudentIds(backendAssignment.courseId, controller.signal).then(async (studentIds) => {
-            const submittedIds = new Set(mapped.map((submission) => submission.studentId));
-            const missingIds = studentIds.filter((studentId) => !submittedIds.has(studentId));
-            const profiles = await getStudentProfiles(missingIds, controller.signal);
-            const missing = missingIds.map((studentId) => {
-              const profile = profiles.find((item) => item.id === studentId);
-              return {
-                id: `missing-${studentId}`,
-                assignmentId: selectedAssignmentId,
-                studentId,
-                studentName: profile?.name || "Student name unavailable",
-                studentEmail: profile?.email || "",
-                submissionDate: "No submission",
-                status: "Pending" as const,
-                maxMarks: backendAssignment.maxMarks,
-              };
-            });
-            setSubmissions((current) => [...current, ...missing]);
-          }).catch(() => undefined);
+          void getCourseStudentIds(backendAssignment.courseId, controller.signal)
+            .then(async (studentIds) => {
+              const submittedIds = new Set(mapped.map((submission) => submission.studentId));
+              const missingIds = studentIds.filter((studentId) => !submittedIds.has(studentId));
+              const profiles = await getStudentProfiles(missingIds, controller.signal);
+              const missing = missingIds.map((studentId) => {
+                const profile = profiles.find((item) => item.id === studentId);
+                return {
+                  id: `missing-${studentId}`,
+                  assignmentId: selectedAssignmentId,
+                  studentId,
+                  studentName: profile?.name || "Student name unavailable",
+                  studentEmail: profile?.email || "",
+                  submissionDate: "No submission",
+                  status: "Pending" as const,
+                  maxMarks: backendAssignment.maxMarks,
+                };
+              });
+              setSubmissions((current) => [...current, ...missing]);
+            })
+            .catch(() => undefined);
         }
         setSubmissions(mapped);
         setSelectedSubmissionId(mapped[0]?.id || "");
@@ -262,20 +266,36 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   };
 
   const handleReleaseSelected = async (all = false) => {
-    const targets = (all ? submissions : submissions.filter((submission) => selectedSubmissionIds.includes(submission.id)))
-      .filter((submission) => !submission.id.startsWith("missing-") && submission.score !== undefined);
+    const targets = (
+      all
+        ? submissions
+        : submissions.filter((submission) => selectedSubmissionIds.includes(submission.id))
+    ).filter(
+      (submission) => !submission.id.startsWith("missing-") && submission.score !== undefined,
+    );
     for (const submission of targets) await releaseSubmissionGrade(submission.id);
-    setSubmissions((current) => current.map((submission) => targets.some((target) => target.id === submission.id)
-      ? { ...submission, status: "Graded", gradeReleased: true, isReturned: true }
-      : submission));
+    setSubmissions((current) =>
+      current.map((submission) =>
+        targets.some((target) => target.id === submission.id)
+          ? { ...submission, status: "Graded", gradeReleased: true, isReturned: true }
+          : submission,
+      ),
+    );
   };
 
   const handleHoldSelected = async () => {
-    const targets = submissions.filter((submission) => selectedSubmissionIds.includes(submission.id) && !submission.id.startsWith("missing-"));
+    const targets = submissions.filter(
+      (submission) =>
+        selectedSubmissionIds.includes(submission.id) && !submission.id.startsWith("missing-"),
+    );
     for (const submission of targets) await holdSubmissionGrade(submission.id);
-    setSubmissions((current) => current.map((submission) => targets.some((target) => target.id === submission.id)
-      ? { ...submission, gradeReleased: false, isReturned: false }
-      : submission));
+    setSubmissions((current) =>
+      current.map((submission) =>
+        targets.some((target) => target.id === submission.id)
+          ? { ...submission, gradeReleased: false, isReturned: false }
+          : submission,
+      ),
+    );
   };
 
   const handleReturnSubmission = async () => {
@@ -405,16 +425,20 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                       checked={isCheckboxSelected}
                       onChange={(event) => {
                         event.stopPropagation();
-                        setSelectedSubmissionIds((current) => event.target.checked
-                          ? [...current, sub.id]
-                          : current.filter((id) => id !== sub.id));
+                        setSelectedSubmissionIds((current) =>
+                          event.target.checked
+                            ? [...current, sub.id]
+                            : current.filter((id) => id !== sub.id),
+                        );
                       }}
                       onClick={(event) => event.stopPropagation()}
                       className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className={`text-xs font-semibold truncate ${isSelected ? "text-indigo-900" : "text-slate-900"}`}>
+                    <p
+                      className={`text-xs font-semibold truncate ${isSelected ? "text-indigo-900" : "text-slate-900"}`}
+                    >
                       {sub.studentName}
                     </p>
                     <p className="text-[11px] text-slate-400 truncate">{sub.submissionDate}</p>
@@ -457,10 +481,20 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                   onClick={async () => {
                     if (!currentSubmission.submittedFileId) return;
                     try {
-                      const download = await getSubmissionFileDownload(currentSubmission.id, currentSubmission.submittedFileId);
-                      if (download.downloadUrl) window.open(download.downloadUrl, "_blank", "noopener,noreferrer");
+                      const download = await getSubmissionFileDownload(
+                        currentSubmission.id,
+                        currentSubmission.submittedFileId,
+                      );
+                      if (download.downloadUrl)
+                        window.open(download.downloadUrl, "_blank", "noopener,noreferrer");
                     } catch (error) {
-                      setNotice({ title: "Download unavailable", message: error instanceof Error ? error.message : "The file could not be downloaded." });
+                      setNotice({
+                        title: "Download unavailable",
+                        message:
+                          error instanceof Error
+                            ? error.message
+                            : "The file could not be downloaded.",
+                      });
                     }
                   }}
                   className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors flex items-center gap-1"
@@ -473,24 +507,25 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-5">
-            {currentSubmission.submittedFileId && currentSubmission.submittedFileContentType?.includes("pdf") ? (
-            <div className="h-[520px] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-              <iframe
-                title={`Preview of ${currentSubmission.submittedFileName}`}
-                src={previewUrl}
-                className="h-full w-full"
-              />
-            </div>
-          ) : (
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Student Submission Notes & Architecture
-              </span>
-              <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-line font-sans">
-                {currentSubmission.submittedContentText || "No text answer was submitted."}
-              </p>
-            </div>
-          )}
+            {currentSubmission.submittedFileId &&
+            currentSubmission.submittedFileContentType?.includes("pdf") ? (
+              <div className="h-[520px] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                <iframe
+                  title={`Preview of ${currentSubmission.submittedFileName}`}
+                  src={previewUrl}
+                  className="h-full w-full"
+                />
+              </div>
+            ) : (
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                  Student Submission Notes & Architecture
+                </span>
+                <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-line font-sans">
+                  {currentSubmission.submittedContentText || "No text answer was submitted."}
+                </p>
+              </div>
+            )}
 
             {/* Code / Artifact Viewer */}
             {currentSubmission.codeSnippet && (
@@ -545,14 +580,21 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               </div>
             </div>
 
-            {currentSubmission.isLate && Number(currentAssignment.latePenaltyPercentage || 0) > 0 && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                Late penalty: {currentAssignment.latePenaltyPercentage}%
-                <span className="block mt-1 font-mono font-bold">
-                  Final mark: {Math.max(0, Number(inputScore || 0) * (1 - Number(currentAssignment.latePenaltyPercentage || 0) / 100)).toFixed(2)} / {currentAssignment.maxMarks}
-                </span>
-              </div>
-            )}
+            {currentSubmission.isLate &&
+              Number(currentAssignment.latePenaltyPercentage || 0) > 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                  Late penalty: {currentAssignment.latePenaltyPercentage}%
+                  <span className="block mt-1 font-mono font-bold">
+                    Final mark:{" "}
+                    {Math.max(
+                      0,
+                      Number(inputScore || 0) *
+                        (1 - Number(currentAssignment.latePenaltyPercentage || 0) / 100),
+                    ).toFixed(2)}{" "}
+                    / {currentAssignment.maxMarks}
+                  </span>
+                </div>
+              )}
 
             {/* Rubric Breakdown */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
@@ -561,25 +603,35 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               </span>
               <div className="space-y-2">
                 {currentAssignment.rubricItems.map((r, i) => {
-                  const allotted = currentAssignment.maxMarks * r.marks / 100;
+                  const allotted = (currentAssignment.maxMarks * r.marks) / 100;
                   return (
-                  <label key={i} className="text-xs p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-start justify-between gap-2">
-                    <span className="text-slate-700 leading-snug">{r.criterion}<span className="block text-[10px] text-slate-400">Out of {Number(allotted.toFixed(2))} marks ({r.marks}%)</span></span>
-                    <input
-                      type="number"
-                      min="0"
-                      max={allotted}
-                      value={rubricScores[i] || ""}
-                      onChange={(event) => {
-                        const next = [...rubricScores];
-                        next[i] = event.target.value;
-                        setRubricScores(next);
-                        setInputScore(String(next.reduce((sum, value) => sum + (Number(value) || 0), 0)));
-                      }}
-                      disabled={isReadOnly}
-                      className="w-16 rounded border border-slate-300 px-2 py-1 text-right font-mono text-xs"
-                    />
-                  </label>
+                    <label
+                      key={i}
+                      className="text-xs p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-start justify-between gap-2"
+                    >
+                      <span className="text-slate-700 leading-snug">
+                        {r.criterion}
+                        <span className="block text-[10px] text-slate-400">
+                          Out of {Number(allotted.toFixed(2))} marks ({r.marks}%)
+                        </span>
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={allotted}
+                        value={rubricScores[i] || ""}
+                        onChange={(event) => {
+                          const next = [...rubricScores];
+                          next[i] = event.target.value;
+                          setRubricScores(next);
+                          setInputScore(
+                            String(next.reduce((sum, value) => sum + (Number(value) || 0), 0)),
+                          );
+                        }}
+                        disabled={isReadOnly}
+                        className="w-16 rounded border border-slate-300 px-2 py-1 text-right font-mono text-xs"
+                      />
+                    </label>
                   );
                 })}
               </div>
