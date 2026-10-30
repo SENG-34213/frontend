@@ -1,4 +1,4 @@
-export type Language = 'en' | 'ta' | 'si';
+export type Language = "en" | "ta" | "si";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -13,19 +13,19 @@ export interface ApiResponse<T> {
 }
 
 export type MaterialCategory =
-  | 'Notes'
-  | 'Short Notes'
-  | 'Past Papers'
-  | 'Exam Papers'
-  | 'Model Papers'
-  | 'Worksheets'
-  | 'Question Banks'
-  | 'Marking Schemes'
-  | 'Revision Packs'
-  | 'Study Guides'
-  | 'Tutorials'
-  | 'Practice Papers'
-  | 'Other';
+  | "Notes"
+  | "Short Notes"
+  | "Past Papers"
+  | "Exam Papers"
+  | "Model Papers"
+  | "Worksheets"
+  | "Question Banks"
+  | "Marking Schemes"
+  | "Revision Packs"
+  | "Study Guides"
+  | "Tutorials"
+  | "Practice Papers"
+  | "Other";
 
 export interface MaterialItem {
   id: string;
@@ -41,9 +41,9 @@ export interface MaterialItem {
   discountPercent?: number;
   finalPrice: number;
   currency: string;
-  status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
+  status: "PUBLISHED" | "DRAFT" | "ARCHIVED";
   thumbnailUrl: string;
-  fileFormat?: 'PDF' | 'DOCX' | 'ZIP';
+  fileFormat?: "PDF" | "DOCX" | "ZIP";
   fileSize?: string;
   pages?: number;
   authorName?: string;
@@ -69,15 +69,15 @@ export interface CourseItem {
     avatarUrl: string;
     rating: number;
   };
-  learningFormat: 'Online Live' | 'Physical Classroom' | 'Hybrid' | 'Self-Paced';
+  learningFormat: "Online Live" | "Physical Classroom" | "Hybrid" | "Self-Paced";
   schedule: string;
   duration: string;
   fee: {
     amount: number;
     currency: string;
-    period: 'monthly' | 'term' | 'course';
+    period: "monthly" | "term" | "course";
   };
-  availability: 'Enrollment Open' | 'Limited Seats' | 'Waitlist' | 'Closed';
+  availability: "Enrollment Open" | "Limited Seats" | "Waitlist" | "Closed";
   syllabus: {
     term: string;
     weeks: number;
@@ -113,7 +113,7 @@ export interface AdmissionsFormData {
   studentFullName: string;
   studentInitials: string;
   dateOfBirth: string;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   guardianName: string;
   guardianRelation: string;
   guardianPhone: string;
@@ -126,8 +126,8 @@ export interface AdmissionsFormData {
   grade: string;
   stream?: string;
   preferredSubjects: string[];
-  learningPreference: 'Online Live' | 'Physical Classroom' | 'Hybrid';
-  preferredContactMethod: 'WhatsApp' | 'Phone Call' | 'Email';
+  learningPreference: "Online Live" | "Physical Classroom" | "Hybrid";
+  preferredContactMethod: "WhatsApp" | "Phone Call" | "Email";
   previousSchool?: string;
   specialRequests?: string;
   consentAgreed: boolean;
@@ -137,7 +137,7 @@ export interface ContactFormData {
   fullName: string;
   email: string;
   phone: string;
-  inquiryType: 'admissions' | 'marketplace' | 'courses' | 'tech_support' | 'partnership' | 'other';
+  inquiryType: "admissions" | "marketplace" | "courses" | "tech_support" | "partnership" | "other";
   subject: string;
   message: string;
 }
@@ -147,7 +147,12 @@ export interface CartItem {
   quantity: number;
 }
 
-export type OrderPaymentStatus = 'pending' | 'processing' | 'succeeded' | 'failed' | 'requires_action';
+export type OrderPaymentStatus =
+  | "pending"
+  | "processing"
+  | "succeeded"
+  | "failed"
+  | "requires_action";
 
 export interface OrderPreparationState {
   orderId?: string;

@@ -1,32 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { CartItem, CourseItem, Language, MaterialItem } from './types';
-import { MOCK_COURSES, MOCK_MATERIALS } from './data/mockData';
-import { Navbar } from './components/layout/Navbar';
-import { Footer } from './components/layout/Footer';
-import { CartDrawer } from './components/layout/CartDrawer';
-import { CheckoutModal } from './components/marketplace/CheckoutModal';
-import { QuickApplyModal } from './components/admissions/QuickApplyModal';
-import { ExamResultsLookupModal } from './components/portal/ExamResultsLookupModal';
-import { TutorApplicationModal } from './components/tutors/TutorApplicationModal';
+import React, { useState, useEffect } from "react";
+import { CartItem, CourseItem, Language, MaterialItem } from "./types";
+import { MOCK_COURSES, MOCK_MATERIALS } from "./data/mockData";
+import { Navbar } from "./components/layout/Navbar";
+import { Footer } from "./components/layout/Footer";
+import { CartDrawer } from "./components/layout/CartDrawer";
+import { CheckoutModal } from "./components/marketplace/CheckoutModal";
+import { QuickApplyModal } from "./components/admissions/QuickApplyModal";
+import { ExamResultsLookupModal } from "./components/portal/ExamResultsLookupModal";
+import { TutorApplicationModal } from "./components/tutors/TutorApplicationModal";
 
 // Pages
-import { HomePage } from './pages/HomePage';
-import { AboutPage } from './pages/AboutPage';
-import { CoursesPage } from './pages/CoursesPage';
-import { CourseDetailPage } from './pages/CourseDetailPage';
-import { FeaturesPage } from './pages/FeaturesPage';
-import { MarketplacePage } from './pages/MarketplacePage';
-import { MaterialDetailPage } from './pages/MaterialDetailPage';
-import { AdmissionsPage } from './pages/AdmissionsPage';
-import { TeachersPage } from './pages/TeachersPage';
-import { PortalsPage } from './pages/PortalsPage';
-import { ContactLegalPage } from './pages/ContactLegalPage';
+import { HomePage } from "./pages/HomePage";
+import { AboutPage } from "./pages/AboutPage";
+import { CoursesPage } from "./pages/CoursesPage";
+import { CourseDetailPage } from "./pages/CourseDetailPage";
+import { FeaturesPage } from "./pages/FeaturesPage";
+import { MarketplacePage } from "./pages/MarketplacePage";
+import { MaterialDetailPage } from "./pages/MaterialDetailPage";
+import { AdmissionsPage } from "./pages/AdmissionsPage";
+import { TeachersPage } from "./pages/TeachersPage";
+import { PortalsPage } from "./pages/PortalsPage";
+import { ContactLegalPage } from "./pages/ContactLegalPage";
 
-export default function App({ initialLang = 'en' }: { initialLang?: Language }) {
+export default function App({ initialLang = "en" }: { initialLang?: Language }) {
   // Navigation & Page State
-  const [currentPath, setCurrentPath] = useState<string>('home');
+  const [currentPath, setCurrentPath] = useState<string>("home");
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialItem | null>(null);
 
@@ -39,29 +39,29 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Theme State (Light by default, togglable to Dark)
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('tit_theme') || localStorage.getItem('mentify_theme');
-      if (saved === 'dark' || saved === 'light') return saved;
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("tit_theme") || localStorage.getItem("mentify_theme");
+      if (saved === "dark" || saved === "light") return saved;
+      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        return "dark";
       }
     }
-    return 'light';
+    return "light";
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
+    if (theme === "dark") {
+      root.classList.add("dark");
     } else {
-      root.classList.remove('dark');
+      root.classList.remove("dark");
     }
-    localStorage.setItem('tit_theme', theme);
+    localStorage.setItem("tit_theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
   // Admission Enquiry Modal State
@@ -75,52 +75,52 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
   // Synchronize hash with currentPath
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '') || 'home';
-      if (hash.startsWith('course-')) {
-        const id = hash.replace('course-', '');
+      const hash = window.location.hash.replace("#", "") || "home";
+      if (hash.startsWith("course-")) {
+        const id = hash.replace("course-", "");
         const found = MOCK_COURSES.find((c) => c.id === id);
         if (found) {
           setSelectedCourse(found);
-          setCurrentPath('course-detail');
+          setCurrentPath("course-detail");
         }
-      } else if (hash.startsWith('material-')) {
-        const id = hash.replace('material-', '');
+      } else if (hash.startsWith("material-")) {
+        const id = hash.replace("material-", "");
         const found = MOCK_MATERIALS.find((m) => m.id === id);
         if (found) {
           setSelectedMaterial(found);
-          setCurrentPath('material-detail');
+          setCurrentPath("material-detail");
         }
       } else {
         setCurrentPath(hash);
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     if (window.location.hash) {
       handleHashChange();
     }
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
   const navigateTo = (path: string) => {
     window.location.hash = path;
     setCurrentPath(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSelectCourse = (course: CourseItem) => {
     setSelectedCourse(course);
     window.location.hash = `course-${course.id}`;
-    setCurrentPath('course-detail');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setCurrentPath("course-detail");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSelectMaterial = (material: MaterialItem) => {
     setSelectedMaterial(material);
     window.location.hash = `material-${material.id}`;
-    setCurrentPath('material-detail');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setCurrentPath("material-detail");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleApplyCourse = (course: CourseItem) => {
@@ -170,23 +170,23 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
       {/* Main Page Content Router */}
       <main className="flex-1">
         {(![
-          'courses',
-          'course-detail',
-          'marketplace',
-          'material-detail',
-          'features',
-          'about',
-          'teachers',
-          'portals',
-          'admissions',
-          'contact',
-          'faq',
-          'privacy',
-          'terms',
+          "courses",
+          "course-detail",
+          "marketplace",
+          "material-detail",
+          "features",
+          "about",
+          "teachers",
+          "portals",
+          "admissions",
+          "contact",
+          "faq",
+          "privacy",
+          "terms",
         ].includes(currentPath) ||
-          currentPath === 'home' ||
-          (currentPath === 'course-detail' && !selectedCourse) ||
-          (currentPath === 'material-detail' && !selectedMaterial)) && (
+          currentPath === "home" ||
+          (currentPath === "course-detail" && !selectedCourse) ||
+          (currentPath === "material-detail" && !selectedMaterial)) && (
           <HomePage
             currentLang={currentLang}
             onNavigate={navigateTo}
@@ -205,7 +205,7 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
           />
         )}
 
-        {currentPath === 'courses' && (
+        {currentPath === "courses" && (
           <CoursesPage
             currentLang={currentLang}
             courses={MOCK_COURSES}
@@ -214,16 +214,16 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
           />
         )}
 
-        {currentPath === 'course-detail' && selectedCourse && (
+        {currentPath === "course-detail" && selectedCourse && (
           <CourseDetailPage
             currentLang={currentLang}
             course={selectedCourse}
-            onBack={() => navigateTo('courses')}
+            onBack={() => navigateTo("courses")}
             onApply={handleApplyCourse}
           />
         )}
 
-        {currentPath === 'marketplace' && (
+        {currentPath === "marketplace" && (
           <MarketplacePage
             currentLang={currentLang}
             onSelectMaterial={handleSelectMaterial}
@@ -231,20 +231,20 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
           />
         )}
 
-        {currentPath === 'material-detail' && selectedMaterial && (
+        {currentPath === "material-detail" && selectedMaterial && (
           <MaterialDetailPage
             currentLang={currentLang}
             material={selectedMaterial}
             relatedMaterials={MOCK_MATERIALS.filter(
-              (m) => m.id !== selectedMaterial.id && m.subject === selectedMaterial.subject
+              (m) => m.id !== selectedMaterial.id && m.subject === selectedMaterial.subject,
             )}
-            onBack={() => navigateTo('marketplace')}
+            onBack={() => navigateTo("marketplace")}
             onAddToCart={handleAddToCart}
             onSelectRelated={handleSelectMaterial}
           />
         )}
 
-        {currentPath === 'features' && (
+        {currentPath === "features" && (
           <FeaturesPage
             onNavigate={navigateTo}
             onOpenAdmissions={() => {
@@ -254,7 +254,7 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
           />
         )}
 
-        {currentPath === 'about' && (
+        {currentPath === "about" && (
           <AboutPage
             onNavigate={navigateTo}
             onOpenAdmissions={() => {
@@ -264,29 +264,27 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
           />
         )}
 
-        {currentPath === 'teachers' && (
+        {currentPath === "teachers" && (
           <TeachersPage currentLang={currentLang} onNavigate={navigateTo} />
         )}
 
-        {currentPath === 'portals' && <PortalsPage currentLang={currentLang} />}
+        {currentPath === "portals" && <PortalsPage currentLang={currentLang} />}
 
-        {currentPath === 'admissions' && (
+        {currentPath === "admissions" && (
           <AdmissionsPage currentLang={currentLang} onNavigate={navigateTo} />
         )}
 
-        {currentPath === 'contact' && (
+        {currentPath === "contact" && (
           <ContactLegalPage currentLang={currentLang} initialTab="contact" />
         )}
 
-        {currentPath === 'faq' && (
-          <ContactLegalPage currentLang={currentLang} initialTab="faq" />
-        )}
+        {currentPath === "faq" && <ContactLegalPage currentLang={currentLang} initialTab="faq" />}
 
-        {currentPath === 'privacy' && (
+        {currentPath === "privacy" && (
           <ContactLegalPage currentLang={currentLang} initialTab="privacy" />
         )}
 
-        {currentPath === 'terms' && (
+        {currentPath === "terms" && (
           <ContactLegalPage currentLang={currentLang} initialTab="terms" />
         )}
       </main>
@@ -329,16 +327,10 @@ export default function App({ initialLang = 'en' }: { initialLang?: Language }) 
       />
 
       {/* Official Exam Results Lookup Modal */}
-      <ExamResultsLookupModal
-        isOpen={isResultsOpen}
-        onClose={() => setIsResultsOpen(false)}
-      />
+      <ExamResultsLookupModal isOpen={isResultsOpen} onClose={() => setIsResultsOpen(false)} />
 
       {/* Official Apply as a Tutor Modal */}
-      <TutorApplicationModal
-        isOpen={isTutorApplyOpen}
-        onClose={() => setIsTutorApplyOpen(false)}
-      />
+      <TutorApplicationModal isOpen={isTutorApplyOpen} onClose={() => setIsTutorApplyOpen(false)} />
     </div>
   );
 }

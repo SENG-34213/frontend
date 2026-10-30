@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect } from "react";
+import { X } from "lucide-react";
 
 export interface ModalProps {
   isOpen: boolean;
@@ -7,7 +7,7 @@ export interface ModalProps {
   title?: string;
   description?: string;
   children: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -16,30 +16,30 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   description,
   children,
-  maxWidth = 'md',
+  maxWidth = "md",
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
     }
     return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = "unset";
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const maxWidthStyles = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    '2xl': 'max-w-2xl',
+    sm: "max-w-sm",
+    md: "max-w-md",
+    lg: "max-w-lg",
+    xl: "max-w-xl",
+    "2xl": "max-w-2xl",
   };
 
   return (
@@ -64,8 +64,12 @@ export const Modal: React.FC<ModalProps> = ({
 
         {title && (
           <div className="mb-4 pr-8">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
-            {description && <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{description}</p>}
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {title}
+            </h3>
+            {description && (
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{description}</p>
+            )}
           </div>
         )}
 
@@ -80,7 +84,7 @@ export interface DrawerProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  position?: 'right' | 'left';
+  position?: "right" | "left";
 }
 
 export const Drawer: React.FC<DrawerProps> = ({
@@ -88,14 +92,14 @@ export const Drawer: React.FC<DrawerProps> = ({
   onClose,
   title,
   children,
-  position = 'right',
+  position = "right",
 }) => {
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
@@ -110,12 +114,12 @@ export const Drawer: React.FC<DrawerProps> = ({
 
       <div
         className={`fixed inset-y-0 ${
-          position === 'right' ? 'right-0' : 'left-0'
+          position === "right" ? "right-0" : "left-0"
         } max-w-full flex pl-10 z-10`}
       >
         <div className="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-300">
           <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{title || 'Menu'}</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{title || "Menu"}</h3>
             <button
               onClick={onClose}
               className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"

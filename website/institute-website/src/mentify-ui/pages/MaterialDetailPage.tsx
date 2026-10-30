@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -14,14 +14,14 @@ import {
   Sparkles,
   Star,
   User,
-} from 'lucide-react';
-import { Language, MaterialItem } from '../types';
-import { Container } from '../components/ui/Container';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { Breadcrumb } from '../components/ui/FeedbackStates';
-import { MaterialCard } from '../components/marketplace/MaterialCard';
+} from "lucide-react";
+import { Language, MaterialItem } from "../types";
+import { Container } from "../components/ui/Container";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Breadcrumb } from "../components/ui/FeedbackStates";
+import { MaterialCard } from "../components/marketplace/MaterialCard";
 
 export interface MaterialDetailPageProps {
   currentLang: Language;
@@ -47,8 +47,8 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
         <Container>
           <Breadcrumb
             items={[
-              { label: 'Home', onClick: onBack },
-              { label: 'Marketplace', onClick: onBack },
+              { label: "Home", onClick: onBack },
+              { label: "Marketplace", onClick: onBack },
               { label: material.title, active: true },
             ]}
           />
@@ -61,10 +61,12 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
               <Badge variant="primary" size="md">
                 {material.subject}
               </Badge>
-              <Badge variant={material.free ? 'success' : 'neutral'} size="md">
-                {material.free ? 'FREE RESOURCE' : 'VERIFIED PACK'}
+              <Badge variant={material.free ? "success" : "neutral"} size="md">
+                {material.free ? "FREE RESOURCE" : "VERIFIED PACK"}
               </Badge>
-              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">ID: {material.materialId}</span>
+              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                ID: {material.materialId}
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
@@ -90,7 +92,9 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
 
             {/* Description */}
             <div className="space-y-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Resource Overview</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                Resource Overview
+              </h2>
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                 {material.description}
               </p>
@@ -98,14 +102,16 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
 
             {/* Specification Metadata Table */}
             <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-800">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">File & Document Specifications</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                File & Document Specifications
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                   <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     File Format
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.fileFormat || 'PDF'}
+                    {material.fileFormat || "PDF"}
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -121,7 +127,7 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     Download Size
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.fileSize || '5.2 MB'}
+                    {material.fileSize || "5.2 MB"}
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -129,7 +135,7 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     Total Downloads
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.downloadCount ? material.downloadCount.toLocaleString() : '1,200+'}
+                    {material.downloadCount ? material.downloadCount.toLocaleString() : "1,200+"}
                   </span>
                 </div>
               </div>
@@ -141,7 +147,8 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
               <div className="text-xs text-indigo-950 dark:text-indigo-200 space-y-1">
                 <span className="font-bold block">Academic Integrity & Verified Solutions</span>
                 <p className="text-indigo-900/80 dark:text-indigo-300/80 leading-relaxed">
-                  Every past paper scheme and model document published on the TiT marketplace is vetted by faculty members to ensure precision and syllabus conformity.
+                  Every past paper scheme and model document published on the TiT marketplace is
+                  vetted by faculty members to ensure precision and syllabus conformity.
                 </p>
               </div>
             </div>
@@ -149,7 +156,10 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
 
           {/* Right Column: Sticky Purchase Information Panel */}
           <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-5">
-            <Card padding="none" className="overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-xl">
+            <Card
+              padding="none"
+              className="overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-xl"
+            >
               <div className="p-6 space-y-5">
                 {/* Price Display */}
                 <div>
@@ -158,7 +168,9 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                   </span>
                   <div className="flex items-baseline gap-2 mt-1">
                     {material.free ? (
-                      <span className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">Free Download</span>
+                      <span className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                        Free Download
+                      </span>
                     ) : (
                       <>
                         <span className="text-3xl font-extrabold text-slate-900 dark:text-white">
@@ -180,9 +192,11 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     <User className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
-                    <span className="text-[11px] font-semibold text-slate-400 block uppercase">Authored By</span>
+                    <span className="text-[11px] font-semibold text-slate-400 block uppercase">
+                      Authored By
+                    </span>
                     <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                      {material.authorName || 'TiT Academic Board'}
+                      {material.authorName || "TiT Academic Board"}
                     </h5>
                   </div>
                 </div>
@@ -193,7 +207,9 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     <Button
                       variant="primary"
                       size="lg"
-                      onClick={() => alert(`Initiating direct verified download for ${material.title}`)}
+                      onClick={() =>
+                        alert(`Initiating direct verified download for ${material.title}`)
+                      }
                       leftIcon={<Download className="w-4 h-4" />}
                       className="w-full justify-center bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20"
                     >

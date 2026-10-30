@@ -1,24 +1,25 @@
-import React from 'react';
-import { Badge } from './Badge';
+import React from "react";
+import { Badge } from "./Badge";
 
 export interface SectionHeadingProps {
   badge?: string;
-  badgeVariant?: 'primary' | 'secondary' | 'accent' | 'neutral' | 'success';
+  badgeVariant?: "primary" | "secondary" | "accent" | "neutral" | "success";
   title: string;
   subtitle?: string;
-  align?: 'left' | 'center';
+  align?: "left" | "center";
   className?: string;
 }
 
 export const SectionHeading: React.FC<SectionHeadingProps> = ({
   badge,
-  badgeVariant = 'primary',
+  badgeVariant = "primary",
   title,
   subtitle,
-  align = 'center',
-  className = '',
+  align = "center",
+  className = "",
 }) => {
-  const alignClass = align === 'center' ? 'text-center mx-auto items-center' : 'text-left items-start';
+  const alignClass =
+    align === "center" ? "text-center mx-auto items-center" : "text-left items-start";
 
   return (
     <div className={`flex flex-col max-w-3xl ${alignClass} ${className}`}>

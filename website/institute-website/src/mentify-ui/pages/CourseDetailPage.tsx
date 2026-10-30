@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -13,14 +13,14 @@ import {
   Sparkles,
   Star,
   Users,
-} from 'lucide-react';
-import { CourseItem, Language } from '../types';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { Accordion, Breadcrumb } from '../components/ui/FeedbackStates';
+} from "lucide-react";
+import { CourseItem, Language } from "../types";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import { Card } from "../components/ui/Card";
+import { Accordion, Breadcrumb } from "../components/ui/FeedbackStates";
 
 export interface CourseDetailPageProps {
   currentLang: Language;
@@ -44,8 +44,8 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
         <Container>
           <Breadcrumb
             items={[
-              { label: 'Home', onClick: onBack },
-              { label: 'Courses', onClick: onBack },
+              { label: "Home", onClick: onBack },
+              { label: "Courses", onClick: onBack },
               { label: course.title, active: true },
             ]}
           />
@@ -61,7 +61,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
               <Badge variant="success" size="md" dot>
                 {course.availability}
               </Badge>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono ml-1">Code: {course.code}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-mono ml-1">
+                Code: {course.code}
+              </span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
@@ -82,7 +84,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
           <div className="lg:col-span-8 space-y-10">
             {/* Overview */}
             <section className="space-y-4">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Course Overview</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Course Overview
+              </h2>
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
                 {course.description}
               </p>
@@ -90,7 +94,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
             {/* Learning Outcomes */}
             <section className="space-y-4 pt-6 border-t border-slate-200/80 dark:border-slate-800">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">What You Will Master</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                What You Will Master
+              </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {course.outcomes.map((outcome, idx) => (
                   <div
@@ -109,7 +115,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
             {/* Syllabus Overview */}
             <section className="space-y-4 pt-6 border-t border-slate-200/80 dark:border-slate-800">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Curriculum Syllabus</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                  Curriculum Syllabus
+                </h2>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {course.syllabus.length} Academic Terms
                 </span>
@@ -122,7 +130,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                     className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs space-y-3"
                   >
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                      <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">{term.term}</h4>
+                      <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                        {term.term}
+                      </h4>
                       <Badge variant="neutral" size="sm">
                         {term.weeks} Weeks Duration
                       </Badge>
@@ -142,7 +152,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
             {/* Instructor Profile */}
             <section className="space-y-4 pt-6 border-t border-slate-200/80 dark:border-slate-800">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Your Course Instructor</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                Your Course Instructor
+              </h2>
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 shadow-2xs">
                 <img
                   src={course.teacher.avatarUrl}
@@ -151,15 +163,20 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                 />
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{course.teacher.name}</h4>
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {course.teacher.name}
+                    </h4>
                     <span className="flex items-center gap-1 text-amber-500 text-xs font-bold">
                       <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                       {course.teacher.rating}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-indigo-600 dark:text-indigo-400 font-medium">{course.teacher.title}</p>
+                  <p className="text-xs sm:text-sm text-indigo-600 dark:text-indigo-400 font-medium">
+                    {course.teacher.title}
+                  </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Senior curriculum specialist conducting live broadcast lectures and personal doubt review sessions inside the TiT portal.
+                    Senior curriculum specialist conducting live broadcast lectures and personal
+                    doubt review sessions inside the TiT portal.
                   </p>
                 </div>
               </div>
@@ -181,7 +198,10 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
 
           {/* Sticky Enrollment Card Right Column */}
           <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-5">
-            <Card padding="none" className="overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-xl">
+            <Card
+              padding="none"
+              className="overflow-hidden border border-slate-200/90 dark:border-slate-800 shadow-xl"
+            >
               <div className="relative h-48 w-full bg-slate-100 dark:bg-slate-800">
                 <img
                   src={course.thumbnailUrl}
@@ -197,14 +217,17 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
               <div className="p-6 space-y-5">
                 {/* Tuition Program Details */}
                 <div>
-                  <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">Program Type</span>
+                  <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">
+                    Program Type
+                  </span>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xl font-extrabold text-slate-900 dark:text-white">
                       Internal Academic Batch
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                    Conducted within our tuition institute with classroom guidance, live Zoom lectures, and comprehensive syllabus notes.
+                    Conducted within our tuition institute with classroom guidance, live Zoom
+                    lectures, and comprehensive syllabus notes.
                   </p>
                 </div>
 
@@ -212,19 +235,27 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({
                 <div className="space-y-2.5 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs">
                   <div className="flex items-start gap-2.5 text-slate-600 dark:text-slate-300">
                     <Calendar className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                    <span><strong>Schedule:</strong> {course.schedule}</span>
+                    <span>
+                      <strong>Schedule:</strong> {course.schedule}
+                    </span>
                   </div>
                   <div className="flex items-start gap-2.5 text-slate-600 dark:text-slate-300">
                     <Clock className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                    <span><strong>Duration:</strong> {course.duration}</span>
+                    <span>
+                      <strong>Duration:</strong> {course.duration}
+                    </span>
                   </div>
                   <div className="flex items-start gap-2.5 text-slate-600 dark:text-slate-300">
                     <MapPin className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                    <span><strong>Location:</strong> Alaveddy Center & Islandwide Online</span>
+                    <span>
+                      <strong>Location:</strong> Alaveddy Center & Islandwide Online
+                    </span>
                   </div>
                   <div className="flex items-start gap-2.5 text-slate-600 dark:text-slate-300">
                     <Users className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                    <span><strong>Status:</strong> {course.availability}</span>
+                    <span>
+                      <strong>Status:</strong> {course.availability}
+                    </span>
                   </div>
                 </div>
 

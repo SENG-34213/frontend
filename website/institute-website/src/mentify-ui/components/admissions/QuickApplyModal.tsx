@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { CheckCircle2, GraduationCap, Send, X } from 'lucide-react';
-import { CourseItem } from '../../types';
-import { api } from '../../lib/api/client';
-import { Button } from '../ui/Button';
-import { Input, Select } from '../ui/FormControls';
-import { SITE_CONFIG } from '../../lib/config/site';
+import React, { useState } from "react";
+import { CheckCircle2, GraduationCap, Send, X } from "lucide-react";
+import { CourseItem } from "../../types";
+import { api } from "../../lib/api/client";
+import { Button } from "../ui/Button";
+import { Input, Select } from "../ui/FormControls";
+import { SITE_CONFIG } from "../../lib/config/site";
 
 export interface QuickApplyModalProps {
   isOpen: boolean;
@@ -17,14 +17,16 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
   onClose,
   selectedCourse,
 }) => {
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [district, setDistrict] = useState('Colombo');
-  const [learningPreference, setLearningPreference] = useState<'Online Live' | 'Physical Classroom' | 'Hybrid'>('Hybrid');
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [district, setDistrict] = useState("Colombo");
+  const [learningPreference, setLearningPreference] = useState<
+    "Online Live" | "Physical Classroom" | "Hybrid"
+  >("Hybrid");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [referenceNo, setReferenceNo] = useState('');
+  const [referenceNo, setReferenceNo] = useState("");
 
   if (!isOpen) return null;
 
@@ -35,11 +37,14 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
     try {
       const res = await api.submitAdmissions({
         studentFullName: fullName,
-        studentInitials: fullName.split(' ').map(n => n[0]).join('.'),
-        dateOfBirth: '2008-01-01',
-        gender: 'other',
-        guardianName: 'Guardian of ' + fullName,
-        guardianRelation: 'Parent',
+        studentInitials: fullName
+          .split(" ")
+          .map((n) => n[0])
+          .join("."),
+        dateOfBirth: "2008-01-01",
+        gender: "other",
+        guardianName: "Guardian of " + fullName,
+        guardianRelation: "Parent",
         guardianPhone: phone,
         guardianEmail: email,
         studentEmail: email,
@@ -47,10 +52,10 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
         district: district,
         city: district,
         address: district,
-        grade: selectedCourse ? selectedCourse.grade : 'A/L',
-        preferredSubjects: selectedCourse ? [selectedCourse.subject] : ['Combined Mathematics'],
+        grade: selectedCourse ? selectedCourse.grade : "A/L",
+        preferredSubjects: selectedCourse ? [selectedCourse.subject] : ["Combined Mathematics"],
         learningPreference: learningPreference,
-        preferredContactMethod: 'WhatsApp',
+        preferredContactMethod: "WhatsApp",
         consentAgreed: true,
       });
 
@@ -84,9 +89,13 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                 className="w-12 h-12 rounded-full object-contain bg-white shadow-md ring-2 ring-indigo-500/30 shrink-0"
               />
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Course Admission Enquiry</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Course Admission Enquiry
+                </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {selectedCourse ? selectedCourse.title : 'TiT Online Education · Academic Intake Pre-Registration'}
+                  {selectedCourse
+                    ? selectedCourse.title
+                    : "TiT Online Education · Academic Intake Pre-Registration"}
                 </p>
               </div>
             </div>
@@ -95,10 +104,14 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               <div className="p-3.5 bg-indigo-50/50 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-900/50 mb-5 text-xs text-indigo-900 dark:text-indigo-200 space-y-1">
                 <div className="flex justify-between font-bold">
                   <span>Selected Program:</span>
-                  <span>{selectedCourse.fee.currency} {selectedCourse.fee.amount.toLocaleString()}/{selectedCourse.fee.period}</span>
+                  <span>
+                    {selectedCourse.fee.currency} {selectedCourse.fee.amount.toLocaleString()}/
+                    {selectedCourse.fee.period}
+                  </span>
                 </div>
                 <div className="text-slate-600 dark:text-slate-400">
-                  Format: {selectedCourse.learningFormat} • Instructor: {selectedCourse.teacher.name}
+                  Format: {selectedCourse.learningFormat} • Instructor:{" "}
+                  {selectedCourse.teacher.name}
                 </div>
               </div>
             )}
@@ -143,9 +156,9 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
                   value={learningPreference}
                   onChange={(e) => setLearningPreference(e.target.value as any)}
                   options={[
-                    { value: 'Hybrid', label: 'Hybrid (Online + In-Person Tuition)' },
-                    { value: 'Online Live', label: 'Online Live Only' },
-                    { value: 'Physical Classroom', label: 'Physical Classroom' },
+                    { value: "Hybrid", label: "Hybrid (Online + In-Person Tuition)" },
+                    { value: "Online Live", label: "Online Live Only" },
+                    { value: "Physical Classroom", label: "Physical Classroom" },
                   ]}
                 />
               </div>
@@ -174,7 +187,8 @@ export const QuickApplyModal: React.FC<QuickApplyModalProps> = ({
               Reference: {referenceNo}
             </p>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
-              Our academic counselors will review your intake details and message you via WhatsApp with registration documents and timetable schedules.
+              Our academic counselors will review your intake details and message you via WhatsApp
+              with registration documents and timetable schedules.
             </p>
             <Button variant="primary" size="md" onClick={onClose} className="w-full justify-center">
               Done

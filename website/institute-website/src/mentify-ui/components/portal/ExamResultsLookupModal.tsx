@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Award,
   BookOpen,
@@ -12,10 +12,10 @@ import {
   Sparkles,
   User,
   X,
-} from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Input, Select } from '../ui/FormControls';
-import { SITE_CONFIG } from '../../lib/config/site';
+} from "lucide-react";
+import { Button } from "../ui/Button";
+import { Input, Select } from "../ui/FormControls";
+import { SITE_CONFIG } from "../../lib/config/site";
 
 export interface ExamResultsLookupModalProps {
   isOpen: boolean;
@@ -37,74 +37,147 @@ interface MockResultRecord {
   subjects: {
     subjectName: string;
     marks: number;
-    grade: 'A' | 'B' | 'C' | 'S' | 'W';
+    grade: "A" | "B" | "C" | "S" | "W";
     remarks: string;
   }[];
   generalFeedback: string;
 }
 
 const MOCK_RESULTS: Record<string, MockResultRecord> = {
-  'TIT-2025-1042': {
-    indexNo: 'TIT-2025-1042',
-    studentName: 'S. Kavingan',
-    grade: 'Grade 11 (O/L)',
-    term: '2nd Term Assessment 2025',
-    academicYear: '2024/2025',
-    district: 'Jaffna',
+  "TIT-2025-1042": {
+    indexNo: "TIT-2025-1042",
+    studentName: "S. Kavingan",
+    grade: "Grade 11 (O/L)",
+    term: "2nd Term Assessment 2025",
+    academicYear: "2024/2025",
+    district: "Jaffna",
     totalMarks: 782,
     maxMarks: 900,
     average: 86.9,
     rank: 4,
     totalCandidates: 340,
     subjects: [
-      { subjectName: 'Mathematics', marks: 96, grade: 'A', remarks: 'Exceptional geometry & algebra accuracy' },
-      { subjectName: 'Science', marks: 89, grade: 'A', remarks: 'Strong in chemistry stoichiometry' },
-      { subjectName: 'Tamil Language & Literature', marks: 88, grade: 'A', remarks: 'Fluent comprehension & essay structure' },
-      { subjectName: 'English Language', marks: 85, grade: 'A', remarks: 'Great vocabulary & grammar precision' },
-      { subjectName: 'History', marks: 82, grade: 'A', remarks: 'Thorough chronological events recall' },
-      { subjectName: 'Information & Communication Tech (ICT)', marks: 91, grade: 'A', remarks: 'Excellent Python algorithm logic' },
-      { subjectName: 'Commerce & Accounting', marks: 78, grade: 'B', remarks: 'Good ledger postings, revise bank reconciliation' },
-      { subjectName: 'Religion (Hinduism)', marks: 92, grade: 'A', remarks: 'Outstanding philosophical analysis' },
-      { subjectName: 'Citizenship Education', marks: 81, grade: 'A', remarks: 'Clear governance structure answers' },
+      {
+        subjectName: "Mathematics",
+        marks: 96,
+        grade: "A",
+        remarks: "Exceptional geometry & algebra accuracy",
+      },
+      {
+        subjectName: "Science",
+        marks: 89,
+        grade: "A",
+        remarks: "Strong in chemistry stoichiometry",
+      },
+      {
+        subjectName: "Tamil Language & Literature",
+        marks: 88,
+        grade: "A",
+        remarks: "Fluent comprehension & essay structure",
+      },
+      {
+        subjectName: "English Language",
+        marks: 85,
+        grade: "A",
+        remarks: "Great vocabulary & grammar precision",
+      },
+      {
+        subjectName: "History",
+        marks: 82,
+        grade: "A",
+        remarks: "Thorough chronological events recall",
+      },
+      {
+        subjectName: "Information & Communication Tech (ICT)",
+        marks: 91,
+        grade: "A",
+        remarks: "Excellent Python algorithm logic",
+      },
+      {
+        subjectName: "Commerce & Accounting",
+        marks: 78,
+        grade: "B",
+        remarks: "Good ledger postings, revise bank reconciliation",
+      },
+      {
+        subjectName: "Religion (Hinduism)",
+        marks: 92,
+        grade: "A",
+        remarks: "Outstanding philosophical analysis",
+      },
+      {
+        subjectName: "Citizenship Education",
+        marks: 81,
+        grade: "A",
+        remarks: "Clear governance structure answers",
+      },
     ],
-    generalFeedback: 'Consistent high performer across both sciences and languages. Recommended for A/L Physical Science stream.',
+    generalFeedback:
+      "Consistent high performer across both sciences and languages. Recommended for A/L Physical Science stream.",
   },
-  'TIT-05-101': {
-    indexNo: 'TIT-05-101',
-    studentName: 'M. Thanushika',
-    grade: 'Grade 5 (Scholarship)',
-    term: 'Grand Scholarship Mock Exam II',
-    academicYear: '2025',
-    district: 'Jaffna',
+  "TIT-05-101": {
+    indexNo: "TIT-05-101",
+    studentName: "M. Thanushika",
+    grade: "Grade 5 (Scholarship)",
+    term: "Grand Scholarship Mock Exam II",
+    academicYear: "2025",
+    district: "Jaffna",
     totalMarks: 184,
     maxMarks: 200,
     average: 92.0,
     rank: 2,
     totalCandidates: 480,
     subjects: [
-      { subjectName: 'Paper I (IQ & Mental Agility)', marks: 92, grade: 'A', remarks: 'Solved 48/50 in under 42 minutes' },
-      { subjectName: 'Paper II (Language & Environment)', marks: 92, grade: 'A', remarks: 'Excellent sentence construction & environmental knowledge' },
+      {
+        subjectName: "Paper I (IQ & Mental Agility)",
+        marks: 92,
+        grade: "A",
+        remarks: "Solved 48/50 in under 42 minutes",
+      },
+      {
+        subjectName: "Paper II (Language & Environment)",
+        marks: 92,
+        grade: "A",
+        remarks: "Excellent sentence construction & environmental knowledge",
+      },
     ],
-    generalFeedback: 'Projected Island Top 50 Rank in the National Grade 5 Scholarship Examination.',
+    generalFeedback:
+      "Projected Island Top 50 Rank in the National Grade 5 Scholarship Examination.",
   },
-  'TIT-13-882': {
-    indexNo: 'TIT-13-882',
-    studentName: 'V. Abhirami',
-    grade: 'Grade 13 (A/L Revision)',
-    term: 'A/L Physical Science Model Exam 3',
-    academicYear: '2025',
-    district: 'Jaffna',
+  "TIT-13-882": {
+    indexNo: "TIT-13-882",
+    studentName: "V. Abhirami",
+    grade: "Grade 13 (A/L Revision)",
+    term: "A/L Physical Science Model Exam 3",
+    academicYear: "2025",
+    district: "Jaffna",
     totalMarks: 268,
     maxMarks: 300,
     average: 89.3,
     rank: 1,
     totalCandidates: 280,
     subjects: [
-      { subjectName: 'Combined Mathematics', marks: 91, grade: 'A', remarks: 'Mastery in Pure Maths Part B questions' },
-      { subjectName: 'Physics', marks: 89, grade: 'A', remarks: 'Flawless error analysis and mechanics derivation' },
-      { subjectName: 'Chemistry', marks: 88, grade: 'A', remarks: 'Zero errors in organic synthesis pathways' },
+      {
+        subjectName: "Combined Mathematics",
+        marks: 91,
+        grade: "A",
+        remarks: "Mastery in Pure Maths Part B questions",
+      },
+      {
+        subjectName: "Physics",
+        marks: 89,
+        grade: "A",
+        remarks: "Flawless error analysis and mechanics derivation",
+      },
+      {
+        subjectName: "Chemistry",
+        marks: 88,
+        grade: "A",
+        remarks: "Zero errors in organic synthesis pathways",
+      },
     ],
-    generalFeedback: 'Exceptional Z-score projection (~2.42). Top tier candidate for University Engineering admission.',
+    generalFeedback:
+      "Exceptional Z-score projection (~2.42). Top tier candidate for University Engineering admission.",
   },
 };
 
@@ -112,9 +185,9 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [indexNumber, setIndexNumber] = useState('');
-  const [selectedTerm, setSelectedTerm] = useState('2nd Term Assessment 2025');
-  const [selectedGrade, setSelectedGrade] = useState('Grade 11 (O/L)');
+  const [indexNumber, setIndexNumber] = useState("");
+  const [selectedTerm, setSelectedTerm] = useState("2nd Term Assessment 2025");
+  const [selectedGrade, setSelectedGrade] = useState("Grade 11 (O/L)");
   const [searchedRecord, setSearchedRecord] = useState<MockResultRecord | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -141,21 +214,47 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
           studentName: `Registered Student (${cleaned})`,
           grade: selectedGrade,
           term: selectedTerm,
-          academicYear: '2024/2025',
-          district: 'Jaffna',
+          academicYear: "2024/2025",
+          district: "Jaffna",
           totalMarks: randomTotal,
           maxMarks: 900,
           average: avg,
           rank: Math.floor(Math.random() * 15) + 3,
           totalCandidates: 210,
           subjects: [
-            { subjectName: 'Mathematics', marks: Math.min(98, Math.floor(avg + 5)), grade: 'A', remarks: 'Strong analytical skills' },
-            { subjectName: 'Science', marks: Math.min(94, Math.floor(avg + 2)), grade: 'A', remarks: 'Good scientific methodology' },
-            { subjectName: 'Tamil / English Language', marks: Math.floor(avg), grade: 'A', remarks: 'Fluent written communication' },
-            { subjectName: 'Social Studies & History', marks: Math.floor(avg - 4), grade: 'B', remarks: 'Satisfactory conceptual grasp' },
-            { subjectName: 'Information & Tech (ICT)', marks: Math.min(95, Math.floor(avg + 4)), grade: 'A', remarks: 'High practical competence' },
+            {
+              subjectName: "Mathematics",
+              marks: Math.min(98, Math.floor(avg + 5)),
+              grade: "A",
+              remarks: "Strong analytical skills",
+            },
+            {
+              subjectName: "Science",
+              marks: Math.min(94, Math.floor(avg + 2)),
+              grade: "A",
+              remarks: "Good scientific methodology",
+            },
+            {
+              subjectName: "Tamil / English Language",
+              marks: Math.floor(avg),
+              grade: "A",
+              remarks: "Fluent written communication",
+            },
+            {
+              subjectName: "Social Studies & History",
+              marks: Math.floor(avg - 4),
+              grade: "B",
+              remarks: "Satisfactory conceptual grasp",
+            },
+            {
+              subjectName: "Information & Tech (ICT)",
+              marks: Math.min(95, Math.floor(avg + 4)),
+              grade: "A",
+              remarks: "High practical competence",
+            },
           ],
-          generalFeedback: 'Verified official assessment score verified through the TiT Online Education examination database.',
+          generalFeedback:
+            "Verified official assessment score verified through the TiT Online Education examination database.",
         };
         setSearchedRecord(dynamicRecord);
       }
@@ -205,7 +304,10 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
         </div>
 
         {/* Search Form */}
-        <form onSubmit={handleSearch} className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <form
+          onSubmit={handleSearch}
+          className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800"
+        >
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -264,7 +366,9 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
               <span className="font-semibold">Quick Demos:</span>
               <button
                 type="button"
-                onClick={() => handleQuickIndex('TIT-2025-1042', 'Grade 11 (O/L)', '2nd Term Assessment 2025')}
+                onClick={() =>
+                  handleQuickIndex("TIT-2025-1042", "Grade 11 (O/L)", "2nd Term Assessment 2025")
+                }
                 className="underline hover:text-indigo-600 dark:hover:text-indigo-400"
               >
                 TIT-2025-1042 (O/L)
@@ -272,7 +376,13 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
               <span>·</span>
               <button
                 type="button"
-                onClick={() => handleQuickIndex('TIT-05-101', 'Grade 5 (Scholarship)', 'Grand Scholarship Mock Exam II')}
+                onClick={() =>
+                  handleQuickIndex(
+                    "TIT-05-101",
+                    "Grade 5 (Scholarship)",
+                    "Grand Scholarship Mock Exam II",
+                  )
+                }
                 className="underline hover:text-indigo-600 dark:hover:text-indigo-400"
               >
                 TIT-05-101 (Scholarship)
@@ -280,7 +390,13 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
               <span>·</span>
               <button
                 type="button"
-                onClick={() => handleQuickIndex('TIT-13-882', 'Grade 13 (A/L Revision)', 'A/L Physical Science Model Exam 3')}
+                onClick={() =>
+                  handleQuickIndex(
+                    "TIT-13-882",
+                    "Grade 13 (A/L Revision)",
+                    "A/L Physical Science Model Exam 3",
+                  )
+                }
                 className="underline hover:text-indigo-600 dark:hover:text-indigo-400"
               >
                 TIT-13-882 (A/L)
@@ -295,7 +411,7 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
               leftIcon={<Search className="w-3.5 h-3.5" />}
               className="text-xs shrink-0"
             >
-              {isSearching ? 'Verifying...' : 'Check Results'}
+              {isSearching ? "Verifying..." : "Check Results"}
             </Button>
           </div>
         </form>
@@ -320,7 +436,8 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
                       {searchedRecord.studentName}
                     </h4>
                     <p className="text-xs text-indigo-200">
-                      Index No: <strong>{searchedRecord.indexNo}</strong> · District: {searchedRecord.district}
+                      Index No: <strong>{searchedRecord.indexNo}</strong> · District:{" "}
+                      {searchedRecord.district}
                     </p>
                   </div>
                 </div>
@@ -334,7 +451,9 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
               {/* Metrics Summary Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center pt-1">
                 <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs">
-                  <div className="text-[10px] uppercase text-indigo-200 font-medium">Total Score</div>
+                  <div className="text-[10px] uppercase text-indigo-200 font-medium">
+                    Total Score
+                  </div>
                   <div className="text-lg font-extrabold text-white">
                     {searchedRecord.totalMarks} / {searchedRecord.maxMarks}
                   </div>
@@ -350,15 +469,16 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
                 <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs">
                   <div className="text-[10px] uppercase text-indigo-200 font-medium">Term Rank</div>
                   <div className="text-lg font-extrabold text-amber-300">
-                    #{searchedRecord.rank} <span className="text-xs font-normal text-indigo-200">/ {searchedRecord.totalCandidates}</span>
+                    #{searchedRecord.rank}{" "}
+                    <span className="text-xs font-normal text-indigo-200">
+                      / {searchedRecord.totalCandidates}
+                    </span>
                   </div>
                 </div>
 
                 <div className="bg-white/10 rounded-xl p-2.5 backdrop-blur-xs">
                   <div className="text-[10px] uppercase text-indigo-200 font-medium">Status</div>
-                  <div className="text-lg font-extrabold text-white">
-                    Distinction
-                  </div>
+                  <div className="text-lg font-extrabold text-white">Distinction</div>
                 </div>
               </div>
             </div>
@@ -376,7 +496,10 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                   {searchedRecord.subjects.map((sub, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <tr
+                      key={idx}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                    >
                       <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-white">
                         {sub.subjectName}
                       </td>
@@ -384,13 +507,15 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
                         {sub.marks}
                       </td>
                       <td className="py-2.5 px-4 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-md font-extrabold text-xs ${
-                          sub.grade === 'A'
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                            : sub.grade === 'B'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                        }`}>
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-md font-extrabold text-xs ${
+                            sub.grade === "A"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                              : sub.grade === "B"
+                                ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                          }`}
+                        >
                           {sub.grade}
                         </span>
                       </td>
@@ -407,7 +532,9 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-slate-900 dark:text-white block">Academic Board Evaluation:</strong>
+                <strong className="text-slate-900 dark:text-white block">
+                  Academic Board Evaluation:
+                </strong>
                 <span>{searchedRecord.generalFeedback}</span>
               </div>
             </div>
@@ -428,12 +555,7 @@ export const ExamResultsLookupModal: React.FC<ExamResultsLookupModalProps> = ({
                 >
                   Print Report
                 </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={onClose}
-                  className="text-xs"
-                >
+                <Button variant="primary" size="sm" onClick={onClose} className="text-xs">
                   Close
                 </Button>
               </div>

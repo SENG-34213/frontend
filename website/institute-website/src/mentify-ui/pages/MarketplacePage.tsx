@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   BookOpen,
   Check,
@@ -9,19 +9,19 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
-} from 'lucide-react';
-import { Language, MaterialCategory, MaterialItem } from '../types';
-import { api, MarketplaceQueryParams } from '../lib/api/client';
-import { SITE_CONFIG } from '../lib/config/site';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Input, Select } from '../components/ui/FormControls';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { EmptyState, ErrorState, Skeleton } from '../components/ui/FeedbackStates';
-import { MaterialCard } from '../components/marketplace/MaterialCard';
-import { Drawer } from '../components/ui/Modal';
+} from "lucide-react";
+import { Language, MaterialCategory, MaterialItem } from "../types";
+import { api, MarketplaceQueryParams } from "../lib/api/client";
+import { SITE_CONFIG } from "../lib/config/site";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Input, Select } from "../components/ui/FormControls";
+import { Button } from "../components/ui/Button";
+import { Badge } from "../components/ui/Badge";
+import { EmptyState, ErrorState, Skeleton } from "../components/ui/FeedbackStates";
+import { MaterialCard } from "../components/marketplace/MaterialCard";
+import { Drawer } from "../components/ui/Modal";
 
 export interface MarketplacePageProps {
   currentLang: Language;
@@ -41,11 +41,11 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   const [isError, setIsError] = useState(false);
 
   // Filters
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedSubject, setSelectedSubject] = useState<string>('all');
-  const [selectedGrade, setSelectedGrade] = useState<string>('all');
-  const [pricingFilter, setPricingFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
+  const [selectedGrade, setSelectedGrade] = useState<string>("all");
+  const [pricingFilter, setPricingFilter] = useState<"all" | "free" | "paid">("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -53,16 +53,16 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const categories: MaterialCategory[] = [
-    'Model Papers',
-    'Revision Packs',
-    'Study Guides',
-    'Question Banks',
-    'Exam Papers',
-    'Tutorials',
-    'Notes',
-    'Short Notes',
-    'Worksheets',
-    'Marking Schemes',
+    "Model Papers",
+    "Revision Packs",
+    "Study Guides",
+    "Question Banks",
+    "Exam Papers",
+    "Tutorials",
+    "Notes",
+    "Short Notes",
+    "Worksheets",
+    "Marking Schemes",
   ];
 
   const fetchMaterials = async () => {
@@ -72,10 +72,10 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
     try {
       const params: MarketplaceQueryParams = {
         search: search.trim() || undefined,
-        category: selectedCategory !== 'all' ? selectedCategory : undefined,
-        subject: selectedSubject !== 'all' ? selectedSubject : undefined,
-        gradeId: selectedGrade !== 'all' ? selectedGrade : undefined,
-        isFree: pricingFilter === 'all' ? undefined : pricingFilter === 'free',
+        category: selectedCategory !== "all" ? selectedCategory : undefined,
+        subject: selectedSubject !== "all" ? selectedSubject : undefined,
+        gradeId: selectedGrade !== "all" ? selectedGrade : undefined,
+        isFree: pricingFilter === "all" ? undefined : pricingFilter === "free",
         page,
         limit: 9,
       };
@@ -101,20 +101,20 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   }, [search, selectedCategory, selectedSubject, selectedGrade, pricingFilter, page]);
 
   const handleResetFilters = () => {
-    setSearch('');
-    setSelectedCategory('all');
-    setSelectedSubject('all');
-    setSelectedGrade('all');
-    setPricingFilter('all');
+    setSearch("");
+    setSelectedCategory("all");
+    setSelectedSubject("all");
+    setSelectedGrade("all");
+    setPricingFilter("all");
     setPage(1);
   };
 
   const hasActiveFilters =
-    search !== '' ||
-    selectedCategory !== 'all' ||
-    selectedSubject !== 'all' ||
-    selectedGrade !== 'all' ||
-    pricingFilter !== 'all';
+    search !== "" ||
+    selectedCategory !== "all" ||
+    selectedSubject !== "all" ||
+    selectedGrade !== "all" ||
+    pricingFilter !== "all";
 
   return (
     <div className="space-y-12 pb-20">
@@ -125,10 +125,10 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             Digital Resource Hub
           </Badge>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {t('market.title')}
+            {t("market.title")}
           </h1>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
-            {t('market.subtitle')}
+            {t("market.subtitle")}
           </p>
         </Container>
       </section>
@@ -138,13 +138,13 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-none mb-6">
           <button
             onClick={() => {
-              setSelectedCategory('all');
+              setSelectedCategory("all");
               setPage(1);
             }}
             className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-              selectedCategory === 'all'
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+              selectedCategory === "all"
+                ? "bg-indigo-600 text-white shadow-xs"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
             All Resources
@@ -158,8 +158,8 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               }}
               className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 selectedCategory === cat
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
               {cat}
@@ -173,7 +173,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             {/* Search */}
             <div className="sm:col-span-5 lg:col-span-4">
               <Input
-                placeholder={t('market.search.placeholder')}
+                placeholder={t("market.search.placeholder")}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -193,7 +193,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
                   setPage(1);
                 }}
                 options={[
-                  { value: 'all', label: 'All Subjects' },
+                  { value: "all", label: "All Subjects" },
                   ...SITE_CONFIG.subjects.map((s) => ({ value: s, label: s })),
                 ]}
               />
@@ -204,9 +204,9 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
                   setPage(1);
                 }}
                 options={[
-                  { value: 'all', label: 'All Pricing (Free & Paid)' },
-                  { value: 'free', label: 'Free Downloads Only' },
-                  { value: 'paid', label: 'Premium Materials' },
+                  { value: "all", label: "All Pricing (Free & Paid)" },
+                  { value: "free", label: "Free Downloads Only" },
+                  { value: "paid", label: "Premium Materials" },
                 ]}
               />
             </div>
@@ -220,7 +220,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
                 leftIcon={<SlidersHorizontal className="w-4 h-4" />}
                 className="lg:hidden w-full sm:w-auto"
               >
-                Filters {hasActiveFilters && '•'}
+                Filters {hasActiveFilters && "•"}
               </Button>
 
               {hasActiveFilters && (
@@ -241,7 +241,8 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         {/* Results Metadata */}
         <div className="flex items-center justify-between mb-6 text-xs text-slate-500 dark:text-slate-400 font-medium">
           <span>
-            Displaying <strong className="text-slate-800 dark:text-slate-200">{totalCount}</strong> verified educational materials
+            Displaying <strong className="text-slate-800 dark:text-slate-200">{totalCount}</strong>{" "}
+            verified educational materials
           </span>
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline">Verification:</span>
@@ -255,7 +256,10 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4">
+              <div
+                key={i}
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4"
+              >
                 <Skeleton className="h-40 w-full" />
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-full" />
@@ -279,7 +283,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
                   onViewDetails={onSelectMaterial}
                   onAddToCart={onAddToCart}
                   onQuickDownload={(item) => {
-                    alert(`Starting download for ${item.title} (${item.fileFormat || 'PDF'})`);
+                    alert(`Starting download for ${item.title} (${item.fileFormat || "PDF"})`);
                   }}
                 />
               ))}
@@ -337,7 +341,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               setPage(1);
             }}
             options={[
-              { value: 'all', label: 'All Categories' },
+              { value: "all", label: "All Categories" },
               ...categories.map((c) => ({ value: c, label: c })),
             ]}
           />
@@ -350,7 +354,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               setPage(1);
             }}
             options={[
-              { value: 'all', label: 'All Subjects' },
+              { value: "all", label: "All Subjects" },
               ...SITE_CONFIG.subjects.map((s) => ({ value: s, label: s })),
             ]}
           />
@@ -363,7 +367,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               setPage(1);
             }}
             options={[
-              { value: 'all', label: 'All Grades' },
+              { value: "all", label: "All Grades" },
               ...SITE_CONFIG.grades.map((g) => ({ value: g.id, label: g.name })),
             ]}
           />
@@ -376,9 +380,9 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               setPage(1);
             }}
             options={[
-              { value: 'all', label: 'All Pricing (Free & Paid)' },
-              { value: 'free', label: 'Free Only' },
-              { value: 'paid', label: 'Paid Only' },
+              { value: "all", label: "All Pricing (Free & Paid)" },
+              { value: "free", label: "Free Only" },
+              { value: "paid", label: "Paid Only" },
             ]}
           />
 

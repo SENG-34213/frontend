@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Bell,
   BookOpen,
@@ -17,17 +17,17 @@ import {
   ArrowRight,
   Maximize2,
   Check,
-} from 'lucide-react';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
+} from "lucide-react";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Card } from "../components/ui/Card";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
 import {
   FourCoreFeaturesShowcase,
   CORE_FEATURES_DATA,
   CoreFeatureId,
-} from '../components/features/FourCoreFeaturesShowcase';
+} from "../components/features/FourCoreFeaturesShowcase";
 
 export interface FeaturesPageProps {
   onNavigate: (path: string) => void;
@@ -44,51 +44,51 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
   const coreFeatures = [
     {
       icon: <Bot className="w-6 h-6 text-indigo-600" />,
-      title: 'TiT AI Assistant',
-      category: 'School Management',
-      desc: 'Easy-to-use assistant for school principals and teachers to quickly check student numbers and class updates.',
+      title: "TiT AI Assistant",
+      category: "School Management",
+      desc: "Easy-to-use assistant for school principals and teachers to quickly check student numbers and class updates.",
     },
     {
       icon: <MessageSquare className="w-6 h-6 text-blue-600" />,
-      title: 'Class Discussions & Messaging',
-      category: 'Communication',
-      desc: 'Class groups for every subject and grade, where students can ask homework questions and get help from teachers.',
+      title: "Class Discussions & Messaging",
+      category: "Communication",
+      desc: "Class groups for every subject and grade, where students can ask homework questions and get help from teachers.",
     },
     {
       icon: <Calendar className="w-6 h-6 text-amber-600" />,
-      title: 'Academic Class Timetable',
-      category: 'Timetable',
-      desc: 'Live class timetables, homework due dates, and exam dates neatly organized in Month, Week, and Day views.',
+      title: "Academic Class Timetable",
+      category: "Timetable",
+      desc: "Live class timetables, homework due dates, and exam dates neatly organized in Month, Week, and Day views.",
     },
     {
       icon: <FileCheck className="w-6 h-6 text-emerald-600" />,
-      title: 'Practice Tests & Quizzes',
-      category: 'Practice Tests',
-      desc: 'Practice tests with a live timer, question checklist, bookmark button, and instant marks with step-by-step answers.',
+      title: "Practice Tests & Quizzes",
+      category: "Practice Tests",
+      desc: "Practice tests with a live timer, question checklist, bookmark button, and instant marks with step-by-step answers.",
     },
     {
       icon: <LineChart className="w-6 h-6 text-purple-600" />,
-      title: 'Progress & Report Cards',
-      category: 'Report Cards',
-      desc: 'View term test results, subject progress reports, attendance records, and personal improvement feedback.',
+      title: "Progress & Report Cards",
+      category: "Report Cards",
+      desc: "View term test results, subject progress reports, attendance records, and personal improvement feedback.",
     },
     {
       icon: <Video className="w-6 h-6 text-rose-600" />,
-      title: 'Live Online Classrooms',
-      category: 'Live Classes',
-      desc: 'Live Zoom tuition classes with interactive teacher chat, digital whiteboard lessons, and replay recordings.',
+      title: "Live Online Classrooms",
+      category: "Live Classes",
+      desc: "Live Zoom tuition classes with interactive teacher chat, digital whiteboard lessons, and replay recordings.",
     },
     {
       icon: <BookOpen className="w-6 h-6 text-indigo-600" />,
-      title: 'Past Papers & Study Notes',
-      category: 'Study Materials',
-      desc: 'Download term test papers, provincial exam papers, and revision notes prepared by experienced teachers.',
+      title: "Past Papers & Study Notes",
+      category: "Study Materials",
+      desc: "Download term test papers, provincial exam papers, and revision notes prepared by experienced teachers.",
     },
     {
       icon: <Shield className="w-6 h-6 text-slate-700" />,
-      title: 'Student Safety & Privacy',
-      category: 'Privacy',
-      desc: 'Protected accounts keeping student details, test marks, and attendance records strictly private.',
+      title: "Student Safety & Privacy",
+      category: "Privacy",
+      desc: "Protected accounts keeping student details, test marks, and attendance records strictly private.",
     },
   ];
 
@@ -102,8 +102,8 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
           <FourCoreFeaturesShowcase
             initialFeature="ai"
             onExploreMore={() => {
-              const el = document.getElementById('deep-dive-grid');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              const el = document.getElementById("deep-dive-grid");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
             }}
             onOpenAdmissions={onOpenAdmissions}
             title="Core Platform Features"
@@ -114,7 +114,10 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
       </section>
 
       {/* 3. FEATURES DEEP-DIVE CARDS WITH EMBEDDED SCREENSHOT PREVIEWS */}
-      <section id="deep-dive-grid" className="bg-slate-50/70 dark:bg-slate-950/60 py-16 border-y border-slate-200/80 dark:border-slate-800 transition-colors">
+      <section
+        id="deep-dive-grid"
+        className="bg-slate-50/70 dark:bg-slate-950/60 py-16 border-y border-slate-200/80 dark:border-slate-800 transition-colors"
+      >
         <Container>
           <SectionHeading
             badge="Features Overview"
@@ -180,10 +183,15 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
                   {/* Highlights list */}
                   <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     {feat.hotspots.slice(0, 2).map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                      <div
+                        key={idx}
+                        className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300"
+                      >
                         <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                         <div>
-                          <strong className="font-semibold text-slate-800 dark:text-slate-200">{item.title}:</strong>{' '}
+                          <strong className="font-semibold text-slate-800 dark:text-slate-200">
+                            {item.title}:
+                          </strong>{" "}
                           <span>{item.desc}</span>
                         </div>
                       </div>
@@ -222,8 +230,6 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
         </Container>
       </section>
 
-
-
       {/* 5. Grid of All Educational Capabilities */}
       <section>
         <Container>
@@ -246,8 +252,12 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
                       {feat.category}
                     </Badge>
                   </div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2">{feat.title}</h3>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{feat.desc}</p>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white mb-2">
+                    {feat.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {feat.desc}
+                  </p>
                 </div>
               </Card>
             ))}
@@ -255,12 +265,16 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
         </Container>
       </section>
 
-
       {/* 7. CTA */}
       <section>
         <Container size="md" className="text-center">
-          <Card padding="lg" className="border-indigo-100 dark:border-indigo-900/40 bg-gradient-to-r from-indigo-50/50 via-white to-blue-50/50 dark:from-slate-900 dark:via-indigo-950/20 dark:to-slate-900">
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Experience the TiT Difference</h3>
+          <Card
+            padding="lg"
+            className="border-indigo-100 dark:border-indigo-900/40 bg-gradient-to-r from-indigo-50/50 via-white to-blue-50/50 dark:from-slate-900 dark:via-indigo-950/20 dark:to-slate-900"
+          >
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Experience the TiT Difference
+            </h3>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto">
               Join upcoming term batches or access our open marketplace materials today.
             </p>
@@ -268,7 +282,7 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
               <Button variant="primary" size="lg" onClick={onOpenAdmissions}>
                 Apply for Next Intake
               </Button>
-              <Button variant="outline" size="lg" onClick={() => onNavigate('marketplace')}>
+              <Button variant="outline" size="lg" onClick={() => onNavigate("marketplace")}>
                 Explore Marketplace
               </Button>
             </div>
@@ -288,9 +302,7 @@ export const FeaturesPage: React.FC<FeaturesPageProps> = ({ onNavigate, onOpenAd
           >
             <div className="px-5 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between text-white shrink-0">
               <div>
-                <h3 className="font-bold text-base leading-tight">
-                  {selectedLightboxImage.title}
-                </h3>
+                <h3 className="font-bold text-base leading-tight">{selectedLightboxImage.title}</h3>
                 <p className="text-xs text-slate-400 mt-0.5">{selectedLightboxImage.subtitle}</p>
               </div>
               <button

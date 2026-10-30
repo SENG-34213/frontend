@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   Award,
   BookOpen,
@@ -20,12 +20,12 @@ import {
   Users,
   Video,
   X,
-} from 'lucide-react';
-import { CourseItem } from '../../types';
-import { SITE_CONFIG } from '../../lib/config/site';
-import { CourseCard } from './CourseCard';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/FormControls';
+} from "lucide-react";
+import { CourseItem } from "../../types";
+import { SITE_CONFIG } from "../../lib/config/site";
+import { CourseCard } from "./CourseCard";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/FormControls";
 
 export interface GradeCourseExplorerProps {
   courses: CourseItem[];
@@ -35,7 +35,7 @@ export interface GradeCourseExplorerProps {
   showAllGradesOption?: boolean;
 }
 
-type ExplorerViewMode = 'grid' | 'timetable' | 'curriculum';
+type ExplorerViewMode = "grid" | "timetable" | "curriculum";
 
 interface TimetableSlot {
   courseId: string;
@@ -44,7 +44,7 @@ interface TimetableSlot {
   grade: string;
   day: string;
   time: string;
-  format: 'Online Live' | 'Physical Classroom' | 'Hybrid' | 'Self-Paced';
+  format: "Online Live" | "Physical Classroom" | "Hybrid" | "Self-Paced";
   teacherName: string;
   feeAmount: number;
   originalCourse: CourseItem;
@@ -54,21 +54,21 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
   courses,
   onSelectCourse,
   onApplyCourse,
-  initialGradeId = 'grade-5',
+  initialGradeId = "grade-5",
   showAllGradesOption = true,
 }) => {
   // Current active stage filter ('all' | 'primary' | 'junior' | 'ol' | 'al')
-  const [activeStage, setActiveStage] = useState<string>('all');
+  const [activeStage, setActiveStage] = useState<string>("all");
   // Selected grade ID ('all' or 'grade-1' ... 'grade-13')
   const [selectedGradeId, setSelectedGradeId] = useState<string>(initialGradeId);
   // View mode: 'grid' (cards) | 'timetable' (weekly schedule) | 'curriculum' (milestone topics)
-  const [viewMode, setViewMode] = useState<ExplorerViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ExplorerViewMode>("grid");
   // Search query within the explorer
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>("");
   // Subject filter within the selected grade
-  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
   // Format filter: 'all' | 'Online Live' | 'Hybrid'
-  const [selectedFormat, setSelectedFormat] = useState<string>('all');
+  const [selectedFormat, setSelectedFormat] = useState<string>("all");
   // Preview Course Syllabus Drawer State
   const [previewCourse, setPreviewCourse] = useState<CourseItem | null>(null);
 
@@ -77,25 +77,25 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
 
   // Filter grades list based on selected stage
   const visibleGrades = useMemo(() => {
-    if (activeStage === 'all') return allGrades;
+    if (activeStage === "all") return allGrades;
     return allGrades.filter((g) => g.stageId === activeStage);
   }, [activeStage, allGrades]);
 
   // When stage changes, if the selected grade is no longer in visibleGrades, select the first one
   const handleStageChange = (stageId: string) => {
     setActiveStage(stageId);
-    if (stageId !== 'all') {
+    if (stageId !== "all") {
       const match = allGrades.filter((g) => g.stageId === stageId);
       if (match.length > 0 && !match.some((g) => g.id === selectedGradeId)) {
         setSelectedGradeId(match[0].id);
-        setSelectedSubject('all');
+        setSelectedSubject("all");
       }
     }
   };
 
   // Currently active grade object (or null if 'all' is selected)
   const currentGrade = useMemo(() => {
-    if (selectedGradeId === 'all') return null;
+    if (selectedGradeId === "all") return null;
     return allGrades.find((g) => g.id === selectedGradeId) || allGrades[0];
   }, [selectedGradeId, allGrades]);
 
@@ -113,15 +113,15 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
     return courses.filter((course) => {
       // Grade match
       const matchesGrade =
-        selectedGradeId === 'all'
-          ? activeStage === 'all'
+        selectedGradeId === "all"
+          ? activeStage === "all"
             ? true
             : allGrades.find((g) => g.id === course.gradeId)?.stageId === activeStage
           : course.gradeId === selectedGradeId;
 
       // Search match
       const matchesSearch =
-        searchQuery === '' ||
+        searchQuery === "" ||
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -129,23 +129,27 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
 
       // Subject filter match
       const matchesSubject =
-        selectedSubject === 'all' ||
-        course.subject.toLowerCase() === selectedSubject.toLowerCase();
+        selectedSubject === "all" || course.subject.toLowerCase() === selectedSubject.toLowerCase();
 
       // Format filter match
-      const matchesFormat =
-        selectedFormat === 'all' || course.learningFormat === selectedFormat;
+      const matchesFormat = selectedFormat === "all" || course.learningFormat === selectedFormat;
 
       return matchesGrade && matchesSearch && matchesSubject && matchesFormat;
     });
-  }, [courses, selectedGradeId, activeStage, searchQuery, selectedSubject, selectedFormat, allGrades]);
+  }, [
+    courses,
+    selectedGradeId,
+    activeStage,
+    searchQuery,
+    selectedSubject,
+    selectedFormat,
+    allGrades,
+  ]);
 
   // Unique subjects available within the selected grade
   const availableSubjects = useMemo(() => {
     const relevant =
-      selectedGradeId === 'all'
-        ? courses
-        : courses.filter((c) => c.gradeId === selectedGradeId);
+      selectedGradeId === "all" ? courses : courses.filter((c) => c.gradeId === selectedGradeId);
     const map = new Map<string, number>();
     relevant.forEach((c) => {
       map.set(c.subject, (map.get(c.subject) || 0) + 1);
@@ -163,25 +167,25 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
   const handlePrevGrade = () => {
     if (currentIndex > 0) {
       setSelectedGradeId(allGrades[currentIndex - 1].id);
-      setSelectedSubject('all');
+      setSelectedSubject("all");
     }
   };
   const handleNextGrade = () => {
     if (currentIndex < allGrades.length - 1 && currentIndex >= 0) {
       setSelectedGradeId(allGrades[currentIndex + 1].id);
-      setSelectedSubject('all');
+      setSelectedSubject("all");
     }
   };
 
   // Helper to extract day and time from schedule string
   const timetableSlots = useMemo<TimetableSlot[]>(() => {
     return gradeCourses.map((c) => {
-      let day = 'Scheduled Session';
+      let day = "Scheduled Session";
       let time = c.schedule;
-      if (c.schedule.includes(':')) {
-        const parts = c.schedule.split(':');
+      if (c.schedule.includes(":")) {
+        const parts = c.schedule.split(":");
         day = parts[0].trim();
-        time = parts.slice(1).join(':').trim();
+        time = parts.slice(1).join(":").trim();
       }
       return {
         courseId: c.id,
@@ -214,19 +218,21 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
                   onClick={() => handleStageChange(stage.id)}
                   className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 border ${
                     isActive
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                      : "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
-                  {stage.id === 'all' && <Compass className="w-3.5 h-3.5" />}
-                  {stage.id === 'primary' && <Award className="w-3.5 h-3.5" />}
-                  {stage.id === 'junior' && <BookOpen className="w-3.5 h-3.5" />}
-                  {stage.id === 'ol' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                  {stage.id === 'al' && <GraduationCap className="w-3.5 h-3.5" />}
+                  {stage.id === "all" && <Compass className="w-3.5 h-3.5" />}
+                  {stage.id === "primary" && <Award className="w-3.5 h-3.5" />}
+                  {stage.id === "junior" && <BookOpen className="w-3.5 h-3.5" />}
+                  {stage.id === "ol" && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {stage.id === "al" && <GraduationCap className="w-3.5 h-3.5" />}
                   <span>{stage.name}</span>
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
-                      isActive ? 'bg-indigo-700/80 text-indigo-100' : 'bg-slate-200/70 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                      isActive
+                        ? "bg-indigo-700/80 text-indigo-100"
+                        : "bg-slate-200/70 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
                     }`}
                   >
                     {stage.count}
@@ -240,11 +246,11 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0 self-start lg:self-auto">
             <button
               type="button"
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                viewMode === "grid"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Layers className="w-3.5 h-3.5 text-indigo-500" />
@@ -252,11 +258,11 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('timetable')}
+              onClick={() => setViewMode("timetable")}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                viewMode === 'timetable'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                viewMode === "timetable"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Calendar className="w-3.5 h-3.5 text-blue-500" />
@@ -264,11 +270,11 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('curriculum')}
+              onClick={() => setViewMode("curriculum")}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer ${
-                viewMode === 'curriculum'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                viewMode === "curriculum"
+                  ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <FileText className="w-3.5 h-3.5 text-emerald-500" />
@@ -283,9 +289,10 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {activeStage === 'all'
-                ? 'All Academic Grades (Grade 1 to 13)'
-                : SITE_CONFIG.academicStages.find((s) => s.id === activeStage)?.name || 'Select Grade'}
+              {activeStage === "all"
+                ? "All Academic Grades (Grade 1 to 13)"
+                : SITE_CONFIG.academicStages.find((s) => s.id === activeStage)?.name ||
+                  "Select Grade"}
             </span>
             <span className="text-xs text-slate-400">·</span>
             <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -293,7 +300,7 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
             </span>
           </div>
 
-          {selectedGradeId !== 'all' && (
+          {selectedGradeId !== "all" && (
             <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2.5 py-1 rounded-xl shadow-2xs">
               <button
                 type="button"
@@ -323,27 +330,27 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
         {/* Clean Responsive Grade Deck */}
         <div
           className={`grid gap-3 ${
-            activeStage === 'ol' || activeStage === 'al'
-              ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl'
-              : activeStage === 'primary'
-              ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5'
-              : activeStage === 'junior'
-              ? 'grid-cols-2 sm:grid-cols-4'
-              : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7'
+            activeStage === "ol" || activeStage === "al"
+              ? "grid-cols-1 sm:grid-cols-2 max-w-2xl"
+              : activeStage === "primary"
+                ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-5"
+                : activeStage === "junior"
+                  ? "grid-cols-2 sm:grid-cols-4"
+                  : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7"
           }`}
         >
           {/* "All Grades" Card when viewing All stage */}
-          {showAllGradesOption && activeStage === 'all' && (
+          {showAllGradesOption && activeStage === "all" && (
             <button
               type="button"
               onClick={() => {
-                setSelectedGradeId('all');
-                setSelectedSubject('all');
+                setSelectedGradeId("all");
+                setSelectedSubject("all");
               }}
               className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-                selectedGradeId === 'all'
-                  ? 'border-indigo-600 bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
+                selectedGradeId === "all"
+                  ? "border-indigo-600 bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/20 shadow-md"
+                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
               }`}
             >
               <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
@@ -360,7 +367,7 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
               </div>
               <div className="flex items-center justify-between text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <span>{courses.length} Total Batches</span>
-                {selectedGradeId === 'all' && <span>✓ Active</span>}
+                {selectedGradeId === "all" && <span>✓ Active</span>}
               </div>
             </button>
           )}
@@ -373,28 +380,33 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
             let milestoneTag: { label: string; badgeClass: string } | null = null;
             if (grade.level === 5) {
               milestoneTag = {
-                label: 'Scholarship Exam',
-                badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300/60',
+                label: "Scholarship Exam",
+                badgeClass:
+                  "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300/60",
               };
             } else if (grade.level === 10) {
               milestoneTag = {
-                label: 'O/L Theory Year',
-                badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border border-sky-300/60',
+                label: "O/L Theory Year",
+                badgeClass:
+                  "bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border border-sky-300/60",
               };
             } else if (grade.level === 11) {
               milestoneTag = {
-                label: 'O/L National Exam',
-                badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300/60',
+                label: "O/L National Exam",
+                badgeClass:
+                  "bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300/60",
               };
             } else if (grade.level === 12) {
               milestoneTag = {
-                label: 'A/L Theory Stream',
-                badgeClass: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-300/60',
+                label: "A/L Theory Stream",
+                badgeClass:
+                  "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-300/60",
               };
             } else if (grade.level === 13) {
               milestoneTag = {
-                label: 'A/L Final Revision',
-                badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300/60',
+                label: "A/L Final Revision",
+                badgeClass:
+                  "bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300/60",
               };
             }
 
@@ -404,12 +416,12 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
                 type="button"
                 onClick={() => {
                   setSelectedGradeId(grade.id);
-                  setSelectedSubject('all');
+                  setSelectedSubject("all");
                 }}
                 className={`group p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between relative ${
                   isSelected
-                    ? 'border-indigo-600 bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/30 shadow-md'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-xs'
+                    ? "border-indigo-600 bg-indigo-50/90 dark:bg-indigo-950/70 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/30 shadow-md"
+                    : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-xs"
                 }`}
               >
                 {/* Top: Stage Tag & Milestone Pill */}
@@ -418,7 +430,9 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
                     {grade.stage}
                   </span>
                   {milestoneTag && (
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${milestoneTag.badgeClass}`}>
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${milestoneTag.badgeClass}`}
+                    >
                       {milestoneTag.label}
                     </span>
                   )}
@@ -437,7 +451,7 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
                 {/* Bottom: Batch count and selection indicator */}
                 <div className="flex items-center justify-between text-xs pt-2 mt-1 border-t border-slate-100 dark:border-slate-800/80">
                   <span className="font-semibold text-slate-600 dark:text-slate-400">
-                    {count} {count === 1 ? 'batch' : 'batches'}
+                    {count} {count === 1 ? "batch" : "batches"}
                   </span>
                   {isSelected ? (
                     <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
@@ -462,19 +476,19 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 md:pb-0">
           <button
             type="button"
-            onClick={() => setSelectedSubject('all')}
+            onClick={() => setSelectedSubject("all")}
             className={`px-3 py-1.5 text-xs rounded-xl font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-              selectedSubject === 'all'
-                ? 'bg-indigo-600 text-white shadow-2xs font-semibold'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              selectedSubject === "all"
+                ? "bg-indigo-600 text-white shadow-2xs font-semibold"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
             }`}
           >
             <span>All Subjects</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                selectedSubject === 'all'
-                  ? 'bg-indigo-700 text-indigo-100'
-                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                selectedSubject === "all"
+                  ? "bg-indigo-700 text-indigo-100"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
               }`}
             >
               {gradeCourses.length}
@@ -488,16 +502,16 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
               onClick={() => setSelectedSubject(sub.name)}
               className={`px-3 py-1.5 text-xs rounded-xl font-medium transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 selectedSubject === sub.name
-                  ? 'bg-indigo-600 text-white shadow-2xs font-semibold'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? "bg-indigo-600 text-white shadow-2xs font-semibold"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               <span>{sub.name}</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                   selectedSubject === sub.name
-                    ? 'bg-indigo-700 text-indigo-100'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    ? "bg-indigo-700 text-indigo-100"
+                    : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                 }`}
               >
                 {sub.count}
@@ -510,7 +524,9 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
         <div className="flex items-center gap-2.5 shrink-0 self-end md:self-auto w-full md:w-auto">
           <div className="relative flex-1 md:w-56">
             <Input
-              placeholder={currentGrade ? `Search ${currentGrade.shortName}...` : 'Search courses...'}
+              placeholder={
+                currentGrade ? `Search ${currentGrade.shortName}...` : "Search courses..."
+              }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               leftIcon={<Search className="w-3.5 h-3.5 text-slate-400" />}
@@ -519,7 +535,7 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
+                onClick={() => setSearchQuery("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="w-3.5 h-3.5" />
@@ -540,7 +556,7 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
       </div>
 
       {/* 4. MAIN VIEW CONTENT: Cards OR Timetable OR Curriculum */}
-      {viewMode === 'grid' && (
+      {viewMode === "grid" && (
         <>
           {gradeCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -574,9 +590,9 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
               searchQuery={searchQuery}
               currentGradeName={currentGrade?.name}
               onClear={() => {
-                setSearchQuery('');
-                setSelectedSubject('all');
-                setSelectedFormat('all');
+                setSearchQuery("");
+                setSelectedSubject("all");
+                setSelectedFormat("all");
               }}
             />
           )}
@@ -584,18 +600,19 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
       )}
 
       {/* 5. TIMETABLE VIEW: Weekly Schedule for Selected Grade */}
-      {viewMode === 'timetable' && (
+      {viewMode === "timetable" && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xs">
           <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
             <div>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <h5 className="font-extrabold text-base text-slate-900 dark:text-white">
-                  Weekly Class Timetable · {currentGrade?.name || 'All Selected Batches'}
+                  Weekly Class Timetable · {currentGrade?.name || "All Selected Batches"}
                 </h5>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                All classes are conducted with live interactive chat, whiteboard streaming, and replay archives.
+                All classes are conducted with live interactive chat, whiteboard streaming, and
+                replay archives.
               </p>
             </div>
             <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -623,11 +640,13 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
                         <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                           {slot.grade}
                         </span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          slot.format === 'Online Live'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                            : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        }`}>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            slot.format === "Online Live"
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          }`}
+                        >
                           {slot.format}
                         </span>
                       </div>
@@ -641,7 +660,9 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
                           📅 {slot.day}: {slot.time}
                         </span>
                         <span>·</span>
-                        <span>Instructor: <strong>{slot.teacherName}</strong></span>
+                        <span>
+                          Instructor: <strong>{slot.teacherName}</strong>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -683,7 +704,7 @@ export const GradeCourseExplorer: React.FC<GradeCourseExplorerProps> = ({
       )}
 
       {/* 6. CURRICULUM & SYLLABUS TOPICS VIEW */}
-      {viewMode === 'curriculum' && (
+      {viewMode === "curriculum" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {gradeCourses.map((course) => (
             <div
@@ -862,8 +883,8 @@ const EmptyCoursesFallback: React.FC<EmptyCoursesFallbackProps> = ({
       </h4>
       <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
         {searchQuery
-          ? `No batches matching "${searchQuery}" in ${currentGradeName || 'this grade'}. Try adjusting your search term.`
-          : `New batches for ${currentGradeName || 'this grade'} are currently being scheduled for the upcoming intake.`}
+          ? `No batches matching "${searchQuery}" in ${currentGradeName || "this grade"}. Try adjusting your search term.`
+          : `New batches for ${currentGradeName || "this grade"} are currently being scheduled for the upcoming intake.`}
       </p>
       <Button variant="outline" size="sm" onClick={onClear} className="text-xs mt-2">
         Clear Filters

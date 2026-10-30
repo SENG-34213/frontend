@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ArrowRight,
   Award,
@@ -7,23 +7,23 @@ import {
   GraduationCap,
   Sparkles,
   UserCheck,
-} from 'lucide-react';
-import { CourseItem, Language, MaterialItem } from '../types';
-import { SITE_CONFIG } from '../lib/config/site';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Accordion } from '../components/ui/FeedbackStates';
-import heroStudentsImg from '../assets/images/mentify_students_hero_1792947128104.jpg';
-import { CourseCard } from '../components/courses/CourseCard';
-import { MaterialCard } from '../components/marketplace/MaterialCard';
-import { MOCK_FAQS } from '../data/mockData';
-import { InteractiveAppSuite, FeatureTabKey } from '../components/features/InteractiveAppSuite';
-import { FourCoreFeaturesShowcase } from '../components/features/FourCoreFeaturesShowcase';
-import { GradeCourseExplorer } from '../components/courses/GradeCourseExplorer';
-import { AcademicPlacementSection } from '../components/home/AcademicPlacementSection';
+} from "lucide-react";
+import { CourseItem, Language, MaterialItem } from "../types";
+import { SITE_CONFIG } from "../lib/config/site";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Button } from "../components/ui/Button";
+import { Badge } from "../components/ui/Badge";
+import { Accordion } from "../components/ui/FeedbackStates";
+import heroStudentsImg from "../assets/images/mentify_students_hero_1792947128104.jpg";
+import { CourseCard } from "../components/courses/CourseCard";
+import { MaterialCard } from "../components/marketplace/MaterialCard";
+import { MOCK_FAQS } from "../data/mockData";
+import { InteractiveAppSuite, FeatureTabKey } from "../components/features/InteractiveAppSuite";
+import { FourCoreFeaturesShowcase } from "../components/features/FourCoreFeaturesShowcase";
+import { GradeCourseExplorer } from "../components/courses/GradeCourseExplorer";
+import { AcademicPlacementSection } from "../components/home/AcademicPlacementSection";
 
 export interface HomePageProps {
   currentLang: Language;
@@ -52,7 +52,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenResults,
   onOpenTutorApply,
 }) => {
-  const [activeFeatureTab, setActiveFeatureTab] = useState<FeatureTabKey>('chat');
+  const [activeFeatureTab, setActiveFeatureTab] = useState<FeatureTabKey>("chat");
   const [showInteractiveSandbox, setShowInteractiveSandbox] = useState<boolean>(false);
   const t = (key: string) => getTranslation(currentLang, key);
 
@@ -72,15 +72,15 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/60 text-xs font-semibold text-indigo-700 dark:text-indigo-300 shadow-2xs">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>{t('hero.badge')}</span>
+                <span>{t("hero.badge")}</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.12]">
-                {t('hero.headline')}
+                {t("hero.headline")}
               </h1>
 
               <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                {t('hero.subheadline')}
+                {t("hero.subheadline")}
               </p>
 
               {/* Action Buttons */}
@@ -88,11 +88,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={() => onNavigate('courses')}
+                  onClick={() => onNavigate("courses")}
                   leftIcon={<GraduationCap className="w-5 h-5" />}
                   className="w-full sm:w-auto shadow-md shadow-indigo-500/20"
                 >
-                  {t('hero.cta.courses')}
+                  {t("hero.cta.courses")}
                 </Button>
 
                 {onOpenResults && (
@@ -123,16 +123,28 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Verified Trust Metrics */}
               <div className="pt-6 border-t border-slate-200/80 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
                 <div>
-                  <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Islandwide</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Student Community</div>
+                  <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                    Islandwide
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Student Community
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">500+</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Zoom Videos & Notes</div>
+                  <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                    500+
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Zoom Videos & Notes
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Alaveddy</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tuition Center</div>
+                  <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                    Alaveddy
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Tuition Center
+                  </div>
                 </div>
               </div>
             </div>
@@ -158,7 +170,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                     />
                     <div>
                       <p className="font-bold text-xs leading-none">TiT Online Education</p>
-                      <p className="text-[10px] text-slate-300 mt-0.5">Alaveddy, Jaffna · +94 77 015 8446</p>
+                      <p className="text-[10px] text-slate-300 mt-0.5">
+                        Alaveddy, Jaffna · +94 77 015 8446
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -197,7 +211,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3.5 pt-3 sm:pt-0 sm:px-4 cursor-pointer group" onClick={onOpenResults}>
+              <div
+                className="flex items-center gap-3.5 pt-3 sm:pt-0 sm:px-4 cursor-pointer group"
+                onClick={onOpenResults}
+              >
                 <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                   <Award className="w-5 h-5" />
                 </div>
@@ -206,7 +223,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       Exam Results Portal
                     </h4>
-                    <span className="text-[9px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">New</span>
+                    <span className="text-[9px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">
+                      New
+                    </span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Term 1, 2, 3 official report cards
@@ -233,11 +252,14 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 2. CORE PLATFORM CAPABILITIES */}
-      <section id="features-demo" className="bg-slate-50/70 dark:bg-slate-950/60 py-12 sm:py-16 border-y border-slate-200/80 dark:border-slate-800 transition-colors">
+      <section
+        id="features-demo"
+        className="bg-slate-50/70 dark:bg-slate-950/60 py-12 sm:py-16 border-y border-slate-200/80 dark:border-slate-800 transition-colors"
+      >
         <Container>
           <FourCoreFeaturesShowcase
             initialFeature="ai"
-            onExploreMore={() => onNavigate('features')}
+            onExploreMore={() => onNavigate("features")}
             onOpenAdmissions={onOpenAdmissions}
             title="Core Learning Features of TiT"
             subtitle="Explore our flagship capabilities: TiT AI Assistant, Course-wise Communication, Academic Calendar, and Timed Live Assessments."
@@ -251,7 +273,11 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-300 transition-all cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-indigo-500" />
-              <span>{showInteractiveSandbox ? 'Hide Interactive Demo' : 'Try Interactive Learning Demo (Live Tools)'}</span>
+              <span>
+                {showInteractiveSandbox
+                  ? "Hide Interactive Demo"
+                  : "Try Interactive Learning Demo (Live Tools)"}
+              </span>
             </button>
 
             {showInteractiveSandbox && (
@@ -279,13 +305,14 @@ export const HomePage: React.FC<HomePageProps> = ({
               Classes Available for Grade 1 to Grade 13
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Select any grade from Grade 1 to Grade 13 to explore current active classes, lesson topics, teachers, and weekly timetables.
+              Select any grade from Grade 1 to Grade 13 to explore current active classes, lesson
+              topics, teachers, and weekly timetables.
             </p>
             <div className="mt-4">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onNavigate('courses')}
+                onClick={() => onNavigate("courses")}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
                 Full Class Directory
@@ -317,7 +344,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onNavigate('marketplace')}
+                onClick={() => onNavigate("marketplace")}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
                 Browse All Materials
@@ -339,10 +366,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 5. SECURE YOUR ACADEMIC PLACEMENT - PROPER PRE-REGISTRATION SECTION */}
-      <AcademicPlacementSection
-        onOpenAdmissions={onOpenAdmissions}
-        onNavigate={onNavigate}
-      />
+      <AcademicPlacementSection onOpenAdmissions={onOpenAdmissions} onNavigate={onNavigate} />
 
       {/* 6. FREQUENTLY ASKED QUESTIONS */}
       <section>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -14,10 +14,10 @@ import {
   ShoppingBag,
   Trash2,
   X,
-} from 'lucide-react';
-import { CartItem, MaterialItem } from '../../types';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+} from "lucide-react";
+import { CartItem, MaterialItem } from "../../types";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 
 export interface CartDrawerProps {
   isOpen: boolean;
@@ -39,7 +39,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   if (!isOpen) return null;
 
   const subtotal = items.reduce((sum, item) => sum + item.material.finalPrice * item.quantity, 0);
-  const currency = items[0]?.material.currency || 'LKR';
+  const currency = items[0]?.material.currency || "LKR";
 
   return (
     <div className="fixed inset-0 z-50 flex overflow-hidden">
@@ -58,7 +58,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               <ShoppingBag className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Your Cart</h3>
               <Badge variant="primary" size="sm">
-                {items.length} {items.length === 1 ? 'item' : 'items'}
+                {items.length} {items.length === 1 ? "item" : "items"}
               </Badge>
             </div>
             <button
@@ -77,9 +77,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center mb-4">
                   <ShoppingBag className="w-8 h-8" />
                 </div>
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">Your cart is empty</h4>
+                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                  Your cart is empty
+                </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
-                  Browse our Educational Marketplace to acquire past papers, model answers, and revision guides.
+                  Browse our Educational Marketplace to acquire past papers, model answers, and
+                  revision guides.
                 </p>
                 <Button variant="outline" size="sm" onClick={onClose} className="mt-5">
                   Browse Materials
@@ -118,7 +121,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400">
                             {item.material.free
-                              ? 'FREE'
+                              ? "FREE"
                               : `${item.material.currency} ${item.material.finalPrice.toLocaleString()}`}
                           </span>
                           <button
@@ -141,7 +144,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     <span>Secure Verified Learning Materials</span>
                   </div>
                   <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                    Downloads are saved directly to your student account with lifetime access upon payment confirmation.
+                    Downloads are saved directly to your student account with lifetime access upon
+                    payment confirmation.
                   </p>
                 </div>
               </>
@@ -160,7 +164,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
                   <span>Platform Fee & Tax</span>
-                  <span className="font-medium text-emerald-600 dark:text-emerald-400">Included</span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                    Included
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-base font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-800">
                   <span>Estimated Total</span>

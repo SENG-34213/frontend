@@ -1,8 +1,8 @@
-import React from 'react';
-import { Download, FileText, ShoppingBag, Star, User } from 'lucide-react';
-import { MaterialItem } from '../../types';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+import React from "react";
+import { Download, FileText, ShoppingBag, Star, User } from "lucide-react";
+import { MaterialItem } from "../../types";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 
 export interface MaterialCardProps {
   material: MaterialItem;
@@ -29,16 +29,29 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-          <Badge variant="accent" size="sm" className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs font-semibold">
+          <Badge
+            variant="accent"
+            size="sm"
+            className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs font-semibold"
+          >
             {material.category}
           </Badge>
           {material.free ? (
-            <Badge variant="success" size="sm" className="bg-emerald-500 text-white font-bold border-none">
+            <Badge
+              variant="success"
+              size="sm"
+              className="bg-emerald-500 text-white font-bold border-none"
+            >
               FREE
             </Badge>
           ) : (
-            material.discountPercent && material.discountPercent > 0 && (
-              <Badge variant="error" size="sm" className="bg-rose-500 text-white font-bold border-none">
+            material.discountPercent &&
+            material.discountPercent > 0 && (
+              <Badge
+                variant="error"
+                size="sm"
+                className="bg-rose-500 text-white font-bold border-none"
+              >
                 -{material.discountPercent}%
               </Badge>
             )
@@ -70,7 +83,7 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
             <span className="flex items-center gap-1 truncate max-w-[160px]">
               <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
-              <span className="truncate">{material.authorName || 'TiT Academic Board'}</span>
+              <span className="truncate">{material.authorName || "TiT Academic Board"}</span>
             </span>
             <div className="flex items-center gap-1 text-amber-500 font-medium">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
@@ -83,7 +96,9 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
         <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
           <div>
             {material.free ? (
-              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">Free Download</span>
+              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                Free Download
+              </span>
             ) : (
               <div className="flex flex-col">
                 <div className="flex items-baseline gap-1.5">

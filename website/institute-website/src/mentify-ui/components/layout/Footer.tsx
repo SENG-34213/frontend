@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   MapPin,
   Phone,
@@ -12,8 +12,8 @@ import {
   Video,
   ShieldCheck,
   UserCheck,
-} from 'lucide-react';
-import { SITE_CONFIG } from '../../lib/config/site';
+} from "lucide-react";
+import { SITE_CONFIG } from "../../lib/config/site";
 
 export interface FooterProps {
   onNavigate: (path: string) => void;
@@ -21,11 +21,7 @@ export interface FooterProps {
   onOpenTutorApply?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({
-  onNavigate,
-  onOpenResults,
-  onOpenTutorApply,
-}) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenResults, onOpenTutorApply }) => {
   return (
     <footer className="bg-slate-950 text-slate-300 border-t border-slate-800/80 pt-20 pb-16 relative overflow-hidden">
       {/* Subtle background ambient lights */}
@@ -54,15 +50,16 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
 
               <p className="text-sm text-slate-400 leading-relaxed">
-                Empowering students across Sri Lanka from Grade 1 through Grade 13 with structured syllabus guidance,
-                interactive live Zoom tuition, comprehensive study notes, model papers, and official student performance tracking.
+                Empowering students across Sri Lanka from Grade 1 through Grade 13 with structured
+                syllabus guidance, interactive live Zoom tuition, comprehensive study notes, model
+                papers, and official student performance tracking.
               </p>
             </div>
 
             {/* Quick Contact & WhatsApp Pill */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 lg:self-center shrink-0">
               <a
-                href={`https://wa.me/94770158446?text=${encodeURIComponent('Hello, I would like to inquire about academic batches.')}`}
+                href={`https://wa.me/94770158446?text=${encodeURIComponent("Hello, I would like to inquire about academic batches.")}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all shadow-lg shadow-emerald-950/40 hover:scale-[1.02] active:scale-[0.98]"
@@ -140,7 +137,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('courses')}
+                  onClick={() => onNavigate("courses")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -150,7 +147,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('courses')}
+                  onClick={() => onNavigate("courses")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -160,7 +157,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('courses')}
+                  onClick={() => onNavigate("courses")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -170,7 +167,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('courses')}
+                  onClick={() => onNavigate("courses")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -180,7 +177,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('courses')}
+                  onClick={() => onNavigate("courses")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -200,7 +197,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('marketplace')}
+                  onClick={() => onNavigate("marketplace")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -210,7 +207,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('marketplace')}
+                  onClick={() => onNavigate("marketplace")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -220,7 +217,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('marketplace')}
+                  onClick={() => onNavigate("marketplace")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -230,7 +227,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('features')}
+                  onClick={() => onNavigate("features")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -240,7 +237,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('admissions')}
+                  onClick={() => onNavigate("admissions")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-emerald-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -270,7 +267,7 @@ export const Footer: React.FC<FooterProps> = ({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => onNavigate('portals')}
+                    onClick={() => onNavigate("portals")}
                     className="text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-2 text-left"
                   >
                     <Award className="w-4 h-4 text-amber-400 shrink-0" />
@@ -293,7 +290,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('portals')}
+                  onClick={() => onNavigate("portals")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -303,7 +300,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('portals')}
+                  onClick={() => onNavigate("portals")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -313,7 +310,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
-                  onClick={() => onNavigate('faq')}
+                  onClick={() => onNavigate("faq")}
                   className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-2 group text-left"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-purple-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
@@ -390,7 +387,7 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="flex flex-wrap items-center justify-center gap-6 text-slate-400 text-xs">
             <button
               type="button"
-              onClick={() => onNavigate('privacy')}
+              onClick={() => onNavigate("privacy")}
               className="hover:text-slate-200 transition-colors cursor-pointer"
             >
               Privacy Policy
@@ -398,7 +395,7 @@ export const Footer: React.FC<FooterProps> = ({
             <span className="text-slate-700">·</span>
             <button
               type="button"
-              onClick={() => onNavigate('terms')}
+              onClick={() => onNavigate("terms")}
               className="hover:text-slate-200 transition-colors cursor-pointer"
             >
               Terms of Service
@@ -406,7 +403,7 @@ export const Footer: React.FC<FooterProps> = ({
             <span className="text-slate-700">·</span>
             <button
               type="button"
-              onClick={() => onNavigate('contact')}
+              onClick={() => onNavigate("contact")}
               className="hover:text-slate-200 transition-colors cursor-pointer"
             >
               Admissions Help Desk
@@ -414,7 +411,7 @@ export const Footer: React.FC<FooterProps> = ({
             <span className="text-slate-700">·</span>
             <button
               type="button"
-              onClick={() => onNavigate('portals')}
+              onClick={() => onNavigate("portals")}
               className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer"
             >
               Portal Login

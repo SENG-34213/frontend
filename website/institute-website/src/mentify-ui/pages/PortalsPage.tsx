@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   ArrowUpRight,
   GraduationCap,
@@ -8,15 +8,15 @@ import {
   Sparkles,
   UserCheck,
   Users,
-} from 'lucide-react';
-import { Language } from '../types';
-import { SITE_CONFIG } from '../lib/config/site';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
+} from "lucide-react";
+import { Language } from "../types";
+import { SITE_CONFIG } from "../lib/config/site";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Card } from "../components/ui/Card";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
 
 export interface PortalsPageProps {
   currentLang: Language;
@@ -27,55 +27,55 @@ export const PortalsPage: React.FC<PortalsPageProps> = ({ currentLang }) => {
 
   const portals = [
     {
-      id: 'student',
-      title: t('portals.student.title'),
-      role: 'Student & Candidate Access',
-      badge: 'Active',
-      badgeVariant: 'primary' as const,
+      id: "student",
+      title: t("portals.student.title"),
+      role: "Student & Candidate Access",
+      badge: "Active",
+      badgeVariant: "primary" as const,
       icon: <GraduationCap className="w-8 h-8 text-indigo-600" />,
-      desc: t('portals.student.desc'),
+      desc: t("portals.student.desc"),
       url: SITE_CONFIG.portals.student,
       features: [
-        'Live lecture video links & archives',
-        'Homework assignments & marksheets',
-        'Step-by-step past paper explanations',
-        'Digital library and class downloads',
+        "Live lecture video links & archives",
+        "Homework assignments & marksheets",
+        "Step-by-step past paper explanations",
+        "Digital library and class downloads",
       ],
-      btnVariant: 'primary' as const,
+      btnVariant: "primary" as const,
     },
     {
-      id: 'teacher',
-      title: t('portals.teacher.title'),
-      role: 'Faculty & Educator Access',
-      badge: 'Faculty Portal',
-      badgeVariant: 'secondary' as const,
+      id: "teacher",
+      title: t("portals.teacher.title"),
+      role: "Faculty & Educator Access",
+      badge: "Faculty Portal",
+      badgeVariant: "secondary" as const,
       icon: <Users className="w-8 h-8 text-blue-600" />,
-      desc: t('portals.teacher.desc'),
+      desc: t("portals.teacher.desc"),
       url: SITE_CONFIG.portals.teacher,
       features: [
-        'Classroom stream management & attendance',
-        'Assignment evaluation & grading rubrics',
-        'Marketplace digital material publishing',
-        'Student test marksheets and progress reports',
+        "Classroom stream management & attendance",
+        "Assignment evaluation & grading rubrics",
+        "Marketplace digital material publishing",
+        "Student test marksheets and progress reports",
       ],
-      btnVariant: 'secondary' as const,
+      btnVariant: "secondary" as const,
     },
     {
-      id: 'admin',
-      title: t('portals.admin.title'),
-      role: 'Institutional Administration',
-      badge: 'Protected Access',
-      badgeVariant: 'neutral' as const,
+      id: "admin",
+      title: t("portals.admin.title"),
+      role: "Institutional Administration",
+      badge: "Protected Access",
+      badgeVariant: "neutral" as const,
       icon: <School className="w-8 h-8 text-slate-800" />,
-      desc: t('portals.admin.desc'),
+      desc: t("portals.admin.desc"),
       url: SITE_CONFIG.portals.admin,
       features: [
-        'Class & subject timetable planning',
-        'Teacher allocations and room management',
-        'Tuition fee payment records',
-        'Staff accounts & access protection',
+        "Class & subject timetable planning",
+        "Teacher allocations and room management",
+        "Tuition fee payment records",
+        "Staff accounts & access protection",
       ],
-      btnVariant: 'outline' as const,
+      btnVariant: "outline" as const,
     },
   ];
 
@@ -93,10 +93,10 @@ export const PortalsPage: React.FC<PortalsPageProps> = ({ currentLang }) => {
             Institutional Gateway
           </Badge>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {t('portals.title')}
+            {t("portals.title")}
           </h1>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
-            {t('portals.subtitle')}
+            {t("portals.subtitle")}
           </p>
         </Container>
       </section>
@@ -171,10 +171,13 @@ export const PortalsPage: React.FC<PortalsPageProps> = ({ currentLang }) => {
             <Lock className="w-5 h-5" />
           </div>
           <div className="text-xs text-indigo-950 dark:text-indigo-200 space-y-1">
-            <h4 className="font-bold text-sm text-indigo-950 dark:text-white">Protected Access for Students, Teachers & Parents</h4>
+            <h4 className="font-bold text-sm text-indigo-950 dark:text-white">
+              Protected Access for Students, Teachers & Parents
+            </h4>
             <p className="text-indigo-900/80 dark:text-indigo-300/80 leading-relaxed">
-              TiT portals provide safe, personalized access for every user. Students, teachers, and school administrators
-              are automatically directed to their dedicated dashboard with private and encrypted login protection.
+              TiT portals provide safe, personalized access for every user. Students, teachers, and
+              school administrators are automatically directed to their dedicated dashboard with
+              private and encrypted login protection.
             </p>
           </div>
         </div>

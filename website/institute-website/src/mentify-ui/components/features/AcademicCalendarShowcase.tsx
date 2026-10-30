@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -13,127 +13,127 @@ import {
   ExternalLink,
   CheckCircle,
   BookOpen,
-} from 'lucide-react';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+} from "lucide-react";
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { Badge } from "../ui/Badge";
 
 export interface CalendarEvent {
   id: string;
   title: string;
   course: string;
-  category: 'lecture' | 'assignment' | 'quiz' | 'exam' | 'doubt';
+  category: "lecture" | "assignment" | "quiz" | "exam" | "doubt";
   dateStr: string; // YYYY-MM-DD
   dayNumber: number;
   timeRange: string;
   instructor: string;
   location: string;
   syllabusTopic: string;
-  status: 'upcoming' | 'live' | 'completed';
+  status: "upcoming" | "live" | "completed";
   zoomLink?: string;
 }
 
 const SAMPLE_EVENTS: CalendarEvent[] = [
   {
-    id: 'ev-1',
-    title: 'A/L Combined Maths: Integration by Parts Proofs',
-    course: 'Combined Mathematics 2026',
-    category: 'lecture',
-    dateStr: '2026-11-04',
+    id: "ev-1",
+    title: "A/L Combined Maths: Integration by Parts Proofs",
+    course: "Combined Mathematics 2026",
+    category: "lecture",
+    dateStr: "2026-11-04",
     dayNumber: 4,
-    timeRange: '08:30 AM – 11:30 AM',
-    instructor: 'Eng. S. Perera',
-    location: 'Main Auditorium & Live HD Stream',
-    syllabusTopic: 'Unit 08: Integral Calculus (NIE A/L Core)',
-    status: 'upcoming',
-    zoomLink: 'https://tit.edu.lk/stream/math-live',
+    timeRange: "08:30 AM – 11:30 AM",
+    instructor: "Eng. S. Perera",
+    location: "Main Auditorium & Live HD Stream",
+    syllabusTopic: "Unit 08: Integral Calculus (NIE A/L Core)",
+    status: "upcoming",
+    zoomLink: "https://tit.edu.lk/stream/math-live",
   },
   {
-    id: 'ev-2',
-    title: 'Submission Due: Mechanics Tutorial 04 (Relative Velocity)',
-    course: 'Combined Mathematics 2026',
-    category: 'assignment',
-    dateStr: '2026-11-06',
+    id: "ev-2",
+    title: "Submission Due: Mechanics Tutorial 04 (Relative Velocity)",
+    course: "Combined Mathematics 2026",
+    category: "assignment",
+    dateStr: "2026-11-06",
     dayNumber: 6,
-    timeRange: '11:59 PM (Hard Deadline)',
-    instructor: 'Eng. S. Perera',
-    location: 'Student Submission Portal (PDF Upload)',
-    syllabusTopic: 'Unit 14: Applied Mechanics & Kinematics',
-    status: 'upcoming',
+    timeRange: "11:59 PM (Hard Deadline)",
+    instructor: "Eng. S. Perera",
+    location: "Student Submission Portal (PDF Upload)",
+    syllabusTopic: "Unit 14: Applied Mechanics & Kinematics",
+    status: "upcoming",
   },
   {
-    id: 'ev-3',
-    title: 'Physics Practical & Wave Motion MCQ Speed Drill',
-    course: 'Advanced Level Physics Masterclass',
-    category: 'quiz',
-    dateStr: '2026-11-08',
+    id: "ev-3",
+    title: "Physics Practical & Wave Motion MCQ Speed Drill",
+    course: "Advanced Level Physics Masterclass",
+    category: "quiz",
+    dateStr: "2026-11-08",
     dayNumber: 8,
-    timeRange: '04:00 PM – 05:00 PM',
-    instructor: 'Dr. S. Gunawardana',
-    location: 'Interactive Quiz Arena',
-    syllabusTopic: 'Unit 03: Doppler Effect & Standing Waves',
-    status: 'upcoming',
+    timeRange: "04:00 PM – 05:00 PM",
+    instructor: "Dr. S. Gunawardana",
+    location: "Interactive Quiz Arena",
+    syllabusTopic: "Unit 03: Doppler Effect & Standing Waves",
+    status: "upcoming",
   },
   {
-    id: 'ev-4',
-    title: 'Live Lab Broadcast: Surface Tension Experiments',
-    course: 'Advanced Level Physics Masterclass',
-    category: 'lecture',
-    dateStr: '2026-11-12',
+    id: "ev-4",
+    title: "Live Lab Broadcast: Surface Tension Experiments",
+    course: "Advanced Level Physics Masterclass",
+    category: "lecture",
+    dateStr: "2026-11-12",
     dayNumber: 12,
-    timeRange: '09:00 AM – 12:00 PM',
-    instructor: 'Dr. S. Gunawardana',
-    location: 'Lab Room 2 & Dual Camera Stream',
-    syllabusTopic: 'Unit 02: Properties of Matter',
-    status: 'upcoming',
+    timeRange: "09:00 AM – 12:00 PM",
+    instructor: "Dr. S. Gunawardana",
+    location: "Lab Room 2 & Dual Camera Stream",
+    syllabusTopic: "Unit 02: Properties of Matter",
+    status: "upcoming",
   },
   {
-    id: 'ev-5',
-    title: 'Organic Chemistry Synthesis Mechanisms Seminar',
-    course: 'A/L Chemistry Inorganic & Organic',
-    category: 'lecture',
-    dateStr: '2026-11-15',
+    id: "ev-5",
+    title: "Organic Chemistry Synthesis Mechanisms Seminar",
+    course: "A/L Chemistry Inorganic & Organic",
+    category: "lecture",
+    dateStr: "2026-11-15",
     dayNumber: 15,
-    timeRange: '02:00 PM – 05:30 PM',
-    instructor: 'Mrs. K. Jayasuriya',
-    location: 'Hall 3 & Online Replay Archive',
-    syllabusTopic: 'Unit 11: Organic Synthesis & Benzene Derivatives',
-    status: 'upcoming',
+    timeRange: "02:00 PM – 05:30 PM",
+    instructor: "Mrs. K. Jayasuriya",
+    location: "Hall 3 & Online Replay Archive",
+    syllabusTopic: "Unit 11: Organic Synthesis & Benzene Derivatives",
+    status: "upcoming",
   },
   {
-    id: 'ev-6',
-    title: 'Mid-Year Comprehensive Term Examination (Paper I & II)',
-    course: 'All Departments (TiT Institute)',
-    category: 'exam',
-    dateStr: '2026-11-20',
+    id: "ev-6",
+    title: "Mid-Year Comprehensive Term Examination (Paper I & II)",
+    course: "All Departments (TiT Institute)",
+    category: "exam",
+    dateStr: "2026-11-20",
     dayNumber: 20,
-    timeRange: '08:00 AM – 01:00 PM',
-    instructor: 'TiT Examination Board',
-    location: 'Main Examination Halls 1–6',
-    syllabusTopic: 'Complete Term 1 & 2 Syllabus Scope',
-    status: 'upcoming',
+    timeRange: "08:00 AM – 01:00 PM",
+    instructor: "TiT Examination Board",
+    location: "Main Examination Halls 1–6",
+    syllabusTopic: "Complete Term 1 & 2 Syllabus Scope",
+    status: "upcoming",
   },
   {
-    id: 'ev-7',
-    title: 'Live Doubt Clearance & Past Paper Discussion Hour',
-    course: 'Biology NIE Curriculum',
-    category: 'doubt',
-    dateStr: '2026-11-24',
+    id: "ev-7",
+    title: "Live Doubt Clearance & Past Paper Discussion Hour",
+    course: "Biology NIE Curriculum",
+    category: "doubt",
+    dateStr: "2026-11-24",
     dayNumber: 24,
-    timeRange: '06:00 PM – 07:30 PM',
-    instructor: 'Dr. N. Wickramasinghe',
-    location: 'Google Meet / TiT Chat Room',
-    syllabusTopic: 'Unit 05: Plant Physiology & C4 Pathway',
-    status: 'upcoming',
+    timeRange: "06:00 PM – 07:30 PM",
+    instructor: "Dr. N. Wickramasinghe",
+    location: "Google Meet / TiT Chat Room",
+    syllabusTopic: "Unit 05: Plant Physiology & C4 Pathway",
+    status: "upcoming",
   },
 ];
 
 export const AcademicCalendarShowcase: React.FC = () => {
-  const [selectedCourse, setSelectedCourse] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCourse, setSelectedCourse] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<number>(4);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(SAMPLE_EVENTS[0]);
-  const [countdown, setCountdown] = useState<string>('02h 45m 18s');
+  const [countdown, setCountdown] = useState<string>("02h 45m 18s");
 
   // Simulated ticking countdown to next live lecture
   useEffect(() => {
@@ -144,44 +144,67 @@ export const AcademicCalendarShowcase: React.FC = () => {
       const m = Math.floor((secondsLeft % 3600) / 60);
       const s = secondsLeft % 60;
       setCountdown(
-        `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`
+        `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`,
       );
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
   const filteredEvents = SAMPLE_EVENTS.filter((ev) => {
-    if (selectedCourse !== 'all' && !ev.course.toLowerCase().includes(selectedCourse.toLowerCase())) {
+    if (
+      selectedCourse !== "all" &&
+      !ev.course.toLowerCase().includes(selectedCourse.toLowerCase())
+    ) {
       return false;
     }
-    if (selectedCategory !== 'all' && ev.category !== selectedCategory) {
+    if (selectedCategory !== "all" && ev.category !== selectedCategory) {
       return false;
     }
     return true;
   });
 
-  const getCategoryBadge = (cat: CalendarEvent['category']) => {
+  const getCategoryBadge = (cat: CalendarEvent["category"]) => {
     switch (cat) {
-      case 'lecture':
-        return <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded text-[10px] font-bold">Live Lecture</span>;
-      case 'assignment':
-        return <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">Assignment Deadline</span>;
-      case 'quiz':
-        return <span className="bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold">Timed Quiz</span>;
-      case 'exam':
-        return <span className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 px-2 py-0.5 rounded text-[10px] font-bold">Term Examination</span>;
-      case 'doubt':
-        return <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">Doubt Clinic</span>;
+      case "lecture":
+        return (
+          <span className="bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded text-[10px] font-bold">
+            Live Lecture
+          </span>
+        );
+      case "assignment":
+        return (
+          <span className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">
+            Assignment Deadline
+          </span>
+        );
+      case "quiz":
+        return (
+          <span className="bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 px-2 py-0.5 rounded text-[10px] font-bold">
+            Timed Quiz
+          </span>
+        );
+      case "exam":
+        return (
+          <span className="bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 px-2 py-0.5 rounded text-[10px] font-bold">
+            Term Examination
+          </span>
+        );
+      case "doubt":
+        return (
+          <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">
+            Doubt Clinic
+          </span>
+        );
     }
   };
 
   const handleDownloadICS = (ev: CalendarEvent) => {
     const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//TiT Education//Academic Calendar//EN\nBEGIN:VEVENT\nSUMMARY:${ev.title}\nDESCRIPTION:${ev.syllabusTopic} - Instructor: ${ev.instructor}\nLOCATION:${ev.location}\nSTATUS:CONFIRMED\nEND:VEVENT\nEND:VCALENDAR`;
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', `${ev.title.replace(/[^a-zA-Z0-9]/g, '_')}.ics`);
+    link.setAttribute("download", `${ev.title.replace(/[^a-zA-Z0-9]/g, "_")}.ics`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -206,7 +229,8 @@ export const AcademicCalendarShowcase: React.FC = () => {
             Lectures, Assignment Deadlines & Mock Exam Countdown
           </h3>
           <p className="text-xs text-slate-300">
-            Never miss an assessment or live practical session with automatic timezone sync and exportable calendar feeds.
+            Never miss an assessment or live practical session with automatic timezone sync and
+            exportable calendar feeds.
           </p>
         </div>
 
@@ -214,7 +238,9 @@ export const AcademicCalendarShowcase: React.FC = () => {
         <div className="bg-indigo-900/60 border border-indigo-400/30 px-3.5 py-2 rounded-2xl flex items-center gap-2.5">
           <Clock className="w-4 h-4 text-indigo-400 shrink-0" />
           <div>
-            <div className="text-[10px] text-indigo-200 uppercase font-semibold">Next Live Lecture In</div>
+            <div className="text-[10px] text-indigo-200 uppercase font-semibold">
+              Next Live Lecture In
+            </div>
             <div className="text-xs font-mono font-bold text-white">{countdown}</div>
           </div>
         </div>
@@ -241,19 +267,19 @@ export const AcademicCalendarShowcase: React.FC = () => {
         {/* Event Type Filter */}
         <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
           {[
-            { id: 'all', label: 'All Events' },
-            { id: 'lecture', label: 'Lectures' },
-            { id: 'assignment', label: 'Assignments' },
-            { id: 'quiz', label: 'Quizzes' },
-            { id: 'exam', label: 'Exams' },
+            { id: "all", label: "All Events" },
+            { id: "lecture", label: "Lectures" },
+            { id: "assignment", label: "Assignments" },
+            { id: "quiz", label: "Quizzes" },
+            { id: "exam", label: "Exams" },
           ].map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-2.5 py-1 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                 selectedCategory === cat.id
-                  ? 'bg-indigo-600 text-white font-bold'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:text-slate-900'
+                  ? "bg-indigo-600 text-white font-bold"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:text-slate-900"
               }`}
             >
               {cat.label}
@@ -276,7 +302,9 @@ export const AcademicCalendarShowcase: React.FC = () => {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 px-2">Nov 2026</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 px-2">
+                Nov 2026
+              </span>
               <button
                 className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                 title="Next Month"
@@ -315,17 +343,17 @@ export const AcademicCalendarShowcase: React.FC = () => {
                   }}
                   className={`min-h-[56px] p-1.5 rounded-xl border flex flex-col justify-between text-left transition-all cursor-pointer ${
                     isSelected
-                      ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/60 shadow-xs'
-                      : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? "border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/60 shadow-xs"
+                      : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60"
                   }`}
                 >
                   <span
                     className={`text-xs font-bold ${
                       isSelected
-                        ? 'text-indigo-600 dark:text-indigo-400'
+                        ? "text-indigo-600 dark:text-indigo-400"
                         : hasEvents
-                        ? 'text-slate-900 dark:text-white'
-                        : 'text-slate-400 dark:text-slate-500'
+                          ? "text-slate-900 dark:text-white"
+                          : "text-slate-400 dark:text-slate-500"
                     }`}
                   >
                     {day}
@@ -337,20 +365,22 @@ export const AcademicCalendarShowcase: React.FC = () => {
                         <div
                           key={ev.id}
                           className={`text-[9px] font-semibold px-1 py-0.5 rounded truncate ${
-                            ev.category === 'lecture'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                              : ev.category === 'assignment'
-                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                              : ev.category === 'quiz'
-                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300'
-                              : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                            ev.category === "lecture"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                              : ev.category === "assignment"
+                                ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                                : ev.category === "quiz"
+                                  ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                                  : "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
                           }`}
                         >
                           {ev.title}
                         </div>
                       ))}
                       {eventsOnDay.length > 2 && (
-                        <span className="text-[8px] text-slate-400">+{eventsOnDay.length - 2} more</span>
+                        <span className="text-[8px] text-slate-400">
+                          +{eventsOnDay.length - 2} more
+                        </span>
                       )}
                     </div>
                   )}
@@ -403,7 +433,9 @@ export const AcademicCalendarShowcase: React.FC = () => {
                   <div className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300">
                     <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold block text-slate-900 dark:text-white">Time Slot</span>
+                      <span className="font-semibold block text-slate-900 dark:text-white">
+                        Time Slot
+                      </span>
                       <span>{selectedEvent.timeRange}</span>
                     </div>
                   </div>
@@ -411,7 +443,9 @@ export const AcademicCalendarShowcase: React.FC = () => {
                   <div className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300">
                     <BookOpen className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold block text-slate-900 dark:text-white">Syllabus Scope</span>
+                      <span className="font-semibold block text-slate-900 dark:text-white">
+                        Syllabus Scope
+                      </span>
                       <span>{selectedEvent.syllabusTopic}</span>
                     </div>
                   </div>
@@ -419,7 +453,9 @@ export const AcademicCalendarShowcase: React.FC = () => {
                   <div className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300">
                     <Video className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold block text-slate-900 dark:text-white">Venue / Access</span>
+                      <span className="font-semibold block text-slate-900 dark:text-white">
+                        Venue / Access
+                      </span>
                       <span>{selectedEvent.location}</span>
                     </div>
                   </div>
@@ -427,7 +463,8 @@ export const AcademicCalendarShowcase: React.FC = () => {
               </div>
             ) : (
               <div className="py-12 text-center text-xs text-slate-400">
-                No scheduled academic event on November {selectedDate}. Select another date with event dots.
+                No scheduled academic event on November {selectedDate}. Select another date with
+                event dots.
               </div>
             )}
           </div>
@@ -448,7 +485,7 @@ export const AcademicCalendarShowcase: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="rounded-xl text-xs"
-                  onClick={() => window.open(selectedEvent.zoomLink, '_blank')}
+                  onClick={() => window.open(selectedEvent.zoomLink, "_blank")}
                   leftIcon={<ExternalLink className="w-3.5 h-3.5" />}
                 >
                   Join Stream

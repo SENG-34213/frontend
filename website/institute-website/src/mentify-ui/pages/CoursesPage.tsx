@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   Bell,
   BookOpen,
@@ -10,18 +10,18 @@ import {
   SlidersHorizontal,
   Sparkles,
   Video,
-} from 'lucide-react';
-import { CourseItem, Language } from '../types';
-import { SITE_CONFIG } from '../lib/config/site';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Input, Select } from '../components/ui/FormControls';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { EmptyState } from '../components/ui/FeedbackStates';
-import { CourseCard } from '../components/courses/CourseCard';
-import { Drawer } from '../components/ui/Modal';
+} from "lucide-react";
+import { CourseItem, Language } from "../types";
+import { SITE_CONFIG } from "../lib/config/site";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Input, Select } from "../components/ui/FormControls";
+import { Button } from "../components/ui/Button";
+import { Badge } from "../components/ui/Badge";
+import { EmptyState } from "../components/ui/FeedbackStates";
+import { CourseCard } from "../components/courses/CourseCard";
+import { Drawer } from "../components/ui/Modal";
 
 export interface CoursesPageProps {
   currentLang: Language;
@@ -38,16 +38,16 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
 }) => {
   const t = (key: string) => getTranslation(currentLang, key);
 
-  const [search, setSearch] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('all');
-  const [selectedGrade, setSelectedGrade] = useState('all');
-  const [selectedFormat, setSelectedFormat] = useState('all');
+  const [search, setSearch] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("all");
+  const [selectedGrade, setSelectedGrade] = useState("all");
+  const [selectedFormat, setSelectedFormat] = useState("all");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [notifiedList, setNotifiedList] = useState<Record<string, boolean>>({});
 
-  const formats = ['Online Live', 'Physical Classroom', 'Hybrid'];
+  const formats = ["Online Live", "Physical Classroom", "Hybrid"];
 
-  const [selectedStage, setSelectedStage] = useState('all');
+  const [selectedStage, setSelectedStage] = useState("all");
 
   const handleNotifyToggle = (id: string) => {
     setNotifiedList((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -56,40 +56,44 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
       const matchesSearch =
-        search === '' ||
+        search === "" ||
         course.title.toLowerCase().includes(search.toLowerCase()) ||
         course.description.toLowerCase().includes(search.toLowerCase()) ||
         course.teacher.name.toLowerCase().includes(search.toLowerCase()) ||
         course.subject.toLowerCase().includes(search.toLowerCase());
 
       const matchesSubject =
-        selectedSubject === 'all' || course.subject.toLowerCase() === selectedSubject.toLowerCase();
+        selectedSubject === "all" || course.subject.toLowerCase() === selectedSubject.toLowerCase();
 
       // Check grade match (or stage match if selectedGrade is 'all' and a stage is selected)
       let matchesGrade = true;
-      if (selectedGrade !== 'all') {
+      if (selectedGrade !== "all") {
         matchesGrade = course.gradeId === selectedGrade;
-      } else if (selectedStage !== 'all') {
+      } else if (selectedStage !== "all") {
         const gradeObj = SITE_CONFIG.grades.find((g) => g.id === course.gradeId);
         matchesGrade = gradeObj?.stageId === selectedStage;
       }
 
-      const matchesFormat = selectedFormat === 'all' || course.learningFormat === selectedFormat;
+      const matchesFormat = selectedFormat === "all" || course.learningFormat === selectedFormat;
 
       return matchesSearch && matchesSubject && matchesGrade && matchesFormat;
     });
   }, [courses, search, selectedSubject, selectedGrade, selectedStage, selectedFormat]);
 
   const handleResetFilters = () => {
-    setSearch('');
-    setSelectedSubject('all');
-    setSelectedGrade('all');
-    setSelectedStage('all');
-    setSelectedFormat('all');
+    setSearch("");
+    setSelectedSubject("all");
+    setSelectedGrade("all");
+    setSelectedStage("all");
+    setSelectedFormat("all");
   };
 
   const hasActiveFilters =
-    search !== '' || selectedSubject !== 'all' || selectedGrade !== 'all' || selectedStage !== 'all' || selectedFormat !== 'all';
+    search !== "" ||
+    selectedSubject !== "all" ||
+    selectedGrade !== "all" ||
+    selectedStage !== "all" ||
+    selectedFormat !== "all";
 
   // Count courses per grade
   const gradeCounts = useMemo(() => {
@@ -114,7 +118,8 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
             Curriculum Batches & Syllabus
           </h1>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
-            These are the academic curriculum batches conducted inside our tuition center. Explore syllabus outlines and timetable details below.
+            These are the academic curriculum batches conducted inside our tuition center. Explore
+            syllabus outlines and timetable details below.
           </p>
         </Container>
       </section>
@@ -131,17 +136,17 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                   type="button"
                   onClick={() => {
                     setSelectedStage(stage.id);
-                    if (stage.id !== 'all') {
+                    if (stage.id !== "all") {
                       const match = SITE_CONFIG.grades.filter((g) => g.stageId === stage.id);
                       if (match.length > 0 && !match.some((g) => g.id === selectedGrade)) {
-                        setSelectedGrade('all');
+                        setSelectedGrade("all");
                       }
                     }
                   }}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
                     isActive
-                      ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   {stage.name}
@@ -155,7 +160,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
               <span className="font-medium text-indigo-600 dark:text-indigo-400">
                 Filtered: {activeGradeObj.name} · {activeGradeObj.stage}
               </span>
-            ) : selectedStage !== 'all' ? (
+            ) : selectedStage !== "all" ? (
               <span className="font-medium text-indigo-600 dark:text-indigo-400">
                 Stage: {SITE_CONFIG.academicStages.find((s) => s.id === selectedStage)?.name}
               </span>
@@ -169,22 +174,24 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 lg:grid-cols-14 gap-2 mb-8">
           <button
             type="button"
-            onClick={() => setSelectedGrade('all')}
+            onClick={() => setSelectedGrade("all")}
             className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between ${
-              selectedGrade === 'all'
-                ? 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/20'
-                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+              selectedGrade === "all"
+                ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/20"
+                : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
             }`}
           >
             <span className="text-[9px] uppercase font-bold text-slate-400">All</span>
             <span className="font-bold text-xs sm:text-sm mt-0.5">All</span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">{courses.length} courses</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+              {courses.length} courses
+            </span>
           </button>
 
           {SITE_CONFIG.grades.map((g) => {
             const isSelected = selectedGrade === g.id;
             const count = gradeCounts[g.id] || 0;
-            const isStageMatch = selectedStage === 'all' || g.stageId === selectedStage;
+            const isStageMatch = selectedStage === "all" || g.stageId === selectedStage;
 
             return (
               <button
@@ -193,29 +200,37 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 onClick={() => setSelectedGrade(g.id)}
                 className={`p-2 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[66px] ${
                   isSelected
-                    ? 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/20 shadow-xs'
+                    ? "border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-950 dark:text-indigo-200 ring-2 ring-indigo-500/20 shadow-xs"
                     : !isStageMatch
-                    ? 'border-slate-200/50 dark:border-slate-800/50 bg-slate-50/40 dark:bg-slate-900/30 text-slate-400 opacity-60'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                      ? "border-slate-200/50 dark:border-slate-800/50 bg-slate-50/40 dark:bg-slate-900/30 text-slate-400 opacity-60"
+                      : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 truncate">
-                    {g.stageId === 'primary' && 'P'}
-                    {g.stageId === 'junior' && 'J'}
-                    {g.stageId === 'ol' && 'OL'}
-                    {g.stageId === 'al' && 'AL'}
+                    {g.stageId === "primary" && "P"}
+                    {g.stageId === "junior" && "J"}
+                    {g.stageId === "ol" && "OL"}
+                    {g.stageId === "al" && "AL"}
                   </span>
-                  {g.level === 5 && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Scholarship" />}
-                  {g.level === 11 && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" title="O/L Exam" />}
-                  {g.level === 13 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="A/L Exam" />}
+                  {g.level === 5 && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" title="Scholarship" />
+                  )}
+                  {g.level === 11 && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" title="O/L Exam" />
+                  )}
+                  {g.level === 13 && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="A/L Exam" />
+                  )}
                 </div>
                 <div className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white leading-tight mt-0.5 truncate">
                   {g.shortName}
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center justify-between">
                   <span>{count}</span>
-                  {isSelected && <span className="text-indigo-600 dark:text-indigo-400 font-bold">✓</span>}
+                  {isSelected && (
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold">✓</span>
+                  )}
                 </div>
               </button>
             );
@@ -242,7 +257,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 value={selectedGrade}
                 onChange={(e) => setSelectedGrade(e.target.value)}
                 options={[
-                  { value: 'all', label: 'All Grades (1–13)' },
+                  { value: "all", label: "All Grades (1–13)" },
                   ...SITE_CONFIG.grades.map((g) => ({ value: g.id, label: g.name })),
                 ]}
               />
@@ -250,7 +265,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
                 options={[
-                  { value: 'all', label: 'All Subjects' },
+                  { value: "all", label: "All Subjects" },
                   ...SITE_CONFIG.subjects.map((s) => ({ value: s, label: s })),
                 ]}
               />
@@ -258,7 +273,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 value={selectedFormat}
                 onChange={(e) => setSelectedFormat(e.target.value)}
                 options={[
-                  { value: 'all', label: 'All Formats' },
+                  { value: "all", label: "All Formats" },
                   ...formats.map((f) => ({ value: f, label: f })),
                 ]}
               />
@@ -273,7 +288,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 leftIcon={<SlidersHorizontal className="w-4 h-4" />}
                 className="lg:hidden w-full sm:w-auto"
               >
-                Filters {hasActiveFilters && '•'}
+                Filters {hasActiveFilters && "•"}
               </Button>
 
               {hasActiveFilters && (
@@ -294,7 +309,9 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
         {/* Results Metadata Bar */}
         <div className="flex items-center justify-between mb-6 text-xs text-slate-500 dark:text-slate-400 font-medium">
           <span>
-            Showing <strong className="text-slate-800 dark:text-slate-200">{filteredCourses.length}</strong> academic programs
+            Showing{" "}
+            <strong className="text-slate-800 dark:text-slate-200">{filteredCourses.length}</strong>{" "}
+            academic programs
           </span>
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline">Curriculum:</span>
@@ -339,7 +356,8 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 Paid Online Courses & Special Masterclasses
               </h2>
               <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                Self-paced video modules, advanced past-paper revision sprints, and on-demand subject masterclasses will be available for online purchase soon.
+                Self-paced video modules, advanced past-paper revision sprints, and on-demand
+                subject masterclasses will be available for online purchase soon.
               </p>
             </div>
 
@@ -367,7 +385,8 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                     Combined Mathematics Masterclass
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                    100+ worked video solutions for Pure & Applied Mathematics, structured unit tests, and rapid IQ problem-solving frameworks.
+                    100+ worked video solutions for Pure & Applied Mathematics, structured unit
+                    tests, and rapid IQ problem-solving frameworks.
                   </p>
                 </div>
 
@@ -387,14 +406,14 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 <span className="text-xs text-slate-400 font-medium">Self-Paced Course</span>
                 <button
                   type="button"
-                  onClick={() => handleNotifyToggle('al-maths')}
+                  onClick={() => handleNotifyToggle("al-maths")}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
-                    notifiedList['al-maths']
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-400 hover:text-amber-500'
+                    notifiedList["al-maths"]
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                      : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-400 hover:text-amber-500"
                   }`}
                 >
-                  {notifiedList['al-maths'] ? (
+                  {notifiedList["al-maths"] ? (
                     <>
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Notified</span>
@@ -426,7 +445,8 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                     Scholarship IQ & Speed Drills Booster
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                    Interactive speed tests, pattern recognition mastery, and model paper explanations designed specifically for Grade 5 aspirants.
+                    Interactive speed tests, pattern recognition mastery, and model paper
+                    explanations designed specifically for Grade 5 aspirants.
                   </p>
                 </div>
 
@@ -446,14 +466,14 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 <span className="text-xs text-slate-400 font-medium">Self-Paced Course</span>
                 <button
                   type="button"
-                  onClick={() => handleNotifyToggle('g5-iq')}
+                  onClick={() => handleNotifyToggle("g5-iq")}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
-                    notifiedList['g5-iq']
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-400 hover:text-amber-500'
+                    notifiedList["g5-iq"]
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                      : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-400 hover:text-amber-500"
                   }`}
                 >
-                  {notifiedList['g5-iq'] ? (
+                  {notifiedList["g5-iq"] ? (
                     <>
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Notified</span>
@@ -485,7 +505,8 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                     Science & Maths Revision Vault
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                    Complete syllabus review videos, formula cheat sheets, past 10-year paper breakdowns, and exam tip sheets.
+                    Complete syllabus review videos, formula cheat sheets, past 10-year paper
+                    breakdowns, and exam tip sheets.
                   </p>
                 </div>
 
@@ -505,14 +526,14 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
                 <span className="text-xs text-slate-400 font-medium">Self-Paced Course</span>
                 <button
                   type="button"
-                  onClick={() => handleNotifyToggle('ol-vault')}
+                  onClick={() => handleNotifyToggle("ol-vault")}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
-                    notifiedList['ol-vault']
-                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800'
-                      : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-400 hover:text-amber-500'
+                    notifiedList["ol-vault"]
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                      : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-amber-400 hover:text-amber-500"
                   }`}
                 >
-                  {notifiedList['ol-vault'] ? (
+                  {notifiedList["ol-vault"] ? (
                     <>
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>Notified</span>
@@ -542,7 +563,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
             options={[
-              { value: 'all', label: 'All Subjects' },
+              { value: "all", label: "All Subjects" },
               ...SITE_CONFIG.subjects.map((s) => ({ value: s, label: s })),
             ]}
           />
@@ -552,7 +573,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
             value={selectedGrade}
             onChange={(e) => setSelectedGrade(e.target.value)}
             options={[
-              { value: 'all', label: 'All Grades' },
+              { value: "all", label: "All Grades" },
               ...SITE_CONFIG.grades.map((g) => ({ value: g.id, label: g.name })),
             ]}
           />
@@ -562,7 +583,7 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({
             value={selectedFormat}
             onChange={(e) => setSelectedFormat(e.target.value)}
             options={[
-              { value: 'all', label: 'All Formats' },
+              { value: "all", label: "All Formats" },
               ...formats.map((f) => ({ value: f, label: f })),
             ]}
           />

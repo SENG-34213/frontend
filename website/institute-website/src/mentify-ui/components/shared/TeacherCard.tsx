@@ -1,7 +1,7 @@
-import React from 'react';
-import { Award, BookOpen, CheckCircle2 } from 'lucide-react';
-import { TeacherProfile } from '../../types';
-import { Badge } from '../ui/Badge';
+import React from "react";
+import { Award, BookOpen, CheckCircle2 } from "lucide-react";
+import { TeacherProfile } from "../../types";
+import { Badge } from "../ui/Badge";
 
 export interface TeacherCardProps {
   teacher: TeacherProfile;
@@ -30,8 +30,12 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({ teacher }) => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug truncate">{teacher.name}</h4>
-            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-0.5 line-clamp-1">{teacher.title}</p>
+            <h4 className="font-bold text-slate-900 dark:text-white text-base leading-snug truncate">
+              {teacher.name}
+            </h4>
+            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-0.5 line-clamp-1">
+              {teacher.title}
+            </p>
             <div className="flex items-center gap-2 mt-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
               <span className="flex items-center gap-1">
                 <Award className="w-3.5 h-3.5 text-amber-500" />
@@ -68,7 +72,10 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({ teacher }) => {
         </span>
         <ul className="space-y-1">
           {teacher.qualifications.slice(0, 2).map((q, idx) => (
-            <li key={idx} className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5">
+            <li
+              key={idx}
+              className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1.5"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0" />
               <span className="line-clamp-1">{q}</span>
             </li>

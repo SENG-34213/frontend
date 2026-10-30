@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
@@ -13,10 +13,10 @@ import {
   ShieldCheck,
   ShoppingBag,
   X,
-} from 'lucide-react';
-import { CartItem, OrderPaymentStatus } from '../../types';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+} from "lucide-react";
+import { CartItem, OrderPaymentStatus } from "../../types";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 
 export interface CheckoutModalProps {
   isOpen: boolean;
@@ -31,27 +31,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   items,
   onSuccess,
 }) => {
-  const [status, setStatus] = useState<OrderPaymentStatus>('pending');
-  const [studentEmail, setStudentEmail] = useState('');
+  const [status, setStatus] = useState<OrderPaymentStatus>("pending");
+  const [studentEmail, setStudentEmail] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   if (!isOpen) return null;
 
   const subtotal = items.reduce((sum, item) => sum + item.material.finalPrice * item.quantity, 0);
-  const currency = items[0]?.material.currency || 'LKR';
+  const currency = items[0]?.material.currency || "LKR";
   const orderId = `ORD-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
-  const handleSimulatePayment = (outcome: 'success' | 'failure') => {
+  const handleSimulatePayment = (outcome: "success" | "failure") => {
     setIsProcessing(true);
-    setStatus('processing');
+    setStatus("processing");
 
     setTimeout(() => {
       setIsProcessing(false);
-      if (outcome === 'success') {
-        setStatus('succeeded');
+      if (outcome === "success") {
+        setStatus("succeeded");
         onSuccess();
       } else {
-        setStatus('failed');
+        setStatus("failed");
       }
     }, 1200);
   };
@@ -73,15 +73,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         </button>
 
         {/* Status: PENDING / FORM */}
-        {(status === 'pending' || status === 'processing') && (
+        {(status === "pending" || status === "processing") && (
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Secure Order Checkout</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Order ID: {orderId} • Encrypted Session</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Secure Order Checkout
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Order ID: {orderId} • Encrypted Session
+                </p>
               </div>
             </div>
 
@@ -136,7 +140,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <span>Safe & Instant Access</span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-blue-800 dark:text-blue-300">
-                  Your payment is processed through a safe, encrypted checkout. Once confirmed, digital downloads and study notes are unlocked immediately in your account.
+                  Your payment is processed through a safe, encrypted checkout. Once confirmed,
+                  digital downloads and study notes are unlocked immediately in your account.
                 </p>
               </div>
             </div>
@@ -147,7 +152,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 variant="primary"
                 size="lg"
                 isLoading={isProcessing}
-                onClick={() => handleSimulatePayment('success')}
+                onClick={() => handleSimulatePayment("success")}
                 className="w-full justify-center shadow-md shadow-indigo-500/20"
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
@@ -156,7 +161,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => handleSimulatePayment('failure')}
+                onClick={() => handleSimulatePayment("failure")}
                 className="w-full text-center text-xs text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors py-1 cursor-pointer"
               >
                 Simulate Gateway Declined Scenario (Verification Test)
@@ -166,7 +171,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         )}
 
         {/* Status: SUCCEEDED */}
-        {status === 'succeeded' && (
+        {status === "succeeded" && (
           <div className="text-center py-4 space-y-4 animate-in fade-in">
             <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto border-4 border-emerald-100 dark:border-emerald-800/60">
               <CheckCircle2 className="w-8 h-8" />
@@ -174,17 +179,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             <div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Order Confirmed!</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Reference: {orderId}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Reference: {orderId}
+              </p>
             </div>
 
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-md mx-auto">
-              Your payment has been recorded. Entitlements have been provisioned to your TiT account. A receipt has been dispatched to {studentEmail || 'your registered email'}.
+              Your payment has been recorded. Entitlements have been provisioned to your TiT
+              account. A receipt has been dispatched to {studentEmail || "your registered email"}.
             </p>
 
             <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2">
-              <span className="font-bold text-slate-800 dark:text-slate-200 block">Provisioned Downloads:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                Provisioned Downloads:
+              </span>
               {items.map((it) => (
-                <div key={it.material.id} className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                <div
+                  key={it.material.id}
+                  className="flex items-center justify-between text-slate-600 dark:text-slate-300"
+                >
                   <span className="truncate pr-2">{it.material.title}</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 shrink-0">
                     <Download className="w-3.5 h-3.5" />
@@ -201,19 +214,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         )}
 
         {/* Status: FAILED */}
-        {status === 'failed' && (
+        {status === "failed" && (
           <div className="text-center py-4 space-y-4 animate-in fade-in">
             <div className="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border-4 border-rose-100 dark:border-rose-900/60">
               <AlertCircle className="w-8 h-8" />
             </div>
 
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Payment Unsuccessful</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Transaction Ref: {orderId}</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                Payment Unsuccessful
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Transaction Ref: {orderId}
+              </p>
             </div>
 
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-md mx-auto">
-              The payment gateway was unable to authorize this transaction. No charges were made to your account.
+              The payment gateway was unable to authorize this transaction. No charges were made to
+              your account.
             </p>
 
             <div className="flex items-center gap-3 pt-2">
@@ -228,7 +246,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <Button
                 variant="primary"
                 size="md"
-                onClick={() => setStatus('pending')}
+                onClick={() => setStatus("pending")}
                 leftIcon={<RefreshCw className="w-4 h-4" />}
                 className="w-1/2 justify-center"
               >

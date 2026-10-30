@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Calculator,
   TrendingUp,
@@ -8,10 +8,10 @@ import {
   GraduationCap,
   ArrowRight,
   Info,
-} from 'lucide-react';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+} from "lucide-react";
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { Badge } from "../ui/Badge";
 
 interface SubjectMark {
   name: string;
@@ -20,53 +20,55 @@ interface SubjectMark {
 
 const STREAMS_CONFIG = {
   physical: {
-    name: 'Physical Science (Maths)',
-    subjects: ['Combined Mathematics', 'Physics', 'Chemistry'],
+    name: "Physical Science (Maths)",
+    subjects: ["Combined Mathematics", "Physics", "Chemistry"],
     mean: 52,
     stdDev: 14.5,
     faculties: [
-      { name: 'University of Moratuwa - Engineering', minZ: 1.95 },
-      { name: 'University of Peradeniya - Engineering', minZ: 1.82 },
-      { name: 'University of Colombo - Computer Science', minZ: 1.75 },
-      { name: 'University of Sri Jayewardenepura - Applied Science', minZ: 1.35 },
+      { name: "University of Moratuwa - Engineering", minZ: 1.95 },
+      { name: "University of Peradeniya - Engineering", minZ: 1.82 },
+      { name: "University of Colombo - Computer Science", minZ: 1.75 },
+      { name: "University of Sri Jayewardenepura - Applied Science", minZ: 1.35 },
     ],
   },
   bio: {
-    name: 'Biological Science',
-    subjects: ['Biology', 'Chemistry', 'Physics'],
+    name: "Biological Science",
+    subjects: ["Biology", "Chemistry", "Physics"],
     mean: 49,
     stdDev: 15.2,
     faculties: [
-      { name: 'University of Colombo - Faculty of Medicine', minZ: 2.12 },
-      { name: 'University of Peradeniya - Faculty of Medicine', minZ: 1.98 },
-      { name: 'University of Sri Jayewardenepura - Dental Science', minZ: 1.78 },
-      { name: 'University of Kelaniya - Molecular Biology', minZ: 1.45 },
+      { name: "University of Colombo - Faculty of Medicine", minZ: 2.12 },
+      { name: "University of Peradeniya - Faculty of Medicine", minZ: 1.98 },
+      { name: "University of Sri Jayewardenepura - Dental Science", minZ: 1.78 },
+      { name: "University of Kelaniya - Molecular Biology", minZ: 1.45 },
     ],
   },
   commerce: {
-    name: 'Commerce Stream',
-    subjects: ['Accounting', 'Business Studies', 'Economics'],
+    name: "Commerce Stream",
+    subjects: ["Accounting", "Business Studies", "Economics"],
     mean: 55,
     stdDev: 13.8,
     faculties: [
-      { name: 'University of Sri Jayewardenepura - Management', minZ: 1.85 },
-      { name: 'University of Colombo - Management & Finance', minZ: 1.78 },
-      { name: 'University of Kelaniya - Commerce', minZ: 1.42 },
+      { name: "University of Sri Jayewardenepura - Management", minZ: 1.85 },
+      { name: "University of Colombo - Management & Finance", minZ: 1.78 },
+      { name: "University of Kelaniya - Commerce", minZ: 1.42 },
     ],
   },
 };
 
-export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({ onOpenAdmissions }) => {
-  const [selectedStream, setSelectedStream] = useState<'physical' | 'bio' | 'commerce'>('physical');
+export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({
+  onOpenAdmissions,
+}) => {
+  const [selectedStream, setSelectedStream] = useState<"physical" | "bio" | "commerce">("physical");
   const streamData = STREAMS_CONFIG[selectedStream];
 
   const [marks, setMarks] = useState<Record<string, number>>({
-    'Combined Mathematics': 88,
+    "Combined Mathematics": 88,
     Physics: 82,
     Chemistry: 79,
     Biology: 85,
     Accounting: 80,
-    'Business Studies': 78,
+    "Business Studies": 78,
     Economics: 82,
   });
 
@@ -82,14 +84,12 @@ export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({ 
   const rawAverage = currentSubjectMarks.reduce((a, b) => a + b, 0) / currentSubjectMarks.length;
 
   // Standardized Z-Score calculation approximation based on national distributions
-  const estimatedZScore = Number(
-    ((rawAverage - streamData.mean) / streamData.stdDev).toFixed(3)
-  );
+  const estimatedZScore = Number(((rawAverage - streamData.mean) / streamData.stdDev).toFixed(3));
 
   // Percentile estimate using standard normal approximation
   const percentile = Math.min(
     99.9,
-    Math.max(50, Number((50 + (estimatedZScore / 3) * 49.9).toFixed(1)))
+    Math.max(50, Number((50 + (estimatedZScore / 3) * 49.9).toFixed(1))),
   );
 
   return (
@@ -107,23 +107,24 @@ export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({ 
             G.C.E. A/L Projected Z-Score & Faculty Eligibility Calculator
           </h3>
           <p className="text-xs text-slate-300 mt-0.5">
-            Slide your target term marks to project your standard deviation Z-score and check university cutoff eligibility.
+            Slide your target term marks to project your standard deviation Z-score and check
+            university cutoff eligibility.
           </p>
         </div>
 
         {/* Stream Selector Buttons */}
         <div className="flex items-center p-1 bg-white/10 backdrop-blur-sm rounded-2xl text-xs font-semibold shrink-0">
-          {(['physical', 'bio', 'commerce'] as const).map((st) => (
+          {(["physical", "bio", "commerce"] as const).map((st) => (
             <button
               key={st}
               onClick={() => setSelectedStream(st)}
               className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                 selectedStream === st
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-300 hover:text-white'
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
-              {st === 'physical' ? 'Physical (Maths)' : st === 'bio' ? 'Biological' : 'Commerce'}
+              {st === "physical" ? "Physical (Maths)" : st === "bio" ? "Biological" : "Commerce"}
             </button>
           ))}
         </div>
@@ -175,8 +176,9 @@ export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({ 
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
             <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
             <p className="text-[11px] leading-relaxed">
-              Calculated using the Department of Examinations standardization algorithm: $Z = (X - \mu) / \sigma$.
-              TiT syllabus revision courses are designed to boost raw performance above the top 5% island tier.
+              Calculated using the Department of Examinations standardization algorithm: $Z = (X -
+              \mu) / \sigma$. TiT syllabus revision courses are designed to boost raw performance
+              above the top 5% island tier.
             </p>
           </div>
         </div>
@@ -193,7 +195,7 @@ export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({ 
                 {estimatedZScore > 0 ? `+${estimatedZScore}` : estimatedZScore}
               </span>
               <Badge variant="success" size="md">
-                Top {((100 - percentile) < 0.1 ? 0.1 : (100 - percentile)).toFixed(1)}% Band
+                Top {(100 - percentile < 0.1 ? 0.1 : 100 - percentile).toFixed(1)}% Band
               </Badge>
             </div>
 
@@ -217,7 +219,7 @@ export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({ 
                     <div className="flex items-center gap-2">
                       <span
                         className={`w-2 h-2 rounded-full shrink-0 ${
-                          isEligible ? 'bg-emerald-500' : 'bg-amber-400'
+                          isEligible ? "bg-emerald-500" : "bg-amber-400"
                         }`}
                       />
                       <span className="font-medium text-slate-800 dark:text-slate-200 truncate max-w-[200px]">
@@ -230,11 +232,11 @@ export const ZScoreCalculator: React.FC<{ onOpenAdmissions?: () => void }> = ({ 
                       <span
                         className={`font-bold px-1.5 py-0.5 rounded ${
                           isEligible
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                         }`}
                       >
-                        {isEligible ? 'High Match' : 'Stretch'}
+                        {isEligible ? "High Match" : "Stretch"}
                       </span>
                     </div>
                   </div>

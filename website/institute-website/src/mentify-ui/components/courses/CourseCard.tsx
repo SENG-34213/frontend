@@ -1,8 +1,8 @@
-import React from 'react';
-import { Calendar, Clock, MapPin, Star, User } from 'lucide-react';
-import { CourseItem } from '../../types';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+import React from "react";
+import { Calendar, Clock, MapPin, Star, User } from "lucide-react";
+import { CourseItem } from "../../types";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 
 export interface CourseCardProps {
   course: CourseItem;
@@ -11,11 +11,11 @@ export interface CourseCardProps {
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails, onApply }) => {
-  const availabilityVariants: Record<string, 'success' | 'warning' | 'neutral' | 'error'> = {
-    'Enrollment Open': 'success',
-    'Limited Seats': 'warning',
-    Waitlist: 'neutral',
-    Closed: 'error',
+  const availabilityVariants: Record<string, "success" | "warning" | "neutral" | "error"> = {
+    "Enrollment Open": "success",
+    "Limited Seats": "warning",
+    Waitlist: "neutral",
+    Closed: "error",
   };
 
   return (
@@ -30,11 +30,15 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails, o
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent" />
         <div className="absolute top-3.5 left-3.5 flex flex-wrap gap-1.5">
-          <Badge variant="primary" size="sm" className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs text-indigo-700 dark:text-indigo-300 shadow-2xs">
+          <Badge
+            variant="primary"
+            size="sm"
+            className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs text-indigo-700 dark:text-indigo-300 shadow-2xs"
+          >
             {course.subject}
           </Badge>
           <Badge
-            variant={availabilityVariants[course.availability] || 'neutral'}
+            variant={availabilityVariants[course.availability] || "neutral"}
             size="sm"
             className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs shadow-2xs"
             dot
@@ -72,8 +76,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onViewDetails, o
                 className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700"
               />
               <div>
-                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-none">{course.teacher.name}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[170px]">{course.teacher.title}</p>
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-none">
+                  {course.teacher.name}
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-[170px]">
+                  {course.teacher.title}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1 text-amber-500 text-xs font-semibold">

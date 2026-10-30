@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   MessageSquare,
   Bot,
@@ -10,16 +10,16 @@ import {
   Eye,
   Sliders,
   Sparkles,
-} from 'lucide-react';
-import { CourseChatShowcase } from './CourseChatShowcase';
-import { AIChatbotShowcase } from './AIChatbotShowcase';
-import { AcademicCalendarShowcase } from './AcademicCalendarShowcase';
-import { QuizAssignmentShowcase } from './QuizAssignmentShowcase';
-import { GradingAnalyticsShowcase } from './GradingAnalyticsShowcase';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+} from "lucide-react";
+import { CourseChatShowcase } from "./CourseChatShowcase";
+import { AIChatbotShowcase } from "./AIChatbotShowcase";
+import { AcademicCalendarShowcase } from "./AcademicCalendarShowcase";
+import { QuizAssignmentShowcase } from "./QuizAssignmentShowcase";
+import { GradingAnalyticsShowcase } from "./GradingAnalyticsShowcase";
+import { Button } from "../ui/Button";
+import { Badge } from "../ui/Badge";
 
-export type FeatureTabKey = 'chat' | 'ai' | 'calendar' | 'quiz' | 'analytics';
+export type FeatureTabKey = "chat" | "ai" | "calendar" | "quiz" | "analytics";
 
 export interface InteractiveAppSuiteProps {
   initialTab?: FeatureTabKey;
@@ -47,45 +47,47 @@ const TAB_SCREENSHOTS: Record<
   { src: string; title: string; subtitle: string; portal: string }
 > = {
   ai: {
-    src: '/assets/aistudio/Screenshot_2026-10-30_at_03.55.45_ebe14d69.png',
-    title: 'TiT AI Assistant',
-    subtitle: 'Admin and teacher natural language platform queries and real-time user metrics',
-    portal: 'Admin Portal',
+    src: "/assets/aistudio/Screenshot_2026-10-30_at_03.55.45_ebe14d69.png",
+    title: "TiT AI Assistant",
+    subtitle: "Admin and teacher natural language platform queries and real-time user metrics",
+    portal: "Admin Portal",
   },
   chat: {
-    src: '/assets/aistudio/Screenshot_2026-10-30_at_03.52.50_588ec326.png',
-    title: 'Direct & Group Communication',
-    subtitle: 'Batch-isolated class chat streams (Mathematics, Biology, Science) with direct mentor responses',
-    portal: 'Teacher Portal',
+    src: "/assets/aistudio/Screenshot_2026-10-30_at_03.52.50_588ec326.png",
+    title: "Direct & Group Communication",
+    subtitle:
+      "Batch-isolated class chat streams (Mathematics, Biology, Science) with direct mentor responses",
+    portal: "Teacher Portal",
   },
   calendar: {
-    src: '/assets/aistudio/Screenshot_2026-10-30_at_04.01.21_0a36d13b.png',
-    title: 'Academic Calendar Maintenance',
-    subtitle: 'Unified timetable for live classes, assignment deadlines, quizzes, and examinations',
-    portal: 'Student Portal',
+    src: "/assets/aistudio/Screenshot_2026-10-30_at_04.01.21_0a36d13b.png",
+    title: "Academic Calendar Maintenance",
+    subtitle: "Unified timetable for live classes, assignment deadlines, quizzes, and examinations",
+    portal: "Student Portal",
   },
   quiz: {
-    src: '/assets/aistudio/Screenshot_2026-10-30_at_04.05.37_5f1e7054.png',
-    title: 'AI Quiz & Live Assessment Workspace',
-    subtitle: 'Exam-conditioned testing environment with Question Navigator, timer, and review flagging',
-    portal: 'Student Portal',
+    src: "/assets/aistudio/Screenshot_2026-10-30_at_04.05.37_5f1e7054.png",
+    title: "AI Quiz & Live Assessment Workspace",
+    subtitle:
+      "Exam-conditioned testing environment with Question Navigator, timer, and review flagging",
+    portal: "Student Portal",
   },
   analytics: {
-    src: '/assets/aistudio/Screenshot_2026-10-30_at_03.55.45_ebe14d69.png',
-    title: 'Diagnostic Analytics & Reports',
-    subtitle: 'Institution-wide data, role breakdown, and student academic progress curves',
-    portal: 'Admin Portal',
+    src: "/assets/aistudio/Screenshot_2026-10-30_at_03.55.45_ebe14d69.png",
+    title: "Diagnostic Analytics & Reports",
+    subtitle: "Institution-wide data, role breakdown, and student academic progress curves",
+    portal: "Admin Portal",
   },
 };
 
 export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
-  initialTab = 'chat',
+  initialTab = "chat",
   activeTab: controlledTab,
   onTabChange,
   onOpenAdmissions,
 }) => {
   const [internalTab, setInternalTab] = useState<FeatureTabKey>(initialTab);
-  const [viewMode, setViewMode] = useState<'demo' | 'screenshot'>('demo');
+  const [viewMode, setViewMode] = useState<"demo" | "screenshot">("demo");
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const activeTab = controlledTab ?? internalTab;
@@ -105,88 +107,88 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
 
   const tabs: TabConfig[] = [
     {
-      key: 'chat',
-      label: 'Direct & Group Chat',
-      sublabel: 'Mentor & peer rooms',
+      key: "chat",
+      label: "Direct & Group Chat",
+      sublabel: "Mentor & peer rooms",
       icon: <MessageSquare className="w-4 h-4" />,
-      tag: 'Collaboration',
-      badge: 'Live Rooms',
-      colorClass: 'text-indigo-600 dark:text-indigo-400',
-      badgeColorClass: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300',
-      activeBorderClass: 'border-indigo-500 ring-2 ring-indigo-500/20',
-      activeBgClass: 'bg-white dark:bg-slate-800',
+      tag: "Collaboration",
+      badge: "Live Rooms",
+      colorClass: "text-indigo-600 dark:text-indigo-400",
+      badgeColorClass: "bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300",
+      activeBorderClass: "border-indigo-500 ring-2 ring-indigo-500/20",
+      activeBgClass: "bg-white dark:bg-slate-800",
       highlights: [
-        'Batch-specific channels for Mathematics, Biology, Science',
-        'Direct doubt tagging with verified mentor responses',
-        'Peer discussion & marking scheme debates',
+        "Batch-specific channels for Mathematics, Biology, Science",
+        "Direct doubt tagging with verified mentor responses",
+        "Peer discussion & marking scheme debates",
       ],
     },
     {
-      key: 'ai',
-      label: 'TiT AI Assistant',
-      sublabel: 'Operations & syllabus AI',
+      key: "ai",
+      label: "TiT AI Assistant",
+      sublabel: "Operations & syllabus AI",
       icon: <Bot className="w-4 h-4" />,
-      tag: 'Intelligence',
-      badge: '24/7 AI',
-      colorClass: 'text-cyan-600 dark:text-cyan-400',
-      badgeColorClass: 'bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300',
-      activeBorderClass: 'border-cyan-500 ring-2 ring-cyan-500/20',
-      activeBgClass: 'bg-white dark:bg-slate-800',
+      tag: "Intelligence",
+      badge: "24/7 AI",
+      colorClass: "text-cyan-600 dark:text-cyan-400",
+      badgeColorClass: "bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300",
+      activeBorderClass: "border-cyan-500 ring-2 ring-cyan-500/20",
+      activeBgClass: "bg-white dark:bg-slate-800",
       highlights: [
-        'Instant answers on system stats, rosters, and syllabus steps',
-        'Step-by-step calculus proofs & Doppler effect derivations',
-        'Trilingual support in English, Tamil, and Sinhala',
+        "Instant answers on system stats, rosters, and syllabus steps",
+        "Step-by-step calculus proofs & Doppler effect derivations",
+        "Trilingual support in English, Tamil, and Sinhala",
       ],
     },
     {
-      key: 'calendar',
-      label: 'Academic Calendar',
-      sublabel: 'Lectures, quizzes & exams',
+      key: "calendar",
+      label: "Academic Calendar",
+      sublabel: "Lectures, quizzes & exams",
       icon: <Calendar className="w-4 h-4" />,
-      tag: 'Scheduling',
-      badge: 'Live Sync',
-      colorClass: 'text-amber-600 dark:text-amber-400',
-      badgeColorClass: 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300',
-      activeBorderClass: 'border-amber-500 ring-2 ring-amber-500/20',
-      activeBgClass: 'bg-white dark:bg-slate-800',
+      tag: "Scheduling",
+      badge: "Live Sync",
+      colorClass: "text-amber-600 dark:text-amber-400",
+      badgeColorClass: "bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300",
+      activeBorderClass: "border-amber-500 ring-2 ring-amber-500/20",
+      activeBgClass: "bg-white dark:bg-slate-800",
       highlights: [
-        'Synchronized live Zoom & tuition class timetables',
-        'Homework submission deadlines with countdown clocks',
-        'Term test & provincial trial exam reminders with .ics export',
+        "Synchronized live Zoom & tuition class timetables",
+        "Homework submission deadlines with countdown clocks",
+        "Term test & provincial trial exam reminders with .ics export",
       ],
     },
     {
-      key: 'quiz',
-      label: 'Quizzes & Assessments',
-      sublabel: 'Live drill & rubric grading',
+      key: "quiz",
+      label: "Quizzes & Assessments",
+      sublabel: "Live drill & rubric grading",
       icon: <FileCheck className="w-4 h-4" />,
-      tag: 'Assessments',
-      badge: 'Timed Arena',
-      colorClass: 'text-emerald-600 dark:text-emerald-400',
-      badgeColorClass: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300',
-      activeBorderClass: 'border-emerald-500 ring-2 ring-emerald-500/20',
-      activeBgClass: 'bg-white dark:bg-slate-800',
+      tag: "Assessments",
+      badge: "Timed Arena",
+      colorClass: "text-emerald-600 dark:text-emerald-400",
+      badgeColorClass: "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300",
+      activeBorderClass: "border-emerald-500 ring-2 ring-emerald-500/20",
+      activeBgClass: "bg-white dark:bg-slate-800",
       highlights: [
-        'Exam-conditioned MCQ drills with live timer & Question Navigator',
-        'Flag for review option to revisit uncertain questions',
-        'Structured rubric marking for subjective questions',
+        "Exam-conditioned MCQ drills with live timer & Question Navigator",
+        "Flag for review option to revisit uncertain questions",
+        "Structured rubric marking for subjective questions",
       ],
     },
     {
-      key: 'analytics',
-      label: 'Grading & Analytics',
-      sublabel: 'Progression curves & Z-score',
+      key: "analytics",
+      label: "Grading & Analytics",
+      sublabel: "Progression curves & Z-score",
       icon: <LineChart className="w-4 h-4" />,
-      tag: 'Insights',
-      badge: 'Z-Score',
-      colorClass: 'text-blue-600 dark:text-blue-400',
-      badgeColorClass: 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300',
-      activeBorderClass: 'border-blue-500 ring-2 ring-blue-500/20',
-      activeBgClass: 'bg-white dark:bg-slate-800',
+      tag: "Insights",
+      badge: "Z-Score",
+      colorClass: "text-blue-600 dark:text-blue-400",
+      badgeColorClass: "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300",
+      activeBorderClass: "border-blue-500 ring-2 ring-blue-500/20",
+      activeBgClass: "bg-white dark:bg-slate-800",
       highlights: [
-        'Interactive SVG assessment score progression curves',
-        'A/L Z-Score simulation & university cutoff feasibility',
-        'Topic-level mastery diagnostics and attendance tracking',
+        "Interactive SVG assessment score progression curves",
+        "A/L Z-Score simulation & university cutoff feasibility",
+        "Topic-level mastery diagnostics and attendance tracking",
       ],
     },
   ];
@@ -207,15 +209,15 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
                 className={`text-left p-3.5 rounded-2xl transition-all cursor-pointer flex flex-col justify-between border ${
                   isActive
                     ? `${tab.activeBgClass} ${tab.activeBorderClass} shadow-md`
-                    : 'bg-white/60 dark:bg-slate-850/60 border-transparent text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xs'
+                    : "bg-white/60 dark:bg-slate-850/60 border-transparent text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xs"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div
                     className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                       isActive
-                        ? 'bg-slate-100 dark:bg-slate-750 shadow-2xs ' + tab.colorClass
-                        : 'bg-slate-200/60 dark:bg-slate-800 text-slate-500'
+                        ? "bg-slate-100 dark:bg-slate-750 shadow-2xs " + tab.colorClass
+                        : "bg-slate-200/60 dark:bg-slate-800 text-slate-500"
                     }`}
                   >
                     {tab.icon}
@@ -230,7 +232,9 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
                 <div>
                   <h4
                     className={`text-xs sm:text-sm font-bold leading-tight ${
-                      isActive ? 'text-slate-900 dark:text-white' : 'text-slate-800 dark:text-slate-200'
+                      isActive
+                        ? "text-slate-900 dark:text-white"
+                        : "text-slate-800 dark:text-slate-200"
                     }`}
                   >
                     {tab.label}
@@ -248,24 +252,26 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
       {/* Sub-bar: View Mode Switcher (Interactive Demo vs Real Portal Screenshot) */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">View Mode:</span>
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            View Mode:
+          </span>
           <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
             <button
-              onClick={() => setViewMode('demo')}
+              onClick={() => setViewMode("demo")}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === 'demo'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                viewMode === "demo"
+                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Interactive Demo
             </button>
             <button
-              onClick={() => setViewMode('screenshot')}
+              onClick={() => setViewMode("screenshot")}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === 'screenshot'
-                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                viewMode === "screenshot"
+                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Real Screenshot
@@ -273,7 +279,7 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
           </div>
         </div>
 
-        {viewMode === 'screenshot' && (
+        {viewMode === "screenshot" && (
           <Button
             variant="outline"
             size="sm"
@@ -288,7 +294,7 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
 
       {/* Main Feature Canvas */}
       <div className="w-full transition-all duration-200">
-        {viewMode === 'screenshot' ? (
+        {viewMode === "screenshot" ? (
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-950 overflow-hidden shadow-xl">
             {/* Window bar */}
             <div className="px-5 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-300">
@@ -296,7 +302,9 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span className="ml-2 font-mono text-indigo-400 font-semibold">{currentScreenshot.portal}</span>
+                <span className="ml-2 font-mono text-indigo-400 font-semibold">
+                  {currentScreenshot.portal}
+                </span>
                 <span className="text-slate-500">/</span>
                 <span className="text-slate-300">{currentScreenshot.title}</span>
               </div>
@@ -331,7 +339,7 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
             <div className="px-6 py-3.5 bg-slate-900 border-t border-slate-800 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
               <span>{currentScreenshot.subtitle}</span>
               <button
-                onClick={() => setViewMode('demo')}
+                onClick={() => setViewMode("demo")}
                 className="text-indigo-400 hover:underline font-semibold"
               >
                 Switch to Interactive Demo &rarr;
@@ -340,11 +348,11 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
           </div>
         ) : (
           <div>
-            {activeTab === 'chat' && <CourseChatShowcase />}
-            {activeTab === 'ai' && <AIChatbotShowcase />}
-            {activeTab === 'calendar' && <AcademicCalendarShowcase />}
-            {activeTab === 'quiz' && <QuizAssignmentShowcase />}
-            {activeTab === 'analytics' && <GradingAnalyticsShowcase />}
+            {activeTab === "chat" && <CourseChatShowcase />}
+            {activeTab === "ai" && <AIChatbotShowcase />}
+            {activeTab === "calendar" && <AcademicCalendarShowcase />}
+            {activeTab === "quiz" && <QuizAssignmentShowcase />}
+            {activeTab === "analytics" && <GradingAnalyticsShowcase />}
           </div>
         )}
       </div>

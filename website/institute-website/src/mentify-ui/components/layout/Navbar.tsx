@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   BookOpen,
   ChevronDown,
@@ -11,11 +11,11 @@ import {
   Sparkles,
   Sun,
   X,
-} from 'lucide-react';
-import { Language } from '../../types';
-import { SITE_CONFIG } from '../../lib/config/site';
-import { getTranslation } from '../../lib/translations';
-import { Button } from '../ui/Button';
+} from "lucide-react";
+import { Language } from "../../types";
+import { SITE_CONFIG } from "../../lib/config/site";
+import { getTranslation } from "../../lib/translations";
+import { Button } from "../ui/Button";
 
 export interface NavbarProps {
   currentPath: string;
@@ -25,7 +25,7 @@ export interface NavbarProps {
   cartCount: number;
   onOpenCart: () => void;
   onOpenAdmissions: () => void;
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
   onToggleTheme: () => void;
 }
 
@@ -46,16 +46,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   const t = (key: string) => getTranslation(currentLang, key);
 
   const navLinks = [
-    { id: 'home', label: t('nav.home'), path: 'home' },
-    { id: 'courses', label: t('nav.courses'), path: 'courses' },
-    { id: 'features', label: t('nav.features'), path: 'features' },
-    { id: 'marketplace', label: t('nav.marketplace'), path: 'marketplace' },
+    { id: "home", label: t("nav.home"), path: "home" },
+    { id: "courses", label: t("nav.courses"), path: "courses" },
+    { id: "features", label: t("nav.features"), path: "features" },
+    { id: "marketplace", label: t("nav.marketplace"), path: "marketplace" },
   ];
 
   const languages: { code: Language; label: string; nativeName: string }[] = [
-    { code: 'en', label: 'English', nativeName: 'English' },
-    { code: 'ta', label: 'Tamil', nativeName: 'தமிழ்' },
-    { code: 'si', label: 'Sinhala', nativeName: 'සිංහල' },
+    { code: "en", label: "English", nativeName: "English" },
+    { code: "ta", label: "Tamil", nativeName: "தமிழ்" },
+    { code: "si", label: "Sinhala", nativeName: "සිංහල" },
   ];
 
   const handleNavClick = (path: string) => {
@@ -70,7 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Brand Logo: ONLY the official TiT Jaffna logo image without text near it */}
           <button
             type="button"
-            onClick={() => handleNavClick('home')}
+            onClick={() => handleNavClick("home")}
             className="flex items-center cursor-pointer select-none focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-full group py-1"
             title="TiT Jaffna - Home"
             aria-label="TiT Jaffna Home"
@@ -92,8 +92,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleNavClick(link.path)}
                   className={`px-3.5 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
                     isActive
-                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/50 font-semibold'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50/70 dark:bg-indigo-950/50 font-semibold"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60"
                   }`}
                 >
                   {link.label}
@@ -108,10 +108,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onToggleTheme}
               className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
-              {theme === 'dark' ? (
+              {theme === "dark" ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
                 <Moon className="w-4 h-4 text-slate-600" />
@@ -141,8 +141,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }}
                       className={`w-full text-left px-3.5 py-1.5 text-xs font-medium flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 ${
                         currentLang === lang.code
-                          ? 'text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/40'
-                          : 'text-slate-700 dark:text-slate-300'
+                          ? "text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/40"
+                          : "text-slate-700 dark:text-slate-300"
                       }`}
                     >
                       <span>{lang.nativeName}</span>
@@ -171,11 +171,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleNavClick('portals')}
+              onClick={() => handleNavClick("portals")}
               leftIcon={<LogIn className="w-3.5 h-3.5" />}
               className="text-xs"
             >
-              {t('nav.portals')}
+              {t("nav.portals")}
             </Button>
 
             {/* Admissions / Apply CTA */}
@@ -186,7 +186,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               leftIcon={<Sparkles className="w-3.5 h-3.5" />}
               className="text-xs shadow-sm shadow-indigo-500/20"
             >
-              {t('nav.apply')}
+              {t("nav.apply")}
             </Button>
           </div>
 
@@ -196,9 +196,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onToggleTheme}
               className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
-              {theme === 'dark' ? (
+              {theme === "dark" ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
                 <Moon className="w-4 h-4 text-slate-600" />
@@ -239,8 +239,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => onLanguageChange(lang.code)}
                 className={`py-1.5 text-center text-xs font-semibold rounded-lg border cursor-pointer ${
                   currentLang === lang.code
-                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
-                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                    ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
+                    : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                 }`}
               >
                 {lang.nativeName}
@@ -257,8 +257,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleNavClick(link.path)}
                   className={`px-3.5 py-2.5 text-left text-sm font-medium rounded-xl transition-colors cursor-pointer ${
                     isActive
-                      ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold"
+                      : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   {link.label}
@@ -271,11 +271,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Button
               variant="outline"
               size="md"
-              onClick={() => handleNavClick('portals')}
+              onClick={() => handleNavClick("portals")}
               leftIcon={<LogIn className="w-4 h-4" />}
               className="w-full justify-center"
             >
-              {t('nav.portals')}
+              {t("nav.portals")}
             </Button>
             <Button
               variant="primary"
@@ -287,7 +287,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               leftIcon={<Sparkles className="w-4 h-4" />}
               className="w-full justify-center"
             >
-              {t('nav.apply')}
+              {t("nav.apply")}
             </Button>
           </div>
         </div>

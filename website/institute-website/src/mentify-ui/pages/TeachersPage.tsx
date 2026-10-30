@@ -1,15 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { Award, BookOpen, GraduationCap, Search, ShieldCheck } from 'lucide-react';
-import { Language, TeacherProfile } from '../types';
-import { MOCK_TEACHERS } from '../data/mockData';
-import { SITE_CONFIG } from '../lib/config/site';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Input, Select } from '../components/ui/FormControls';
-import { Badge } from '../components/ui/Badge';
-import { TeacherCard } from '../components/shared/TeacherCard';
-import { EmptyState } from '../components/ui/FeedbackStates';
+import React, { useState, useMemo } from "react";
+import { Award, BookOpen, GraduationCap, Search, ShieldCheck } from "lucide-react";
+import { Language, TeacherProfile } from "../types";
+import { MOCK_TEACHERS } from "../data/mockData";
+import { SITE_CONFIG } from "../lib/config/site";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Input, Select } from "../components/ui/FormControls";
+import { Badge } from "../components/ui/Badge";
+import { TeacherCard } from "../components/shared/TeacherCard";
+import { EmptyState } from "../components/ui/FeedbackStates";
 
 export interface TeachersPageProps {
   currentLang: Language;
@@ -19,19 +19,19 @@ export interface TeachersPageProps {
 export const TeachersPage: React.FC<TeachersPageProps> = ({ currentLang, onNavigate }) => {
   const t = (key: string) => getTranslation(currentLang, key);
 
-  const [search, setSearch] = useState('');
-  const [subjectFilter, setSubjectFilter] = useState('all');
+  const [search, setSearch] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("all");
 
   const filteredTeachers = useMemo(() => {
     return MOCK_TEACHERS.filter((teacher) => {
       const matchesSearch =
-        search === '' ||
+        search === "" ||
         teacher.name.toLowerCase().includes(search.toLowerCase()) ||
         teacher.bio.toLowerCase().includes(search.toLowerCase()) ||
         teacher.subjects.some((s) => s.toLowerCase().includes(search.toLowerCase()));
 
       const matchesSubject =
-        subjectFilter === 'all' ||
+        subjectFilter === "all" ||
         teacher.subjects.some((s) => s.toLowerCase() === subjectFilter.toLowerCase());
 
       return matchesSearch && matchesSubject;
@@ -50,7 +50,8 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ currentLang, onNavig
             Distinguished Faculty & Educators
           </h1>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
-            Learn from master lecturers, national paper setters, and industry engineers dedicated to student achievement.
+            Learn from master lecturers, national paper setters, and industry engineers dedicated to
+            student achievement.
           </p>
         </Container>
       </section>
@@ -73,7 +74,7 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ currentLang, onNavig
                 value={subjectFilter}
                 onChange={(e) => setSubjectFilter(e.target.value)}
                 options={[
-                  { value: 'all', label: 'All Subject Specializations' },
+                  { value: "all", label: "All Subject Specializations" },
                   ...SITE_CONFIG.subjects.map((s) => ({ value: s, label: s })),
                 ]}
               />
@@ -94,8 +95,8 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({ currentLang, onNavig
             description="No educators matched your search terms. Try clearing filters or searching for another subject."
             actionText="Reset Filter"
             onAction={() => {
-              setSearch('');
-              setSubjectFilter('all');
+              setSearch("");
+              setSubjectFilter("all");
             }}
           />
         )}

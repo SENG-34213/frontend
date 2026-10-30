@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Award,
   BookOpen,
@@ -8,10 +8,10 @@ import {
   Sparkles,
   UserCheck,
   X,
-} from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Input, Select } from '../ui/FormControls';
-import { SITE_CONFIG } from '../../lib/config/site';
+} from "lucide-react";
+import { Button } from "../ui/Button";
+import { Input, Select } from "../ui/FormControls";
+import { SITE_CONFIG } from "../../lib/config/site";
 
 export interface TutorApplicationModalProps {
   isOpen: boolean;
@@ -22,24 +22,24 @@ export const TutorApplicationModal: React.FC<TutorApplicationModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [district, setDistrict] = useState('Jaffna');
-  const [medium, setMedium] = useState('Tamil');
-  const [subject, setSubject] = useState('Mathematics');
-  const [selectedGrades, setSelectedGrades] = useState<string[]>(['grade-10', 'grade-11']);
-  const [qualifications, setQualifications] = useState('');
-  const [experienceYears, setExperienceYears] = useState('3');
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [district, setDistrict] = useState("Jaffna");
+  const [medium, setMedium] = useState("Tamil");
+  const [subject, setSubject] = useState("Mathematics");
+  const [selectedGrades, setSelectedGrades] = useState<string[]>(["grade-10", "grade-11"]);
+  const [qualifications, setQualifications] = useState("");
+  const [experienceYears, setExperienceYears] = useState("3");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [appId, setAppId] = useState('');
+  const [appId, setAppId] = useState("");
 
   if (!isOpen) return null;
 
   const handleGradeToggle = (gradeId: string) => {
     setSelectedGrades((prev) =>
-      prev.includes(gradeId) ? prev.filter((id) => id !== gradeId) : [...prev, gradeId]
+      prev.includes(gradeId) ? prev.filter((id) => id !== gradeId) : [...prev, gradeId],
     );
   };
 
@@ -96,14 +96,16 @@ export const TutorApplicationModal: React.FC<TutorApplicationModalProps> = ({
                 Application Submitted Successfully!
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                Thank you for applying to teach at TiT Online Education (Alaveddy, Jaffna). Your application reference is:
+                Thank you for applying to teach at TiT Online Education (Alaveddy, Jaffna). Your
+                application reference is:
               </p>
               <div className="font-mono text-base font-extrabold text-indigo-600 dark:text-indigo-400 pt-1">
                 {appId}
               </div>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto pt-2">
-              Our academic coordination team will contact you via WhatsApp (+94 77 015 8446) within 48 hours for syllabus onboarding.
+              Our academic coordination team will contact you via WhatsApp (+94 77 015 8446) within
+              48 hours for syllabus onboarding.
             </p>
             <Button variant="primary" size="md" onClick={onClose} className="mt-4">
               Return to Platform
@@ -237,8 +239,8 @@ export const TutorApplicationModal: React.FC<TutorApplicationModalProps> = ({
                       key={g.id}
                       className={`text-[11px] p-1.5 rounded-lg border cursor-pointer select-none flex items-center gap-1.5 ${
                         isChecked
-                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200 font-bold'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                          ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200 font-bold"
+                          : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
                       }`}
                     >
                       <input
@@ -279,7 +281,7 @@ export const TutorApplicationModal: React.FC<TutorApplicationModalProps> = ({
                 disabled={isSubmitting}
                 leftIcon={<Send className="w-3.5 h-3.5" />}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                {isSubmitting ? "Submitting..." : "Submit Application"}
               </Button>
             </div>
           </form>

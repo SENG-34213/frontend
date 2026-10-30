@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Bot,
   MessageSquare,
@@ -19,11 +19,11 @@ import {
   ArrowUpRight,
   MousePointerClick,
   Sparkle,
-} from 'lucide-react';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+} from "lucide-react";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 
-export type CoreFeatureId = 'ai' | 'communication' | 'calendar' | 'quiz';
+export type CoreFeatureId = "ai" | "communication" | "calendar" | "quiz";
 
 export interface Hotspot {
   id: string;
@@ -58,251 +58,253 @@ export interface CoreFeatureItem {
 
 export const CORE_FEATURES_DATA: CoreFeatureItem[] = [
   {
-    id: 'ai',
-    tabNumber: '01',
-    title: 'TiT AI Assistant',
-    shortTitle: 'AI Assistant',
-    portalBadge: 'Admin Portal',
-    portalPath: 'Admin / AI Assistant / School Assistant',
-    category: 'School Management',
-    imageSrc: '/assets/aistudio/Screenshot_2026-10-30_at_03.55.45_ebe14d69.png',
-    altText: 'TiT AI Assistant chat interface showing student enrollment numbers and statistics',
-    headline: 'Instant Answers & Student Information for School Admins',
+    id: "ai",
+    tabNumber: "01",
+    title: "TiT AI Assistant",
+    shortTitle: "AI Assistant",
+    portalBadge: "Admin Portal",
+    portalPath: "Admin / AI Assistant / School Assistant",
+    category: "School Management",
+    imageSrc: "/assets/aistudio/Screenshot_2026-10-30_at_03.55.45_ebe14d69.png",
+    altText: "TiT AI Assistant chat interface showing student enrollment numbers and statistics",
+    headline: "Instant Answers & Student Information for School Admins",
     description:
-      'Ask everyday questions to easily check student enrollment numbers, teacher schedules, registered accounts, and school updates without dealing with complicated paperwork.',
-    accentColor: 'text-indigo-500',
-    accentBg: 'bg-indigo-500/10',
-    accentBorder: 'border-indigo-500',
-    accentGlow: 'from-indigo-600/20 via-purple-600/10 to-transparent',
-    badgeColorClass: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30',
-    userRole: 'School Principals & Teachers',
+      "Ask everyday questions to easily check student enrollment numbers, teacher schedules, registered accounts, and school updates without dealing with complicated paperwork.",
+    accentColor: "text-indigo-500",
+    accentBg: "bg-indigo-500/10",
+    accentBorder: "border-indigo-500",
+    accentGlow: "from-indigo-600/20 via-purple-600/10 to-transparent",
+    badgeColorClass: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
+    userRole: "School Principals & Teachers",
     hotspots: [
       {
-        id: 'ai-1',
-        title: 'Easy Questions',
+        id: "ai-1",
+        title: "Easy Questions",
         desc: 'Ask questions like "how many students are enrolled?" or check recent class signups.',
-        top: '32%',
-        left: '68%',
+        top: "32%",
+        left: "68%",
       },
       {
-        id: 'ai-2',
-        title: 'Clear Student Counts',
-        desc: 'Instant visual view of total enrolled students, teachers, and active class batches.',
-        top: '50%',
-        left: '52%',
+        id: "ai-2",
+        title: "Clear Student Counts",
+        desc: "Instant visual view of total enrolled students, teachers, and active class batches.",
+        top: "50%",
+        left: "52%",
       },
       {
-        id: 'ai-3',
-        title: 'Quick Menu',
-        desc: 'Easy shortcuts to student lists, teachers, subjects, exam schedules, and timetables.',
-        top: '40%',
-        left: '88%',
+        id: "ai-3",
+        title: "Quick Menu",
+        desc: "Easy shortcuts to student lists, teachers, subjects, exam schedules, and timetables.",
+        top: "40%",
+        left: "88%",
       },
       {
-        id: 'ai-4',
-        title: 'Saved Conversations',
-        desc: 'Previous questions and school updates saved neatly for quick access.',
-        top: '42%',
-        left: '28%',
+        id: "ai-4",
+        title: "Saved Conversations",
+        desc: "Previous questions and school updates saved neatly for quick access.",
+        top: "42%",
+        left: "28%",
       },
     ],
     specs: [
-      { label: 'Response Time', value: 'Instant' },
-      { label: 'Student Records', value: 'Always Updated' },
-      { label: 'Account Roles', value: 'Students, Teachers & Staff' },
-      { label: 'Data Privacy', value: '100% Safe & Confidential' },
+      { label: "Response Time", value: "Instant" },
+      { label: "Student Records", value: "Always Updated" },
+      { label: "Account Roles", value: "Students, Teachers & Staff" },
+      { label: "Data Privacy", value: "100% Safe & Confidential" },
     ],
     keyCapabilities: [
-      'Quick answers to school enrollment numbers and student profiles',
-      'Recent student and teacher registration organized by grade',
-      'Helpful shortcuts to class schedules, attendance, and exam dates',
-      'Keeps student academic records strictly confidential',
+      "Quick answers to school enrollment numbers and student profiles",
+      "Recent student and teacher registration organized by grade",
+      "Helpful shortcuts to class schedules, attendance, and exam dates",
+      "Keeps student academic records strictly confidential",
     ],
   },
   {
-    id: 'communication',
-    tabNumber: '02',
-    title: 'Direct & Group Communication',
-    shortTitle: 'Communication',
-    portalBadge: 'Teacher Portal',
-    portalPath: 'TEACHER PORTAL > Communication > Class Messages',
-    category: 'Class Discussions',
-    imageSrc: '/assets/aistudio/Screenshot_2026-10-30_at_03.52.50_588ec326.png',
-    altText: 'Teacher Portal messaging interface showing Grade 12 Combined Mathematics class discussions',
-    headline: 'Dedicated Subject Groups & Teacher-Student Messaging',
+    id: "communication",
+    tabNumber: "02",
+    title: "Direct & Group Communication",
+    shortTitle: "Communication",
+    portalBadge: "Teacher Portal",
+    portalPath: "TEACHER PORTAL > Communication > Class Messages",
+    category: "Class Discussions",
+    imageSrc: "/assets/aistudio/Screenshot_2026-10-30_at_03.52.50_588ec326.png",
+    altText:
+      "Teacher Portal messaging interface showing Grade 12 Combined Mathematics class discussions",
+    headline: "Dedicated Subject Groups & Teacher-Student Messaging",
     description:
-      'Dedicated class groups for each subject and grade. Keep schoolwork organized with clean channels for Grade 12 Combined Maths, Biology, and Grade 10 Science where students can ask doubts directly and share homework notes.',
-    accentColor: 'text-blue-500',
-    accentBg: 'bg-blue-500/10',
-    accentBorder: 'border-blue-500',
-    accentGlow: 'from-blue-600/20 via-cyan-600/10 to-transparent',
-    badgeColorClass: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-    userRole: 'Teachers & Students',
+      "Dedicated class groups for each subject and grade. Keep schoolwork organized with clean channels for Grade 12 Combined Maths, Biology, and Grade 10 Science where students can ask doubts directly and share homework notes.",
+    accentColor: "text-blue-500",
+    accentBg: "bg-blue-500/10",
+    accentBorder: "border-blue-500",
+    accentGlow: "from-blue-600/20 via-cyan-600/10 to-transparent",
+    badgeColorClass: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+    userRole: "Teachers & Students",
     hotspots: [
       {
-        id: 'chat-1',
-        title: 'Dedicated Subject Groups',
-        desc: 'Separate discussion groups for Grade 12 Combined Maths, Biology, and Grade 10 Science.',
-        top: '38%',
-        left: '26%',
+        id: "chat-1",
+        title: "Dedicated Subject Groups",
+        desc: "Separate discussion groups for Grade 12 Combined Maths, Biology, and Grade 10 Science.",
+        top: "38%",
+        left: "26%",
       },
       {
-        id: 'chat-2',
-        title: 'Direct Teacher Messages',
-        desc: 'Send private questions directly to class teachers for personal homework help.',
-        top: '60%',
-        left: '26%',
+        id: "chat-2",
+        title: "Direct Teacher Messages",
+        desc: "Send private questions directly to class teachers for personal homework help.",
+        top: "60%",
+        left: "26%",
       },
       {
-        id: 'chat-3',
-        title: 'Class Discussion Stream',
-        desc: 'Lesson instructions, student questions, and helpful teacher guidance in real time.',
-        top: '45%',
-        left: '58%',
+        id: "chat-3",
+        title: "Class Discussion Stream",
+        desc: "Lesson instructions, student questions, and helpful teacher guidance in real time.",
+        top: "45%",
+        left: "58%",
       },
       {
-        id: 'chat-4',
-        title: 'Notes & Worksheets',
-        desc: 'Download model answers, worksheets, past papers, and class notes directly from the chat.',
-        top: '90%',
-        left: '70%',
+        id: "chat-4",
+        title: "Notes & Worksheets",
+        desc: "Download model answers, worksheets, past papers, and class notes directly from the chat.",
+        top: "90%",
+        left: "70%",
       },
     ],
     specs: [
-      { label: 'Class Groups', value: 'By Grade & Subject' },
-      { label: 'Message Speed', value: 'Sent Instantly' },
-      { label: 'Attachments', value: 'PDF Notes, Photos & Worksheets' },
-      { label: 'Teacher Monitored', value: 'Supervised by Class Teachers' },
+      { label: "Class Groups", value: "By Grade & Subject" },
+      { label: "Message Speed", value: "Sent Instantly" },
+      { label: "Attachments", value: "PDF Notes, Photos & Worksheets" },
+      { label: "Teacher Monitored", value: "Supervised by Class Teachers" },
     ],
     keyCapabilities: [
-      'Organized subject groups so students only see messages for their own grade',
-      'Ask teachers homework questions directly with unread message alerts',
-      'School announcements tab for class time changes and exam alerts',
-      'Share homework solutions, worksheets, and study notes easily',
+      "Organized subject groups so students only see messages for their own grade",
+      "Ask teachers homework questions directly with unread message alerts",
+      "School announcements tab for class time changes and exam alerts",
+      "Share homework solutions, worksheets, and study notes easily",
     ],
   },
   {
-    id: 'calendar',
-    tabNumber: '03',
-    title: 'Academic Calendar',
-    shortTitle: 'Academic Calendar',
-    portalBadge: 'Student Portal',
-    portalPath: 'Home > Timetable > Student Class Schedule',
-    category: 'Class Timetable',
-    imageSrc: '/assets/aistudio/Screenshot_2026-10-30_at_04.01.21_0a36d13b.png',
-    altText: 'Academic Calendar showing monthly class timetable, Zoom tuition sessions, and exam dates',
-    headline: 'Complete Timetable for Live Classes, Tests & Homework',
+    id: "calendar",
+    tabNumber: "03",
+    title: "Academic Calendar",
+    shortTitle: "Academic Calendar",
+    portalBadge: "Student Portal",
+    portalPath: "Home > Timetable > Student Class Schedule",
+    category: "Class Timetable",
+    imageSrc: "/assets/aistudio/Screenshot_2026-10-30_at_04.01.21_0a36d13b.png",
+    altText:
+      "Academic Calendar showing monthly class timetable, Zoom tuition sessions, and exam dates",
+    headline: "Complete Timetable for Live Classes, Tests & Homework",
     description:
-      'Never miss a live Zoom tuition class, homework submission, or practice exam. The Academic Calendar lets students view their schedule by Month, Week, or Day, with clear color tags for every subject.',
-    accentColor: 'text-amber-500',
-    accentBg: 'bg-amber-500/10',
-    accentBorder: 'border-amber-500',
-    accentGlow: 'from-amber-600/20 via-orange-600/10 to-transparent',
-    badgeColorClass: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-    userRole: 'Students & Parents',
+      "Never miss a live Zoom tuition class, homework submission, or practice exam. The Academic Calendar lets students view their schedule by Month, Week, or Day, with clear color tags for every subject.",
+    accentColor: "text-amber-500",
+    accentBg: "bg-amber-500/10",
+    accentBorder: "border-amber-500",
+    accentGlow: "from-amber-600/20 via-orange-600/10 to-transparent",
+    badgeColorClass: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    userRole: "Students & Parents",
     hotspots: [
       {
-        id: 'cal-1',
-        title: 'View Switcher',
-        desc: 'Easily switch between Month, Week, Day, and List views to plan your study routine.',
-        top: '28%',
-        left: '88%',
+        id: "cal-1",
+        title: "View Switcher",
+        desc: "Easily switch between Month, Week, Day, and List views to plan your study routine.",
+        top: "28%",
+        left: "88%",
       },
       {
-        id: 'cal-2',
-        title: 'Date Picker',
-        desc: 'Quickly jump to today or any upcoming week to see what classes are scheduled.',
-        top: '45%',
-        left: '28%',
+        id: "cal-2",
+        title: "Date Picker",
+        desc: "Quickly jump to today or any upcoming week to see what classes are scheduled.",
+        top: "45%",
+        left: "28%",
       },
       {
-        id: 'cal-3',
-        title: 'Color-Coded Tags',
-        desc: 'Clear colors for Live Classes, Homework Deadlines, Quizzes, and Term Tests.',
-        top: '75%',
-        left: '28%',
+        id: "cal-3",
+        title: "Color-Coded Tags",
+        desc: "Clear colors for Live Classes, Homework Deadlines, Quizzes, and Term Tests.",
+        top: "75%",
+        left: "28%",
       },
       {
-        id: 'cal-4',
-        title: 'Live Class Reminder',
-        desc: 'Class cards showing exact class start times, Zoom links, and teachers.',
-        top: '65%',
-        left: '52%',
+        id: "cal-4",
+        title: "Live Class Reminder",
+        desc: "Class cards showing exact class start times, Zoom links, and teachers.",
+        top: "65%",
+        left: "52%",
       },
     ],
     specs: [
-      { label: 'Calendar Views', value: 'Month, Week, Day, List' },
-      { label: 'Event Types', value: 'Live Classes, Quizzes, Exams' },
-      { label: 'Quick Search', value: 'Find Classes by Name or Teacher' },
-      { label: 'Reminders', value: 'Syncs with Phone & Google Calendar' },
+      { label: "Calendar Views", value: "Month, Week, Day, List" },
+      { label: "Event Types", value: "Live Classes, Quizzes, Exams" },
+      { label: "Quick Search", value: "Find Classes by Name or Teacher" },
+      { label: "Reminders", value: "Syncs with Phone & Google Calendar" },
     ],
     keyCapabilities: [
-      'Direct links to join live Zoom tuition classes with one click',
-      'Filter classes to view only your upcoming tests or homework',
-      'Personalized study timetable based on your enrolled subjects',
-      'Clear start times and duration for all scheduled sessions',
+      "Direct links to join live Zoom tuition classes with one click",
+      "Filter classes to view only your upcoming tests or homework",
+      "Personalized study timetable based on your enrolled subjects",
+      "Clear start times and duration for all scheduled sessions",
     ],
   },
   {
-    id: 'quiz',
-    tabNumber: '04',
-    title: 'Practice Quizzes & Tests',
-    shortTitle: 'Practice Tests',
-    portalBadge: 'Student Portal',
-    portalPath: 'Home > Quizzes > Practice Test Workspace',
-    category: 'Practice Tests',
-    imageSrc: '/assets/aistudio/Screenshot_2026-10-30_at_04.05.37_5f1e7054.png',
-    altText: 'Practice Test Workspace showing timed quiz with Question Checklist and live timer',
-    headline: 'Real Exam Practice with Live Timer & Question Checklist',
+    id: "quiz",
+    tabNumber: "04",
+    title: "Practice Quizzes & Tests",
+    shortTitle: "Practice Tests",
+    portalBadge: "Student Portal",
+    portalPath: "Home > Quizzes > Practice Test Workspace",
+    category: "Practice Tests",
+    imageSrc: "/assets/aistudio/Screenshot_2026-10-30_at_04.05.37_5f1e7054.png",
+    altText: "Practice Test Workspace showing timed quiz with Question Checklist and live timer",
+    headline: "Real Exam Practice with Live Timer & Question Checklist",
     description:
-      'Practice in real exam conditions with a live countdown timer, a question checklist to track answered questions, a flag button to revisit tricky questions, and instant marks with step-by-step answers.',
-    accentColor: 'text-emerald-500',
-    accentBg: 'bg-emerald-500/10',
-    accentBorder: 'border-emerald-500',
-    accentGlow: 'from-emerald-600/20 via-teal-600/10 to-transparent',
-    badgeColorClass: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-    userRole: 'Students & Teachers',
+      "Practice in real exam conditions with a live countdown timer, a question checklist to track answered questions, a flag button to revisit tricky questions, and instant marks with step-by-step answers.",
+    accentColor: "text-emerald-500",
+    accentBg: "bg-emerald-500/10",
+    accentBorder: "border-emerald-500",
+    accentGlow: "from-emerald-600/20 via-teal-600/10 to-transparent",
+    badgeColorClass: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    userRole: "Students & Teachers",
     hotspots: [
       {
-        id: 'quiz-1',
-        title: 'Live Countdown Timer',
-        desc: 'Clear countdown clock that helps students manage exam time and pace themselves.',
-        top: '17%',
-        left: '86%',
+        id: "quiz-1",
+        title: "Live Countdown Timer",
+        desc: "Clear countdown clock that helps students manage exam time and pace themselves.",
+        top: "17%",
+        left: "86%",
       },
       {
-        id: 'quiz-2',
-        title: 'Question Checklist',
-        desc: 'Easy grid showing answered questions and questions you flagged to recheck.',
-        top: '36%',
-        left: '88%',
+        id: "quiz-2",
+        title: "Question Checklist",
+        desc: "Easy grid showing answered questions and questions you flagged to recheck.",
+        top: "36%",
+        left: "88%",
       },
       {
-        id: 'quiz-3',
-        title: 'Flag for Later Button',
-        desc: 'Bookmark difficult questions so you can easily return to them before submitting.',
-        top: '30%',
-        left: '70%',
+        id: "quiz-3",
+        title: "Flag for Later Button",
+        desc: "Bookmark difficult questions so you can easily return to them before submitting.",
+        top: "30%",
+        left: "70%",
       },
       {
-        id: 'quiz-4',
-        title: 'Multiple Choice Options',
-        desc: 'Questions following government syllabus standards with clear mark values.',
-        top: '60%',
-        left: '48%',
+        id: "quiz-4",
+        title: "Multiple Choice Options",
+        desc: "Questions following government syllabus standards with clear mark values.",
+        top: "60%",
+        left: "48%",
       },
     ],
     specs: [
-      { label: 'Exam Mode', value: 'Timed Practice Test' },
-      { label: 'Automatic Saving', value: 'Saves Every Answer Instantly' },
-      { label: 'Question Review', value: 'Bookmark Questions to Recheck' },
-      { label: 'Results', value: 'Instant Marks & Explanations' },
+      { label: "Exam Mode", value: "Timed Practice Test" },
+      { label: "Automatic Saving", value: "Saves Every Answer Instantly" },
+      { label: "Question Review", value: "Bookmark Questions to Recheck" },
+      { label: "Results", value: "Instant Marks & Explanations" },
     ],
     keyCapabilities: [
-      'Realistic exam environment helping students build speed and confidence',
-      'Question palette displaying answered count and flagged questions at a glance',
-      'Instant grading and step-by-step rationales matching national marking rubrics',
-      'Answers are safely saved so no work is lost if your connection drops',
+      "Realistic exam environment helping students build speed and confidence",
+      "Question palette displaying answered count and flagged questions at a glance",
+      "Instant grading and step-by-step rationales matching national marking rubrics",
+      "Answers are safely saved so no work is lost if your connection drops",
     ],
   },
 ];
@@ -317,12 +319,12 @@ export interface FourCoreFeaturesShowcaseProps {
 }
 
 export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> = ({
-  initialFeature = 'ai',
+  initialFeature = "ai",
   onExploreMore,
   onOpenAdmissions,
-  title = 'Platform Core Features',
-  subtitle = 'Inspect authentic, high-resolution views inside the TiT platform: Admin AI Assistant, Direct Communication, Academic Calendar, and Timed Live Assessments.',
-  badgeText = 'Flagship Interfaces',
+  title = "Platform Core Features",
+  subtitle = "Inspect authentic, high-resolution views inside the TiT platform: Admin AI Assistant, Direct Communication, Academic Calendar, and Timed Live Assessments.",
+  badgeText = "Flagship Interfaces",
 }) => {
   const [activeId, setActiveId] = useState<CoreFeatureId>(initialFeature);
   const [activeHotspot, setActiveHotspot] = useState<Hotspot | null>(null);
@@ -330,8 +332,7 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
   const [lightboxZoom, setLightboxZoom] = useState<boolean>(false);
 
-  const activeFeature =
-    CORE_FEATURES_DATA.find((f) => f.id === activeId) || CORE_FEATURES_DATA[0];
+  const activeFeature = CORE_FEATURES_DATA.find((f) => f.id === activeId) || CORE_FEATURES_DATA[0];
 
   const currentIndex = CORE_FEATURES_DATA.findIndex((f) => f.id === activeId);
 
@@ -342,8 +343,7 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
   };
 
   const handlePrev = () => {
-    const prevIndex =
-      (currentIndex - 1 + CORE_FEATURES_DATA.length) % CORE_FEATURES_DATA.length;
+    const prevIndex = (currentIndex - 1 + CORE_FEATURES_DATA.length) % CORE_FEATURES_DATA.length;
     setActiveId(CORE_FEATURES_DATA[prevIndex].id);
     setActiveHotspot(null);
   };
@@ -351,12 +351,12 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
   // Keyboard navigation between features
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (lightboxOpen && e.key === 'Escape') {
+      if (lightboxOpen && e.key === "Escape") {
         setLightboxOpen(false);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightboxOpen]);
 
   return (
@@ -399,13 +399,13 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
             const isActive = feat.id === activeId;
             const getIcon = () => {
               switch (feat.id) {
-                case 'ai':
+                case "ai":
                   return <Bot className="w-5 h-5" />;
-                case 'communication':
+                case "communication":
                   return <MessageSquare className="w-5 h-5" />;
-                case 'calendar':
+                case "calendar":
                   return <Calendar className="w-5 h-5" />;
-                case 'quiz':
+                case "quiz":
                   return <FileCheck className="w-5 h-5" />;
               }
             };
@@ -419,8 +419,8 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                 }}
                 className={`relative text-left p-4 sm:p-5 rounded-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between border ${
                   isActive
-                    ? 'bg-slate-900 text-white border-slate-700 shadow-xl ring-2 ring-indigo-500/30 -translate-y-1'
-                    : 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:shadow-md'
+                    ? "bg-slate-900 text-white border-slate-700 shadow-xl ring-2 ring-indigo-500/30 -translate-y-1"
+                    : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:shadow-md"
                 }`}
               >
                 {/* Active Indicator Top Line */}
@@ -432,15 +432,20 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
                       isActive
-                        ? feat.accentBg + ' ' + feat.accentColor + ' shadow-sm border border-white/10'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                        ? feat.accentBg +
+                          " " +
+                          feat.accentColor +
+                          " shadow-sm border border-white/10"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                     }`}
                   >
                     {getIcon()}
                   </div>
                   <span
                     className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full ${
-                      isActive ? 'bg-white/10 text-slate-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                      isActive
+                        ? "bg-white/10 text-slate-200"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                     }`}
                   >
                     {feat.tabNumber}
@@ -448,21 +453,23 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                 </div>
 
                 <div>
-                  <span className={`text-[10px] font-semibold uppercase tracking-wider block ${
-                    isActive ? 'text-indigo-400' : 'text-slate-400'
-                  }`}>
+                  <span
+                    className={`text-[10px] font-semibold uppercase tracking-wider block ${
+                      isActive ? "text-indigo-400" : "text-slate-400"
+                    }`}
+                  >
                     {feat.portalBadge}
                   </span>
                   <h4
                     className={`text-sm sm:text-base font-extrabold mt-0.5 ${
-                      isActive ? 'text-white' : 'text-slate-900 dark:text-slate-100'
+                      isActive ? "text-white" : "text-slate-900 dark:text-slate-100"
                     }`}
                   >
                     {feat.shortTitle}
                   </h4>
                   <p
                     className={`text-xs mt-1 line-clamp-1 ${
-                      isActive ? 'text-slate-300' : 'text-slate-500 dark:text-slate-400'
+                      isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
                     }`}
                   >
                     {feat.category}
@@ -507,14 +514,14 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                 onClick={() => setShowHotspots(!showHotspots)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer border ${
                   showHotspots
-                    ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40'
-                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                    ? "bg-indigo-600/20 text-indigo-300 border-indigo-500/40"
+                    : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                 }`}
                 title="Toggle interactive point tags"
               >
                 <MousePointerClick className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">
-                  {showHotspots ? 'Interactive Pins ON' : 'Show Pins'}
+                  {showHotspots ? "Interactive Pins ON" : "Show Pins"}
                 </span>
               </button>
 
@@ -569,13 +576,11 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                         className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
                       >
                         <button
-                          onClick={() =>
-                            setActiveHotspot(isSelected ? null : pin)
-                          }
+                          onClick={() => setActiveHotspot(isSelected ? null : pin)}
                           className={`group relative w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-indigo-500 text-white scale-125 ring-4 ring-indigo-400/40 shadow-lg'
-                              : 'bg-slate-900/90 text-indigo-400 border border-indigo-400/60 shadow-md hover:scale-110 hover:bg-indigo-600 hover:text-white'
+                              ? "bg-indigo-500 text-white scale-125 ring-4 ring-indigo-400/40 shadow-lg"
+                              : "bg-slate-900/90 text-indigo-400 border border-indigo-400/60 shadow-md hover:scale-110 hover:bg-indigo-600 hover:text-white"
                           }`}
                         >
                           <span className="w-2.5 h-2.5 rounded-full bg-current animate-ping absolute inset-0 m-auto opacity-75" />
@@ -640,7 +645,8 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                     {activeFeature.portalBadge}
                   </Badge>
                   <span className="text-xs font-semibold text-slate-400">
-                    Target Role: <strong className="text-slate-200">{activeFeature.userRole}</strong>
+                    Target Role:{" "}
+                    <strong className="text-slate-200">{activeFeature.userRole}</strong>
                   </span>
                 </div>
 
@@ -667,8 +673,8 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                             onClick={() => setActiveHotspot(isSelected ? null : h)}
                             className={`text-xs px-3 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
                               isSelected
-                                ? 'bg-indigo-600 text-white border-indigo-400 font-bold shadow-md'
-                                : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white'
+                                ? "bg-indigo-600 text-white border-indigo-400 font-bold shadow-md"
+                                : "bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800 hover:text-white"
                             }`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
@@ -690,7 +696,10 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   {activeFeature.specs.map((spec, sIdx) => (
-                    <div key={sIdx} className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80">
+                    <div
+                      key={sIdx}
+                      className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80"
+                    >
                       <span className="text-[10px] text-slate-400 block font-medium">
                         {spec.label}
                       </span>
@@ -715,7 +724,6 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
         </div>
       </div>
 
-
       {/* 5. FULL-SCREEN LIGHTBOX MODAL WITH ULTRA-HIGH DEFINITION PREVIEW */}
       {lightboxOpen && (
         <div
@@ -736,7 +744,9 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                   <h3 className="font-extrabold text-base sm:text-lg leading-tight text-white">
                     {activeFeature.title}
                   </h3>
-                  <p className="text-xs text-slate-400 font-mono mt-0.5">{activeFeature.portalPath}</p>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">
+                    {activeFeature.portalPath}
+                  </p>
                 </div>
               </div>
 
@@ -746,9 +756,15 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                   size="sm"
                   onClick={() => setLightboxZoom(!lightboxZoom)}
                   className="text-xs text-white border-slate-700 hover:bg-slate-800"
-                  leftIcon={lightboxZoom ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                  leftIcon={
+                    lightboxZoom ? (
+                      <Minimize2 className="w-3.5 h-3.5" />
+                    ) : (
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    )
+                  }
                 >
-                  {lightboxZoom ? 'Fit Window' : 'Actual Size'}
+                  {lightboxZoom ? "Fit Window" : "Actual Size"}
                 </Button>
                 <button
                   onClick={() => setLightboxOpen(false)}
@@ -766,7 +782,7 @@ export const FourCoreFeaturesShowcase: React.FC<FourCoreFeaturesShowcaseProps> =
                 src={activeFeature.imageSrc}
                 alt={activeFeature.altText}
                 className={`transition-all duration-300 rounded-xl shadow-2xl border border-slate-800 ${
-                  lightboxZoom ? 'max-w-none w-[1600px]' : 'w-full max-h-[78vh] object-contain'
+                  lightboxZoom ? "max-w-none w-[1600px]" : "w-full max-h-[78vh] object-contain"
                 }`}
               />
             </div>

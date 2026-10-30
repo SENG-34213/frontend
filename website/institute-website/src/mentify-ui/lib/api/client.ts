@@ -1,6 +1,13 @@
-import { ApiResponse, CourseItem, MaterialItem, TeacherProfile, AdmissionsFormData, ContactFormData } from '../../types';
-import { MOCK_COURSES, MOCK_MATERIALS, MOCK_TEACHERS } from '../../data/mockData';
-import { SITE_CONFIG } from '../config/site';
+import {
+  ApiResponse,
+  CourseItem,
+  MaterialItem,
+  TeacherProfile,
+  AdmissionsFormData,
+  ContactFormData,
+} from "../../types";
+import { MOCK_COURSES, MOCK_MATERIALS, MOCK_TEACHERS } from "../../data/mockData";
+import { SITE_CONFIG } from "../config/site";
 
 /**
  * Backend API Capability & Integration Status Matrix
@@ -49,7 +56,7 @@ class TiTApiClient {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = SITE_CONFIG.apiGatewayUrl || '';
+    this.baseUrl = SITE_CONFIG.apiGatewayUrl || "";
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
@@ -62,8 +69,8 @@ class TiTApiClient {
         ...options,
         signal: controller.signal,
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
           ...(options.headers || {}),
         },
       });
@@ -83,21 +90,25 @@ class TiTApiClient {
   }
 
   // --- MARKETPLACE MATERIALS ---
-  async getMarketplaceMaterials(params: MarketplaceQueryParams = {}): Promise<ApiResponse<MaterialItem[]>> {
+  async getMarketplaceMaterials(
+    params: MarketplaceQueryParams = {},
+  ): Promise<ApiResponse<MaterialItem[]>> {
     if (this.baseUrl) {
       try {
         const query = new URLSearchParams();
-        if (params.search) query.set('search', params.search);
-        if (params.subject) query.set('subject', params.subject);
-        if (params.gradeId) query.set('gradeId', params.gradeId);
-        if (params.category) query.set('category', params.category);
-        if (params.page) query.set('page', params.page.toString());
-        if (params.limit) query.set('limit', params.limit.toString());
+        if (params.search) query.set("search", params.search);
+        if (params.subject) query.set("subject", params.subject);
+        if (params.gradeId) query.set("gradeId", params.gradeId);
+        if (params.category) query.set("category", params.category);
+        if (params.page) query.set("page", params.page.toString());
+        if (params.limit) query.set("limit", params.limit.toString());
 
-        const res = await this.request<MaterialItem[]>(`/api/v1/marketplace/materials?${query.toString()}`);
+        const res = await this.request<MaterialItem[]>(
+          `/api/v1/marketplace/materials?${query.toString()}`,
+        );
         return res;
       } catch (err) {
-        console.warn('Backend materials fetch failed, utilizing verified mock catalog:', err);
+        console.warn("Backend materials fetch failed, utilizing verified mock catalog:", err);
       }
     }
 
@@ -111,19 +122,19 @@ class TiTApiClient {
           m.title.toLowerCase().includes(term) ||
           m.description.toLowerCase().includes(term) ||
           m.subject.toLowerCase().includes(term) ||
-          m.authorName?.toLowerCase().includes(term)
+          m.authorName?.toLowerCase().includes(term),
       );
     }
 
-    if (params.subject && params.subject !== 'all') {
+    if (params.subject && params.subject !== "all") {
       results = results.filter((m) => m.subject.toLowerCase() === params.subject?.toLowerCase());
     }
 
-    if (params.gradeId && params.gradeId !== 'all') {
+    if (params.gradeId && params.gradeId !== "all") {
       results = results.filter((m) => m.gradeId === params.gradeId);
     }
 
-    if (params.category && params.category !== 'all') {
+    if (params.category && params.category !== "all") {
       results = results.filter((m) => m.category === params.category);
     }
 
@@ -155,7 +166,7 @@ class TiTApiClient {
         const res = await this.request<MaterialItem>(`/api/v1/marketplace/materials/${id}`);
         return res;
       } catch (err) {
-        console.warn('Backend material detail fetch failed, utilizing mock record:', err);
+        console.warn("Backend material detail fetch failed, utilizing mock record:", err);
       }
     }
 
@@ -163,12 +174,14 @@ class TiTApiClient {
     return {
       success: !!item,
       data: item,
-      message: item ? 'Material retrieved' : 'Material not found',
+      message: item ? "Material retrieved" : "Material not found",
     };
   }
 
   // --- COURSES ---
-  async getCourses(filters: { search?: string; subject?: string; gradeId?: string; format?: string } = {}): Promise<ApiResponse<CourseItem[]>> {
+  async getCourses(
+    filters: { search?: string; subject?: string; gradeId?: string; format?: string } = {},
+  ): Promise<ApiResponse<CourseItem[]>> {
     let results = [...MOCK_COURSES];
 
     if (filters.search) {
@@ -178,19 +191,19 @@ class TiTApiClient {
           c.title.toLowerCase().includes(term) ||
           c.subject.toLowerCase().includes(term) ||
           c.teacher.name.toLowerCase().includes(term) ||
-          c.description.toLowerCase().includes(term)
+          c.description.toLowerCase().includes(term),
       );
     }
 
-    if (filters.subject && filters.subject !== 'all') {
+    if (filters.subject && filters.subject !== "all") {
       results = results.filter((c) => c.subject.toLowerCase() === filters.subject?.toLowerCase());
     }
 
-    if (filters.gradeId && filters.gradeId !== 'all') {
+    if (filters.gradeId && filters.gradeId !== "all") {
       results = results.filter((c) => c.gradeId === filters.gradeId);
     }
 
-    if (filters.format && filters.format !== 'all') {
+    if (filters.format && filters.format !== "all") {
       results = results.filter((c) => c.learningFormat === filters.format);
     }
 
@@ -223,16 +236,21 @@ class TiTApiClient {
   }
 
   // --- ADMISSIONS & PRE-REGISTRATION ---
-  async submitAdmissions(formData: AdmissionsFormData): Promise<ApiResponse<{ referenceNo: string }>> {
+  async submitAdmissions(
+    formData: AdmissionsFormData,
+  ): Promise<ApiResponse<{ referenceNo: string }>> {
     if (this.baseUrl) {
       try {
-        const res = await this.request<{ referenceNo: string }>('/api/v1/public/admissions', {
-          method: 'POST',
+        const res = await this.request<{ referenceNo: string }>("/api/v1/public/admissions", {
+          method: "POST",
           body: JSON.stringify(formData),
         });
         return res;
       } catch (err) {
-        console.warn('Backend admissions submission failed, returning verified preview reference:', err);
+        console.warn(
+          "Backend admissions submission failed, returning verified preview reference:",
+          err,
+        );
       }
     }
 
@@ -241,7 +259,7 @@ class TiTApiClient {
     const refNo = `ADM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
     return {
       success: true,
-      message: 'Admission pre-registration successfully received.',
+      message: "Admission pre-registration successfully received.",
       data: { referenceNo: refNo },
     };
   }
@@ -250,13 +268,13 @@ class TiTApiClient {
   async submitContact(formData: ContactFormData): Promise<ApiResponse<{ ticketId: string }>> {
     if (this.baseUrl) {
       try {
-        const res = await this.request<{ ticketId: string }>('/api/v1/public/contact', {
-          method: 'POST',
+        const res = await this.request<{ ticketId: string }>("/api/v1/public/contact", {
+          method: "POST",
           body: JSON.stringify(formData),
         });
         return res;
       } catch (err) {
-        console.warn('Backend contact submission failed, returning local ticket:', err);
+        console.warn("Backend contact submission failed, returning local ticket:", err);
       }
     }
 
@@ -264,7 +282,7 @@ class TiTApiClient {
     const ticketId = `TCK-${Math.floor(10000 + Math.random() * 90000)}`;
     return {
       success: true,
-      message: 'Your inquiry has been submitted. Our support team will follow up promptly.',
+      message: "Your inquiry has been submitted. Our support team will follow up promptly.",
       data: { ticketId },
     };
   }

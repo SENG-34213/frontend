@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef } from "react";
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -9,13 +9,16 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, leftIcon, rightIcon, className = '', id, ...props }, ref) => {
-    const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+  ({ label, error, helperText, leftIcon, rightIcon, className = "", id, ...props }, ref) => {
+    const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+          <label
+            htmlFor={inputId}
+            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+          >
             {label} {props.required && <span className="text-rose-500">*</span>}
           </label>
         )}
@@ -29,11 +32,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={`w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border text-sm transition-all duration-200 py-2.5 px-3.5 focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-              leftIcon ? 'pl-10' : ''
-            } ${rightIcon ? 'pr-10' : ''} ${
+              leftIcon ? "pl-10" : ""
+            } ${rightIcon ? "pr-10" : ""} ${
               error
-                ? 'border-rose-300 dark:border-rose-700 focus:border-rose-500 focus:ring-rose-200 bg-rose-50/20'
-                : 'border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-100 dark:focus:ring-indigo-950'
+                ? "border-rose-300 dark:border-rose-700 focus:border-rose-500 focus:ring-rose-200 bg-rose-50/20"
+                : "border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-100 dark:focus:ring-indigo-950"
             } disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-400 disabled:cursor-not-allowed ${className}`}
             {...props}
           />
@@ -50,9 +53,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         ) : null}
       </div>
     );
-  }
+  },
 );
-Input.displayName = 'Input';
+Input.displayName = "Input";
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
@@ -62,13 +65,16 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, helperText, options, className = '', id, ...props }, ref) => {
-    const selectId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+  ({ label, error, helperText, options, className = "", id, ...props }, ref) => {
+    const selectId = id || (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={selectId} className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+          <label
+            htmlFor={selectId}
+            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+          >
             {label} {props.required && <span className="text-rose-500">*</span>}
           </label>
         )}
@@ -77,13 +83,18 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           className={`w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl border text-sm transition-all duration-200 py-2.5 px-3.5 focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer ${
             error
-              ? 'border-rose-300 dark:border-rose-700 focus:border-rose-500 focus:ring-rose-200 bg-rose-50/20'
-              : 'border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-100 dark:focus:ring-indigo-950'
+              ? "border-rose-300 dark:border-rose-700 focus:border-rose-500 focus:ring-rose-200 bg-rose-50/20"
+              : "border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-100 dark:focus:ring-indigo-950"
           } disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:cursor-not-allowed ${className}`}
           {...props}
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} disabled={opt.disabled} className="dark:bg-slate-900 dark:text-slate-100">
+            <option
+              key={opt.value}
+              value={opt.value}
+              disabled={opt.disabled}
+              className="dark:bg-slate-900 dark:text-slate-100"
+            >
               {opt.label}
             </option>
           ))}
@@ -95,9 +106,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         ) : null}
       </div>
     );
-  }
+  },
 );
-Select.displayName = 'Select';
+Select.displayName = "Select";
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -106,13 +117,16 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, helperText, className = '', id, rows = 4, ...props }, ref) => {
-    const areaId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+  ({ label, error, helperText, className = "", id, rows = 4, ...props }, ref) => {
+    const areaId = id || (label ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
 
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={areaId} className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+          <label
+            htmlFor={areaId}
+            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5"
+          >
             {label} {props.required && <span className="text-rose-500">*</span>}
           </label>
         )}
@@ -122,8 +136,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           rows={rows}
           className={`w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border text-sm transition-all duration-200 p-3.5 focus:outline-none focus:ring-2 focus:ring-offset-1 resize-y ${
             error
-              ? 'border-rose-300 dark:border-rose-700 focus:border-rose-500 focus:ring-rose-200 bg-rose-50/20'
-              : 'border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-100 dark:focus:ring-indigo-950'
+              ? "border-rose-300 dark:border-rose-700 focus:border-rose-500 focus:ring-rose-200 bg-rose-50/20"
+              : "border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-indigo-100 dark:focus:ring-indigo-950"
           } disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:cursor-not-allowed ${className}`}
           {...props}
         />
@@ -134,9 +148,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         ) : null}
       </div>
     );
-  }
+  },
 );
-Textarea.displayName = 'Textarea';
+Textarea.displayName = "Textarea";
 
 export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: React.ReactNode;
@@ -144,7 +158,7 @@ export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElemen
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, className = '', id, ...props }, ref) => {
+  ({ label, description, className = "", id, ...props }, ref) => {
     const checkId = id || `chk-${Math.random().toString(36).substring(2, 7)}`;
 
     return (
@@ -158,10 +172,12 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <label htmlFor={checkId} className="text-sm cursor-pointer select-none">
           <span className="font-medium text-slate-800 dark:text-slate-200">{label}</span>
-          {description && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>}
+          {description && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{description}</p>
+          )}
         </label>
       </div>
     );
-  }
+  },
 );
-Checkbox.displayName = 'Checkbox';
+Checkbox.displayName = "Checkbox";

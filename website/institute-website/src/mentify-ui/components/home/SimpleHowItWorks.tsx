@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   MessageSquare,
   Bot,
@@ -12,8 +12,8 @@ import {
   GraduationCap,
   Clock,
   Award,
-} from 'lucide-react';
-import { FeatureTabKey } from '../features/InteractiveAppSuite';
+} from "lucide-react";
+import { FeatureTabKey } from "../features/InteractiveAppSuite";
 
 export interface SimpleHowItWorksProps {
   onSelectFeature?: (tab: FeatureTabKey) => void;
@@ -26,19 +26,22 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
 }) => {
   const steps = [
     {
-      step: '01',
-      title: 'Join Your Subject Group Chat',
+      step: "01",
+      title: "Join Your Subject Group Chat",
       summary:
-        'When you enroll in a course (Combined Maths, Physics, Chemistry, Biology, or Commerce), you instantly join a dedicated group chat with your verified teacher and classmates.',
-      featureKey: 'chat' as FeatureTabKey,
+        "When you enroll in a course (Combined Maths, Physics, Chemistry, Biology, or Commerce), you instantly join a dedicated group chat with your verified teacher and classmates.",
+      featureKey: "chat" as FeatureTabKey,
       icon: <MessageSquare className="w-6 h-6 text-blue-600 dark:text-blue-400" />,
-      tag: 'Direct Teacher Access',
-      tagColor: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-      highlightBadge: 'Real-Time Mentorship',
+      tag: "Direct Teacher Access",
+      tagColor:
+        "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+      highlightBadge: "Real-Time Mentorship",
       samplePreview: (
         <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3 border border-slate-200/80 dark:border-slate-700 text-xs space-y-2">
           <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200 dark:border-slate-700">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Physics A/L 2026 Batch</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
+              Physics A/L 2026 Batch
+            </span>
             <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Teacher Online
@@ -49,58 +52,73 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
               KS
             </div>
             <p className="text-slate-700 dark:text-slate-300">
-              <span className="font-semibold text-slate-900 dark:text-white">Mr. K. Senthil:</span> "Model paper 04 questions 5 to 8 are posted. Let me know if you need hints!"
+              <span className="font-semibold text-slate-900 dark:text-white">Mr. K. Senthil:</span>{" "}
+              "Model paper 04 questions 5 to 8 are posted. Let me know if you need hints!"
             </p>
           </div>
         </div>
       ),
     },
     {
-      step: '02',
-      title: 'Ask Questions & Get 24/7 AI Answers',
+      step: "02",
+      title: "Ask Questions & Get 24/7 AI Answers",
       summary:
-        'Stuck on a tricky past-paper derivation late at night? Ask our TiT AI Tutor in English, Tamil, or Sinhala for step-by-step working aligned with official marking schemes.',
-      featureKey: 'ai' as FeatureTabKey,
+        "Stuck on a tricky past-paper derivation late at night? Ask our TiT AI Tutor in English, Tamil, or Sinhala for step-by-step working aligned with official marking schemes.",
+      featureKey: "ai" as FeatureTabKey,
       icon: <Bot className="w-6 h-6 text-purple-600 dark:text-purple-400" />,
-      tag: '24/7 Instant Help',
-      tagColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-      highlightBadge: 'Trilingual AI Tutor',
+      tag: "24/7 Instant Help",
+      tagColor:
+        "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+      highlightBadge: "Trilingual AI Tutor",
       samplePreview: (
         <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3 border border-slate-200/80 dark:border-slate-700 text-xs space-y-2">
           <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200 dark:border-slate-700">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">AI Problem Solver</span>
-            <span className="text-purple-600 dark:text-purple-400 font-medium">Instant Response</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
+              AI Problem Solver
+            </span>
+            <span className="text-purple-600 dark:text-purple-400 font-medium">
+              Instant Response
+            </span>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-5 h-5 rounded-full bg-purple-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
               AI
             </div>
             <p className="text-slate-700 dark:text-slate-300">
-              <span className="font-semibold text-slate-900 dark:text-white">TiT AI:</span> "For projectile range on flat ground, R = (u² sin 2θ) / g. Let us break down the steps..."
+              <span className="font-semibold text-slate-900 dark:text-white">TiT AI:</span> "For
+              projectile range on flat ground, R = (u² sin 2θ) / g. Let us break down the steps..."
             </p>
           </div>
         </div>
       ),
     },
     {
-      step: '03',
-      title: 'Practice Quizzes & Track Your Z-Score',
+      step: "03",
+      title: "Practice Quizzes & Track Your Z-Score",
       summary:
-        'Stay organized with your synchronized class calendar, test yourself with timed past paper quizzes, and watch your grade progression curve and estimated Z-score rise.',
-      featureKey: 'quiz' as FeatureTabKey,
+        "Stay organized with your synchronized class calendar, test yourself with timed past paper quizzes, and watch your grade progression curve and estimated Z-score rise.",
+      featureKey: "quiz" as FeatureTabKey,
       icon: <LineChart className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />,
-      tag: 'Exam Readiness',
-      tagColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-      highlightBadge: 'Z-Score Analytics',
+      tag: "Exam Readiness",
+      tagColor:
+        "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+      highlightBadge: "Z-Score Analytics",
       samplePreview: (
         <div className="bg-slate-50 dark:bg-slate-800/80 rounded-xl p-3 border border-slate-200/80 dark:border-slate-700 text-xs space-y-2">
           <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200 dark:border-slate-700">
             <span className="font-semibold text-slate-700 dark:text-slate-300">Term Progress</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Score: 92% (A)</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+              Score: 92% (A)
+            </span>
           </div>
           <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
-            <span className="text-[11px]">Estimated Z-Score: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">1.94</strong></span>
-            <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-medium">Moratuwa Qualified</span>
+            <span className="text-[11px]">
+              Estimated Z-Score:{" "}
+              <strong className="text-emerald-600 dark:text-emerald-400 font-bold">1.94</strong>
+            </span>
+            <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-medium">
+              Moratuwa Qualified
+            </span>
           </div>
         </div>
       ),
@@ -111,9 +129,9 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
     if (onSelectFeature) {
       onSelectFeature(tab);
     }
-    const elem = document.getElementById('features-demo');
+    const elem = document.getElementById("features-demo");
     if (elem) {
-      elem.scrollIntoView({ behavior: 'smooth' });
+      elem.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -129,7 +147,8 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
           How TiT Works for Every Student
         </h2>
         <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-          No complicated setup or confusing dashboards. Everything you need to understand your syllabus, ask questions, and pass your exams is ready in three simple steps.
+          No complicated setup or confusing dashboards. Everything you need to understand your
+          syllabus, ask questions, and pass your exams is ready in three simple steps.
         </p>
       </div>
 
@@ -146,7 +165,9 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
                 <span className="text-3xl font-black text-slate-200 dark:text-slate-800 select-none">
                   {item.step}
                 </span>
-                <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${item.tagColor}`}>
+                <span
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${item.tagColor}`}
+                >
                   {item.highlightBadge}
                 </span>
               </div>
@@ -164,9 +185,7 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
               </p>
 
               {/* Realistic Mini Preview Snippet */}
-              <div className="mb-4">
-                {item.samplePreview}
-              </div>
+              <div className="mb-4">{item.samplePreview}</div>
             </div>
 
             {/* Test Drive Button */}
@@ -203,7 +222,7 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
           <button
             type="button"
-            onClick={() => handleTestDrive('chat')}
+            onClick={() => handleTestDrive("chat")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-xs transition-all cursor-pointer"
           >
             <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
@@ -212,7 +231,7 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
 
           <button
             type="button"
-            onClick={() => handleTestDrive('ai')}
+            onClick={() => handleTestDrive("ai")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 shadow-xs transition-all cursor-pointer"
           >
             <Bot className="w-3.5 h-3.5 text-purple-500" />
@@ -221,7 +240,7 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
 
           <button
             type="button"
-            onClick={() => handleTestDrive('calendar')}
+            onClick={() => handleTestDrive("calendar")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-xs transition-all cursor-pointer"
           >
             <Calendar className="w-3.5 h-3.5 text-blue-500" />
@@ -230,7 +249,7 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
 
           <button
             type="button"
-            onClick={() => handleTestDrive('quiz')}
+            onClick={() => handleTestDrive("quiz")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs transition-all cursor-pointer"
           >
             <FileCheck className="w-3.5 h-3.5 text-emerald-500" />
@@ -239,7 +258,7 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
 
           <button
             type="button"
-            onClick={() => handleTestDrive('analytics')}
+            onClick={() => handleTestDrive("analytics")}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 shadow-xs transition-all cursor-pointer"
           >
             <LineChart className="w-3.5 h-3.5 text-cyan-500" />

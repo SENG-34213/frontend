@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Calendar,
   CheckCircle2,
@@ -14,8 +14,8 @@ import {
   BookOpen,
   ArrowRight,
   RotateCcw,
-} from 'lucide-react';
-import { Button } from '../ui/Button';
+} from "lucide-react";
+import { Button } from "../ui/Button";
 
 interface AcademicPlacementSectionProps {
   onOpenAdmissions?: () => void;
@@ -27,13 +27,13 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
   onNavigate,
 }) => {
   // Form State
-  const [grade, setGrade] = useState<string>('Grade 12 (A/L 2026)');
-  const [stream, setStream] = useState<string>('Physical Science (Combined Maths)');
-  const [studentName, setStudentName] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [district, setDistrict] = useState<string>('Jaffna');
+  const [grade, setGrade] = useState<string>("Grade 12 (A/L 2026)");
+  const [stream, setStream] = useState<string>("Physical Science (Combined Maths)");
+  const [studentName, setStudentName] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [district, setDistrict] = useState<string>("Jaffna");
   const [submitted, setSubmitted] = useState<boolean>(false);
-  const [reservationCode, setReservationCode] = useState<string>('');
+  const [reservationCode, setReservationCode] = useState<string>("");
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,10 +41,10 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
     const newErrors: { name?: string; phone?: string } = {};
 
     if (!studentName.trim()) {
-      newErrors.name = 'Please enter student name';
+      newErrors.name = "Please enter student name";
     }
-    if (!phone.trim() || phone.replace(/\D/g, '').length < 9) {
-      newErrors.phone = 'Please enter a valid phone number (min 9 digits)';
+    if (!phone.trim() || phone.replace(/\D/g, "").length < 9) {
+      newErrors.phone = "Please enter a valid phone number (min 9 digits)";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -60,8 +60,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
 
   const handleReset = () => {
     setSubmitted(false);
-    setStudentName('');
-    setPhone('');
+    setStudentName("");
+    setPhone("");
     setErrors({});
   };
 
@@ -80,7 +80,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
           </h2>
 
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-            Pre-register online in under 2 minutes. Receive timetable details, syllabus previews, and personalized academic counseling for G.C.E. O/L and A/L streams.
+            Pre-register online in under 2 minutes. Receive timetable details, syllabus previews,
+            and personalized academic counseling for G.C.E. O/L and A/L streams.
           </p>
         </div>
 
@@ -129,7 +130,9 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                         Choose Your Grade & Stream
                       </h4>
                       <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Select from Primary (Grades 1–5), Junior Secondary (Grades 6–9), O/L (Grades 10–11), or A/L streams (Combined Maths, Biology, Commerce, Arts, Technology).
+                        Select from Primary (Grades 1–5), Junior Secondary (Grades 6–9), O/L (Grades
+                        10–11), or A/L streams (Combined Maths, Biology, Commerce, Arts,
+                        Technology).
                       </p>
                     </div>
                   </div>
@@ -143,7 +146,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                         Choose Your Learning Format & Study Center
                       </h4>
                       <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Join interactive live Zoom classes from anywhere in Sri Lanka, or attend structured study sessions at our Alaveddy tuition center.
+                        Join interactive live Zoom classes from anywhere in Sri Lanka, or attend
+                        structured study sessions at our Alaveddy tuition center.
                       </p>
                     </div>
                   </div>
@@ -157,7 +161,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                         Receive Timetable & Study Pack Preview
                       </h4>
                       <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                        Our admissions coordinator contacts you with full weekly timetables, teacher introductions, model paper previews, and access details.
+                        Our admissions coordinator contacts you with full weekly timetables, teacher
+                        introductions, model paper previews, and access details.
                       </p>
                     </div>
                   </div>
@@ -173,7 +178,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       <span>Zero Upfront Commitment</span>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-snug">
-                      Pre-registration is completely free. Tuition fees only apply once enrollment is finalized.
+                      Pre-registration is completely free. Tuition fees only apply once enrollment
+                      is finalized.
                     </p>
                   </div>
 
@@ -183,7 +189,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       <span>Small Interactive Batches</span>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-snug">
-                      Limited seats per batch ensure individual attention and direct voice question time with teachers.
+                      Limited seats per batch ensure individual attention and direct voice question
+                      time with teachers.
                     </p>
                   </div>
 
@@ -193,7 +200,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       <span>100% Syllabus Aligned</span>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-snug">
-                      Full coverage of national examination units, past papers from 2011–2025, and monthly model exams.
+                      Full coverage of national examination units, past papers from 2011–2025, and
+                      monthly model exams.
                     </p>
                   </div>
 
@@ -203,7 +211,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       <span>Full Recorded Backups</span>
                     </div>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-snug">
-                      Missed a live class? 24/7 video replays and teacher lecture notes are available in your portal.
+                      Missed a live class? 24/7 video replays and teacher lecture notes are
+                      available in your portal.
                     </p>
                   </div>
                 </div>
@@ -238,7 +247,9 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       onChange={(e) => setGrade(e.target.value)}
                       className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
-                      <option value="Grade 13 (A/L 2025 Revision)">Grade 13 (A/L 2025 Revision)</option>
+                      <option value="Grade 13 (A/L 2025 Revision)">
+                        Grade 13 (A/L 2025 Revision)
+                      </option>
                       <option value="Grade 12 (A/L 2026)">Grade 12 (A/L 2026)</option>
                       <option value="Grade 11 (O/L 2025/2026)">Grade 11 (O/L 2025/2026)</option>
                       <option value="Grade 10 (O/L)">Grade 10 (O/L Foundation)</option>
@@ -247,7 +258,9 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       <option value="Grade 7 (Junior Secondary)">Grade 7 (Junior Secondary)</option>
                       <option value="Grade 6 (Junior Secondary)">Grade 6 (Junior Secondary)</option>
                       <option value="Grade 5 (Scholarship Exam)">Grade 5 (Scholarship Exam)</option>
-                      <option value="Grade 1–4 (Primary Foundations)">Grade 1–4 (Primary Foundations)</option>
+                      <option value="Grade 1–4 (Primary Foundations)">
+                        Grade 1–4 (Primary Foundations)
+                      </option>
                     </select>
                   </div>
 
@@ -261,16 +274,27 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       onChange={(e) => setStream(e.target.value)}
                       className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
-                      <option value="Physical Science (Combined Maths)">Physical Science (Combined Maths & Physics)</option>
-                      <option value="Biological Science">Biological Science (Biology & Chemistry)</option>
-                      <option value="Commerce Stream">Commerce Stream (Accounting, Econ, BS)</option>
+                      <option value="Physical Science (Combined Maths)">
+                        Physical Science (Combined Maths & Physics)
+                      </option>
+                      <option value="Biological Science">
+                        Biological Science (Biology & Chemistry)
+                      </option>
+                      <option value="Commerce Stream">
+                        Commerce Stream (Accounting, Econ, BS)
+                      </option>
                       <option value="Technology Stream">Technology Stream (SFT, BST, ICT)</option>
-                      <option value="Arts & Humanities">Arts & Humanities (Logic, Political Science, History)</option>
-                      <option value="O/L Core Subjects">O/L Core (Mathematics, Science, History, Languages)</option>
-                      <option value="Grade 5 Scholarship Special">Grade 5 Scholarship (Paper I IQ & Paper II)</option>
+                      <option value="Arts & Humanities">
+                        Arts & Humanities (Logic, Political Science, History)
+                      </option>
+                      <option value="O/L Core Subjects">
+                        O/L Core (Mathematics, Science, History, Languages)
+                      </option>
+                      <option value="Grade 5 Scholarship Special">
+                        Grade 5 Scholarship (Paper I IQ & Paper II)
+                      </option>
                     </select>
                   </div>
-
 
                   {/* Student Full Name */}
                   <div className="space-y-1">
@@ -347,7 +371,8 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                   </button>
 
                   <p className="text-[10px] text-slate-500 text-center">
-                    No payment required now · Our Alaveddy coordinator confirms placements by phone or WhatsApp
+                    No payment required now · Our Alaveddy coordinator confirms placements by phone
+                    or WhatsApp
                   </p>
                 </form>
               ) : (
@@ -365,29 +390,40 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                       Welcome, {studentName}!
                     </h3>
                     <p className="text-xs text-slate-600 dark:text-slate-300 max-w-sm mx-auto">
-                      Your provisional seat has been reserved. Our admissions desk will send the full class timetable and syllabus preview to <strong className="text-indigo-600 dark:text-indigo-400">{phone}</strong> via WhatsApp within 2 hours.
+                      Your provisional seat has been reserved. Our admissions desk will send the
+                      full class timetable and syllabus preview to{" "}
+                      <strong className="text-indigo-600 dark:text-indigo-400">{phone}</strong> via
+                      WhatsApp within 2 hours.
                     </p>
                   </div>
 
                   {/* Reservation Details Pill Box */}
                   <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-left text-xs space-y-2">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-500 dark:text-slate-400">Reservation Reference</span>
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Reservation Reference
+                      </span>
                       <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
                         {reservationCode}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Grade & Stream</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{grade}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {grade}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Subject Focus</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{stream}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {stream}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 dark:text-slate-400">District</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{district}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">
+                        {district}
+                      </span>
                     </div>
                   </div>
 
@@ -427,7 +463,7 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                 </span>
                 <button
                   type="button"
-                  onClick={() => onNavigate && onNavigate('contact')}
+                  onClick={() => onNavigate && onNavigate("contact")}
                   className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline cursor-pointer"
                 >
                   Contact Desk →

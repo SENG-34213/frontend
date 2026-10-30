@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
-import { AlertCircle, ChevronDown, ChevronRight, Inbox, Loader2, RefreshCw } from 'lucide-react';
-import { Button } from './Button';
+import React, { useState } from "react";
+import { AlertCircle, ChevronDown, ChevronRight, Inbox, Loader2, RefreshCw } from "lucide-react";
+import { Button } from "./Button";
 
-export const Skeleton: React.FC<{ className?: string }> = ({ className = 'h-4 w-full' }) => {
-  return <div className={`animate-pulse bg-slate-200/80 dark:bg-slate-800 rounded-xl ${className}`} />;
+export const Skeleton: React.FC<{ className?: string }> = ({ className = "h-4 w-full" }) => {
+  return (
+    <div className={`animate-pulse bg-slate-200/80 dark:bg-slate-800 rounded-xl ${className}`} />
+  );
 };
 
 export const LoadingState: React.FC<{ message?: string; className?: string }> = ({
-  message = 'Loading...',
-  className = 'py-16',
+  message = "Loading...",
+  className = "py-16",
 }) => {
   return (
     <div className={`flex flex-col items-center justify-center text-center ${className}`}>
@@ -48,8 +50,8 @@ export const ErrorState: React.FC<{
   message?: string;
   onRetry?: () => void;
 }> = ({
-  title = 'Something went wrong',
-  message = 'We were unable to load the data. Please check your connection and try again.',
+  title = "Something went wrong",
+  message = "We were unable to load the data. Please check your connection and try again.",
   onRetry,
 }) => {
   return (
@@ -82,7 +84,9 @@ export const Accordion: React.FC<{
 
   const toggle = (idx: number) => {
     if (allowMultiple) {
-      setOpenIndices((prev) => (prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]));
+      setOpenIndices((prev) =>
+        prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx],
+      );
     } else {
       setOpenIndices((prev) => (prev.includes(idx) ? [] : [idx]));
     }
@@ -99,10 +103,12 @@ export const Accordion: React.FC<{
               className="w-full flex items-center justify-between text-left p-5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer select-none"
               aria-expanded={isOpen}
             >
-              <span className="font-semibold text-slate-800 dark:text-slate-100 text-base pr-4">{item.title}</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-100 text-base pr-4">
+                {item.title}
+              </span>
               <ChevronDown
                 className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-200 shrink-0 ${
-                  isOpen ? 'rotate-180 text-indigo-600 dark:text-indigo-400' : ''
+                  isOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""
                 }`}
               />
             </button>
@@ -123,9 +129,11 @@ export const Tabs: React.FC<{
   activeTab: string;
   onChange: (tabId: string) => void;
   className?: string;
-}> = ({ tabs, activeTab, onChange, className = '' }) => {
+}> = ({ tabs, activeTab, onChange, className = "" }) => {
   return (
-    <div className={`flex flex-wrap gap-2 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 ${className}`}>
+    <div
+      className={`flex flex-wrap gap-2 p-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 ${className}`}
+    >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -134,8 +142,8 @@ export const Tabs: React.FC<{
             onClick={() => onChange(tab.id)}
             className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-150 cursor-pointer flex items-center gap-2 ${
               isActive
-                ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+                ? "bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50"
             }`}
           >
             <span>{tab.label}</span>
@@ -143,8 +151,8 @@ export const Tabs: React.FC<{
               <span
                 className={`text-[11px] px-1.5 py-0.2 rounded-md ${
                   isActive
-                    ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300"
+                    : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                 }`}
               >
                 {tab.count}
@@ -161,12 +169,19 @@ export const Breadcrumb: React.FC<{
   items: { label: string; onClick?: () => void; active?: boolean }[];
 }> = ({ items }) => {
   return (
-    <nav className="flex items-center text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 flex-wrap gap-1.5" aria-label="Breadcrumb">
+    <nav
+      className="flex items-center text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 flex-wrap gap-1.5"
+      aria-label="Breadcrumb"
+    >
       {items.map((item, idx) => (
         <React.Fragment key={idx}>
-          {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0" />}
+          {idx > 0 && (
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0" />
+          )}
           {item.active || !item.onClick ? (
-            <span className="font-semibold text-slate-900 dark:text-white truncate max-w-xs">{item.label}</span>
+            <span className="font-semibold text-slate-900 dark:text-white truncate max-w-xs">
+              {item.label}
+            </span>
           ) : (
             <button
               onClick={item.onClick}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   MessageSquare,
   Send,
@@ -38,11 +38,11 @@ import {
   Compass,
   CheckCircle2,
   Maximize2,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface ChatMessage {
   id: string;
-  sender: 'user' | 'assistant' | 'mentor';
+  sender: "user" | "assistant" | "mentor";
   senderName: string;
   avatarLabel: string;
   time: string;
@@ -61,87 +61,87 @@ interface ConversationItem {
 
 const INITIAL_CONVERSATIONS: ConversationItem[] = [
   {
-    id: 'conv-1',
-    title: 'Summarize the current student, teacher, and co...',
-    date: '24 Oct',
-    category: 'Admin & Operations',
+    id: "conv-1",
+    title: "Summarize the current student, teacher, and co...",
+    date: "24 Oct",
+    category: "Admin & Operations",
   },
   {
-    id: 'conv-2',
-    title: 'Combined Maths 2026 Pure & Applied Doubts',
-    date: 'Today',
+    id: "conv-2",
+    title: "Combined Maths 2026 Pure & Applied Doubts",
+    date: "Today",
     unreadCount: 3,
-    category: 'Course Batch',
+    category: "Course Batch",
   },
   {
-    id: 'conv-3',
-    title: 'Physics Masterclass: Doppler Effect Derivations',
-    date: 'Yesterday',
-    category: 'Course Batch',
+    id: "conv-3",
+    title: "Physics Masterclass: Doppler Effect Derivations",
+    date: "Yesterday",
+    category: "Course Batch",
   },
   {
-    id: 'conv-4',
-    title: 'Chemistry Inorganic Equilibrium & Redox',
-    date: '22 Oct',
-    category: 'Course Batch',
+    id: "conv-4",
+    title: "Chemistry Inorganic Equilibrium & Redox",
+    date: "22 Oct",
+    category: "Course Batch",
   },
   {
-    id: 'conv-5',
-    title: 'Attendance & Term Mock Exam Analytics',
-    date: '20 Oct',
-    category: 'Analytics',
+    id: "conv-5",
+    title: "Attendance & Term Mock Exam Analytics",
+    date: "20 Oct",
+    category: "Analytics",
   },
 ];
 
 const INITIAL_MESSAGES: ChatMessage[] = [
   {
-    id: 'msg-1',
-    sender: 'user',
-    senderName: 'You',
-    avatarLabel: 'A',
-    time: '04:05',
-    text: 'Summarize the current student, teacher, and course activity.',
+    id: "msg-1",
+    sender: "user",
+    senderName: "You",
+    avatarLabel: "A",
+    time: "04:05",
+    text: "Summarize the current student, teacher, and course activity.",
   },
   {
-    id: 'msg-2',
-    sender: 'assistant',
-    senderName: 'TiT AI',
-    avatarLabel: 'AI',
-    time: '04:05',
-    text: 'I need a little more context before I can answer that follow-up. Which students, class, quiz, or users do you mean?',
+    id: "msg-2",
+    sender: "assistant",
+    senderName: "TiT AI",
+    avatarLabel: "AI",
+    time: "04:05",
+    text: "I need a little more context before I can answer that follow-up. Which students, class, quiz, or users do you mean?",
   },
   {
-    id: 'msg-3',
-    sender: 'user',
-    senderName: 'You',
-    avatarLabel: 'A',
-    time: '04:05',
-    text: 'what about the attendace',
+    id: "msg-3",
+    sender: "user",
+    senderName: "You",
+    avatarLabel: "A",
+    time: "04:05",
+    text: "what about the attendace",
   },
   {
-    id: 'msg-4',
-    sender: 'assistant',
-    senderName: 'TiT AI',
-    avatarLabel: 'AI',
-    time: '04:05',
-    text: 'Here is the current attendance summary across active enrolled course batches:\n\n• Combined Mathematics 2026: 94.2% attendance (342 students enrolled, Eng. S. Perera)\n• A/L Physics Masterclass: 91.8% attendance (289 students enrolled, Dr. S. Gunawardana)\n• A/L Chemistry Inorganic: 88.5% attendance (215 students enrolled, Mrs. K. Jayasuriya)\n• Biology NIE Curriculum Group: 92.4% attendance (178 students enrolled, Dr. N. Wickramasinghe)\n\nOverall institutional average is 91.7%, with 12 pending absence justifications submitted in registration tickets.',
+    id: "msg-4",
+    sender: "assistant",
+    senderName: "TiT AI",
+    avatarLabel: "AI",
+    time: "04:05",
+    text: "Here is the current attendance summary across active enrolled course batches:\n\n• Combined Mathematics 2026: 94.2% attendance (342 students enrolled, Eng. S. Perera)\n• A/L Physics Masterclass: 91.8% attendance (289 students enrolled, Dr. S. Gunawardana)\n• A/L Chemistry Inorganic: 88.5% attendance (215 students enrolled, Mrs. K. Jayasuriya)\n• Biology NIE Curriculum Group: 92.4% attendance (178 students enrolled, Dr. N. Wickramasinghe)\n\nOverall institutional average is 91.7%, with 12 pending absence justifications submitted in registration tickets.",
     structuredDetails: [
-      'Combined Maths 2026: 94.2% (Top cohort attendance)',
-      'Physics Masterclass: 91.8% (Live Zoom lab session)',
-      'Chemistry Inorganic: 88.5% (Module 07 Equilibrium)',
-      'Biology Study Group: 92.4% (Past Paper Revision)',
+      "Combined Maths 2026: 94.2% (Top cohort attendance)",
+      "Physics Masterclass: 91.8% (Live Zoom lab session)",
+      "Chemistry Inorganic: 88.5% (Module 07 Equilibrium)",
+      "Biology Study Group: 92.4% (Past Paper Revision)",
     ],
   },
 ];
 
 export const CourseChatShowcase: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'interactive' | 'screenshot'>('interactive');
+  const [viewMode, setViewMode] = useState<"interactive" | "screenshot">("interactive");
   const [conversations, setConversations] = useState<ConversationItem[]>(INITIAL_CONVERSATIONS);
-  const [selectedConvId, setSelectedConvId] = useState<string>('conv-1');
+  const [selectedConvId, setSelectedConvId] = useState<string>("conv-1");
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
-  const [inputText, setInputText] = useState<string>('');
+  const [inputText, setInputText] = useState<string>("");
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [leftNavCollapsed, setLeftNavCollapsed] = useState<boolean>(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [screenshotModalOpen, setScreenshotModalOpen] = useState<boolean>(false);
@@ -149,7 +149,7 @@ export const CourseChatShowcase: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
   const activeConv = conversations.find((c) => c.id === selectedConvId) || conversations[0];
@@ -160,15 +160,19 @@ export const CourseChatShowcase: React.FC = () => {
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
-      sender: 'user',
-      senderName: 'You',
-      avatarLabel: 'A',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+      sender: "user",
+      senderName: "You",
+      avatarLabel: "A",
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
       text: query,
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setInputText('');
+    setInputText("");
     setIsTyping(true);
 
     setTimeout(() => {
@@ -177,34 +181,38 @@ export const CourseChatShowcase: React.FC = () => {
       let details: string[] | undefined = undefined;
 
       const lower = query.toLowerCase();
-      if (lower.includes('math') || lower.includes('integral') || lower.includes('perera')) {
+      if (lower.includes("math") || lower.includes("integral") || lower.includes("perera")) {
         reply = `Combined Maths 2026 batch update: Eng. S. Perera confirmed that the integration by parts mark scheme (Unit 08) allocates 1 mark for substitution, 2 marks for tabular reduction, and 1 mark for final simplification + C. Tutorial 08 solutions are live in the materials vault.`;
         details = [
-          'Paper II Part B marking rubric applied',
-          '342 active students notified in channel',
-          'Next live lecture: Saturday 8:00 AM (Zoom + Classroom)',
+          "Paper II Part B marking rubric applied",
+          "342 active students notified in channel",
+          "Next live lecture: Saturday 8:00 AM (Zoom + Classroom)",
         ];
-      } else if (lower.includes('physics') || lower.includes('doppler')) {
+      } else if (lower.includes("physics") || lower.includes("doppler")) {
         reply = `Physics Masterclass update: Dr. S. Gunawardana's Doppler effect formula derivation λ′ = (v + w - u_s)/f₀ has been pinned in the physics room with full step justifications for approaching source cases with wind.`;
         details = [
-          'Syllabus Unit 03 (Oscillations & Waves)',
-          '91.8% cohort live attendance verified',
-          'Drill quiz available in assessments tab',
+          "Syllabus Unit 03 (Oscillations & Waves)",
+          "91.8% cohort live attendance verified",
+          "Drill quiz available in assessments tab",
         ];
-      } else if (lower.includes('people') || lower.includes('student') || lower.includes('teacher')) {
+      } else if (
+        lower.includes("people") ||
+        lower.includes("student") ||
+        lower.includes("teacher")
+      ) {
         reply = `Workspace People Overview: 1,024 verified enrolled students, 28 senior faculty mentors, and 4 system administrators currently active in the TiT Enterprise workspace. All batch permissions are synchronized.`;
         details = [
-          'Combined Maths: 342 Students | Eng. S. Perera',
-          'Physics Masterclass: 289 Students | Dr. S. Gunawardana',
-          'Chemistry: 215 Students | Mrs. K. Jayasuriya',
-          'Biology: 178 Students | Dr. N. Wickramasinghe',
+          "Combined Maths: 342 Students | Eng. S. Perera",
+          "Physics Masterclass: 289 Students | Dr. S. Gunawardana",
+          "Chemistry: 215 Students | Mrs. K. Jayasuriya",
+          "Biology: 178 Students | Dr. N. Wickramasinghe",
         ];
-      } else if (lower.includes('assessment') || lower.includes('quiz')) {
+      } else if (lower.includes("assessment") || lower.includes("quiz")) {
         reply = `Assessments Status: 5 timed quizzes are currently published with real-time rubric grading. Average student score across pure mathematics is 78.4%. The next mock examination countdown is scheduled for Sunday.`;
         details = [
-          'Active Quiz: Integration & Differential Equations',
-          'Average completion time: 24 mins',
-          'Automated rubric grading active',
+          "Active Quiz: Integration & Differential Equations",
+          "Average completion time: 24 mins",
+          "Automated rubric grading active",
         ];
       } else {
         reply = `Response from TiT Enterprise Assistant: Your query "${query}" has been logged and contextualized with your enrolled course batch. Mentors and teaching assistants receive instant push alerts for tagged questions.`;
@@ -212,10 +220,14 @@ export const CourseChatShowcase: React.FC = () => {
 
       const assistantMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
-        sender: 'assistant',
-        senderName: 'TiT AI',
-        avatarLabel: 'AI',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+        sender: "assistant",
+        senderName: "TiT AI",
+        avatarLabel: "AI",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }),
         text: reply,
         structuredDetails: details,
       };
@@ -231,7 +243,7 @@ export const CourseChatShowcase: React.FC = () => {
   };
 
   const filteredConversations = conversations.filter((c) =>
-    c.title.toLowerCase().includes(searchTerm.toLowerCase())
+    c.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -268,22 +280,22 @@ export const CourseChatShowcase: React.FC = () => {
         <div className="flex items-center gap-2">
           <div className="bg-slate-900/90 p-1 rounded-xl border border-slate-700/80 flex items-center gap-1 text-xs">
             <button
-              onClick={() => setViewMode('interactive')}
+              onClick={() => setViewMode("interactive")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                viewMode === 'interactive'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                viewMode === "interactive"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Interactive Live UI</span>
             </button>
             <button
-              onClick={() => setViewMode('screenshot')}
+              onClick={() => setViewMode("screenshot")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                viewMode === 'screenshot'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                viewMode === "screenshot"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
               }`}
             >
               <ImageIcon className="w-3.5 h-3.5" />
@@ -294,7 +306,7 @@ export const CourseChatShowcase: React.FC = () => {
       </div>
 
       {/* Main Content Area based on View Mode */}
-      {viewMode === 'screenshot' ? (
+      {viewMode === "screenshot" ? (
         /* View Mode 2: Real Production Screenshot Display */
         <div className="p-6 sm:p-8 bg-[#090d14] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
@@ -307,14 +319,14 @@ export const CourseChatShowcase: React.FC = () => {
                 Production Course Chat & AI Interface
               </h4>
               <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-                This screenshot shows the live platform operations of the TiT AI Assistant, course chat conversations,
-                attendance summaries, and workspace context tools.
+                This screenshot shows the live platform operations of the TiT AI Assistant, course
+                chat conversations, attendance summaries, and workspace context tools.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setViewMode('interactive')}
+                onClick={() => setViewMode("interactive")}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-md cursor-pointer"
               >
                 <span>Try Live Class Chat</span>
@@ -351,7 +363,8 @@ export const CourseChatShowcase: React.FC = () => {
                 <span>School Admin Navigation</span>
               </div>
               <p className="text-xs text-slate-300">
-                Full-tier role access with Students, Teachers, Registrations (12), Courses, and Quizzes modules.
+                Full-tier role access with Students, Teachers, Registrations (12), Courses, and
+                Quizzes modules.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-[#0f1624] border border-slate-800 space-y-1.5">
@@ -360,7 +373,8 @@ export const CourseChatShowcase: React.FC = () => {
                 <span>Conversational Intelligence</span>
               </div>
               <p className="text-xs text-slate-300">
-                Secure assistant session handling student doubts, teacher queries, and attendance tracking in real-time.
+                Secure assistant session handling student doubts, teacher queries, and attendance
+                tracking in real-time.
               </p>
             </div>
             <div className="p-4 rounded-2xl bg-[#0f1624] border border-slate-800 space-y-1.5">
@@ -369,7 +383,8 @@ export const CourseChatShowcase: React.FC = () => {
                 <span>Workspace Context Panel</span>
               </div>
               <p className="text-xs text-slate-300">
-                Direct shortcuts for People, Courses, Enrollments, Assessments, Attendance, and Insights data.
+                Direct shortcuts for People, Courses, Enrollments, Assessments, Attendance, and
+                Insights data.
               </p>
             </div>
           </div>
@@ -402,7 +417,9 @@ export const CourseChatShowcase: React.FC = () => {
             {/* Right quick actions & user status */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handleSendMessage('Quick summary of active course rooms and pending assignments')}
+                onClick={() =>
+                  handleSendMessage("Quick summary of active course rooms and pending assignments")
+                }
                 className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -429,7 +446,9 @@ export const CourseChatShowcase: React.FC = () => {
                 </div>
                 <div className="text-left hidden lg:block">
                   <div className="text-[11px] font-bold leading-none">System Administrator</div>
-                  <div className="text-[9px] text-slate-400 leading-none mt-0.5">Super Administrator ⌄</div>
+                  <div className="text-[9px] text-slate-400 leading-none mt-0.5">
+                    Super Administrator ⌄
+                  </div>
                 </div>
               </div>
             </div>
@@ -449,7 +468,8 @@ export const CourseChatShowcase: React.FC = () => {
                 TiT AI Assistant & Course Chat
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Premium conversational intelligence grounded in TiT institutional data and live platform analytics.
+                Premium conversational intelligence grounded in TiT institutional data and live
+                platform analytics.
               </p>
             </div>
 
@@ -459,18 +479,18 @@ export const CourseChatShowcase: React.FC = () => {
                 const newConv: ConversationItem = {
                   id: `conv-${Date.now()}`,
                   title: newTitle,
-                  date: 'Today',
-                  category: 'Course Batch',
+                  date: "Today",
+                  category: "Course Batch",
                 };
                 setConversations([newConv, ...conversations]);
                 setSelectedConvId(newConv.id);
                 setMessages([
                   {
                     id: `msg-${Date.now()}`,
-                    sender: 'assistant',
-                    senderName: 'TiT AI',
-                    avatarLabel: 'AI',
-                    time: 'Just now',
+                    sender: "assistant",
+                    senderName: "TiT AI",
+                    avatarLabel: "AI",
+                    time: "Just now",
                     text: `Started new conversation "${newTitle}". How can I assist you with students, courses, or analytics today?`,
                   },
                 ]);
@@ -531,7 +551,9 @@ export const CourseChatShowcase: React.FC = () => {
                           <Bell className="w-3.5 h-3.5" />
                           <span>Notifications</span>
                         </div>
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded">1</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded">
+                          1
+                        </span>
                       </li>
                     </ul>
                   </div>
@@ -558,7 +580,9 @@ export const CourseChatShowcase: React.FC = () => {
                           <User className="w-3.5 h-3.5" />
                           <span>Registrations</span>
                         </div>
-                        <span className="text-[9px] font-bold px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded">12</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 bg-slate-800 text-slate-300 rounded">
+                          12
+                        </span>
                       </li>
                     </ul>
                   </div>
@@ -602,7 +626,9 @@ export const CourseChatShowcase: React.FC = () => {
             )}
 
             {/* Pane 1: Conversations List */}
-            <div className={`${leftNavCollapsed ? 'xl:col-span-3' : 'xl:col-span-2'} lg:col-span-3 border-r border-slate-800/90 bg-[#0c121e] p-3 flex flex-col justify-between space-y-3`}>
+            <div
+              className={`${leftNavCollapsed ? "xl:col-span-3" : "xl:col-span-2"} lg:col-span-3 border-r border-slate-800/90 bg-[#0c121e] p-3 flex flex-col justify-between space-y-3`}
+            >
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
                   <span>Conversations</span>
@@ -610,9 +636,9 @@ export const CourseChatShowcase: React.FC = () => {
                     onClick={() => {
                       const newConv: ConversationItem = {
                         id: `conv-${Date.now()}`,
-                        title: 'New Subject Discussion Thread',
-                        date: 'Today',
-                        category: 'Course Batch',
+                        title: "New Subject Discussion Thread",
+                        date: "Today",
+                        category: "Course Batch",
                       };
                       setConversations([newConv, ...conversations]);
                       setSelectedConvId(newConv.id);
@@ -628,9 +654,9 @@ export const CourseChatShowcase: React.FC = () => {
                   onClick={() => {
                     const newConv: ConversationItem = {
                       id: `conv-${Date.now()}`,
-                      title: 'New Course Thread',
-                      date: 'Today',
-                      category: 'Course Batch',
+                      title: "New Course Thread",
+                      date: "Today",
+                      category: "Course Batch",
                     };
                     setConversations([newConv, ...conversations]);
                     setSelectedConvId(newConv.id);
@@ -661,8 +687,8 @@ export const CourseChatShowcase: React.FC = () => {
                         onClick={() => setSelectedConvId(c.id)}
                         className={`w-full text-left p-2.5 rounded-xl text-xs transition-all cursor-pointer border flex items-start gap-2.5 ${
                           isSelected
-                            ? 'bg-[#162137] border-indigo-600/80 text-white shadow-sm'
-                            : 'bg-transparent border-transparent hover:bg-slate-800/60 text-slate-400 hover:text-slate-200'
+                            ? "bg-[#162137] border-indigo-600/80 text-white shadow-sm"
+                            : "bg-transparent border-transparent hover:bg-slate-800/60 text-slate-400 hover:text-slate-200"
                         }`}
                       >
                         <Clock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-indigo-400" />
@@ -691,7 +717,9 @@ export const CourseChatShowcase: React.FC = () => {
             </div>
 
             {/* Pane 2: Middle Chat Feed matching Screenshot */}
-            <div className={`${leftNavCollapsed ? 'xl:col-span-6' : 'xl:col-span-5'} lg:col-span-6 flex flex-col justify-between bg-[#090d16] border-r border-slate-800/90`}>
+            <div
+              className={`${leftNavCollapsed ? "xl:col-span-6" : "xl:col-span-5"} lg:col-span-6 flex flex-col justify-between bg-[#090d16] border-r border-slate-800/90`}
+            >
               {/* Header inside Conversation Area */}
               <div className="px-4 py-3 bg-[#0d1422] border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -742,11 +770,11 @@ export const CourseChatShowcase: React.FC = () => {
               {/* Message Stream */}
               <div className="p-4 sm:p-5 overflow-y-auto space-y-4 max-h-[460px] min-h-[380px]">
                 {messages.map((m) => {
-                  const isUser = m.sender === 'user';
+                  const isUser = m.sender === "user";
                   return (
                     <div
                       key={m.id}
-                      className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} animate-in fade-in duration-150`}
+                      className={`flex flex-col ${isUser ? "items-end" : "items-start"} animate-in fade-in duration-150`}
                     >
                       {/* Sender line */}
                       <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mb-1">
@@ -776,7 +804,10 @@ export const CourseChatShowcase: React.FC = () => {
                           {m.structuredDetails && (
                             <div className="pt-2 border-t border-slate-700/60 space-y-1">
                               {m.structuredDetails.map((line, idx) => (
-                                <div key={idx} className="flex items-start gap-1.5 text-xs text-indigo-300">
+                                <div
+                                  key={idx}
+                                  className="flex items-start gap-1.5 text-xs text-indigo-300"
+                                >
                                   <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
                                   <span>{line}</span>
                                 </div>
@@ -793,7 +824,9 @@ export const CourseChatShowcase: React.FC = () => {
                               {copiedId === m.id ? (
                                 <>
                                   <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span className="text-emerald-400 font-medium">Copied to clipboard</span>
+                                  <span className="text-emerald-400 font-medium">
+                                    Copied to clipboard
+                                  </span>
                                 </>
                               ) : (
                                 <>
@@ -802,7 +835,9 @@ export const CourseChatShowcase: React.FC = () => {
                                 </>
                               )}
                             </button>
-                            <span className="text-[10px] text-slate-500">Verified TiT Assistant</span>
+                            <span className="text-[10px] text-slate-500">
+                              Verified TiT Assistant
+                            </span>
                           </div>
                         </div>
                       )}
@@ -826,19 +861,25 @@ export const CourseChatShowcase: React.FC = () => {
                 {/* Prompt Chips */}
                 <div className="flex gap-1.5 overflow-x-auto pb-1 text-[11px]">
                   <button
-                    onClick={() => handleSendMessage('what about the attendace')}
+                    onClick={() => handleSendMessage("what about the attendace")}
                     className="px-2.5 py-1 rounded-full bg-[#141d2e] hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 shrink-0 cursor-pointer transition-colors"
                   >
                     What about the attendance?
                   </button>
                   <button
-                    onClick={() => handleSendMessage('Show current student doubts in Combined Maths 2026')}
+                    onClick={() =>
+                      handleSendMessage("Show current student doubts in Combined Maths 2026")
+                    }
                     className="px-2.5 py-1 rounded-full bg-[#141d2e] hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 shrink-0 cursor-pointer transition-colors"
                   >
                     Combined Maths doubts
                   </button>
                   <button
-                    onClick={() => handleSendMessage('Summarize the current student, teacher, and course activity.')}
+                    onClick={() =>
+                      handleSendMessage(
+                        "Summarize the current student, teacher, and course activity.",
+                      )
+                    }
                     className="px-2.5 py-1 rounded-full bg-[#141d2e] hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 shrink-0 cursor-pointer transition-colors"
                   >
                     Summarize activity
@@ -923,14 +964,46 @@ export const CourseChatShowcase: React.FC = () => {
                 {/* 8-Tile Shortcut Grid matching Screenshot */}
                 <div className="grid grid-cols-2 gap-1.5 pt-1">
                   {[
-                    { label: 'People', icon: <Users className="w-3.5 h-3.5 text-indigo-400" />, query: 'Show summary of verified students and teachers' },
-                    { label: 'Courses', icon: <BookOpen className="w-3.5 h-3.5 text-indigo-400" />, query: 'List active A/L syllabus courses and enrolled batches' },
-                    { label: 'Enrollments', icon: <User className="w-3.5 h-3.5 text-indigo-400" />, query: 'Show enrollment status and batch capacity' },
-                    { label: 'Assessments', icon: <FileText className="w-3.5 h-3.5 text-indigo-400" />, query: 'Check current timed quiz assessments and marks' },
-                    { label: 'Attendance', icon: <Calendar className="w-3.5 h-3.5 text-indigo-400" />, query: 'what about the attendace' },
-                    { label: 'Insights', icon: <LineChart className="w-3.5 h-3.5 text-indigo-400" />, query: 'Generate student progression and Z-score insights' },
-                    { label: 'Messages', icon: <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />, query: 'Check unread doubts and messages from students' },
-                    { label: 'Schedules', icon: <Clock className="w-3.5 h-3.5 text-indigo-400" />, query: 'Show upcoming live lectures and submission deadlines' },
+                    {
+                      label: "People",
+                      icon: <Users className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "Show summary of verified students and teachers",
+                    },
+                    {
+                      label: "Courses",
+                      icon: <BookOpen className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "List active A/L syllabus courses and enrolled batches",
+                    },
+                    {
+                      label: "Enrollments",
+                      icon: <User className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "Show enrollment status and batch capacity",
+                    },
+                    {
+                      label: "Assessments",
+                      icon: <FileText className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "Check current timed quiz assessments and marks",
+                    },
+                    {
+                      label: "Attendance",
+                      icon: <Calendar className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "what about the attendace",
+                    },
+                    {
+                      label: "Insights",
+                      icon: <LineChart className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "Generate student progression and Z-score insights",
+                    },
+                    {
+                      label: "Messages",
+                      icon: <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "Check unread doubts and messages from students",
+                    },
+                    {
+                      label: "Schedules",
+                      icon: <Clock className="w-3.5 h-3.5 text-indigo-400" />,
+                      query: "Show upcoming live lectures and submission deadlines",
+                    },
                   ].map((tile, i) => (
                     <button
                       key={i}
@@ -948,7 +1021,8 @@ export const CourseChatShowcase: React.FC = () => {
               <div className="p-3 rounded-2xl bg-[#101726] border border-slate-800 space-y-1 text-slate-400">
                 <div className="text-xs font-bold text-white">Data privacy</div>
                 <p className="text-[11px] leading-relaxed">
-                  Your conversations stay within the information available to your administrator workspace.
+                  Your conversations stay within the information available to your administrator
+                  workspace.
                 </p>
               </div>
             </div>

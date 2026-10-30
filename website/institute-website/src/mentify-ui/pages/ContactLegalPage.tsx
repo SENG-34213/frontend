@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -10,49 +10,49 @@ import {
   Send,
   Shield,
   Sparkles,
-} from 'lucide-react';
-import { ContactFormData, Language } from '../types';
-import { api } from '../lib/api/client';
-import { SITE_CONFIG } from '../lib/config/site';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import { Input, Select, Textarea } from '../components/ui/FormControls';
-import { Accordion, Tabs } from '../components/ui/FeedbackStates';
-import { MOCK_FAQS } from '../data/mockData';
+} from "lucide-react";
+import { ContactFormData, Language } from "../types";
+import { api } from "../lib/api/client";
+import { SITE_CONFIG } from "../lib/config/site";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Card } from "../components/ui/Card";
+import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import { Input, Select, Textarea } from "../components/ui/FormControls";
+import { Accordion, Tabs } from "../components/ui/FeedbackStates";
+import { MOCK_FAQS } from "../data/mockData";
 
 export interface ContactLegalPageProps {
   currentLang: Language;
-  initialTab?: 'contact' | 'faq' | 'privacy' | 'terms';
+  initialTab?: "contact" | "faq" | "privacy" | "terms";
 }
 
 export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
   currentLang,
-  initialTab = 'contact',
+  initialTab = "contact",
 }) => {
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Form State
   const [formData, setFormData] = useState<ContactFormData>({
-    fullName: '',
-    email: '',
-    phone: '',
-    inquiryType: 'admissions',
-    subject: '',
-    message: '',
+    fullName: "",
+    email: "",
+    phone: "",
+    inquiryType: "admissions",
+    subject: "",
+    message: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [ticketId, setTicketId] = useState('');
+  const [ticketId, setTicketId] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.message) {
-      alert('Please fill in all required fields.');
+      alert("Please fill in all required fields.");
       return;
     }
 
@@ -63,7 +63,7 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
       setSubmitSuccess(true);
     } catch (err) {
       console.error(err);
-      alert('An error occurred submitting your inquiry. Please try again.');
+      alert("An error occurred submitting your inquiry. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -81,16 +81,17 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
             Help Center, Inquiries & Governance
           </h1>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
-            Get in touch with the TiT Education administration team or review institutional policies.
+            Get in touch with the TiT Education administration team or review institutional
+            policies.
           </p>
 
           <div className="mt-8 flex justify-center">
             <Tabs
               tabs={[
-                { id: 'contact', label: 'Contact Tuition Center' },
-                { id: 'faq', label: 'Frequently Asked Questions' },
-                { id: 'privacy', label: 'Privacy Policy' },
-                { id: 'terms', label: 'Terms of Use' },
+                { id: "contact", label: "Contact Tuition Center" },
+                { id: "faq", label: "Frequently Asked Questions" },
+                { id: "privacy", label: "Privacy Policy" },
+                { id: "terms", label: "Terms of Use" },
               ]}
               activeTab={activeTab}
               onChange={setActiveTab}
@@ -101,7 +102,7 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
 
       <Container>
         {/* TAB 1: CONTACT FORM & CENTER INFO */}
-        {activeTab === 'contact' && (
+        {activeTab === "contact" && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left: Contact Details */}
             <div className="lg:col-span-5 space-y-6">
@@ -109,10 +110,12 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                 <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                   Head Office & Tuition Center
                 </span>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Reach Out to Our Team</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  Reach Out to Our Team
+                </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  Have questions about upcoming intake batches, marketplace publication, or tuition billing?
-                  Our academic officers are available Monday through Saturday.
+                  Have questions about upcoming intake batches, marketplace publication, or tuition
+                  billing? Our academic officers are available Monday through Saturday.
                 </p>
               </div>
 
@@ -122,8 +125,12 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div className="text-xs">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">Main Center Address</span>
-                    <p className="text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">{SITE_CONFIG.contact.address}</p>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+                      Main Center Address
+                    </span>
+                    <p className="text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      {SITE_CONFIG.contact.address}
+                    </p>
                   </div>
                 </div>
 
@@ -132,9 +139,15 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                     <Phone className="w-5 h-5" />
                   </div>
                   <div className="text-xs">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">Direct Phone & WhatsApp</span>
-                    <p className="text-slate-600 dark:text-slate-400 mt-0.5">Telephone: {SITE_CONFIG.contact.phone}</p>
-                    <p className="text-slate-600 dark:text-slate-400">WhatsApp Hotline: {SITE_CONFIG.contact.whatsapp}</p>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+                      Direct Phone & WhatsApp
+                    </span>
+                    <p className="text-slate-600 dark:text-slate-400 mt-0.5">
+                      Telephone: {SITE_CONFIG.contact.phone}
+                    </p>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      WhatsApp Hotline: {SITE_CONFIG.contact.whatsapp}
+                    </p>
                   </div>
                 </div>
 
@@ -143,9 +156,15 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                     <Mail className="w-5 h-5" />
                   </div>
                   <div className="text-xs">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">Email Enquiries</span>
-                    <p className="text-slate-600 dark:text-slate-400 mt-0.5">Admissions: {SITE_CONFIG.contact.supportEmail}</p>
-                    <p className="text-slate-600 dark:text-slate-400">General: {SITE_CONFIG.contact.email}</p>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+                      Email Enquiries
+                    </span>
+                    <p className="text-slate-600 dark:text-slate-400 mt-0.5">
+                      Admissions: {SITE_CONFIG.contact.supportEmail}
+                    </p>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      General: {SITE_CONFIG.contact.email}
+                    </p>
                   </div>
                 </div>
 
@@ -154,8 +173,12 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                     <Clock className="w-5 h-5" />
                   </div>
                   <div className="text-xs">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">Academic Working Hours</span>
-                    <p className="text-slate-600 dark:text-slate-400 mt-0.5">{SITE_CONFIG.contact.businessHours}</p>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm block">
+                      Academic Working Hours
+                    </span>
+                    <p className="text-slate-600 dark:text-slate-400 mt-0.5">
+                      {SITE_CONFIG.contact.businessHours}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -199,13 +222,15 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                       <Select
                         label="Inquiry Type"
                         value={formData.inquiryType}
-                        onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value as any })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, inquiryType: e.target.value as any })
+                        }
                         options={[
-                          { value: 'admissions', label: 'Admissions & Batch Enrollment' },
-                          { value: 'marketplace', label: 'Marketplace Materials & Purchases' },
-                          { value: 'courses', label: 'Course Syllabi & Timetables' },
-                          { value: 'tech_support', label: 'Portal Access / Technical Support' },
-                          { value: 'other', label: 'Other Inquiries' },
+                          { value: "admissions", label: "Admissions & Batch Enrollment" },
+                          { value: "marketplace", label: "Marketplace Materials & Purchases" },
+                          { value: "courses", label: "Course Syllabi & Timetables" },
+                          { value: "tech_support", label: "Portal Access / Technical Support" },
+                          { value: "other", label: "Other Inquiries" },
                         ]}
                       />
                     </div>
@@ -250,7 +275,8 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                       Ticket ID: {ticketId}
                     </p>
                     <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
-                      Thank you for contacting TiT. A member of our academic support team will respond to {formData.email} within 1 business day.
+                      Thank you for contacting TiT. A member of our academic support team will
+                      respond to {formData.email} within 1 business day.
                     </p>
                     <Button
                       variant="outline"
@@ -258,12 +284,12 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
                       onClick={() => {
                         setSubmitSuccess(false);
                         setFormData({
-                          fullName: '',
-                          email: '',
-                          phone: '',
-                          inquiryType: 'admissions',
-                          subject: '',
-                          message: '',
+                          fullName: "",
+                          email: "",
+                          phone: "",
+                          inquiryType: "admissions",
+                          subject: "",
+                          message: "",
                         });
                       }}
                     >
@@ -277,7 +303,7 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
         )}
 
         {/* TAB 2: FREQUENTLY ASKED QUESTIONS */}
-        {activeTab === 'faq' && (
+        {activeTab === "faq" && (
           <div className="max-w-3xl mx-auto space-y-8">
             <Accordion
               items={MOCK_FAQS.map((faq) => ({
@@ -296,78 +322,101 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
         )}
 
         {/* TAB 3: PRIVACY POLICY */}
-        {activeTab === 'privacy' && (
+        {activeTab === "privacy" && (
           <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6 text-sm text-slate-600 dark:text-slate-300 leading-relaxed transition-colors">
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Privacy Policy</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Last Updated: October 2026</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Last Updated: October 2026
+              </p>
             </div>
 
             <section className="space-y-2">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">1. Information We Collect</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                1. Information We Collect
+              </h3>
               <p>
-                TiT collects personal information necessary to facilitate academic enrollment, portal access,
-                and digital resource distribution. This includes student names, guardian contact numbers, email addresses,
-                geographic district, and educational stream preferences submitted during pre-registration.
+                TiT collects personal information necessary to facilitate academic enrollment,
+                portal access, and digital resource distribution. This includes student names,
+                guardian contact numbers, email addresses, geographic district, and educational
+                stream preferences submitted during pre-registration.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">2. Secure Student & Staff Accounts</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                2. Secure Student & Staff Accounts
+              </h3>
               <p>
-                Student, Teacher, and Administrator accounts are protected by secure industry-standard encryption. We never store plain-text
-                passwords, and logins expire automatically when sessions finish to safeguard student privacy.
+                Student, Teacher, and Administrator accounts are protected by secure
+                industry-standard encryption. We never store plain-text passwords, and logins expire
+                automatically when sessions finish to safeguard student privacy.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">3. Learning Material Protection</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                3. Learning Material Protection
+              </h3>
               <p>
-                Digital learning materials, class recordings, and assignments are hosted in private, secure cloud storage with
-                personalized student access. Unapproved copying or unauthorized distribution of intellectual property is strictly prohibited.
+                Digital learning materials, class recordings, and assignments are hosted in private,
+                secure cloud storage with personalized student access. Unapproved copying or
+                unauthorized distribution of intellectual property is strictly prohibited.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">4. Parental Rights</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                4. Parental Rights
+              </h3>
               <p>
-                Parents and legal guardians may request inspection, correction, or deletion of their child's pre-registration
-                records by contacting {SITE_CONFIG.contact.email}.
+                Parents and legal guardians may request inspection, correction, or deletion of their
+                child's pre-registration records by contacting {SITE_CONFIG.contact.email}.
               </p>
             </section>
           </div>
         )}
 
         {/* TAB 4: TERMS OF USE */}
-        {activeTab === 'terms' && (
+        {activeTab === "terms" && (
           <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6 text-sm text-slate-600 dark:text-slate-300 leading-relaxed transition-colors">
             <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Terms of Use</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Effective Date: October 2026</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                Effective Date: October 2026
+              </p>
             </div>
 
             <section className="space-y-2">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">1. Acceptance of Terms</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                1. Acceptance of Terms
+              </h3>
               <p>
-                By using TiT and its associated services, you agree to comply with all institutional academic rules,
-                code of conduct guidelines, and applicable intellectual property laws.
+                By using TiT and its associated services, you agree to comply with all institutional
+                academic rules, code of conduct guidelines, and applicable intellectual property
+                laws.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">2. Intellectual Property of Learning Materials</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                2. Intellectual Property of Learning Materials
+              </h3>
               <p>
-                All past paper markings, model answers, revision guides, and video lectures made available on TiT
-                are the intellectual property of TiT and its authoring educators. Redistribution, unauthorized
-                resale, or public republication is strictly prohibited.
+                All past paper markings, model answers, revision guides, and video lectures made
+                available on TiT are the intellectual property of TiT and its authoring educators.
+                Redistribution, unauthorized resale, or public republication is strictly prohibited.
               </p>
             </section>
 
             <section className="space-y-2">
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">3. Pre-Registration & Batch Allocations</h3>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                3. Pre-Registration & Batch Allocations
+              </h3>
               <p>
-                Online pre-registration reserves preliminary seating consideration for upcoming academic batches. Formal
-                enrollment is finalized upon admissions board review and confirmation of batch schedules.
+                Online pre-registration reserves preliminary seating consideration for upcoming
+                academic batches. Formal enrollment is finalized upon admissions board review and
+                confirmation of batch schedules.
               </p>
             </section>
           </div>

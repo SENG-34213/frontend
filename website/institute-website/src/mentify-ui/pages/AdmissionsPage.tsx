@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,17 +12,17 @@ import {
   Sparkles,
   User,
   Users,
-} from 'lucide-react';
-import { AdmissionsFormData, Language } from '../types';
-import { api } from '../lib/api/client';
-import { SITE_CONFIG } from '../lib/config/site';
-import { getTranslation } from '../lib/translations';
-import { Container } from '../components/ui/Container';
-import { SectionHeading } from '../components/ui/SectionHeading';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Checkbox, Input, Select, Textarea } from '../components/ui/FormControls';
+} from "lucide-react";
+import { AdmissionsFormData, Language } from "../types";
+import { api } from "../lib/api/client";
+import { SITE_CONFIG } from "../lib/config/site";
+import { getTranslation } from "../lib/translations";
+import { Container } from "../components/ui/Container";
+import { SectionHeading } from "../components/ui/SectionHeading";
+import { Card } from "../components/ui/Card";
+import { Button } from "../components/ui/Button";
+import { Badge } from "../components/ui/Badge";
+import { Checkbox, Input, Select, Textarea } from "../components/ui/FormControls";
 
 export interface AdmissionsPageProps {
   currentLang: Language;
@@ -35,29 +35,29 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
-  const [referenceNo, setReferenceNo] = useState('');
+  const [referenceNo, setReferenceNo] = useState("");
 
   // Form State
   const [formData, setFormData] = useState<AdmissionsFormData>({
-    studentFullName: '',
-    studentInitials: '',
-    dateOfBirth: '',
-    gender: 'male',
-    guardianName: '',
-    guardianRelation: 'Mother',
-    guardianPhone: '',
-    guardianEmail: '',
-    studentEmail: '',
-    studentPhone: '',
-    district: 'Colombo',
-    city: '',
-    address: '',
-    grade: 'al-maths',
-    preferredSubjects: ['Combined Mathematics', 'Physics'],
-    learningPreference: 'Hybrid',
-    preferredContactMethod: 'WhatsApp',
-    previousSchool: '',
-    specialRequests: '',
+    studentFullName: "",
+    studentInitials: "",
+    dateOfBirth: "",
+    gender: "male",
+    guardianName: "",
+    guardianRelation: "Mother",
+    guardianPhone: "",
+    guardianEmail: "",
+    studentEmail: "",
+    studentPhone: "",
+    district: "Colombo",
+    city: "",
+    address: "",
+    grade: "al-maths",
+    preferredSubjects: ["Combined Mathematics", "Physics"],
+    learningPreference: "Hybrid",
+    preferredContactMethod: "WhatsApp",
+    previousSchool: "",
+    specialRequests: "",
     consentAgreed: false,
   });
 
@@ -65,18 +65,18 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
 
   const validateStep1 = () => {
     const errs: Record<string, string> = {};
-    if (!formData.studentFullName.trim()) errs.studentFullName = 'Full name is required';
-    if (!formData.dateOfBirth) errs.dateOfBirth = 'Date of birth is required';
+    if (!formData.studentFullName.trim()) errs.studentFullName = "Full name is required";
+    if (!formData.dateOfBirth) errs.dateOfBirth = "Date of birth is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const validateStep2 = () => {
     const errs: Record<string, string> = {};
-    if (!formData.guardianName.trim()) errs.guardianName = 'Guardian name is required';
-    if (!formData.guardianPhone.trim()) errs.guardianPhone = 'Contact phone is required';
-    if (!formData.guardianEmail.trim() || !formData.guardianEmail.includes('@')) {
-      errs.guardianEmail = 'A valid guardian email address is required';
+    if (!formData.guardianName.trim()) errs.guardianName = "Guardian name is required";
+    if (!formData.guardianPhone.trim()) errs.guardianPhone = "Contact phone is required";
+    if (!formData.guardianEmail.trim() || !formData.guardianEmail.includes("@")) {
+      errs.guardianEmail = "A valid guardian email address is required";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -85,10 +85,10 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
   const validateStep3 = () => {
     const errs: Record<string, string> = {};
     if (formData.preferredSubjects.length === 0) {
-      errs.preferredSubjects = 'Please select at least one preferred subject';
+      errs.preferredSubjects = "Please select at least one preferred subject";
     }
     if (!formData.consentAgreed) {
-      errs.consentAgreed = 'You must confirm and consent before submitting';
+      errs.consentAgreed = "You must confirm and consent before submitting";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -120,7 +120,7 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
       setSubmissionSuccess(true);
     } catch (err) {
       console.error(err);
-      alert('An error occurred during admission submission. Please try again.');
+      alert("An error occurred during admission submission. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -135,10 +135,10 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
             Academic Admissions {new Date().getFullYear()} / {new Date().getFullYear() + 1}
           </Badge>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {t('admissions.title')}
+            {t("admissions.title")}
           </h1>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
-            {t('admissions.subtitle')}
+            {t("admissions.subtitle")}
           </p>
         </Container>
       </section>
@@ -149,25 +149,27 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
             {/* Step Progress Indicators */}
             <div className="px-6 sm:px-10 py-5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               {[
-                { number: 1, title: 'Student Identity', label: 'Step 1' },
-                { number: 2, title: 'Parent / Guardian', label: 'Step 2' },
-                { number: 3, title: 'Academic Preferences', label: 'Step 3' },
+                { number: 1, title: "Student Identity", label: "Step 1" },
+                { number: 2, title: "Parent / Guardian", label: "Step 2" },
+                { number: 3, title: "Academic Preferences", label: "Step 3" },
               ].map((s) => (
                 <div key={s.number} className="flex items-center gap-2">
                   <span
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                       step === s.number
-                        ? 'bg-indigo-600 text-white'
+                        ? "bg-indigo-600 text-white"
                         : step > s.number
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                     }`}
                   >
                     {step > s.number ? <CheckCircle2 className="w-4 h-4" /> : s.number}
                   </span>
                   <span
                     className={`hidden sm:inline text-xs font-semibold ${
-                      step === s.number ? 'text-indigo-900 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'
+                      step === s.number
+                        ? "text-indigo-900 dark:text-indigo-300"
+                        : "text-slate-500 dark:text-slate-400"
                     }`}
                   >
                     {s.title}
@@ -182,8 +184,12 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
               {step === 1 && (
                 <div className="space-y-4 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Student Profile</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Provide official details as registered in school records.</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      Student Profile
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Provide official details as registered in school records.
+                    </p>
                   </div>
 
                   <Input
@@ -209,9 +215,9 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
                       value={formData.gender}
                       onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
                       options={[
-                        { value: 'male', label: 'Male' },
-                        { value: 'female', label: 'Female' },
-                        { value: 'other', label: 'Prefer not to say' },
+                        { value: "male", label: "Male" },
+                        { value: "female", label: "Female" },
+                        { value: "other", label: "Prefer not to say" },
                       ]}
                     />
                   </div>
@@ -246,8 +252,12 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
               {step === 2 && (
                 <div className="space-y-4 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Parent / Guardian Contact</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Required for official admissions communication and timetable notifications.</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      Parent / Guardian Contact
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Required for official admissions communication and timetable notifications.
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -262,11 +272,13 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
                     <Select
                       label="Relationship to Student"
                       value={formData.guardianRelation}
-                      onChange={(e) => setFormData({ ...formData, guardianRelation: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, guardianRelation: e.target.value })
+                      }
                       options={[
-                        { value: 'Father', label: 'Father' },
-                        { value: 'Mother', label: 'Mother' },
-                        { value: 'Guardian', label: 'Legal Guardian' },
+                        { value: "Father", label: "Father" },
+                        { value: "Mother", label: "Mother" },
+                        { value: "Guardian", label: "Legal Guardian" },
                       ]}
                     />
                   </div>
@@ -313,8 +325,12 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
               {step === 3 && (
                 <div className="space-y-5 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Academic Intake Preferences</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Configure your target stream and format preferences.</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      Academic Intake Preferences
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Configure your target stream and format preferences.
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -327,11 +343,16 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
                     <Select
                       label="Learning Format"
                       value={formData.learningPreference}
-                      onChange={(e) => setFormData({ ...formData, learningPreference: e.target.value as any })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, learningPreference: e.target.value as any })
+                      }
                       options={[
-                        { value: 'Hybrid', label: 'Hybrid (Tuition Center + Online)' },
-                        { value: 'Online Live', label: 'Online Live Stream Only' },
-                        { value: 'Physical Classroom', label: 'Physical Classroom (Tuition Center)' },
+                        { value: "Hybrid", label: "Hybrid (Tuition Center + Online)" },
+                        { value: "Online Live", label: "Online Live Stream Only" },
+                        {
+                          value: "Physical Classroom",
+                          label: "Physical Classroom (Tuition Center)",
+                        },
                       ]}
                     />
                   </div>
@@ -352,7 +373,9 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
                       ))}
                     </div>
                     {errors.preferredSubjects && (
-                      <p className="mt-1 text-xs text-rose-600 font-medium">{errors.preferredSubjects}</p>
+                      <p className="mt-1 text-xs text-rose-600 font-medium">
+                        {errors.preferredSubjects}
+                      </p>
                     )}
                   </div>
 
@@ -370,10 +393,14 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
                       label="I confirm the accuracy of information and authorize TiT admissions to contact me via WhatsApp/Email."
                       description="Pre-registration is completely free and tuition fees only apply after your enrollment is confirmed."
                       checked={formData.consentAgreed}
-                      onChange={(e) => setFormData({ ...formData, consentAgreed: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, consentAgreed: e.target.checked })
+                      }
                     />
                     {errors.consentAgreed && (
-                      <p className="mt-1 text-xs text-rose-600 font-medium">{errors.consentAgreed}</p>
+                      <p className="mt-1 text-xs text-rose-600 font-medium">
+                        {errors.consentAgreed}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -440,27 +467,36 @@ export const AdmissionsPage: React.FC<AdmissionsPageProps> = ({ currentLang, onN
             </div>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-lg mx-auto leading-relaxed">
-              Thank you, <strong className="text-slate-800 dark:text-slate-200">{formData.studentFullName}</strong>. Your academic intake application has been queued with the TiT Education admissions board.
+              Thank you,{" "}
+              <strong className="text-slate-800 dark:text-slate-200">
+                {formData.studentFullName}
+              </strong>
+              . Your academic intake application has been queued with the TiT Education admissions
+              board.
             </p>
 
             <div className="p-5 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-left text-xs max-w-md mx-auto space-y-2">
-              <span className="font-bold text-slate-800 dark:text-slate-200 block text-sm">Next Steps:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200 block text-sm">
+                Next Steps:
+              </span>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                1. An academic counselor will reach out via WhatsApp ({formData.guardianPhone}) within 24 hours.
+                1. An academic counselor will reach out via WhatsApp ({formData.guardianPhone})
+                within 24 hours.
               </p>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                 2. You will receive batch timetable schedules and class admission details.
               </p>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                3. Student portal login details will be sent via WhatsApp once your class enrollment is confirmed.
+                3. Student portal login details will be sent via WhatsApp once your class enrollment
+                is confirmed.
               </p>
             </div>
 
             <div className="pt-4 flex justify-center gap-3">
-              <Button variant="primary" size="md" onClick={() => onNavigate('home')}>
+              <Button variant="primary" size="md" onClick={() => onNavigate("home")}>
                 Return to Homepage
               </Button>
-              <Button variant="outline" size="md" onClick={() => onNavigate('marketplace')}>
+              <Button variant="outline" size="md" onClick={() => onNavigate("marketplace")}>
                 Explore Free Revision Notes
               </Button>
             </div>
