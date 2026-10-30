@@ -54,7 +54,6 @@ const AssignmentStudentPreview: React.FC<{
   instructions: string;
   dueDate: string;
   maxMarks: string;
-  allowedAttempts: string;
   allowLateSubmission: boolean;
   latePenaltyPercentage: string;
   rubricItems: EditRubric[];
@@ -67,7 +66,6 @@ const AssignmentStudentPreview: React.FC<{
   instructions,
   dueDate,
   maxMarks,
-  allowedAttempts,
   allowLateSubmission,
   latePenaltyPercentage,
   rubricItems,
@@ -118,9 +116,6 @@ const AssignmentStudentPreview: React.FC<{
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
                 Due: {dueDate ? new Date(dueDate).toLocaleString() : "Not set"}
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                {allowedAttempts || "1"} attempt{allowedAttempts === "1" ? "" : "s"}
               </span>
               <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
                 {allowLateSubmission
@@ -233,7 +228,6 @@ const AssignmentEditModal: React.FC<{
   const [startDate, setStartDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [maxMarks, setMaxMarks] = useState("100");
-  const [allowedAttempts, setAllowedAttempts] = useState("1");
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
   const [rubricItems, setRubricItems] = useState<EditRubric[]>([]);
@@ -252,7 +246,6 @@ const AssignmentEditModal: React.FC<{
     setStartDate(assignmentDateInput(assignment.startDate));
     setDueDate(assignmentDateInput(assignment.dueDate));
     setMaxMarks(String(assignment.maxMarks));
-    setAllowedAttempts(String(assignment.allowedAttempts || 1));
     setAllowLateSubmission(Boolean(assignment.allowLateSubmission));
     setLatePenaltyPercentage(String(assignment.latePenaltyPercentage || 0));
     setRubricItems(
@@ -286,8 +279,12 @@ const AssignmentEditModal: React.FC<{
     if (!startDate || !dueDate || startDate > dueDate) {
       return setFormError("The due date must be on or after the start date.");
     }
-    if (Number(maxMarks) < 1 || Number(allowedAttempts) < 1) {
-      return setFormError("Maximum marks and allowed attempts must be at least 1.");
+    if (Number(maxMarks) < 1) {
+      return setFormError("Maximum marks must be at least 1.");
+    }
+    const totalPercentage = rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0);
+    if (totalPercentage > 100) {
+      return setFormError("Rubric criteria percentages cannot exceed 100% in total.");
     }
     setIsSubmitting(true);
     setFormError("");
@@ -299,7 +296,6 @@ const AssignmentEditModal: React.FC<{
         startDate: `${startDate}:00`,
         dueDate: `${dueDate}:00`,
         maxMarks: Number(maxMarks),
-        allowedAttempts: Number(allowedAttempts),
         allowLateSubmission,
         latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
         rubricItems: rubricItems
@@ -452,16 +448,6 @@ const AssignmentEditModal: React.FC<{
                 className={fieldClass}
               />
             </label>
-            <label className="text-xs font-semibold text-slate-700">
-              Allowed attempts
-              <input
-                type="number"
-                min="1"
-                value={allowedAttempts}
-                onChange={(e) => setAllowedAttempts(e.target.value)}
-                className={fieldClass}
-              />
-            </label>
           </div>
           <label className="block text-xs font-semibold text-slate-700">
             Description
@@ -596,6 +582,9 @@ const AssignmentEditModal: React.FC<{
                 + Add criterion
               </button>
             </div>
+            <p className="text-[11px] text-slate-500">
+              Total: {rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0)}% / 100%
+            </p>
             {rubricItems.map((item, index) => (
               <div key={index} className="flex flex-col gap-2 sm:flex-row">
                 <input
@@ -613,15 +602,23 @@ const AssignmentEditModal: React.FC<{
                 <input
                   type="number"
                   min="1"
-                  placeholder="Marks"
+                  max="100"
+                  placeholder="Percentage"
                   value={item.marks}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    const otherTotal = rubricItems.reduce(
+                      (sum, row, rowIndex) =>
+                        sum + (rowIndex === index ? 0 : Number(row.marks) || 0),
+                      0,
+                    );
+                    if (value < 0 || otherTotal + value > 100) return;
                     setRubricItems((items) =>
                       items.map((row, i) =>
                         i === index ? { ...row, marks: e.target.value } : row,
                       ),
                     )
-                  }
+                  }}
                   className={`${fieldClass} mt-0 sm:w-24`}
                 />
                 <button
@@ -675,7 +672,6 @@ const AssignmentEditModal: React.FC<{
           instructions={instructions}
           dueDate={dueDate}
           maxMarks={maxMarks}
-          allowedAttempts={allowedAttempts}
           allowLateSubmission={allowLateSubmission}
           latePenaltyPercentage={latePenaltyPercentage}
           rubricItems={rubricItems}
@@ -1071,8 +1067,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                     Due: {asg.dueDate} at {asg.dueTime}
                   </span>
                   <span className="font-mono font-medium text-slate-700">
-                    {asg.maxMarks} marks · {asg.allowedAttempts || 1} attempt
-                    {asg.allowedAttempts === 1 ? "" : "s"}
+                    {asg.maxMarks} marks
                   </span>
                 </div>
               </div>
