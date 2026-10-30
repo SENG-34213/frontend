@@ -18,10 +18,10 @@ export default async function LanguageLayout({ children, params }) {
   }
 
   return (
-    <>
+    <div className="languageLayout">
       <Header />
       <main>{children}</main>
       <Footer />
-    </>
+    </div>
   );
 }
