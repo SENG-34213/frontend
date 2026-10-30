@@ -181,7 +181,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
       if (!formData.firstName.trim()) errors.firstName = "First name is required";
       if (!formData.lastName.trim()) errors.lastName = "Last name is required";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
-        errors.email = "Valid institutional or student email is required";
+        errors.email = "Valid platform or student email is required";
     }
     if (step === 2) {
       if (!selectedGradeName.trim()) errors.grade = "Select an active grade";
@@ -632,13 +632,13 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                   </div>
                   <div className="col-span-2">
                     <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                      Student Institutional Email *
+                      Student Platform Email *
                     </label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="e.g. liam.bennett@mentify.edu"
+                      placeholder="e.g. nimal.perera@example.com"
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                     {formErrors.email && (
@@ -653,10 +653,10 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       Primary Phone
                     </label>
                     <input
-                      type="text"
+                      type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="e.g. +94 77 123 4567"
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   </div>
@@ -713,7 +713,7 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       School / Tuition Center
                     </label>
                     <input
-                      type="text"
+                      type="tel"
                       value={formData.schoolName}
                       onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -755,10 +755,10 @@ export const StudentManagement: React.FC<StudentManagementProps> = ({
                       Guardian Contact Phone *
                     </label>
                     <input
-                      type="text"
+                      type="tel"
                       value={formData.guardianPhone}
                       onChange={(e) => setFormData({ ...formData, guardianPhone: e.target.value })}
-                      placeholder="+1 (555) 887-1290"
+                      placeholder="e.g. +94 71 234 5678"
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                     {formErrors.guardianPhone && (

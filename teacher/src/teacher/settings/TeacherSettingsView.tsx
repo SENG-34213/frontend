@@ -400,7 +400,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({
         <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-2 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-2 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 p-4 text-white">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-100">
-              Faculty workspace
+              Teacher workspace
             </p>
             <p className="mt-1 text-lg font-bold">Settings centre</p>
             <p className="mt-1 text-[11px] text-indigo-100">
@@ -441,7 +441,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({
                       Teaching account overview
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      A quick view of your faculty identity and account protection.
+                      A quick view of your teacher identity and account protection.
                     </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -792,7 +792,7 @@ export const TeacherSettingsView: React.FC<TeacherSettingsViewProps> = ({
                       Account security
                     </h2>
                     <p className="mt-1 text-xs text-slate-500">
-                      Change your faculty account password securely.
+                      Change your teacher account password securely.
                     </p>
                   </div>
                   <form onSubmit={changePassword} className="max-w-xl space-y-4">

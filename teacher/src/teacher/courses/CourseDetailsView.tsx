@@ -642,7 +642,6 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                         <th className="px-4 py-3">Student</th>
                         <th className="px-4 py-3">Student Number</th>
                         <th className="px-4 py-3">Attendance</th>
-                        <th className="px-4 py-3">GPA</th>
                         <th className="px-4 py-3">Academic Status</th>
                         <th className="px-4 py-3 text-right">Action</th>
                       </tr>
@@ -650,7 +649,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                     <tbody className="divide-y divide-slate-100">
                       {enrolledStudents.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-4 py-8 text-center text-xs text-slate-400">
+                          <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-400">
                             No enrolled students found.
                           </td>
                         </tr>
@@ -673,9 +672,6 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                             <td className="px-4 py-3 font-mono text-slate-600">{st.studentId}</td>
                             <td className="px-4 py-3 font-mono tabular-nums text-slate-700">
                               {st.attendanceRate === null ? "Unavailable" : `${st.attendanceRate}%`}
-                            </td>
-                            <td className="px-4 py-3 font-mono tabular-nums font-semibold text-slate-900">
-                              {st.gpa === null ? "Unavailable" : st.gpa.toFixed(2)}
                             </td>
                             <td className="px-4 py-3">
                               <StatusBadge status={st.status} />

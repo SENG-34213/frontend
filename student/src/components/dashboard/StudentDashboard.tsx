@@ -265,12 +265,6 @@ export const StudentDashboard: React.FC = () => {
               <p className="text-[10px] uppercase tracking-wider text-slate-400">Degree progress</p>
               <p className="mt-1 text-sm font-bold text-cyan-300">{Math.round(creditProgress)}%</p>
             </div>
-            <div className="bg-white/[0.06] p-4">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400">Current GPA</p>
-              <p className="mt-1 text-sm font-bold text-emerald-300">
-                {profile.currentGpa ? profile.currentGpa.toFixed(2) : "—"}
-              </p>
-            </div>
           </div>
         </div>
       </section>

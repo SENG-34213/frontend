@@ -167,12 +167,10 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
             return (
               <div
                 key={course.id}
-                className="bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all overflow-hidden flex flex-col group"
+                className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg"
               >
                 {/* Styled Course Header / Cover */}
-                <div
-                  className={`h-24 bg-gradient-to-r ${themeColors} p-4 flex flex-col justify-between text-white relative`}
-                >
+                <div className={`relative h-44 bg-gradient-to-r ${themeColors} p-4 text-white`}>
                   {course.courseThumbnail && (
                     <CourseThumbnailImage
                       source={course.courseThumbnail}
@@ -180,79 +178,63 @@ export const CourseListView: React.FC<CourseListViewProps> = ({
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   )}
-                  <div className="absolute inset-0 bg-slate-950/30" />
-                  <div className="flex items-center justify-between relative">
-                    <span className="text-xs font-mono font-bold bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded border border-white/20">
-                      {course.code}
+                  <div className="absolute inset-0 bg-slate-950/35" />
+                  <div className="relative flex items-start justify-between gap-2">
+                    <span className="rounded-full border border-white/30 bg-white/90 px-2.5 py-1 text-[10px] font-bold text-slate-800 shadow-sm">
+                      {course.category || "Course"}
                     </span>
-                    <span className="text-xs bg-black/20 backdrop-blur-xs px-2 py-0.5 rounded">
-                      {course.level}
+                    <span className="rounded-full bg-slate-950/60 px-2.5 py-1 text-[10px] font-bold backdrop-blur-sm">
+                      {course.status}
                     </span>
                   </div>
-                  <div className="text-[11px] text-white/80 font-medium relative">
-                    {course.semester}
-                    {course.academicYear ? ` · ${course.academicYear}` : ""}
+                  <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2">
+                    <span className="rounded-md bg-slate-950/70 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
+                      {course.code}
+                    </span>
+                    <span className="text-right text-[11px] font-medium text-white/90">
+                      {course.level}
+                      {course.semester ? ` · ${course.semester}` : ""}
+                    </span>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-4 flex-1 flex flex-col justify-between">
+                <div className="flex flex-1 flex-col justify-between p-5">
                   <div>
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <div className="mb-2 flex items-start justify-between gap-2">
                       <h3
                         onClick={() => onSelectCourse(course)}
-                        className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 cursor-pointer transition-colors line-clamp-1"
+                        className="line-clamp-2 cursor-pointer text-base font-bold leading-snug text-slate-900 transition-colors group-hover:text-indigo-600"
                       >
                         {course.title}
                       </h3>
-                      <StatusBadge status={course.status} />
                     </div>
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                    <p className="line-clamp-2 text-xs leading-relaxed text-slate-500">
                       {course.description}
                     </p>
                   </div>
 
-                  {/* Metrics bar */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 space-y-2.5">
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                      <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-                        <span className="block text-[10px] text-slate-400 font-medium">
-                          Students
-                        </span>
-                        <span className="font-bold text-slate-900 font-mono tabular-nums">
-                          {course.maxCapacity > 0
-                            ? `${course.enrolledCount}/${course.maxCapacity}`
-                            : course.enrolledCount}
-                        </span>
-                      </div>
-                      <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-                        <span className="block text-[10px] text-slate-400 font-medium">
-                          Modules
-                        </span>
-                        <span className="font-bold text-slate-900 font-mono tabular-nums">
-                          {course.modulesCount}
-                        </span>
-                      </div>
-                      <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-                        <span className="block text-[10px] text-slate-400 font-medium">
-                          Avg Grade
-                        </span>
-                        <span className="font-bold text-slate-900 font-mono tabular-nums">
-                          {course.averageGrade > 0 ? `${course.averageGrade}%` : "N/A"}
-                        </span>
-                      </div>
+                  <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-slate-400" />
+                        {course.enrolledCount} students
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Layers className="h-3.5 w-3.5 text-slate-400" />
+                        {course.modulesCount} modules
+                      </span>
                     </div>
-
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[11px] text-slate-400">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-[11px] text-slate-400">
                         Next: {course.nextSession || "Not scheduled"}
                       </span>
                       <button
                         onClick={() => onSelectCourse(course)}
-                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700"
                       >
-                        <span>Manage Course</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span>View Course</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>

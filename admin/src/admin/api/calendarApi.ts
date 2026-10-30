@@ -37,6 +37,11 @@ export interface CalendarEventRequest {
 
 interface CalendarEventResponse extends CalendarEventRequest {
   id: string;
+  instructorId?: string;
+  instructorName?: string;
+  instructorEmail?: string;
+  instructorTitle?: string;
+  instructorDepartment?: string;
   sourceType?: string;
   sourceId?: string | null;
   createdBy?: string;
@@ -86,6 +91,8 @@ export function mapCalendarEvent(event: CalendarEventResponse): AcademicEvent {
     endDateTime: event.endDateTime,
     allDay: event.allDay,
     courseId: event.courseId,
+    instructorName: event.instructorName,
+    instructorEmail: event.instructorEmail,
     visibility: event.visibility,
     targetRole: event.targetRole,
     canEdit: event.canEdit,

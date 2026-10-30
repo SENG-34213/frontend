@@ -338,7 +338,7 @@ export const MentifyAIAssistant: React.FC = () => {
     <div className="space-y-4">
       <PageHeader
         title="TiT AI Assistant"
-        description="Premium conversational intelligence grounded in TiT institutional data and live platform analytics."
+        description="Premium conversational intelligence grounded in TiT platform data and live platform analytics."
         breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "TiT AI" }]}
         actions={
           <button

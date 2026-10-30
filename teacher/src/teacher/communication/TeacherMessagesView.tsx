@@ -1067,7 +1067,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
             <div>
               <h2 className="text-lg font-bold text-slate-900">Announcements</h2>
               <p className="mt-1 text-xs text-slate-500">
-                Institutional announcements shared with teaching faculty.
+                Platform announcements shared with teaching teacher.
               </p>
             </div>
             {isAnnouncementLoading ? (
@@ -1091,7 +1091,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
                       <div className="mb-1 flex items-center gap-2">
                         <Megaphone className="h-4 w-4 text-indigo-600" />
                         <span className="text-[10px] font-semibold uppercase tracking-wide text-indigo-600">
-                          {announcement.audience === "ALL" ? "All users" : "Teaching faculty"}
+                          {announcement.audience === "ALL" ? "All users" : "Teaching teacher"}
                         </span>
                         {announcement.priority === "URGENT" && (
                           <span className="rounded bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-600">

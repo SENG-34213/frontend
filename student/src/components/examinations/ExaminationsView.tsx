@@ -47,7 +47,7 @@ export const ExaminationsView: React.FC = () => {
           Formal Examinations Center
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Official proctored midterms, cumulative finals, and institutional academic assessments
+          Official proctored midterms, cumulative finals, and platform academic assessments
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export const ExaminationsView: React.FC = () => {
               Proctored examination workspace
             </h3>
             <p className="text-xs text-indigo-900/90 dark:text-indigo-300 leading-relaxed">
-              Examinations are strictly proctored under institutional university guidelines.
+              Examinations are strictly proctored under platform tuition program guidelines.
               Students must present a valid photo ID. Laptops must remain in secure fullscreen
               browser kiosk mode throughout the timed duration.
             </p>
@@ -164,7 +164,7 @@ export const ExaminationsView: React.FC = () => {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <User className="h-4 w-4 text-slate-400" />
-                    <span>Proctor: {exam.proctorName || "Assigned by course faculty"}</span>
+                    <span>Proctor: {exam.proctorName || "Assigned by course teacher"}</span>
                   </span>
                 </div>
 

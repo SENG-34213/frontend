@@ -1655,7 +1655,7 @@ function PreviewModal({
               <p className="font-mono text-xs text-slate-500">{material.originalFilename}</p>
               <p className="mx-auto max-w-md text-xs leading-relaxed text-slate-600">
                 {material.description ||
-                  "This document can be opened and downloaded using your authenticated institutional credentials."}
+                  "This document can be opened and downloaded using your authenticated platform credentials."}
               </p>
             </div>
           )}

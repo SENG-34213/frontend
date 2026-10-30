@@ -30,7 +30,7 @@ const toAssignment = (item: AdminAssignmentRecord, course?: Course): Assignment 
   courseId: item.courseId,
   courseCode: course?.code || item.courseId,
   courseTitle: course?.title || "Unknown course",
-  teacherName: course?.teacherName || "Unassigned faculty",
+  teacherName: course?.teacherName || "Unassigned teacher",
   title: item.title,
   dueDate: item.dueDate,
   totalSubmissions: item.totalSubmissions ?? 0,
@@ -361,7 +361,7 @@ export const AssignmentOversight: React.FC<AssignmentOversightProps> = ({ course
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                   <th className="px-4 py-3 font-semibold">Assignment</th>
-                  <th className="px-4 py-3 font-semibold">Course & faculty</th>
+                  <th className="px-4 py-3 font-semibold">Course & teacher</th>
                   <th className="px-4 py-3 font-semibold">Grading progress</th>
                   <th className="px-4 py-3 font-semibold">Due date</th>
                   <th className="px-4 py-3 font-semibold">Status</th>

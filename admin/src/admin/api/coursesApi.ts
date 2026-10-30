@@ -65,7 +65,7 @@ export function mapCourseResponse(course: CourseApiResponse): Course {
     title: course.courseName,
     courseName: course.courseName,
     teacherId: course.assignedTeacherId || "",
-    teacherName: course.assignedTeacherId ? "Assigned faculty" : "Unassigned faculty",
+    teacherName: course.assignedTeacherId ? "Assigned teacher" : "Unassigned teacher",
     assignedTeacherId: course.assignedTeacherId || undefined,
     grade: course.gradeName || "Grade not specified",
     gradeId: course.gradeId || undefined,

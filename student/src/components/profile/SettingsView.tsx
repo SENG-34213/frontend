@@ -123,7 +123,7 @@ export const SettingsView: React.FC = () => {
                 Course Broadcast Announcements
               </span>
               <span className="text-slate-500 text-[11px]">
-                Deliver faculty announcements to connected university email
+                Deliver teacher announcements to connected tuition program email
               </span>
             </div>
             <input

@@ -17,10 +17,10 @@ export const ReportsManagement: React.FC = () => {
   const reports: ReportTemplate[] = [
     {
       id: "rep-1",
-      title: "Institutional User Registration & Account Activity",
+      title: "Platform User Registration & Account Activity",
       category: "User Management",
       description:
-        "Detailed breakdown of newly registered students, appointed faculty, account activation times, and invitation issues.",
+        "Detailed breakdown of newly registered students, appointed teacher, account activation times, and invitation issues.",
       frequency: "Weekly",
       lastGenerated: "Oct 16, 2026",
     },
@@ -29,7 +29,7 @@ export const ReportsManagement: React.FC = () => {
       title: "Term 1 Course Enrollment & Section Capacity Digest",
       category: "Academic Operations",
       description:
-        "Audits student enrollment saturation per subject department, pending approval queues, and faculty course loads.",
+        "Audits student enrollment saturation per subject department, pending approval queues, and teacher course loads.",
       frequency: "Bi-Weekly",
       lastGenerated: "Oct 15, 2026",
     },
@@ -56,7 +56,7 @@ export const ReportsManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Institutional Reports"
+        title="Platform Reports"
         description="Generate certified administrative audits, enrollment digests, and compliance reporting packages."
         breadcrumbs={[{ label: "Admin" }, { label: "Platform Operations" }, { label: "Reports" }]}
       />

@@ -19,7 +19,7 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
 
 ### 1. Flagship Operations Dashboard
 
-- **Dynamic Institutional KPIs**: Real-time metric cards for Total Students (1,420), Total Faculty (84), Active Courses (48), Enrollments (3,290), Pending Keycloak Invites (12), Active Users (1,485), and Upcoming Exams (9).
+- **Dynamic Platform KPIs**: Real-time metric cards for Total Students (1,420), Total Teacher (84), Active Courses (48), Enrollments (3,290), Pending Keycloak Invites (12), Active Users (1,485), and Upcoming Exams (9).
 - **Registration Velocity Chart**: Interactive registration trend visualization with 7-day, 30-day, and 90-day time filters.
 - **Pending Invitations Operational Center**: Direct action card to inspect and dispatch Keycloak invitation reminders.
 - **Upcoming Academic Timetable**: Real-time schedule of lectures, quizzes, assignment deadlines, and exam hall sessions.
@@ -33,7 +33,7 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
   - **5-Step Registration Wizard**: Personal Info &rarr; Academic & Guardian &rarr; Residential Address &rarr; Review & Validation &rarr; Backend Auto-Generated Student ID (`STU-2026-xxxx`).
   - Student inspection drawer with dedicated tabs for Overview, Enrolled Courses, Grades, and Roll Call logs.
 - **Teacher Administration**:
-  - Faculty directory with specializations, hire dates, and assigned course loads.
+  - Teacher directory with specializations, hire dates, and assigned course loads.
   - **5-Step Registration Wizard**: Personal Info &rarr; Professional Credentials (NIC, Multiple Specializations) &rarr; Address &rarr; Review &rarr; Auto-Generated Teacher Code (`TCH-91xx`).
 - **Administrator Governance (`SUPER_ADMIN` Only)**:
   - Strict role-gated directory for administrative credentials.
@@ -44,7 +44,7 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
 - **Course Management**: Course code tracking, category tagging, student capacity gauges, and a creation modal. Includes inspection tabs for Syllabus Curriculum, Student Rosters, S3 Assets, and Evaluation Statistics.
 - **Enrollment Management**: Cross-department student rosters with approval triggers for pending enrollments.
 - **Modules & Lessons Explorer**: Interactive curriculum tree showing lesson durations, attached quizzes, and syllabus publishing states.
-- **Assignment Oversight**: Submission tracking and faculty grading velocity progress bars.
+- **Assignment Oversight**: Submission tracking and teacher grading velocity progress bars.
 - **Quiz Management & Analytics**: Formative assessment statistics, median score distributions, and pass rate thresholds.
 - **Examination Management**: Summative exam timetables, candidate hall allocations, and proctoring schedules.
 - **Grades & Results Gradebook**: Comprehensive evaluation ledger with score breakdowns and qualitative evaluator feedback.
@@ -63,11 +63,11 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
 ### 5. Intelligence & Administrative Governance
 
 - **TiT AI Assistant**:
-  - Interactive conversational assistant grounded in institutional data and microservice operations.
+  - Interactive conversational assistant grounded in platform data and microservice operations.
   - Pre-configured administrative inquiry prompt chips (registration velocity, quiz failure variance, exam venue conflicts).
   - Markdown message rendering, response copy utilities, and new session management.
 - **Analytics Dashboard**: Departmental enrollment distribution bars, weekly attendance compliance curves, and demographic KPIs.
-- **Certified Institutional Reports**: Report template preview and parameter customization.
+- **Certified Platform Reports**: Report template preview and parameter customization.
 - **System Audit & Activity**: Immutable event stream with full JSON payload drawer inspection.
 
 ### 6. Profile & Settings
@@ -79,7 +79,7 @@ Built with **React 19**, **TypeScript**, and **Tailwind CSS v4**, this workspace
 
 ## 🔐 Role-Based Access Control (RBAC)
 
-The application models the institutional authorization policies enforced by Keycloak and Spring Boot:
+The application models the platform authorization policies enforced by Keycloak and Spring Boot:
 
 | Capability                                  |      ADMIN      | SUPER_ADMIN |
 | :------------------------------------------ | :-------------: | :---------: |
@@ -155,7 +155,7 @@ src/
 │   ├── settings/           # Appearance, Keycloak SSO, and session settings
 │   ├── students/           # Student directory & 5-step registration wizard
 │   ├── teachers/           # Teacher directory & 5-step registration wizard
-│   ├── users/              # Unified directory across all institutional users
+│   ├── users/              # Unified directory across all platform users
 │   ├── mockData.ts         # Seed data grounded in Spring Boot microservices
 │   └── types.ts            # Domain TypeScript models
 ├── App.tsx                 # Core state coordinator & view router

@@ -153,7 +153,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
       if (!formData.firstName.trim()) errors.firstName = "First name is required";
       if (!formData.lastName.trim()) errors.lastName = "Last name is required";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(formData.email.trim()))
-        errors.email = "Valid institutional faculty email is required";
+        errors.email = "Valid platform teacher email is required";
     }
     if (step === 2) {
       if (!formData.nic.trim()) errors.nic = "National Identity Card (NIC) is required";
@@ -221,7 +221,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
     <div className="space-y-6">
       <PageHeader
         title="Teacher Management"
-        description="Faculty directory, departmental specializations, course assignments, and credential onboarding."
+        description="Teacher directory, departmental specializations, course assignments, and credential onboarding."
         breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "Teachers" }]}
         actions={
           <button
@@ -251,7 +251,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
         </div>
 
         <span className="text-xs text-slate-400 tabular-nums">
-          {filteredTeachers.length} active faculty members
+          {filteredTeachers.length} active teacher members
         </span>
       </div>
 
@@ -262,7 +262,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
             <thead>
               <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-3 px-4 font-semibold">Teacher Code</th>
-                <th className="py-3 px-4 font-semibold">Faculty Name & Email</th>
+                <th className="py-3 px-4 font-semibold">Teacher Name & Email</th>
                 <th className="py-3 px-4 font-semibold">Approved Specializations</th>
                 <th className="py-3 px-4 font-semibold">Hire Date</th>
                 <th className="py-3 px-4 font-semibold">Courses</th>
@@ -470,7 +470,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
             {currentStep === 1 && (
               <div className="py-4 space-y-4">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Step 1: Faculty Profile
+                  Step 1: Teacher Profile
                 </h4>
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
@@ -505,13 +505,13 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                   </div>
                   <div className="col-span-2">
                     <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                      Faculty Institutional Email *
+                      Teacher Platform Email *
                     </label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="e.g. jonathan.hughes@mentify.edu"
+                      placeholder="e.g. kasun.perera@example.com"
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                     {formErrors.email && (
@@ -523,10 +523,10 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                       Phone Number
                     </label>
                     <input
-                      type="text"
+                      type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="e.g. +94 76 345 6789"
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                     />
                   </div>
@@ -687,18 +687,18 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
             {currentStep === 4 && (
               <div className="py-4 space-y-4">
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Step 4: Confirm Faculty Provisioning
+                  Step 4: Confirm Teacher Provisioning
                 </h4>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <span className="text-slate-400 block">Faculty Name:</span>
+                      <span className="text-slate-400 block">Teacher Name:</span>
                       <span className="font-semibold text-slate-900 dark:text-white">
                         {formData.firstName} {formData.lastName}
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">Faculty Email:</span>
+                      <span className="text-slate-400 block">Teacher Email:</span>
                       <span className="font-medium text-slate-900 dark:text-white">
                         {formData.email}
                       </span>
@@ -761,7 +761,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
                     onClick={resetWizard}
                     className="px-4 py-2 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
                   >
-                    Done & Return to Faculty Directory
+                    Done & Return to Teacher Directory
                   </button>
                   <button
                     onClick={() => {
@@ -834,7 +834,7 @@ export const TeacherManagement: React.FC<TeacherManagementProps> = ({
         <DetailDrawer
           isOpen={!!selectedTeacher}
           title={`${selectedTeacher.firstName} ${selectedTeacher.lastName}`}
-          subtitle={`${selectedTeacher.teacherCode} · Faculty Member`}
+          subtitle={`${selectedTeacher.teacherCode} · Teacher Member`}
           onClose={() => setSelectedTeacher(null)}
           width="lg"
         >

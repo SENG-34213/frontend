@@ -167,7 +167,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
     <div className="space-y-6">
       <PageHeader
         title="All Users Management"
-        description="Unified institutional directory for managing people and access."
+        description="Unified platform directory for managing people and access."
         breadcrumbs={[{ label: "Admin" }, { label: "User Management" }, { label: "All Users" }]}
         actions={
           <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, email, or institutional code..."
+            placeholder="Search by name, email, or platform code..."
             className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
         </div>
@@ -258,7 +258,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
               <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
                 <th className="py-3 px-4 font-semibold">User</th>
                 <th className="py-3 px-4 font-semibold">Role</th>
-                <th className="py-3 px-4 font-semibold">Institutional Code</th>
+                <th className="py-3 px-4 font-semibold">Platform Code</th>
                 <th className="py-3 px-4 font-semibold">Account Status</th>
                 <th className="py-3 px-4 font-semibold text-right">Actions</th>
               </tr>
@@ -536,7 +536,7 @@ export const UsersManagement: React.FC<UsersManagementProps> = ({
             {selectedUser.role === "TEACHER" && (
               <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Faculty Attributes
+                  Teacher Attributes
                 </h4>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">

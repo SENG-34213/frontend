@@ -116,8 +116,8 @@ const TUITION_VENUES: VenueStatus[] = [
   },
   {
     id: "v-06",
-    name: "Faculty Wing Room 310",
-    building: "Faculty Wing",
+    name: "Teacher Wing Room 310",
+    building: "Teacher Wing",
     capacity: 15,
     type: "Advising Room",
   },
@@ -137,7 +137,7 @@ const KNOWN_COURSES = [
   { code: "BIO-204", title: "Molecular Genetics & Cellular Biology", dept: "Biology" },
   { code: "CHEM-201", title: "Organic Chemistry & Reaction Mechanisms", dept: "Chemistry" },
   { code: "CS-450", title: "Artificial Intelligence & Ethics", dept: "Computer Science" },
-  { code: "SENATE", title: "Institutional Governance Council", dept: "Administration" },
+  { code: "SENATE", title: "Platform Governance Council", dept: "Administration" },
   { code: "REGISTRAR", title: "Academic Registrar & Records", dept: "Administration" },
 ];
 
@@ -972,7 +972,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
       {/* Top Header */}
       <PageHeader
         title="Academic Calendar & Schedule"
-        description="Master timetable and facility scheduling for examinations, lectures, assignment cutoffs, and faculty councils."
+        description="Master timetable and facility scheduling for examinations, lectures, assignment cutoffs, and teacher councils."
         breadcrumbs={[
           { label: "Home" },
           { label: "Overview" },
@@ -1206,7 +1206,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                   {selectedVisibility === "PUBLIC_STUDENTS"
                     ? "Public"
                     : selectedVisibility === "FACULTY_ONLY"
-                      ? "Faculty"
+                      ? "Teacher"
                       : "Admin"}
                 </span>
                 <button onClick={() => setSelectedVisibility("ALL")} className="hover:text-sky-900">
@@ -1373,7 +1373,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 onChange={(e) => setSelectedInstructor(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
               >
-                <option value="ALL">All Faculty Members ({instructorOptions.length})</option>
+                <option value="ALL">All Teacher Members ({instructorOptions.length})</option>
                 {instructorOptions.map((i) => (
                   <option key={i.name} value={i.name}>
                     {i.name} ({i.dept})
@@ -1411,7 +1411,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
               >
                 <option value="ALL">All Audiences</option>
                 <option value="PUBLIC_STUDENTS">Public (Student Facing)</option>
-                <option value="FACULTY_ONLY">Faculty Only</option>
+                <option value="FACULTY_ONLY">Teacher Only</option>
                 <option value="ADMIN_RESTRICTED">Admin Restricted</option>
               </select>
             </div>
@@ -2123,7 +2123,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 onChange={(e) => setSelectedInstructor(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
               >
-                <option value="ALL">All Faculty</option>
+                <option value="ALL">All Teacher</option>
                 {instructorOptions.map((i) => (
                   <option key={i.name} value={i.name}>
                     {i.name}
@@ -2161,7 +2161,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
               >
                 <option value="ALL">All Audiences</option>
                 <option value="PUBLIC_STUDENTS">Public (Students)</option>
-                <option value="FACULTY_ONLY">Faculty Only</option>
+                <option value="FACULTY_ONLY">Teacher Only</option>
                 <option value="ADMIN_RESTRICTED">Admin Restricted</option>
               </select>
             </div>
@@ -2208,7 +2208,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                       {selectedEvent.visibility === "PUBLIC_STUDENTS"
                         ? "Public"
                         : selectedEvent.visibility === "FACULTY_ONLY"
-                          ? "Faculty Only"
+                          ? "Teacher Only"
                           : "Admin Restricted"}
                     </span>
                   )}
@@ -2306,7 +2306,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
             {selectedTeacherName && (
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/50 space-y-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Assigned Faculty Lead / Proctor
+                  Assigned Teacher Lead / Proctor
                 </span>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
@@ -2319,14 +2319,11 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                       </h4>
                       <span className="text-[11px] text-slate-400 flex items-center gap-1">
                         <Mail className="w-3 h-3" />
-                        <span>
-                          {selectedEvent.instructorEmail ||
-                            `${selectedTeacherName.toLowerCase().replace(/[^a-z]/g, "")}@mentify.edu`}
-                        </span>
+                        <span>{selectedEvent.instructorEmail || "Email not available"}</span>
                       </span>
                     </div>
                   </div>
-                  <span className="text-[10.5px] text-slate-400">Verified Faculty</span>
+                  <span className="text-[10.5px] text-slate-400">Verified Teacher</span>
                 </div>
               </div>
             )}
@@ -2613,8 +2610,8 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                     onChange={(e) => setFormVisibility(e.target.value as any)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
                   >
-                    <option value="PUBLIC_STUDENTS">Public (All Students & Faculty)</option>
-                    <option value="FACULTY_ONLY">Faculty & Staff Only</option>
+                    <option value="PUBLIC_STUDENTS">Public (All Students & Teacher)</option>
+                    <option value="FACULTY_ONLY">Teacher & Staff Only</option>
                     <option value="ADMIN_RESTRICTED">Administrative Governance Only</option>
                   </select>
                 </div>

@@ -103,7 +103,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
     <div className="space-y-6">
       <PageHeader
         title="Learning Material Management"
-        description="Inspect cloud storage asset repositories, upload pedagogical media, and verify student access integrity."
+        description="Manage course materials, upload files, and control student access."
         breadcrumbs={[
           { label: "Admin" },
           { label: "Platform Operations" },
@@ -120,7 +120,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
         }
       />
 
-      {/* S3 Storage Stats Bar */}
+      {/* Learning materials summary */}
       <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
@@ -129,14 +129,14 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
           <div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-900 dark:text-white">
-                Secure learning storage
+                Learning materials
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                mentify-course-assets-prod
+                Course resources
               </span>
             </div>
             <span className="text-slate-500 text-[11px] block mt-0.5">
-              Region: us-east-1 · AES-256 Server-Side Encryption Enforced
+              All uploaded files are securely managed for your courses.
             </span>
           </div>
         </div>
@@ -145,7 +145,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
           <div>
             <span className="text-slate-400 block text-[11px]">Indexed Files</span>
             <span className="font-bold text-slate-900 dark:text-white tabular-nums">
-              {materials.length} assets
+              {materials.length} materials
             </span>
           </div>
           <div>
@@ -165,7 +165,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by title, S3 key, or course code..."
+            placeholder="Search by title, file name, or course code..."
             className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none"
           />
         </div>
@@ -204,11 +204,11 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                <th className="py-3 px-4 font-semibold">Asset Title</th>
+                <th className="py-3 px-4 font-semibold">Material Title</th>
                 <th className="py-3 px-4 font-semibold">Course Code</th>
                 <th className="py-3 px-4 font-semibold">Format</th>
                 <th className="py-3 px-4 font-semibold">File Size</th>
-                <th className="py-3 px-4 font-semibold">S3 Object Key</th>
+                <th className="py-3 px-4 font-semibold">File Name</th>
                 <th className="py-3 px-4 font-semibold">Status</th>
                 <th className="py-3 px-4 font-semibold text-right">Actions</th>
               </tr>
@@ -243,7 +243,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
                   </td>
 
                   <td className="py-3 px-4 font-mono text-[11px] text-slate-400 truncate max-w-xs">
-                    {mat.s3Key}
+                    {mat.s3Key.split("/").pop() || mat.s3Key}
                   </td>
 
                   <td className="py-3 px-4">
@@ -336,7 +336,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
 
               <div>
                 <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                  File Attachment (Simulated S3 Upload)
+                  File Attachment
                 </label>
                 <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-center bg-slate-50 dark:bg-slate-800/40">
                   <Upload className="w-6 h-6 text-slate-400 mx-auto mb-1" />
@@ -344,7 +344,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
                     {formData.fileName}
                   </span>
                   <span className="text-[11px] text-slate-400">
-                    {formData.fileSizeMb} MB · Ready to sync
+                    {formData.fileSizeMb} MB · Ready to save
                   </span>
                 </div>
               </div>
@@ -361,7 +361,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
                   type="submit"
                   className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
-                  Confirm & Sync to S3
+                  Save Material
                 </button>
               </div>
             </form>
@@ -374,15 +374,15 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
         <DetailDrawer
           isOpen={!!previewMaterial}
           title={previewMaterial.title}
-          subtitle={`${previewMaterial.courseCode} · S3 Asset Record`}
+          subtitle={`${previewMaterial.courseCode} · Learning Material`}
           onClose={() => setPreviewMaterial(null)}
           width="md"
         >
           <div className="space-y-4 text-xs">
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
-              <span className="text-slate-400 block text-[11px]">File location:</span>
+              <span className="text-slate-400 block text-[11px]">File name:</span>
               <p className="font-mono text-slate-900 dark:text-white break-all bg-white dark:bg-slate-900 p-2.5 rounded border border-slate-100 dark:border-slate-800">
-                s3://mentify-course-assets-prod/{previewMaterial.s3Key}
+                {previewMaterial.s3Key.split("/").pop() || previewMaterial.s3Key}
               </p>
             </div>
 
@@ -394,7 +394,7 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
                 </span>
               </div>
               <div className="p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 block mb-0.5">Byte Size</span>
+                <span className="text-slate-400 block mb-0.5">File Size</span>
                 <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                   {(previewMaterial.fileSizeBytes / 1024 / 1024).toFixed(2)} MB
                 </span>

@@ -42,6 +42,11 @@ export type BackendCalendarEvent = {
   targetRole?: "ADMIN" | "TEACHER" | "STUDENT";
   status: CalendarEventStatus;
   location?: string;
+  instructorId?: string;
+  instructorName?: string;
+  instructorEmail?: string;
+  instructorTitle?: string;
+  instructorDepartment?: string;
   createdAt?: string;
   updatedAt?: string;
   canEdit: boolean;

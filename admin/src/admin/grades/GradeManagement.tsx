@@ -332,7 +332,7 @@ export const GradeManagement: React.FC<GradeManagementProps> = ({
     <div className="space-y-6">
       <PageHeader
         title="Grade Management"
-        description="Configure institutional academic grade levels used when assigning courses."
+        description="Configure platform academic grade levels used when assigning courses."
         breadcrumbs={[{ label: "Admin" }, { label: "Academic Management" }, { label: "Grades" }]}
         actions={
           <button

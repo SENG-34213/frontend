@@ -312,7 +312,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                     className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden"
                   >
                     <option value="Published">Published to Students</option>
-                    <option value="Draft">Draft (Faculty Only)</option>
+                    <option value="Draft">Draft (Teacher Only)</option>
                   </select>
                 </div>
               </div>
