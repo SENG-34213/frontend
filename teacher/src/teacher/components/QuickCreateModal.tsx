@@ -95,6 +95,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentLessons, setAssignmentLessons] = useState<CourseContentLesson[]>([]);
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
+  const [assignmentSubmissionType, setAssignmentSubmissionType] = useState<"TEXT" | "DOCUMENT">("TEXT");
   const [rubricItems, setRubricItems] = useState<Array<{ criterion: string; marks: string }>>([]);
   const [assignmentFiles, setAssignmentFiles] = useState<File[]>([]);
   const [lessonContentType, setLessonContentType] = useState("Lecture");
@@ -451,6 +452,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           allowedAttempts: 1,
           allowLateSubmission,
           latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
+          submissionType: assignmentSubmissionType,
           rubricItems: rubricItems
             .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
             .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
@@ -800,6 +802,25 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
                     />
                   </div>
+
+                  <fieldset className="rounded-lg border border-slate-200 p-3">
+                    <legend className="px-1 text-xs font-semibold text-slate-700">Submission required</legend>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["TEXT", "DOCUMENT"] as const).map((submissionType) => (
+                        <label key={submissionType} className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${assignmentSubmissionType === submissionType ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                          <input
+                            type="radio"
+                            name="assignment-submission-type"
+                            value={submissionType}
+                            checked={assignmentSubmissionType === submissionType}
+                            onChange={() => setAssignmentSubmissionType(submissionType)}
+                            className="sr-only"
+                          />
+                          {submissionType === "TEXT" ? "Text answer" : "Document"}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="flex items-center gap-2 pt-5">
