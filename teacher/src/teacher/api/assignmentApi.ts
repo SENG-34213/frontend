@@ -15,7 +15,7 @@ export type BackendAssignment = {
   startDate: string;
   dueDate: string;
   maxMarks: number;
-  allowedAttempts: number;
+  allowedAttempts?: number;
   allowLateSubmission: boolean;
   latePenaltyPercentage?: number;
   status: BackendAssignmentStatus;
@@ -54,7 +54,7 @@ export type AssignmentDraft = {
   startDate: string;
   dueDate: string;
   maxMarks: number;
-  allowedAttempts: number;
+  allowedAttempts?: number;
   allowLateSubmission: boolean;
   latePenaltyPercentage?: number;
   rubricItems?: { criterion: string; marks: number }[];

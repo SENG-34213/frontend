@@ -77,6 +77,10 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentStartDate, setAssignmentStartDate] = useState(
     `${new Date().toISOString().slice(0, 10)}T09:00`,
   );
+  const localDateTimeNow = () => {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  };
   const [dueDate, setDueDate] = useState("");
   const [maxMarks, setMaxMarks] = useState("100");
   const [duration, setDuration] = useState("45");
@@ -89,7 +93,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentModules, setAssignmentModules] = useState<CourseContentModule[]>([]);
   const [assignmentLessonId, setAssignmentLessonId] = useState("");
   const [assignmentLessons, setAssignmentLessons] = useState<CourseContentLesson[]>([]);
-  const [allowedAttempts, setAllowedAttempts] = useState("1");
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
   const [rubricItems, setRubricItems] = useState<Array<{ criterion: string; marks: string }>>([]);
@@ -202,10 +205,22 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       return;
     }
 
-    if (activeType === "assignment" && (!allowedAttempts || Number(allowedAttempts) < 1)) {
-      setIsSubmitting(false);
-      setFormError("Allowed attempts must be at least 1.");
-      return;
+    if (activeType === "assignment") {
+      const now = new Date();
+      const currentMinute = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+        .toISOString()
+        .slice(0, 16);
+      if (assignmentStartDate < currentMinute) {
+        setIsSubmitting(false);
+        setFormError("Assignment start date and time cannot be before the current time.");
+        return;
+      }
+      const totalPercentage = rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0);
+      if (totalPercentage > 100) {
+        setIsSubmitting(false);
+        setFormError("Rubric criteria percentages cannot exceed 100% in total.");
+        return;
+      }
     }
 
     if (activeType === "exam") {
@@ -433,7 +448,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           startDate: `${assignmentStartDate}:00`,
           dueDate: `${dueDate}:00`,
           maxMarks: Number(maxMarks) || 100,
-          allowedAttempts: Number(allowedAttempts),
+          allowedAttempts: 1,
           allowLateSubmission,
           latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
           rubricItems: rubricItems
@@ -786,20 +801,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Allowed attempts
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={allowedAttempts}
-                        onChange={(e) => setAllowedAttempts(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="flex items-center gap-2 pt-5">
                       <input
                         id="allow-late-submission"
@@ -848,9 +850,13 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     </div>
                     {rubricItems.length === 0 && (
                       <p className="text-[11px] text-slate-400">
-                        Optional: add criteria and marks for grading.
+                        Optional: add criteria using percentages for grading.
                       </p>
                     )}
+                    <p className="text-[11px] text-slate-500">
+                      Total: {rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0)}%
+                      / 100%
+                    </p>
                     {rubricItems.map((item, index) => (
                       <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input
@@ -869,16 +875,25 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                         <input
                           type="number"
                           min="1"
-                          placeholder="Marks"
+                          max="100"
+                          placeholder="Percentage"
                           value={item.marks}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const nextValue = Number(e.target.value);
+                            const otherTotal = rubricItems.reduce(
+                              (sum, row, rowIndex) =>
+                                sum + (rowIndex === index ? 0 : Number(row.marks) || 0),
+                              0,
+                            );
+                            if (nextValue < 0 || otherTotal + nextValue > 100) return;
                             setRubricItems((items) =>
                               items.map((row, rowIndex) =>
                                 rowIndex === index ? { ...row, marks: e.target.value } : row,
                               ),
                             )
-                          }
+                          }}
                           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 sm:w-20"
+                          aria-label="Rubric percentage"
                         />
                         <button
                           type="button"
@@ -1101,6 +1116,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     <input
                       type="datetime-local"
                       value={assignmentStartDate}
+                      min={localDateTimeNow()}
                       onChange={(e) => setAssignmentStartDate(e.target.value)}
                       required
                       className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
