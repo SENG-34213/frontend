@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   Search,
+  Archive,
   FileText,
   Video,
   Code,
@@ -13,6 +14,9 @@ import {
   BookOpen,
   X,
   FileSpreadsheet,
+  Image as ImageIcon,
+  Music2,
+  Type,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { LearningMaterial } from "../../types";
@@ -26,7 +30,21 @@ export const LearningMaterialsView: React.FC = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [previewMaterial, setPreviewMaterial] = useState<LearningMaterial | null>(null);
 
-  const materialTypes = ["All", "PDF", "CODE", "SLIDES", "DOCUMENT", "VIDEO"];
+  const materialTypes = [
+    "All",
+    "PDF",
+    "DOCUMENT",
+    "PRESENTATION",
+    "SLIDES",
+    "SPREADSHEET",
+    "IMAGE",
+    "VIDEO",
+    "AUDIO",
+    "ARCHIVE",
+    "TEXT",
+    "CODE",
+    "OTHER",
+  ];
 
   const filteredMaterials = materials.filter((m) => {
     const matchesSearch =
@@ -50,9 +68,39 @@ export const LearningMaterialsView: React.FC = () => {
         return <Sliders className="h-5 w-5 text-amber-600 dark:text-amber-400" />;
       case "VIDEO":
         return <Video className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
+      case "AUDIO":
+        return <Music2 className="h-5 w-5 text-pink-600 dark:text-pink-400" />;
+      case "IMAGE":
+        return <ImageIcon className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />;
+      case "ARCHIVE":
+        return <Archive className="h-5 w-5 text-orange-600 dark:text-orange-400" />;
+      case "TEXT":
+        return <Type className="h-5 w-5 text-slate-600 dark:text-slate-400" />;
+      case "PRESENTATION":
+        return <Sliders className="h-5 w-5 text-amber-600 dark:text-amber-400" />;
+      case "SPREADSHEET":
+        return <FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
       default:
         return <FileSpreadsheet className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />;
     }
+  };
+
+  const fileTypeLabel = (type: LearningMaterial["type"]) => {
+    const labels: Record<string, string> = {
+      PDF: "PDF document",
+      DOCUMENT: "Document",
+      PRESENTATION: "Presentation",
+      SLIDES: "Presentation",
+      SPREADSHEET: "Spreadsheet",
+      IMAGE: "Image",
+      VIDEO: "Video",
+      AUDIO: "Audio",
+      ARCHIVE: "Archive",
+      TEXT: "Text file",
+      CODE: "Code file",
+      OTHER: "Other file",
+    };
+    return labels[type] || "Other file";
   };
 
   return (
@@ -227,7 +275,7 @@ export const LearningMaterialsView: React.FC = () => {
                       {mat.courseCode}
                     </span>
                     <span className="text-slate-300 dark:text-slate-600">·</span>
-                    <span className="text-xs text-slate-400">{mat.type}</span>
+                    <span className="text-xs text-slate-400">{fileTypeLabel(mat.type)}</span>
                   </div>
                   <h4 className="font-display text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                     {mat.title}
@@ -279,7 +327,7 @@ export const LearningMaterialsView: React.FC = () => {
                     {previewMaterial.title}
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    {previewMaterial.courseCode} · {previewMaterial.type} ·{" "}
+                    {previewMaterial.courseCode} · {fileTypeLabel(previewMaterial.type)} ·{" "}
                     {previewMaterial.fileSize}
                   </p>
                 </div>
@@ -311,7 +359,7 @@ export const LearningMaterialsView: React.FC = () => {
               <div className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 font-serif leading-relaxed text-slate-800 dark:text-slate-200">
                 <div className="border-b border-slate-100 pb-4 mb-6 font-sans">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-600 font-bold">
-                    {previewMaterial.type} · {previewMaterial.fileSize}
+                    {fileTypeLabel(previewMaterial.type)} · {previewMaterial.fileSize}
                   </span>
                   <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white mt-1">
                     {previewMaterial.title}

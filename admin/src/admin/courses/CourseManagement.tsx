@@ -521,12 +521,14 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
   const handleDeleteConfirm = async () => {
     if (!deleteConfirmCourse) return;
 
-    if (
-      (deleteConfirmCourse.studentCount ?? 0) > 0 ||
-      (deleteConfirmCourse.enrollmentCount && deleteConfirmCourse.enrollmentCount > 0)
-    ) {
+    const activeEnrollmentCount = enrollments.filter(
+      (enrollment) =>
+        enrollment.courseId === deleteConfirmCourse.id && enrollment.status === "ACTIVE",
+    ).length;
+
+    if (activeEnrollmentCount > 0) {
       setDeleteError(
-        `Cannot delete course: ${deleteConfirmCourse.studentCount} active students are currently enrolled. Reassign or unenroll students first.`,
+        `Cannot delete course: ${activeEnrollmentCount} active ${activeEnrollmentCount === 1 ? "student is" : "students are"} currently enrolled. Reassign or unenroll ${activeEnrollmentCount === 1 ? "the student" : "students"} first.`,
       );
       return;
     }
@@ -1601,7 +1603,7 @@ export const CourseManagement: React.FC<CourseManagementProps> = ({
           title={`Delete Course "${deleteConfirmCourse.courseName || deleteConfirmCourse.title}"?`}
           description={
             deleteError ||
-            `Are you sure you want to delete this course? This invokes DELETE /api/v1/course/${deleteConfirmCourse.id}.`
+            "Are you sure you want to delete this course? This action cannot be undone."
           }
           consequences={[
             "The course record will be permanently purged from the Course Service registry.",

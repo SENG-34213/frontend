@@ -238,7 +238,19 @@ export interface LearningMaterial {
   courseTitle: string;
   title: string;
   description: string;
-  type: "PDF" | "VIDEO" | "CODE" | "SLIDES" | "DOCUMENT";
+  type:
+    | "PDF"
+    | "VIDEO"
+    | "CODE"
+    | "SLIDES"
+    | "DOCUMENT"
+    | "PRESENTATION"
+    | "SPREADSHEET"
+    | "IMAGE"
+    | "AUDIO"
+    | "ARCHIVE"
+    | "TEXT"
+    | "OTHER";
   fileSize: string;
   uploadedDate: string;
   downloadsCount?: number;

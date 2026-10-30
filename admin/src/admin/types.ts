@@ -279,7 +279,18 @@ export interface LearningMaterial {
   title: string;
   courseId: string;
   courseCode: string;
-  fileType: "PDF" | "VIDEO" | "SLIDES" | "DOCUMENT" | "AUDIO";
+  fileType:
+    | "PDF"
+    | "DOCUMENT"
+    | "PRESENTATION"
+    | "SLIDES"
+    | "SPREADSHEET"
+    | "IMAGE"
+    | "VIDEO"
+    | "AUDIO"
+    | "ARCHIVE"
+    | "TEXT"
+    | "OTHER";
   s3Key: string;
   fileSizeBytes: number;
   uploadedAt: string;
