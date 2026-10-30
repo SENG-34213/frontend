@@ -38,7 +38,7 @@ interface TeacherNavbarProps {
 }
 
 const tabTitles: Record<NavigationTab, { title: string; category: string }> = {
-  dashboard: { title: "Faculty Dashboard", category: "Overview" },
+  dashboard: { title: "Teacher Dashboard", category: "Overview" },
   calendar: { title: "Academic Calendar & Schedule", category: "Overview" },
   notifications: { title: "Notification Center", category: "Overview" },
   courses: { title: "My Courses", category: "Teaching" },
@@ -52,7 +52,7 @@ const tabTitles: Record<NavigationTab, { title: string; category: string }> = {
   exams: { title: "Examination Management", category: "Assessments" },
   grades: { title: "Gradebook & Final Results", category: "Assessments" },
   analytics: { title: "Teaching Analytics & Insights", category: "Insights" },
-  messages: { title: "Student & Faculty Messages", category: "Communication" },
+  messages: { title: "Student & Teacher Messages", category: "Communication" },
   profile: { title: "Teacher Profile", category: "Account" },
   settings: { title: "Account Settings & Preferences", category: "Account" },
 };

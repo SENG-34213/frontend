@@ -71,7 +71,7 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by student name, ID number, or university email..."
+            placeholder="Search by student name, ID number, or tuition program email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-xs text-slate-900 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -147,7 +147,6 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
                 <th className="px-4 py-3">Student Number</th>
                 <th className="px-4 py-3">Courses</th>
                 <th className="px-4 py-3">Attendance</th>
-                <th className="px-4 py-3">GPA</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-5 py-3 text-right">Action</th>
               </tr>
@@ -155,7 +154,7 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400 text-xs">
+                  <td colSpan={6} className="px-5 py-8 text-center text-slate-400 text-xs">
                     No students found matching your criteria.
                   </td>
                 </tr>
@@ -217,9 +216,6 @@ export const StudentDirectoryView: React.FC<StudentDirectoryViewProps> = ({
                       >
                         {st.attendanceRate === null ? "Unavailable" : `${st.attendanceRate}%`}
                       </span>
-                    </td>
-                    <td className="px-4 py-3.5 font-mono tabular-nums font-bold text-slate-900">
-                      {st.gpa === null ? "Unavailable" : st.gpa.toFixed(2)}
                     </td>
                     <td className="px-4 py-3.5">
                       <StatusBadge status={st.status} />

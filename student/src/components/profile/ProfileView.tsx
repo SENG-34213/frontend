@@ -359,18 +359,6 @@ export const ProfileView: React.FC = () => {
             <p className="mt-1 text-[11px] text-slate-500">active courses</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center gap-2 text-emerald-600">
-              <Award className="h-4 w-4" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                GPA
-              </span>
-            </div>
-            <p className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
-              {profile.currentGpa ? profile.currentGpa.toFixed(2) : "—"}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">current academic average</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center gap-2 text-cyan-600">
               <GraduationCap className="h-4 w-4" />
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -560,7 +548,7 @@ export const ProfileView: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Academic advisor</h2>
-              <p className="mt-1 text-xs text-slate-500">Your assigned faculty contact.</p>
+              <p className="mt-1 text-xs text-slate-500">Your assigned teacher contact.</p>
             </div>
           </div>
           {profile.academicAdvisor.name ||

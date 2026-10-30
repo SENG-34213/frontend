@@ -10,7 +10,6 @@ import {
   ShieldAlert,
   BookOpen,
   Calendar,
-  ChevronRight,
   Menu,
   LogOut,
   User,
@@ -29,8 +28,6 @@ interface AdminNavbarProps {
   notifications: NotificationItem[];
   onMarkNotificationRead: (id: string) => void;
   onOpenMobileMenu: () => void;
-  isSidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
   onQuickAction: (action: string) => void;
   onOpenSearch: () => void;
   isDarkMode: boolean;
@@ -46,8 +43,6 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   notifications,
   onMarkNotificationRead,
   onOpenMobileMenu,
-  isSidebarCollapsed,
-  onToggleSidebar,
   onQuickAction,
   onOpenSearch,
   isDarkMode,
@@ -110,18 +105,36 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
     profile: "Admin Profile",
   };
 
+  const routeCategories: Partial<Record<AdminRoute, string>> = {
+    analytics: "Overview",
+    notifications: "Overview",
+    students: "User Management",
+    teachers: "User Management",
+    administrators: "User Management",
+    registrations: "User Management",
+    courses: "Academic Management",
+    enrollments: "Academic Management",
+    academic: "Academic Management",
+    assignments: "Academic Management",
+    quizzes: "Academic Management",
+    examinations: "Academic Management",
+    grades: "Academic Management",
+    results: "Academic Management",
+    attendance: "Academic Management",
+    materials: "Platform Operations",
+    communication: "Platform Operations",
+    "ai-assistant": "Platform Operations",
+    reports: "Platform Operations",
+    audit: "Administration",
+    settings: "Administration",
+    profile: "Administration",
+  };
+  const currentCategory = routeCategories[currentRoute] || "Overview";
+
   return (
     <header className="sticky top-0 z-20 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between gap-4">
-      {/* Left: Mobile trigger & Page breadcrumb title */}
+      {/* Left: Mobile trigger & page breadcrumbs */}
       <div className="flex items-center gap-3 min-w-0">
-        <button
-          onClick={onToggleSidebar}
-          className="hidden md:flex p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-        </button>
         <button
           onClick={onOpenMobileMenu}
           className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -131,12 +144,16 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
         </button>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-            <span>Admin</span>
-            <span>/</span>
-            <span className="capitalize">{currentRoute.replace("-", " ")}</span>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 truncate">
+            <span className="font-medium">Home</span>
+            <span>›</span>
+            <span>{currentCategory}</span>
+            <span>›</span>
+            <span className="font-semibold text-slate-800 dark:text-white truncate">
+              {routeTitles[currentRoute] || "TiT Admin"}
+            </span>
           </div>
-          <h1 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate">
+          <h1 className="sm:hidden text-sm font-semibold text-slate-900 dark:text-white truncate">
             {routeTitles[currentRoute] || "TiT Admin"}
           </h1>
         </div>

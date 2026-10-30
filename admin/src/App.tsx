@@ -1109,7 +1109,7 @@ export default function App() {
   const handleAddEvent = async (request: Parameters<typeof createCalendarEvent>[0]) => {
     const created = await createCalendarEvent(request);
     setEvents((prev) => [created, ...prev.filter((event) => event.id !== created.id)]);
-    addToast("success", "Event Scheduled", `Added "${created.title}" to institutional calendar.`);
+    addToast("success", "Event Scheduled", `Added "${created.title}" to platform calendar.`);
   };
 
   const handleUpdateEvent = async (
@@ -1378,6 +1378,13 @@ export default function App() {
           error={attendanceError}
           selectedSessionId={attendanceSessionId}
           onSessionChange={(sessionId) => setAttendanceSessionId(sessionId)}
+          onAttendanceSaved={(updatedSession) =>
+            setAttendanceSessions((current) =>
+              current.map((session) =>
+                session.id === updatedSession.id ? updatedSession : session,
+              ),
+            )
+          }
         />
       )}
 

@@ -683,7 +683,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                     <span className="text-xs font-bold text-slate-900 block">Proctoring Mode</span>
                     <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
                       <input type="checkbox" defaultChecked className="text-indigo-600" />
-                      <span>Require physical faculty proctor verification</span>
+                      <span>Require physical teacher proctor verification</span>
                     </label>
                     <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
                       <input type="checkbox" defaultChecked className="text-indigo-600" />
@@ -698,7 +698,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                   <div className="p-4 rounded-xl border border-slate-200 space-y-2 bg-slate-50/50">
                     <h4 className="text-xs font-bold text-slate-900">Question Blueprint Format</h4>
                     <p className="text-xs text-slate-500">
-                      Standard university examination blueprint comprising Section A (Objective MCQ,
+                      Standard tuition program examination blueprint comprising Section A (Objective MCQ,
                       30 marks), Section B (Algorithmic Proofs, 40 marks), and Section C (Code
                       Implementation, 30 marks).
                     </p>

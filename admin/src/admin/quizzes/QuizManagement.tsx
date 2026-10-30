@@ -39,7 +39,7 @@ const toQuiz = (item: AdminQuizRecord, course?: Course): Quiz => ({
   courseId: item.courseId,
   courseCode: course?.code || item.courseId,
   courseTitle: course?.title || "Unknown course",
-  teacherName: course?.teacherName || "Unassigned faculty",
+  teacherName: course?.teacherName || "Unassigned teacher",
   title: item.title,
   questionCount: item.questionCount ?? item.questions?.length ?? 0,
   durationMinutes: item.durationMinutes ?? 0,
@@ -465,7 +465,7 @@ export const QuizManagement: React.FC<QuizManagementProps> = ({ courses, grades 
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
                   <th className="px-4 py-3 font-semibold">Quiz</th>
-                  <th className="px-4 py-3 font-semibold">Course & faculty</th>
+                  <th className="px-4 py-3 font-semibold">Course & teacher</th>
                   <th className="px-4 py-3 font-semibold">Questions & time</th>
                   <th className="px-4 py-3 font-semibold">Attempts</th>
                   <th className="px-4 py-3 font-semibold">Average score</th>

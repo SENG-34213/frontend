@@ -61,6 +61,8 @@ function mapEvent(event: BackendCalendarEvent, courses: AdminCourse[]): Academic
     endDateTime: event.endDateTime || null,
     allDay: event.allDay,
     courseId: event.courseId || null,
+    instructorName: event.instructorName,
+    instructorEmail: event.instructorEmail,
     visibility: event.visibility,
     targetRole: event.targetRole,
     canEdit: event.canEdit,

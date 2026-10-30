@@ -126,7 +126,7 @@ export const CommunicationManagement: React.FC = () => {
     <div className="space-y-6">
       <PageHeader
         title="Communication & Announcements"
-        description="Broadcast institutional announcements, manage course discussion channels, and oversee school communications."
+        description="Broadcast platform announcements, manage course discussion channels, and oversee school communications."
         breadcrumbs={[
           { label: "Admin" },
           { label: "Platform Operations" },
@@ -216,10 +216,10 @@ export const CommunicationManagement: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-150">
             <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
-              {editingAnnouncement ? "Edit Announcement" : "Broadcast Institutional Announcement"}
+              {editingAnnouncement ? "Edit Announcement" : "Broadcast Platform Announcement"}
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              Dispatches platform notification and banner alert to student & faculty dashboards.
+              Dispatches platform notification and banner alert to student & teacher dashboards.
             </p>
 
             <form onSubmit={handlePostAnnouncement} className="space-y-4 text-xs">
@@ -248,7 +248,7 @@ export const CommunicationManagement: React.FC = () => {
                 >
                   <option value="ALL">All Users</option>
                   <option value="STUDENT">Students</option>
-                  <option value="TEACHER">Teaching Faculty</option>
+                  <option value="TEACHER">Teaching Teacher</option>
                   <option value="ADMIN">Administrators</option>
                 </select>
               </div>

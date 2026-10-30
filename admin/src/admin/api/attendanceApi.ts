@@ -21,6 +21,7 @@ interface AttendanceSessionApiResponse {
   startTime?: string;
   endTime?: string;
   mode?: string;
+  status?: "OPEN" | "COMPLETED" | "CANCELLED";
   createdBy?: string;
   createdByName?: string;
   records?: AttendanceRecordApiResponse[];
@@ -60,6 +61,7 @@ export async function fetchAttendanceSessionsForCourse(
       date: session.attendanceDate || "Date not set",
       timeSlot: timeLabel(session.startTime, session.endTime),
       mode: session.mode === "ONLINE" || session.mode === "HYBRID" ? session.mode : "IN_PERSON",
+      status: session.status || "OPEN",
       totalStudents: records.length,
       presentCount,
       absentCount,
@@ -103,4 +105,15 @@ export async function fetchAttendanceSessions(courses: Course[], teachers: Teach
     sessions,
     failedCourses,
   };
+}
+
+export async function updateAttendanceRecords(
+  sessionId: string,
+  records: Array<{ studentId: string; status: "PRESENT" | "ABSENT" | "LATE"; remarks?: string }>,
+) {
+  const response = await apiRequest<ApiResponse<unknown>>(
+    `/api/v1/attendance/sessions/${encodeURIComponent(sessionId)}/records`,
+    { method: "PUT", body: { records } },
+  );
+  return response.data;
 }

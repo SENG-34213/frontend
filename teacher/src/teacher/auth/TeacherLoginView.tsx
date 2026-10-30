@@ -216,7 +216,7 @@ export function TeacherLoginView({ onLogin }: Props) {
               </button>
             </form>
             <p className="mt-6 text-center text-[11px] text-slate-400">
-              Protected faculty workspace
+              Protected teacher workspace
             </p>
           </div>
         </div>

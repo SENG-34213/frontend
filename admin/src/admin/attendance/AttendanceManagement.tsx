@@ -5,13 +5,15 @@ import {
   CheckCircle2,
   Clock,
   GraduationCap,
+  Save,
   Search,
   X,
   Users,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
-import { AttendanceSession, Course, Grade } from "../types";
+import { AttendanceRecord, AttendanceSession, Course, Grade } from "../types";
+import { updateAttendanceRecords } from "../api/attendanceApi";
 
 interface AttendanceManagementProps {
   sessions: AttendanceSession[];
@@ -20,6 +22,7 @@ interface AttendanceManagementProps {
   error?: string;
   selectedSessionId?: string | null;
   onSessionChange?: (sessionId: string | null) => void;
+  onAttendanceSaved?: (session: AttendanceSession) => void;
 }
 
 function normalizedGrade(value?: string) {
@@ -41,11 +44,17 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
   error,
   selectedSessionId,
   onSessionChange,
+  onAttendanceSaved,
 }) => {
   const [selectedGradeId, setSelectedGradeId] = useState("ALL");
   const [selectedCourseId, setSelectedCourseId] = useState("ALL");
   const [selectedSession, setSelectedSession] = useState<AttendanceSession | null>(null);
   const [studentSearch, setStudentSearch] = useState("");
+  const [draftRecords, setDraftRecords] = useState<
+    Record<string, { status: AttendanceSession["records"][number]["status"]; remarks: string }>
+  >({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (!selectedSessionId) {
@@ -61,8 +70,74 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
       setSelectedSession(session);
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStudentSearch("");
+      setDraftRecords(
+        Object.fromEntries(
+          session.records.map((record) => [
+            record.id,
+            { status: record.status, remarks: record.remarks || "" },
+          ]),
+        ),
+      );
+      setSaveError("");
     }
   }, [selectedSessionId, sessions]);
+
+  const saveAttendance = async () => {
+    if (!selectedSession || isSaving) return;
+    const records = selectedSession.records
+      .map((record) => ({
+        studentId: record.studentId,
+        status: draftRecords[record.id]?.status || record.status,
+        remarks: draftRecords[record.id]?.remarks ?? record.remarks ?? "",
+      }))
+      .filter(
+        (
+          record,
+        ): record is {
+          studentId: string;
+          status: "PRESENT" | "ABSENT" | "LATE";
+          remarks: string;
+        } => record.status === "PRESENT" || record.status === "ABSENT" || record.status === "LATE",
+      );
+
+    if (records.length === 0) {
+      setSaveError("Select an attendance status before saving.");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await updateAttendanceRecords(selectedSession.id, records);
+      const updatedRecords = selectedSession.records.map((record) => {
+        const updated = records.find((item) => item.studentId === record.studentId);
+        return updated
+          ? {
+              ...record,
+              status: updated.status,
+              remarks: updated.remarks,
+              updatedAt: new Date().toISOString(),
+            }
+          : record;
+      });
+      const updatedSession: AttendanceSession = {
+        ...selectedSession,
+        records: updatedRecords,
+        totalStudents: updatedRecords.length,
+        presentCount: updatedRecords.filter((record) => record.status === "PRESENT").length,
+        absentCount: updatedRecords.filter((record) => record.status === "ABSENT").length,
+        lateCount: updatedRecords.filter((record) => record.status === "LATE").length,
+      };
+      setSelectedSession(updatedSession);
+      onAttendanceSaved?.(updatedSession);
+      setSelectedSession(null);
+      onSessionChange?.(null);
+    } catch (caught) {
+      setSaveError(caught instanceof Error ? caught.message : "Attendance could not be saved.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const selectedGrade = grades.find((grade) => grade.id === selectedGradeId);
   const availableCourses = useMemo(
@@ -381,18 +456,34 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
                     {selectedSession.markedBy}
                   </span>
                 </p>
+                <span
+                  className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase ${selectedSession.status === "COMPLETED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" : selectedSession.status === "CANCELLED" ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" : "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"}`}
+                >
+                  {selectedSession.status.replace("_", " ")}
+                </span>
               </div>
-              <button
-                type="button"
-                aria-label="Close attendance details"
-                onClick={() => {
-                  setSelectedSession(null);
-                  onSessionChange?.(null);
-                }}
-                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void saveAttendance()}
+                  disabled={isSaving || selectedSession.status === "CANCELLED"}
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Save className="h-4 w-4" />
+                  {isSaving ? "Saving…" : "Save changes"}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close attendance details"
+                  onClick={() => {
+                    setSelectedSession(null);
+                    onSessionChange?.(null);
+                  }}
+                  className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3 border-b border-slate-200 p-5 dark:border-slate-800">
@@ -463,6 +554,11 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
             )}
 
             <div className="max-h-[50vh] overflow-y-auto p-5">
+              {saveError && (
+                <p className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+                  {saveError}
+                </p>
+              )}
               <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/60">
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
@@ -515,13 +611,13 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
                           );
                         })
                         .map((record) => {
-                          const status = record.status.replace("_", " ");
+                          const currentStatus = draftRecords[record.id]?.status || record.status;
                           const statusClass =
-                            record.status === "PRESENT"
+                            currentStatus === "PRESENT"
                               ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                              : record.status === "ABSENT"
+                              : currentStatus === "ABSENT"
                                 ? "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
-                                : record.status === "LATE"
+                                : currentStatus === "LATE"
                                   ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
                                   : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
                           return (
@@ -532,13 +628,44 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
                                 </span>
                               </td>
                               <td className="px-4 py-3">
-                                <span
-                                  className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${statusClass}`}
+                                <select
+                                  value={draftRecords[record.id]?.status || record.status}
+                                  onChange={(event) =>
+                                    setDraftRecords((current) => ({
+                                      ...current,
+                                      [record.id]: {
+                                        status: event.target.value as AttendanceRecord["status"],
+                                        remarks:
+                                          current[record.id]?.remarks ?? record.remarks ?? "",
+                                      },
+                                    }))
+                                  }
+                                  className={`rounded-lg border-0 px-2 py-1 text-[10px] font-bold uppercase outline-none ${statusClass}`}
+                                  aria-label={`Attendance status for ${record.studentName || record.studentId}`}
                                 >
-                                  {status}
-                                </span>
+                                  <option value="NOT_MARKED">Not marked</option>
+                                  <option value="PRESENT">Present</option>
+                                  <option value="ABSENT">Absent</option>
+                                  <option value="LATE">Late</option>
+                                </select>
                               </td>
-                              <td className="px-4 py-3 text-slate-500">{record.remarks || "—"}</td>
+                              <td className="px-4 py-3">
+                                <input
+                                  value={draftRecords[record.id]?.remarks ?? record.remarks ?? ""}
+                                  onChange={(event) =>
+                                    setDraftRecords((current) => ({
+                                      ...current,
+                                      [record.id]: {
+                                        status: current[record.id]?.status ?? record.status,
+                                        remarks: event.target.value,
+                                      },
+                                    }))
+                                  }
+                                  placeholder="Add a note"
+                                  className="w-full min-w-32 rounded-lg border border-slate-200 bg-transparent px-2 py-1 text-xs text-slate-700 outline-none focus:border-indigo-400 dark:border-slate-700 dark:text-slate-300"
+                                  aria-label={`Remarks for ${record.studentName || record.studentId}`}
+                                />
+                              </td>
                               <td className="px-4 py-3 text-slate-500">
                                 {record.markedAt ? new Date(record.markedAt).toLocaleString() : "—"}
                               </td>
@@ -549,6 +676,20 @@ export const AttendanceManagement: React.FC<AttendanceManagementProps> = ({
                   </table>
                 </div>
               )}
+            </div>
+            <div className="flex items-center justify-between gap-3 border-t border-slate-200 p-5 dark:border-slate-800">
+              <p className="text-[11px] text-slate-500">
+                Admin changes can be saved even after a session is completed.
+              </p>
+              <button
+                type="button"
+                onClick={() => void saveAttendance()}
+                disabled={isSaving || selectedSession.status === "CANCELLED"}
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? "Saving…" : "Save changes"}
+              </button>
             </div>
           </section>
         </div>

@@ -128,7 +128,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: "calendar", title: "Academic Calendar & Schedule", category: "Overview" },
     { id: "communication", title: "Broadcast Communication", category: "Platform Operations" },
     { id: "ai-assistant", title: "TiT AI Admin Assistant", category: "Platform Operations" },
-    { id: "reports", title: "Institutional Reports & Exports", category: "Platform Operations" },
+    { id: "reports", title: "Platform Reports & Exports", category: "Platform Operations" },
     { id: "audit", title: "System Audit Logs & Security Stream", category: "Administration" },
     { id: "settings", title: "Platform Settings", category: "Administration" },
     { id: "profile", title: "Alex Mercer Profile", category: "Administration" },
@@ -169,8 +169,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           notifications={notifications}
           onMarkNotificationRead={onMarkNotificationRead}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
           onQuickAction={onQuickAction}
           onOpenSearch={() => setIsSearchOpen(true)}
           isDarkMode={isDarkMode}

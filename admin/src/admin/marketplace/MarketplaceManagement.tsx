@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Archive,
+  ArrowLeft,
   Check,
+  Download,
   Edit3,
+  FileText,
   Grid2X2,
   ImagePlus,
   List,
@@ -10,12 +13,16 @@ import {
   Plus,
   RefreshCcw,
   Search,
+  ShieldCheck,
+  Trash2,
+  User,
   X,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
 import {
   createMarketplaceProduct,
+  deleteMarketplaceProduct,
   getMarketplaceMaterialDownloadUrl,
   getMarketplaceProducts,
   MARKETPLACE_CATEGORIES,
@@ -71,8 +78,11 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
+  const [selectedProduct, setSelectedProduct] = useState<MarketplaceProduct | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [teachers, setTeachers] = useState<TeacherProfile[]>([]);
@@ -209,6 +219,243 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
       notify("error", "Status update failed", message);
     }
   };
+
+  const downloadProduct = async () => {
+    if (!selectedProduct || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const url = await getMarketplaceMaterialDownloadUrl(selectedProduct.materialId);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (caught) {
+      notify(
+        "error",
+        "Download unavailable",
+        caught instanceof Error ? caught.message : "The material could not be downloaded.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const deleteProduct = async (product = selectedProduct) => {
+    if (!product || isDeleting) return;
+    const confirmed = window.confirm(
+      `Delete "${product.title}" from the marketplace? This removes the listing but keeps the uploaded material.`,
+    );
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteMarketplaceProduct(product.id);
+      notify("success", "Marketplace material deleted", `${product.title} was removed.`);
+      if (selectedProduct?.id === product.id) setSelectedProduct(null);
+      await load();
+    } catch (caught) {
+      notify(
+        "error",
+        "Delete failed",
+        caught instanceof Error ? caught.message : "The marketplace material could not be deleted.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openEdit = (product: MarketplaceProduct) => {
+    setEditing(product);
+    setSelectedFile(null);
+    setSelectedThumbnail(null);
+    setIsFormOpen(true);
+    setForm({
+      materialId: product.materialId,
+      thumbnailMaterialId: product.thumbnailMaterialId || "",
+      materialOwnerId: product.materialOwnerId || "",
+      materialOwnerName: product.materialOwnerName || "",
+      title: product.title,
+      shortDescription: product.shortDescription || "",
+      description: product.description || "",
+      category: product.category,
+      subject: product.subject || "",
+      courseDomain: product.courseDomain || product.subject || "",
+      gradeId: product.gradeId || "",
+      price: product.price,
+      free: product.free,
+      discountPercent: product.discountPercent,
+      currency: product.currency,
+      thumbnailUrl: product.thumbnailUrl || "",
+      status: product.status,
+    });
+  };
+
+  const detailModal = selectedProduct
+    ? (() => {
+        const previewUrl =
+          thumbnailUrls[selectedProduct.thumbnailMaterialId || ""] || selectedProduct.thumbnailUrl;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 text-slate-900 backdrop-blur-sm dark:text-white">
+            <div className="max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-slate-950">
+              <div className="border-b border-slate-200 bg-white px-5 py-4 dark:border-white/10 dark:bg-slate-900/95 sm:px-8">
+                <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedProduct(null)}
+                      className="hover:text-indigo-600 dark:hover:text-white"
+                    >
+                      Marketplace
+                    </button>
+                    <span>/</span>
+                    <span className="truncate font-semibold text-slate-900 dark:text-white">
+                      {selectedProduct.title}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProduct(null)}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" /> Back
+                  </button>
+                </div>
+              </div>
+
+              <div className="mx-auto max-w-7xl bg-white px-5 py-8 dark:bg-slate-950 sm:px-8 lg:py-12">
+                <div className="mb-8 flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="rounded-full bg-indigo-100 px-3 py-1.5 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+                    {label(selectedProduct.category)}
+                  </span>
+                  {selectedProduct.courseDomain && (
+                    <span className="rounded-full bg-violet-100 px-3 py-1.5 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                      {selectedProduct.courseDomain}
+                    </span>
+                  )}
+                  <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                    {selectedProduct.free ? "Free resource" : label(selectedProduct.status)}
+                  </span>
+                </div>
+
+                <h1 className="max-w-4xl text-3xl font-bold leading-tight tracking-tight sm:text-5xl">
+                  {selectedProduct.title}
+                </h1>
+
+                <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_330px]">
+                  <div>
+                    <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xl dark:border-white/10 dark:bg-slate-900">
+                      {previewUrl ? (
+                        <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <FileText className="h-16 w-16 text-indigo-300" />
+                      )}
+                    </div>
+
+                    <section className="mt-8 max-w-3xl">
+                      <h2 className="text-xl font-bold">Resource Overview</h2>
+                      <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600 dark:text-slate-400">
+                        {selectedProduct.description ||
+                          selectedProduct.shortDescription ||
+                          "This learning resource is ready to support your course preparation."}
+                      </p>
+                    </section>
+
+                    <section className="mt-8 border-t border-slate-200 pt-6 dark:border-white/10">
+                      <h2 className="text-lg font-bold">Resource Information</h2>
+                      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {[
+                          ["Category", label(selectedProduct.category)],
+                          [
+                            "Subject",
+                            selectedProduct.subject || selectedProduct.courseDomain || "General",
+                          ],
+                          ["Grade", selectedProduct.gradeId ? "Assigned grade" : "All grades"],
+                          ["Status", label(selectedProduct.status)],
+                        ].map(([heading, value]) => (
+                          <div
+                            key={heading}
+                            className="rounded-xl bg-slate-100 p-4 dark:bg-slate-800"
+                          >
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                              {heading}
+                            </span>
+                            <span className="mt-1 block text-sm font-semibold text-slate-900 dark:text-white">
+                              {value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+
+                  <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-xl dark:border-white/10 dark:bg-slate-900">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Resource Access
+                    </span>
+                    <div className="mt-2 text-2xl font-bold text-emerald-400">
+                      {selectedProduct.free
+                        ? "Free Download"
+                        : `${selectedProduct.currency} ${(selectedProduct.finalPrice ?? selectedProduct.price).toFixed(2)}`}
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-100 p-3 dark:border-white/10 dark:bg-slate-800">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300">
+                        <User className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-slate-500">
+                          Added by
+                        </span>
+                        <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">
+                          {selectedProduct.materialOwnerName || "Course team"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => void downloadProduct()}
+                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-500 disabled:opacity-60"
+                      disabled={isDownloading}
+                    >
+                      <Download className="h-4 w-4" />
+                      {isDownloading ? "Preparing download…" : "Download Material"}
+                    </button>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedProduct(null);
+                          openEdit(selectedProduct);
+                        }}
+                        className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
+                        aria-label="Edit material"
+                        title="Edit material"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteProduct()}
+                        disabled={isDeleting}
+                        className="inline-flex w-full items-center justify-center rounded-xl border border-rose-200 px-4 py-3 text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                        aria-label="Delete material"
+                        title="Delete material"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="mt-5 flex gap-2 border-t border-slate-200 pt-4 text-[11px] leading-5 text-slate-500 dark:border-white/10">
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                      <span>Managed learning material for your tuition platform.</span>
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()
+    : null;
 
   return (
     <div className="space-y-6 pb-8">
@@ -370,7 +617,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                   }
                 >
                   <div
-                    className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300 ${viewMode === "grid" ? "aspect-[16/9] w-full" : "h-16 w-20"}`}
+                    className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300 ${viewMode === "grid" ? "aspect-[16/9] w-full" : "h-16 w-20"}`}
                   >
                     {thumbnailUrls[product.thumbnailMaterialId || ""] || product.thumbnailUrl ? (
                       <img
@@ -385,9 +632,30 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                     ) : (
                       <PackageOpen className="h-7 w-7" />
                     )}
+                    {viewMode === "grid" && (
+                      <>
+                        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-slate-700 shadow-sm dark:bg-slate-900/90 dark:text-slate-200">
+                          {label(product.category)}
+                        </span>
+                        <span
+                          className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold shadow-sm ${product.free ? "bg-emerald-500 text-white" : product.discountPercent ? "bg-rose-500 text-white" : "bg-slate-900/80 text-white"}`}
+                        >
+                          {product.free
+                            ? "FREE"
+                            : product.discountPercent && product.discountPercent > 0
+                              ? `-${product.discountPercent}%`
+                              : label(product.status)}
+                        </span>
+                        <span className="absolute bottom-3 left-3 rounded-md bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-white">
+                          {product.courseDomain || product.subject || "Course material"}
+                        </span>
+                      </>
+                    )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                    <p
+                      className={`${viewMode === "grid" ? "line-clamp-2 text-base leading-snug" : "truncate text-sm"} font-semibold text-slate-900 dark:text-white`}
+                    >
                       {product.title}
                     </p>
                     {product.shortDescription && (
@@ -395,14 +663,19 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                         {product.shortDescription}
                       </p>
                     )}
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                      <span>{label(product.category)}</span>
-                      {product.gradeId && <span>Grade assigned</span>}
-                      {product.courseDomain && <span>{product.courseDomain}</span>}
-                      {product.materialOwnerName && <span>By {product.materialOwnerName}</span>}
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                      {product.gradeId && <span>Grade material</span>}
+                      {product.materialOwnerName && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 text-slate-400" />
+                          <span>By {product.materialOwnerName}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="shrink-0 text-left md:text-right">
+                  <div
+                    className={`shrink-0 text-left md:text-right ${viewMode === "grid" ? "hidden" : ""}`}
+                  >
                     {product.free ? (
                       <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-extrabold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                         Free
@@ -426,60 +699,95 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                     )}
                   </div>
                   <span
-                    className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-bold ${product.status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : product.status === "ARCHIVED" ? "bg-slate-100 text-slate-500" : "bg-amber-50 text-amber-700"}`}
+                    className={`${viewMode === "grid" ? "hidden" : "w-fit rounded-full px-2.5 py-1 text-[10px] font-bold"} ${product.status === "PUBLISHED" ? "bg-emerald-50 text-emerald-700" : product.status === "ARCHIVED" ? "bg-slate-100 text-slate-500" : "bg-amber-50 text-amber-700"}`}
                   >
                     {label(product.status)}
                   </span>
                   <div
-                    className={`flex items-center gap-1 ${viewMode === "grid" ? "justify-end border-t border-slate-100 pt-3 dark:border-slate-800" : "justify-start md:justify-end"}`}
+                    className={`flex items-center gap-2 ${viewMode === "grid" ? "justify-between border-t border-slate-100 pt-3 dark:border-slate-800" : "justify-start md:justify-end"}`}
                   >
+                    {viewMode === "grid" && (
+                      <div className="text-left">
+                        {product.free ? (
+                          <span className="text-base font-extrabold text-emerald-600">
+                            Free access
+                          </span>
+                        ) : (
+                          <>
+                            {product.discountPercent && product.discountPercent > 0 && (
+                              <span className="mr-2 text-[11px] text-slate-400 line-through">
+                                {product.currency} {product.price.toFixed(2)}
+                              </span>
+                            )}
+                            <span className="text-base font-extrabold text-slate-900 dark:text-white">
+                              {product.currency} {(product.finalPrice ?? product.price).toFixed(2)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
                     <button
-                      onClick={() => {
-                        setEditing(product);
-                        setSelectedFile(null);
-                        setSelectedThumbnail(null);
-                        setIsFormOpen(true);
-                        setForm({
-                          materialId: product.materialId,
-                          thumbnailMaterialId: product.thumbnailMaterialId || "",
-                          materialOwnerId: product.materialOwnerId || "",
-                          materialOwnerName: product.materialOwnerName || "",
-                          title: product.title,
-                          shortDescription: product.shortDescription || "",
-                          description: product.description || "",
-                          category: product.category,
-                          subject: product.subject || "",
-                          courseDomain: product.courseDomain || product.subject || "",
-                          gradeId: product.gradeId || "",
-                          price: product.price,
-                          free: product.free,
-                          discountPercent: product.discountPercent,
-                          currency: product.currency,
-                          thumbnailUrl: product.thumbnailUrl || "",
-                          status: product.status,
-                        });
-                      }}
-                      className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
-                      aria-label={`Edit ${product.title}`}
+                      onClick={() =>
+                        viewMode === "grid" ? setSelectedProduct(product) : openEdit(product)
+                      }
+                      className={
+                        viewMode === "grid"
+                          ? "rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300"
+                          : "rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
+                      }
+                      aria-label={`View details for ${product.title}`}
                     >
-                      <Edit3 className="h-4 w-4" />
+                      {viewMode === "grid" ? "Details" : <Edit3 className="h-4 w-4" />}
+                    </button>
+                    {viewMode === "grid" && (
+                      <button
+                        type="button"
+                        onClick={() => openEdit(product)}
+                        className="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300"
+                        aria-label={`Edit ${product.title}`}
+                        title="Edit material"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void deleteProduct(product)}
+                      disabled={isDeleting}
+                      className={
+                        viewMode === "grid"
+                          ? "rounded-xl border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                          : "rounded-lg p-2 text-rose-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-60"
+                      }
+                      aria-label={`Delete ${product.title}`}
+                      title="Delete material"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </button>
                     {product.status === "DRAFT" && (
                       <button
                         onClick={() => void changeStatus(product, "PUBLISHED")}
-                        className="rounded-lg p-2 text-emerald-600 hover:bg-emerald-50"
+                        className={
+                          viewMode === "grid"
+                            ? "rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                            : "rounded-lg p-2 text-emerald-600 hover:bg-emerald-50"
+                        }
                         aria-label={`Publish ${product.title}`}
                       >
-                        <Check className="h-4 w-4" />
+                        {viewMode === "grid" ? "Publish" : <Check className="h-4 w-4" />}
                       </button>
                     )}
                     {product.status === "PUBLISHED" && (
                       <button
                         onClick={() => void changeStatus(product, "ARCHIVED")}
-                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                        className={
+                          viewMode === "grid"
+                            ? "rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                            : "rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                        }
                         aria-label={`Archive ${product.title}`}
                       >
-                        <Archive className="h-4 w-4" />
+                        {viewMode === "grid" ? "Archive" : <Archive className="h-4 w-4" />}
                       </button>
                     )}
                   </div>
@@ -798,6 +1106,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
             </form>
           </>
         )}
+        {detailModal}
       </div>
     </div>
   );

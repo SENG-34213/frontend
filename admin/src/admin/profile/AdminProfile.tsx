@@ -136,7 +136,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
     <div className="space-y-6">
       <PageHeader
         title="Admin Profile"
-        description="Personal credentials, contact preferences, institutional role tier, and security attributes."
+        description="Personal credentials, contact preferences, platform role tier, and security attributes."
         breadcrumbs={[{ label: "Admin" }, { label: "My Profile" }]}
       />
 
@@ -237,7 +237,7 @@ export const AdminProfile: React.FC<AdminProfileProps> = ({ role }) => {
 
                 <div>
                   <label className="block text-slate-700 dark:text-slate-300 mb-1 font-medium">
-                    Institutional Email (SSO Linked)
+                    Platform Email (SSO Linked)
                   </label>
                   <input
                     type="email"
