@@ -1,0 +1,64 @@
+:root {
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-primary-light: #EEF2FF;
+  --color-secondary: #2563EB;
+  --color-accent: #06B6D4;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-heading: #0F172A;
+  --color-body: #475569;
+  --color-muted: #64748B;
+  --color-border: #E2E8F0;
+}
+
+.dark {
+  --color-primary: #6366F1;
+  --color-primary-hover: #4F46E5;
+  --color-primary-light: #1E1B4B;
+  --color-secondary: #3B82F6;
+  --color-accent: #22D3EE;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #F87171;
+  --color-background: #0B0F19;
+  --color-surface: #111827;
+  --color-heading: #F8FAFC;
+  --color-body: #94A3B8;
+  --color-muted: #64748B;
+  --color-border: #1F2937;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Tamil", "Noto Sans Sinhala", sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-body);
+}
+
+/* Custom scrollbar styling for a polished SaaS look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
