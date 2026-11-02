@@ -40,6 +40,8 @@ import {
   updateCurrentStudentProfile,
 } from "../api/student";
 import { useStudentCommunicationRealtime } from "../api/communicationRealtime";
+import { downloadFile } from "../../../shared/files/downloadFile";
+import { useVisibleAutoRefresh } from "../../../shared/useVisibleAutoRefresh";
 
 interface StudentContextType {
   currentView: StudentView;
@@ -102,7 +104,7 @@ interface StudentContextType {
     end: string,
     filters?: { type?: string; courseId?: string },
   ) => Promise<void>;
-  refreshWorkspace: () => Promise<void>;
+  refreshWorkspace: (silent?: boolean) => Promise<void>;
   workspaceLoading: boolean;
   workspaceError: string | null;
   retryWorkspace: () => Promise<void>;
@@ -234,10 +236,12 @@ export const StudentProvider: React.FC<{
     selectedLessonId,
     selectedQuizId,
   ]);
-  const refreshWorkspace = useCallback(async () => {
+  const refreshWorkspace = useCallback(async (silent = false) => {
     if (!authUser) return;
-    setWorkspaceLoading(true);
-    setWorkspaceError(null);
+    if (!silent) {
+      setWorkspaceLoading(true);
+      setWorkspaceError(null);
+    }
     try {
       const workspace = await loadStudentWorkspace(authUser);
       setProfile(workspace.profile);
@@ -251,13 +255,35 @@ export const StudentProvider: React.FC<{
       setAnnouncements(workspace.announcements);
       setUnreadNotificationCount(workspace.unreadNotificationCount);
       setAttendanceSummaries(workspace.attendanceSummaries);
-      setConversations(workspace.conversations);
-      setMessagePages({});
+      setConversations((current) =>
+        workspace.conversations.map((conversation) => {
+          const previous = current.find((item) => item.id === conversation.id);
+          if (!previous) return conversation;
+
+          const messagesById = new Map(
+            [...previous.messages, ...conversation.messages].map((message) => [message.id, message]),
+          );
+          const messages = Array.from(messagesById.values()).sort(
+            (left, right) =>
+              new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
+          );
+          const latestMessage = messages[messages.length - 1];
+          return {
+            ...conversation,
+            lastMessage: latestMessage?.text ?? conversation.lastMessage,
+            lastMessageTime: latestMessage?.timestamp ?? conversation.lastMessageTime,
+            messages,
+          };
+        }),
+      );
+      if (silent) setWorkspaceError(null);
     } catch (error) {
-      setWorkspaceError(error instanceof Error ? error.message : "Could not load student data.");
+      if (!silent) {
+        setWorkspaceError(error instanceof Error ? error.message : "Could not load student data.");
+      }
       throw error;
     } finally {
-      setWorkspaceLoading(false);
+      if (!silent) setWorkspaceLoading(false);
     }
   }, [authUser]);
 
@@ -274,44 +300,11 @@ export const StudentProvider: React.FC<{
     };
   }, [refreshWorkspace, showToast]);
 
-  // Keep the workspace current while the student portal is open. This covers
-  // content created by teachers/admins in another application tab or session.
-  // The visibility/focus refresh makes returning to the tab feel immediate,
-  // while polling handles changes made while the tab remains open.
-  useEffect(() => {
-    if (!authUser?.id) return;
-
-    let disposed = false;
-    let refreshInFlight = false;
-
-    const syncWorkspace = async () => {
-      if (disposed || refreshInFlight || document.visibilityState !== "visible") return;
-      refreshInFlight = true;
-      try {
-        await refreshWorkspace();
-      } catch {
-        // The initial load reports errors to the student. Background sync is
-        // intentionally silent and retries on the next cycle/focus event.
-      } finally {
-        refreshInFlight = false;
-      }
-    };
-
-    const handleVisibilityOrFocus = () => {
-      if (document.visibilityState === "visible") void syncWorkspace();
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
-    window.addEventListener("focus", handleVisibilityOrFocus);
-    const intervalId = window.setInterval(() => void syncWorkspace(), 15_000);
-
-    return () => {
-      disposed = true;
-      window.clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
-      window.removeEventListener("focus", handleVisibilityOrFocus);
-    };
-  }, [authUser?.id, refreshWorkspace]);
+  useVisibleAutoRefresh(
+    () => refreshWorkspace(true),
+    Boolean(authUser?.id),
+    10_000,
+  );
 
   useStudentCommunicationRealtime(
     conversations.map((conversation) => conversation.id),
@@ -523,7 +516,7 @@ export const StudentProvider: React.FC<{
     const response = await getMaterialDownload(materialId);
     const url = String(response.data?.downloadUrl || "");
     if (!url) throw new Error("The backend did not return a material download URL.");
-    window.open(url, "_blank", "noopener,noreferrer");
+    downloadFile(url, String(response.data?.originalFilename || ""));
   };
   const submitExam = (examId: string) => {
     showToast(`Exam ${examId} submission is not supported by the current backend contract.`);

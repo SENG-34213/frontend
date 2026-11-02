@@ -33,6 +33,8 @@ import type { BackendCourse } from "../api/courseApi";
 import { TextInputModal } from "../components/ActionModal";
 import { ExamInstructionUpload } from "../components/ExamInstructionUpload";
 import { downloadExamAttachment, getExamAttachments, type ExamAttachment } from "../api/examApi";
+import { downloadBlob } from "../../../../shared/files/downloadFile";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface ExamManagementViewProps {
@@ -254,6 +256,19 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
     return () => controller.abort();
   }, [backendCourses, backendCoursesError, backendCoursesLoading]);
 
+  useVisibleAutoRefresh(
+    async () => {
+      if (backendCoursesLoading || backendCoursesError || !backendCourses.length) return;
+      const loaded = (
+        await Promise.all(backendCourses.map((course) => getCourseExams(course.id)))
+      ).flat();
+      setBackendExams(loaded);
+      setExams(loaded.map((exam) => mapBackendExam(exam, backendCourses)));
+    },
+    !backendCoursesLoading && !backendCoursesError && backendCourses.length > 0,
+    15_000,
+  );
+
   const replaceExam = (updated: BackendExam) => {
     setBackendExams((current) => current.map((exam) => (exam.id === updated.id ? updated : exam)));
     setExams((current) =>
@@ -266,14 +281,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
   const handleDownloadAttachment = async (examId: string, attachment: ExamAttachment) => {
     try {
       const blob = await downloadExamAttachment(examId, attachment.id);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = attachment.originalFilename || "exam-instructions.pdf";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      downloadBlob(blob, attachment.originalFilename || "exam-instructions.pdf");
     } catch (requestError) {
       setError(
         requestError instanceof Error

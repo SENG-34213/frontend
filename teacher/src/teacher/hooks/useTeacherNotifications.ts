@@ -10,6 +10,7 @@ import {
 } from "../api/notificationApi";
 import type { NotificationItem } from "../types";
 import { formatNotificationTime } from "../../../../shared/notifications/notificationFormat";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 type NotificationState = {
   notifications: NotificationItem[];
@@ -125,6 +126,23 @@ export function useTeacherNotifications(enabled: boolean, pageSize = 20) {
       controller.abort();
     };
   }, [enabled, page, pageSize, retryKey, unreadOnly]);
+
+  useVisibleAutoRefresh(
+    async () => {
+      const result = await getNotifications(page, pageSize, unreadOnly);
+      setState({
+        notifications: result.notifications.map(toNotificationItem),
+        page: result.page,
+        totalPages: result.totalPages,
+        totalElements: result.totalElements,
+        unreadCount: result.unreadCount,
+        isLoading: false,
+        error: null,
+      });
+    },
+    enabled,
+    15_000,
+  );
 
   const retry = useCallback(() => {
     requestStartedRef.current = false;

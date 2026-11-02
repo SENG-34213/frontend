@@ -149,6 +149,7 @@ export interface StudentSubmission {
   feedback?: string;
   submittedContentText?: string;
   submittedFileName?: string;
+  submittedFiles?: { id: string; name: string }[];
   fileSizeBytes?: number;
   codeSnippet?: string;
 }

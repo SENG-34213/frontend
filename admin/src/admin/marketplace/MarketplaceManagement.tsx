@@ -34,6 +34,8 @@ import {
   type MarketplaceProductRequest,
   type MarketplaceStatus,
 } from "../api/marketplaceApi";
+import { downloadFile } from "../../../../shared/files/downloadFile";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 import type { Course, Grade, TeacherProfile } from "../types";
 import { fetchAdminUsers } from "../api/usersApi";
 import { fetchCourses } from "../api/coursesApi";
@@ -93,18 +95,22 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
     else setError(description);
   };
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
+  const load = useCallback(async (background = false) => {
+    if (!background) {
+      setIsLoading(true);
+      setError("");
+    }
     try {
       const page = await getMarketplaceProducts(search);
       setProducts(page.content || []);
     } catch (caught) {
-      setError(
-        caught instanceof Error ? caught.message : "Marketplace products could not be loaded.",
-      );
+      if (!background) {
+        setError(
+          caught instanceof Error ? caught.message : "Marketplace products could not be loaded.",
+        );
+      }
     } finally {
-      setIsLoading(false);
+      if (!background) setIsLoading(false);
     }
   }, [search]);
 
@@ -112,6 +118,8 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
     const loadTask = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(loadTask);
   }, [load]);
+
+  useVisibleAutoRefresh(() => load(true), true, 15_000);
 
   useEffect(() => {
     const thumbnailIds = products
@@ -225,7 +233,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
     setIsDownloading(true);
     try {
       const url = await getMarketplaceMaterialDownloadUrl(selectedProduct.materialId);
-      window.open(url, "_blank", "noopener,noreferrer");
+      downloadFile(url, selectedProduct.title);
     } catch (caught) {
       notify(
         "error",

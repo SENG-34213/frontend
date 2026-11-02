@@ -27,6 +27,7 @@ import {
   X,
   ChevronLeft,
   ShoppingBag,
+  ClipboardList,
 } from "lucide-react";
 import { AdminRole } from "../types";
 
@@ -34,6 +35,7 @@ export type AdminRoute =
   | "dashboard"
   | "analytics"
   | "notifications"
+  | "pre-registrations"
   | "students"
   | "teachers"
   | "administrators"
@@ -105,6 +107,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           label: "Notifications",
           icon: Bell,
           badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined,
+        },
+        {
+          id: "pre-registrations" as AdminRoute,
+          label: "Pre-Registrations",
+          icon: ClipboardList,
         },
       ],
     },

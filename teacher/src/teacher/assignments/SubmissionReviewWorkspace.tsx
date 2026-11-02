@@ -22,11 +22,15 @@ import {
   getAssignment,
   getAssignmentSubmissions,
   getSubmission,
+  getSubmissionFiles,
+  getSubmissionFileDownload,
   gradeSubmission,
   returnSubmission,
   type BackendAssignment,
   type BackendSubmission,
 } from "../api/assignmentApi";
+import { downloadFile } from "../../../../shared/files/downloadFile";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 interface SubmissionReviewWorkspaceProps {
   initialAssignmentId?: string;
@@ -81,6 +85,7 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
     feedback: item.feedback,
     submittedContentText: item.content,
     submittedFileName: undefined,
+    submittedFiles: [],
     fileSizeBytes: undefined,
     codeSnippet: undefined,
   };
@@ -144,11 +149,85 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     return () => controller.abort();
   }, [selectedAssignmentId]);
 
+  useVisibleAutoRefresh(
+    async () => {
+      if (!selectedAssignmentId) return;
+      const [backendAssignment, backendSubmissions] = await Promise.all([
+        getAssignment(selectedAssignmentId),
+        getAssignmentSubmissions(selectedAssignmentId),
+      ]);
+      if (backendAssignment) setAssignment(mapBackendAssignment(backendAssignment));
+      const mapped = backendSubmissions.map((submission) =>
+        mapBackendSubmission(submission, backendAssignment?.maxMarks ?? 100),
+      );
+      setSubmissions((current) =>
+        mapped.map((submission) => {
+          const previous = current.find((item) => item.id === submission.id);
+          return previous ? { ...submission, submittedFiles: previous.submittedFiles } : submission;
+        }),
+      );
+    },
+    Boolean(selectedAssignmentId),
+    10_000,
+  );
+
   // When switching submission, update local inputs
   useEffect(() => {
     setInputScore(currentSubmission?.score !== undefined ? String(currentSubmission.score) : "");
     setFeedback(currentSubmission?.feedback || "");
   }, [currentSubmission?.id, currentSubmission?.feedback, currentSubmission?.score]);
+
+  useEffect(() => {
+    if (!currentSubmission) return;
+    let active = true;
+    void getSubmissionFiles(currentSubmission.id)
+      .then((files) => {
+        if (!active) return;
+        setSubmissions((current) =>
+          current.map((submission) =>
+            submission.id === currentSubmission.id
+              ? {
+                  ...submission,
+                  submittedFiles: files.map((file) => ({
+                    id: file.id,
+                    name: file.originalFilename,
+                  })),
+                  submittedFileName: files[0]?.originalFilename,
+                }
+              : submission,
+          ),
+        );
+      })
+      .catch(() => {
+        if (active) {
+          setSubmissions((current) =>
+            current.map((submission) =>
+              submission.id === currentSubmission.id
+                ? { ...submission, submittedFiles: [] }
+                : submission,
+            ),
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [currentSubmission?.id]);
+
+  const handleDownloadSubmissionFile = async (file: { id: string; name: string }) => {
+    if (!currentSubmission) return;
+    try {
+      const result = await getSubmissionFileDownload(currentSubmission.id, file.id);
+      if (!result.downloadUrl) throw new Error("A secure submission download URL was not returned.");
+      downloadFile(result.downloadUrl, file.name);
+    } catch (requestError) {
+      setNotice({
+        title: "Download unavailable",
+        message:
+          requestError instanceof Error ? requestError.message : "The submission file is unavailable.",
+      });
+    }
+  };
 
   const handleSelectSubmission = async (sub: StudentSubmission) => {
     setSelectedSubmissionId(sub.id);
@@ -372,25 +451,21 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               </p>
             </div>
 
-            {currentSubmission.submittedFileName && (
-              <div className="flex items-center gap-2">
+            {currentSubmission.submittedFiles?.map((file) => (
+              <div key={file.id} className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 font-mono hidden md:inline">
-                  {currentSubmission.submittedFileName}
+                  {file.name}
                 </span>
                 <button
-                  onClick={() =>
-                    setNotice({
-                      title: "Download unavailable",
-                      message: "This submission does not include a downloadable file URL yet.",
-                    })
-                  }
+                  onClick={() => void handleDownloadSubmissionFile(file)}
                   className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-md transition-colors flex items-center gap-1"
+                  aria-label={`Download ${file.name}`}
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download</span>
                 </button>
               </div>
-            )}
+            ))}
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-5">

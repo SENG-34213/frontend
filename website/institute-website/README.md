@@ -94,9 +94,14 @@ If the application requires environment variables for external services, APIs, o
 Example:
 
 ```env
-# Add required environment variables here
+# Server-side URL for the backend API gateway
+API_GATEWAY_URL=http://localhost:8080
+
+# Must match PRE_REGISTRATION_API_TOKEN in the backend environment
+PRE_REGISTRATION_API_TOKEN=replace-with-a-long-random-server-only-token
 ```
 
-Do not commit API keys, passwords, access tokens, or other secrets to GitHub.
+Set the same `PRE_REGISTRATION_API_TOKEN` in the backend environment. Do not expose it through a
+`NEXT_PUBLIC_` variable or commit real API keys, passwords, or tokens to GitHub.
 
-If the current version of Mentify does not require environment variables, this step can be skipped.
+The website's pre-registration API requires both values to save submissions for admin review.

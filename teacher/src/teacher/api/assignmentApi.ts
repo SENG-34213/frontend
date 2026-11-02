@@ -86,6 +86,18 @@ export type BackendSubmission = {
   returnedAt?: string;
 };
 
+export type BackendSubmissionFile = {
+  id: string;
+  originalFilename: string;
+  contentType: string;
+  fileSize: number;
+};
+
+export type SubmissionFileDownload = BackendSubmissionFile & {
+  downloadUrl?: string;
+  content?: string;
+};
+
 function unwrap<T>(response: ApiResponse<T>) {
   return response.data as T;
 }
@@ -199,6 +211,22 @@ export async function getSubmission(submissionId: string, signal?: AbortSignal) 
     { signal },
   );
   return response.data as BackendSubmission;
+}
+
+export async function getSubmissionFiles(submissionId: string, signal?: AbortSignal) {
+  const response = await apiRequest<ApiResponse<BackendSubmissionFile[]>>(
+    `/api/v1/submissions/${encodeURIComponent(submissionId)}/files`,
+    { signal },
+  );
+  return response.data ?? [];
+}
+
+export async function getSubmissionFileDownload(submissionId: string, fileId: string) {
+  const response = await apiRequest<ApiResponse<SubmissionFileDownload>>(
+    `/api/v1/submissions/${encodeURIComponent(submissionId)}/files/${encodeURIComponent(fileId)}/download`,
+  );
+  if (!response.data) throw new Error(response.message || "The submission file is unavailable.");
+  return response.data;
 }
 
 export async function gradeSubmission(

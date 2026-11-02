@@ -292,7 +292,11 @@ export const LearningMaterialsView: React.FC = () => {
                   Preview
                 </button>
                 <button
-                  onClick={() => showToast(`Downloaded: ${mat.title}`)}
+                  onClick={() =>
+                    downloadMaterial(mat.id).catch((error) =>
+                      showToast(error instanceof Error ? error.message : "Download failed."),
+                    )
+                  }
                   className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
                 >
                   Download

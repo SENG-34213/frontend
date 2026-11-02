@@ -241,6 +241,42 @@ export async function POST(request) {
       return json("Too many registration attempts. Please try again later.", 429);
     }
 
+    const apiBaseUrl = (
+      process.env.API_GATEWAY_URL || process.env.NEXT_PUBLIC_API_GATEWAY_URL || ""
+    ).replace(/\/$/, "");
+    const apiToken = process.env.PRE_REGISTRATION_API_TOKEN || "";
+    if (!apiBaseUrl || !apiToken) {
+      console.error("Pre-registration API configuration is incomplete.");
+      return json("The registration service is not configured.", 503);
+    }
+
+    const submissionResponse = await fetch(`${apiBaseUrl}/api/v1/public/pre-registrations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-Pre-Registration-Token": apiToken,
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        phone,
+        role,
+        district,
+        city,
+        classFormat,
+        grade,
+        subjects,
+        contactMethod,
+        consent: true,
+      }),
+    });
+
+    if (!submissionResponse.ok) {
+      console.error("Pre-registration could not be saved to the admissions service.");
+      return json("We could not submit your registration. Please try again later.", 503);
+    }
+
     const emailBody = [
       "New TiT class pre-registration",
       "",
@@ -271,7 +307,6 @@ export async function POST(request) {
 
     if (error) {
       console.error("Pre-registration email delivery failed.");
-      return json("We could not submit your registration. Please try again later.", 502);
     }
 
     return json("Your pre-registration has been submitted successfully.", 200);

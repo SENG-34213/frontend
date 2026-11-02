@@ -47,6 +47,8 @@ import {
   updateMaterial,
   uploadMaterial,
 } from "../api/materialApi";
+import { downloadFile } from "../../../../shared/files/downloadFile";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 type Props = { backendCourses?: BackendCourse[] };
 const emptyPage: MaterialPage = {
@@ -117,9 +119,11 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
     "upload" | "edit" | "details" | "preview" | "archive" | "delete" | null
   >(null);
   const load = useCallback(
-    async (signal?: AbortSignal) => {
-      setLoading(true);
-      setError(null);
+    async (signal?: AbortSignal, background = false) => {
+      if (!background) {
+        setLoading(true);
+        setError(null);
+      }
       try {
         const assignedCourseIds = backendCourses
           .map((course) => course.id)
@@ -192,9 +196,9 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
           empty: content.length === 0,
         });
       } catch (err) {
-        if (!signal?.aborted) setError(materialError(err));
+        if (!background && !signal?.aborted) setError(materialError(err));
       } finally {
-        if (!signal?.aborted) setLoading(false);
+        if (!background && !signal?.aborted) setLoading(false);
       }
     },
     [backendCourses, filters],
@@ -204,6 +208,11 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
     load(controller.signal);
     return () => controller.abort();
   }, [load]);
+  useVisibleAutoRefresh(
+    () => load(undefined, true),
+    backendCourses.length > 0,
+    15_000,
+  );
   useEffect(() => {
     if (!notice) return;
     const timer = window.setTimeout(() => setNotice(null), 3500);
@@ -219,7 +228,7 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
   const download = async (material: Material) => {
     try {
       const result = await getMaterialDownload(material.id);
-      window.open(result.downloadUrl, "_blank", "noopener,noreferrer");
+      downloadFile(result.downloadUrl, result.originalFilename);
       setNotice(`Download link issued for “${material.originalFilename}”.`);
     } catch (err) {
       setError(materialError(err));
@@ -1248,7 +1257,7 @@ function DetailsModal({
     try {
       const response = await getMaterialDownload(material.id);
       if (!response.downloadUrl) throw new Error("This resource is not available for download.");
-      window.open(response.downloadUrl, "_blank", "noopener,noreferrer");
+      downloadFile(response.downloadUrl, response.originalFilename);
     } catch (err) {
       setDownloadError(materialError(err));
     } finally {
@@ -1452,7 +1461,7 @@ function PreviewModal({
     if (isExpired || !downloadData?.downloadUrl) {
       void fetchDownloadUrl();
     } else {
-      window.open(downloadData.downloadUrl, "_blank", "noopener,noreferrer");
+      downloadFile(downloadData.downloadUrl, material.originalFilename);
     }
   };
 
