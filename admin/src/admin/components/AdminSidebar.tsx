@@ -19,7 +19,6 @@ import {
   MessageSquare,
   Sparkles,
   FileText,
-  Activity,
   Settings,
   User,
   ChevronDown,
@@ -160,7 +159,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       key: "ADMINISTRATION",
       label: "Administration",
       items: [
-        { id: "audit" as AdminRoute, label: "Audit & Activity", icon: Activity },
         { id: "settings" as AdminRoute, label: "Settings", icon: Settings },
         { id: "profile" as AdminRoute, label: "My Profile", icon: User },
       ],

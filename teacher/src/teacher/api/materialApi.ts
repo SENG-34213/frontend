@@ -10,6 +10,7 @@ export type MaterialType =
   | "VIDEO"
   | "AUDIO"
   | "ARCHIVE"
+  | "TEXT"
   | "OTHER";
 export type MaterialPurpose =
   | "LEARNING_MATERIAL"

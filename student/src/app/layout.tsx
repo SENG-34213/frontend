@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   icons: {
     icon: `${appBasePath}/TiTJaffna-logo.jpeg`,
     shortcut: `${appBasePath}/TiTJaffna-logo.jpeg`,
+    apple: `${appBasePath}/TiTJaffna-logo.jpeg`,
   },
 };
 

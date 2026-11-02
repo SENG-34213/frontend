@@ -484,57 +484,70 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
         }
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {[
-          {
-            label: "Total products",
-            value: products.length,
-            tone: "text-slate-900 dark:text-white",
-            icon: PackageOpen,
-          },
-          {
-            label: "Published",
-            value: products.filter((product) => product.status === "PUBLISHED").length,
-            tone: "text-emerald-600",
-            icon: Check,
-          },
-          {
-            label: "Drafts",
-            value: products.filter((product) => product.status === "DRAFT").length,
-            tone: "text-amber-600",
-            icon: Edit3,
-          },
-        ].map((metric) => (
-          <div
-            key={metric.label}
-            className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xs dark:border-slate-800 dark:bg-slate-900"
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-              {metric.label}
-            </p>
-            <p className={`mt-1 text-2xl font-bold ${metric.tone}`}>{metric.value}</p>
-            <div className={`rounded-xl bg-slate-100 p-2.5 dark:bg-slate-800 ${metric.tone}`}>
-              <metric.icon className="h-4 w-4" />
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-4 text-xs sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+              <PackageOpen className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-semibold text-slate-900 dark:text-white">
+                Marketplace catalog
+              </div>
+              <span className="mt-0.5 block text-[11px] text-slate-500">
+                Manage learning resources and their availability.
+              </span>
             </div>
           </div>
-        ))}
+          <div className="grid grid-cols-3 gap-5 sm:flex sm:items-center sm:gap-6">
+            {[
+              {
+                label: "Total products",
+                value: products.length,
+                tone: "text-slate-900 dark:text-white",
+                icon: PackageOpen,
+              },
+              {
+                label: "Published",
+                value: products.filter((product) => product.status === "PUBLISHED").length,
+                tone: "text-emerald-600",
+                icon: Check,
+              },
+              {
+                label: "Drafts",
+                value: products.filter((product) => product.status === "DRAFT").length,
+                tone: "text-amber-600",
+                icon: Edit3,
+              },
+            ].map((metric) => (
+              <div key={metric.label} className="min-w-0">
+                <span className="block text-[11px] text-slate-400">{metric.label}</span>
+                <span className={`font-bold tabular-nums ${metric.tone}`}>{metric.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <h2 className="text-lg font-semibold text-slate-950 dark:text-white">Product catalog</h2>
-          <p className="text-xs text-slate-500">
-            Manage titles, prices, categories, and publishing state.
-          </p>
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-md">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by title, category, or subject..."
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => void load()}
-            className="rounded-xl border border-slate-200 p-2.5 text-slate-500 hover:text-indigo-600 dark:border-slate-800"
+            className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:text-indigo-600 dark:border-slate-700"
+            aria-label="Refresh marketplace"
           >
             <RefreshCcw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
-          <div className="flex rounded-xl border border-slate-200 p-1 dark:border-slate-800">
+          <div className="flex rounded-lg border border-slate-200 p-1 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setViewMode("list")}
@@ -567,17 +580,6 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
 
       <div className="w-full">
         <section className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="border-b border-slate-100 p-4 dark:border-slate-800">
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search products..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-950"
-              />
-            </div>
-          </div>
           {isLoading ? (
             <div className="p-10 text-center text-sm text-slate-500">
               Loading marketplace products…
@@ -704,12 +706,12 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                     {label(product.status)}
                   </span>
                   <div
-                    className={`flex items-center gap-2 ${viewMode === "grid" ? "justify-between border-t border-slate-100 pt-3 dark:border-slate-800" : "justify-start md:justify-end"}`}
+                    className={`flex min-w-0 flex-wrap items-center gap-2 ${viewMode === "grid" ? "justify-between border-t border-slate-100 pt-3 dark:border-slate-800" : "justify-start md:justify-end"}`}
                   >
                     {viewMode === "grid" && (
-                      <div className="text-left">
+                      <div className="min-w-0 flex-1 text-left">
                         {product.free ? (
-                          <span className="text-base font-extrabold text-emerald-600">
+                          <span className="block truncate text-base font-extrabold text-emerald-600">
                             Free access
                           </span>
                         ) : (
@@ -719,7 +721,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                                 {product.currency} {product.price.toFixed(2)}
                               </span>
                             )}
-                            <span className="text-base font-extrabold text-slate-900 dark:text-white">
+                            <span className="block truncate text-base font-extrabold text-slate-900 dark:text-white">
                               {product.currency} {(product.finalPrice ?? product.price).toFixed(2)}
                             </span>
                           </>
@@ -732,7 +734,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                       }
                       className={
                         viewMode === "grid"
-                          ? "rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300"
+                          ? "h-10 shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300"
                           : "rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
                       }
                       aria-label={`View details for ${product.title}`}
@@ -743,7 +745,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                       <button
                         type="button"
                         onClick={() => openEdit(product)}
-                        className="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300"
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 p-0 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300"
                         aria-label={`Edit ${product.title}`}
                         title="Edit material"
                       >
@@ -756,7 +758,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                       disabled={isDeleting}
                       className={
                         viewMode === "grid"
-                          ? "rounded-xl border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                          ? "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-rose-200 p-0 text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                           : "rounded-lg p-2 text-rose-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-60"
                       }
                       aria-label={`Delete ${product.title}`}
@@ -769,7 +771,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                         onClick={() => void changeStatus(product, "PUBLISHED")}
                         className={
                           viewMode === "grid"
-                            ? "rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                            ? "h-10 shrink-0 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
                             : "rounded-lg p-2 text-emerald-600 hover:bg-emerald-50"
                         }
                         aria-label={`Publish ${product.title}`}
@@ -782,7 +784,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                         onClick={() => void changeStatus(product, "ARCHIVED")}
                         className={
                           viewMode === "grid"
-                            ? "rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+                            ? "h-10 shrink-0 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
                             : "rounded-lg p-2 text-slate-400 hover:bg-slate-100"
                         }
                         aria-label={`Archive ${product.title}`}

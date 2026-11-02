@@ -14,8 +14,13 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: "Institute Name | Education and Resources",
-  description: "Explore our programmes, services, and public educational resources.",
+  title: "TiT Online Education | Jaffna",
+  description: "Online learning, courses, and educational resources from TiT Online Education.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({ children }) {

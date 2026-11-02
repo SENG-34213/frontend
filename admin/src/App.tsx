@@ -418,9 +418,20 @@ export default function App() {
   const loadAdminUsers = async () => {
     try {
       const data = await fetchAdminUsers();
-      setStudents(data.students);
-      setTeachers(data.teachers);
-      setAdministrators(data.administrators);
+      // Keep locally-added users when the initial/background request finishes after
+      // a registration request. The API response remains authoritative for existing IDs.
+      setStudents((previous) => {
+        const returnedIds = new Set(data.students.map((user) => user.id));
+        return [...data.students, ...previous.filter((user) => !returnedIds.has(user.id))];
+      });
+      setTeachers((previous) => {
+        const returnedIds = new Set(data.teachers.map((user) => user.id));
+        return [...data.teachers, ...previous.filter((user) => !returnedIds.has(user.id))];
+      });
+      setAdministrators((previous) => {
+        const returnedIds = new Set(data.administrators.map((user) => user.id));
+        return [...data.administrators, ...previous.filter((user) => !returnedIds.has(user.id))];
+      });
     } catch (error) {
       addToast(
         "error",
@@ -923,7 +934,7 @@ export default function App() {
   };
 
   const handleAddStudent = (newStudent: StudentProfile) => {
-    setStudents((prev) => [newStudent, ...prev]);
+    setStudents((prev) => [newStudent, ...prev.filter((student) => student.id !== newStudent.id)]);
     setKpis((prev) => ({
       ...prev,
       totalStudents: prev.totalStudents + 1,
@@ -937,7 +948,7 @@ export default function App() {
   };
 
   const handleAddTeacher = (newTeacher: TeacherProfile) => {
-    setTeachers((prev) => [newTeacher, ...prev]);
+    setTeachers((prev) => [newTeacher, ...prev.filter((teacher) => teacher.id !== newTeacher.id)]);
     setKpis((prev) => ({
       ...prev,
       totalTeachers: prev.totalTeachers + 1,
@@ -951,7 +962,10 @@ export default function App() {
   };
 
   const handleAddAdministrator = (newAdmin: AdministratorProfile) => {
-    setAdministrators((prev) => [newAdmin, ...prev]);
+    setAdministrators((prev) => [
+      newAdmin,
+      ...prev.filter((administrator) => administrator.id !== newAdmin.id),
+    ]);
     addToast(
       "success",
       "Administrator Registered",
@@ -1099,11 +1113,6 @@ export default function App() {
       previous ? previous.filter((item) => item.id !== enrollmentId) : previous,
     );
     addToast("success", "Course Unenrolled", "The course was removed from the student’s plan.");
-  };
-
-  const handleUploadMaterial = (newMat: LearningMaterial) => {
-    setMaterials((prev) => [newMat, ...prev]);
-    addToast("success", "Material Uploaded", `${newMat.title} was uploaded successfully.`);
   };
 
   const handleAddEvent = async (request: Parameters<typeof createCalendarEvent>[0]) => {
@@ -1389,11 +1398,7 @@ export default function App() {
       )}
 
       {currentRoute === "materials" && (
-        <LearningMaterialManagement
-          materials={materials}
-          courses={courses}
-          onUploadMaterial={handleUploadMaterial}
-        />
+        <LearningMaterialManagement materials={materials} courses={courses} />
       )}
 
       {currentRoute === "marketplace" && <MarketplaceManagement onToast={addToast} />}

@@ -733,7 +733,7 @@ export const CourseDetailsView: React.FC<CourseDetailsViewProps> = ({
                       >
                         <div className="flex items-start gap-3">
                           <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs font-mono border border-indigo-100">
-                            {mat.fileType}
+                            {mat.fileType === "SLIDES" ? "Presentation" : mat.fileType}
                           </div>
                           <div>
                             <h4 className="text-xs font-bold text-slate-900 line-clamp-1">

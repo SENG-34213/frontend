@@ -17,6 +17,23 @@ function materialType(material: Material) {
     "FILE"
   ).toUpperCase();
 }
+function materialTypeLabel(material: Material) {
+  const type = materialType(material);
+  const labels: Record<string, string> = {
+    PDF: "PDF document",
+    DOCUMENT: "Document",
+    PRESENTATION: "Presentation",
+    SLIDES: "Presentation",
+    SPREADSHEET: "Spreadsheet",
+    IMAGE: "Image",
+    VIDEO: "Video",
+    AUDIO: "Audio",
+    ARCHIVE: "Archive",
+    TEXT: "Text file",
+    OTHER: "Other file",
+  };
+  return labels[type] || type;
+}
 function materialDate(material: Material) {
   const value = material.uploadedAt || material.createdAt || material.updatedAt;
   return value
@@ -170,7 +187,7 @@ export function MaterialCard({
         <dl>
           <div>
             <dt>Type</dt>
-            <dd>{materialType(material)}</dd>
+            <dd>{materialTypeLabel(material)}</dd>
           </div>
           <div>
             <dt>File</dt>
