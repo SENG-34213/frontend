@@ -33,6 +33,7 @@ import {
 import type { Course } from "../types";
 import type { Student } from "../types";
 import { TeacherAvatar } from "../components/TeacherAvatar";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 type AttendanceWorkspaceViewProps = {
   courses: Course[];
@@ -287,6 +288,20 @@ export const AttendanceWorkspaceView: React.FC<AttendanceWorkspaceViewProps> = (
     // The teacher course list is the data dependency for this workspace.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendCourses, selectedSessionId]);
+
+  useVisibleAutoRefresh(
+    async () => {
+      if (!backendCourses.length) return;
+      const result = await Promise.allSettled(
+        backendCourses.map((course) => getCourseAttendanceSessions(course.id)),
+      );
+      if (result.some((item) => item.status === "fulfilled")) {
+        setSessions(result.flatMap((item) => (item.status === "fulfilled" ? item.value : [])));
+      }
+    },
+    backendCourses.length > 0,
+    15_000,
+  );
 
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();

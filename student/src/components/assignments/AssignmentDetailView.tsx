@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { downloadAssignmentAttachment } from "../../api/student";
+import { downloadFile } from "../../../../shared/files/downloadFile";
 
 export const AssignmentDetailView: React.FC = () => {
   const { assignments, selectedAssignmentId, submitAssignment, setCurrentView, showToast } =
@@ -66,6 +67,24 @@ export const AssignmentDetailView: React.FC = () => {
       window.open(url, "_blank", "noopener,noreferrer");
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Document preview is unavailable.");
+    }
+  };
+
+  const handleDownloadAttachment = async (
+    attachment: NonNullable<typeof assignment.attachments>[number],
+  ) => {
+    if (!attachment.id) {
+      showToast("This document is not available for download yet.");
+      return;
+    }
+    try {
+      const response = await downloadAssignmentAttachment(assignment.id, attachment.id);
+      const payload = (response as { data?: { downloadUrl?: string } })?.data ?? response;
+      const url = (payload as { downloadUrl?: string })?.downloadUrl;
+      if (!url) throw new Error("A secure download link was not returned.");
+      downloadFile(url, attachment.name);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Document download is unavailable.");
     }
   };
 
@@ -215,7 +234,7 @@ export const AssignmentDetailView: React.FC = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => void handlePreviewAttachment(att)}
+                        onClick={() => void handleDownloadAttachment(att)}
                         className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-50"
                         aria-label={`Preview ${att.name}`}
                         title="Preview document"
@@ -228,7 +247,7 @@ export const AssignmentDetailView: React.FC = () => {
                         onClick={() => void handlePreviewAttachment(att)}
                         className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600"
                         aria-label={`Download ${att.name}`}
-                        title="Open document"
+                        title="Download document"
                       >
                         <Download className="h-4 w-4" />
                       </button>

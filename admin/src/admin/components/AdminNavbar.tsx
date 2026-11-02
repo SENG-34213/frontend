@@ -81,6 +81,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
     dashboard: "Platform Overview",
     analytics: "Analytics & Insights",
     notifications: "Notification Center",
+    "pre-registrations": "Pre-Registrations",
     students: "Student Management",
     teachers: "Teacher Management",
     administrators: "Administrator Oversight",
@@ -108,6 +109,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({
   const routeCategories: Partial<Record<AdminRoute, string>> = {
     analytics: "Overview",
     notifications: "Overview",
+    "pre-registrations": "Overview",
     students: "User Management",
     teachers: "User Management",
     administrators: "User Management",

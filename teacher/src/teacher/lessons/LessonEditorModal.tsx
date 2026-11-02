@@ -3,6 +3,7 @@ import { X, Save, Eye, Edit3, Check, FileText, Upload, Download, FileArchive } f
 import { Lesson, Module } from "../types";
 import { deleteModuleMaterial } from "../api/courseContentApi";
 import { getMaterialDownload } from "../api/materialApi";
+import { downloadFile } from "../../../../shared/files/downloadFile";
 import { ConfirmModal } from "../components/ActionModal";
 
 interface LessonEditorModalProps {
@@ -171,14 +172,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
       const result = await getMaterialDownload(materialId);
       const url = result.downloadUrl;
       if (!url) throw new Error("A secure material URL was not returned.");
-      const downloadLink = document.createElement("a");
-      downloadLink.href = url;
-      downloadLink.download = "";
-      downloadLink.target = "_blank";
-      downloadLink.rel = "noopener noreferrer";
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      downloadLink.remove();
+      downloadFile(url, result.originalFilename);
     } catch (error) {
       setMaterialError(error instanceof Error ? error.message : "Material could not be opened.");
     } finally {

@@ -19,6 +19,7 @@ import {
   type BackendCalendarEvent,
   type CalendarEventRequest,
 } from "../api/calendarApi";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 type TeacherCalendarViewProps = {
   backendCourses: BackendCourse[];
@@ -184,6 +185,18 @@ export const TeacherCalendarView: React.FC<TeacherCalendarViewProps> = ({
       await loadEvents(start, end, filters);
     },
     [loadEvents],
+  );
+
+  useVisibleAutoRefresh(
+    () => {
+      const now = new Date();
+      return loadEvents(
+        new Date(now.getFullYear(), now.getMonth(), 1),
+        new Date(now.getFullYear(), now.getMonth() + 1, 1),
+      );
+    },
+    true,
+    15_000,
   );
 
   return (

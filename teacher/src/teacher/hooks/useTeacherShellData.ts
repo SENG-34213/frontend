@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getTeacherShellData } from "../api/teacherApi";
 import type { TeacherUserSummary } from "../auth/authTypes";
 import type { TeacherProfile } from "../types";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 type ShellState = {
   teacherProfile: TeacherProfile | null;
@@ -102,6 +103,21 @@ export function useTeacherShellData(enabled: boolean): ShellState & { retry: () 
       controller.abort();
     };
   }, [enabled, retryKey]);
+
+  useVisibleAutoRefresh(
+    async () => {
+      const data = await getTeacherShellData();
+      setState({
+        teacherProfile: toTeacherProfile(data.user),
+        unreadNotificationsCount: data.unreadNotificationsCount,
+        isLoading: false,
+        error: null,
+        notificationError: data.notificationsError ?? null,
+      });
+    },
+    enabled,
+    15_000,
+  );
 
   const retry = useCallback(() => {
     requestStartedRef.current = false;

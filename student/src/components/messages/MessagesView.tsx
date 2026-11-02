@@ -13,6 +13,7 @@ import { getCommunicationAttachmentDownload } from "../../api/student";
 import { useStudent } from "../../context/StudentContext";
 import type { Message } from "../../types";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
+import { downloadFile } from "../../../../shared/files/downloadFile";
 
 function formatMessageTime(value?: string) {
   if (!value) return "";
@@ -174,6 +175,26 @@ export const MessagesView: React.FC = () => {
       if (url) window.open(url, "_blank", "noopener,noreferrer");
     } catch {
       // The existing student toast flow handles request failures during the next refresh.
+    }
+  };
+
+  const downloadAttachment = async (
+    messageId: string,
+    attachmentId: string | undefined,
+    filename: string,
+  ) => {
+    if (!activeConv || !attachmentId) return;
+    try {
+      const response = await getCommunicationAttachmentDownload(
+        activeConv.id,
+        messageId,
+        attachmentId,
+      );
+      const url = String(response.data?.downloadUrl || "");
+      if (!url) throw new Error("A secure download link was not returned.");
+      downloadFile(url, filename);
+    } catch {
+      // The portal's toast flow handles communication errors on the next workspace refresh.
     }
   };
 
@@ -364,7 +385,9 @@ export const MessagesView: React.FC = () => {
                         <button
                           key={attachment.id || attachment.name}
                           type="button"
-                          onClick={() => void openAttachment(msg.id, attachment.id)}
+                          onClick={() =>
+                            void downloadAttachment(msg.id, attachment.id, attachment.name)
+                          }
                           className="mt-2 flex w-full items-center gap-2 rounded-lg bg-black/10 px-2.5 py-2 text-left hover:bg-black/20"
                         >
                           <FileText className="h-4 w-4 shrink-0" />
