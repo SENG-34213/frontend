@@ -415,11 +415,7 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     let requestInFlight = false;
 
     const refreshMessages = async () => {
-      if (
-        disposed ||
-        requestInFlight ||
-        document.visibilityState !== "visible"
-      ) {
+      if (disposed || requestInFlight || document.visibilityState !== "visible") {
         return;
       }
       requestInFlight = true;

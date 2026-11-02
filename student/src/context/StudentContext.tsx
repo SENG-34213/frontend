@@ -236,56 +236,64 @@ export const StudentProvider: React.FC<{
     selectedLessonId,
     selectedQuizId,
   ]);
-  const refreshWorkspace = useCallback(async (silent = false) => {
-    if (!authUser) return;
-    if (!silent) {
-      setWorkspaceLoading(true);
-      setWorkspaceError(null);
-    }
-    try {
-      const workspace = await loadStudentWorkspace(authUser);
-      setProfile(workspace.profile);
-      setCourses(workspace.courses);
-      setAssignments(workspace.assignments);
-      setQuizzes(workspace.quizzes);
-      setExaminations(workspace.examinations);
-      setMaterials(workspace.materials);
-      setCalendarEvents(workspace.calendarEvents);
-      setNotifications(workspace.notifications);
-      setAnnouncements(workspace.announcements);
-      setUnreadNotificationCount(workspace.unreadNotificationCount);
-      setAttendanceSummaries(workspace.attendanceSummaries);
-      setConversations((current) =>
-        workspace.conversations.map((conversation) => {
-          const previous = current.find((item) => item.id === conversation.id);
-          if (!previous) return conversation;
-
-          const messagesById = new Map(
-            [...previous.messages, ...conversation.messages].map((message) => [message.id, message]),
-          );
-          const messages = Array.from(messagesById.values()).sort(
-            (left, right) =>
-              new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
-          );
-          const latestMessage = messages[messages.length - 1];
-          return {
-            ...conversation,
-            lastMessage: latestMessage?.text ?? conversation.lastMessage,
-            lastMessageTime: latestMessage?.timestamp ?? conversation.lastMessageTime,
-            messages,
-          };
-        }),
-      );
-      if (silent) setWorkspaceError(null);
-    } catch (error) {
+  const refreshWorkspace = useCallback(
+    async (silent = false) => {
+      if (!authUser) return;
       if (!silent) {
-        setWorkspaceError(error instanceof Error ? error.message : "Could not load student data.");
+        setWorkspaceLoading(true);
+        setWorkspaceError(null);
       }
-      throw error;
-    } finally {
-      if (!silent) setWorkspaceLoading(false);
-    }
-  }, [authUser]);
+      try {
+        const workspace = await loadStudentWorkspace(authUser);
+        setProfile(workspace.profile);
+        setCourses(workspace.courses);
+        setAssignments(workspace.assignments);
+        setQuizzes(workspace.quizzes);
+        setExaminations(workspace.examinations);
+        setMaterials(workspace.materials);
+        setCalendarEvents(workspace.calendarEvents);
+        setNotifications(workspace.notifications);
+        setAnnouncements(workspace.announcements);
+        setUnreadNotificationCount(workspace.unreadNotificationCount);
+        setAttendanceSummaries(workspace.attendanceSummaries);
+        setConversations((current) =>
+          workspace.conversations.map((conversation) => {
+            const previous = current.find((item) => item.id === conversation.id);
+            if (!previous) return conversation;
+
+            const messagesById = new Map(
+              [...previous.messages, ...conversation.messages].map((message) => [
+                message.id,
+                message,
+              ]),
+            );
+            const messages = Array.from(messagesById.values()).sort(
+              (left, right) =>
+                new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
+            );
+            const latestMessage = messages[messages.length - 1];
+            return {
+              ...conversation,
+              lastMessage: latestMessage?.text ?? conversation.lastMessage,
+              lastMessageTime: latestMessage?.timestamp ?? conversation.lastMessageTime,
+              messages,
+            };
+          }),
+        );
+        if (silent) setWorkspaceError(null);
+      } catch (error) {
+        if (!silent) {
+          setWorkspaceError(
+            error instanceof Error ? error.message : "Could not load student data.",
+          );
+        }
+        throw error;
+      } finally {
+        if (!silent) setWorkspaceLoading(false);
+      }
+    },
+    [authUser],
+  );
 
   useEffect(() => {
     let active = true;
@@ -300,11 +308,7 @@ export const StudentProvider: React.FC<{
     };
   }, [refreshWorkspace, showToast]);
 
-  useVisibleAutoRefresh(
-    () => refreshWorkspace(true),
-    Boolean(authUser?.id),
-    10_000,
-  );
+  useVisibleAutoRefresh(() => refreshWorkspace(true), Boolean(authUser?.id), 10_000);
 
   useStudentCommunicationRealtime(
     conversations.map((conversation) => conversation.id),

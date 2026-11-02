@@ -208,11 +208,7 @@ export const MaterialLibraryView: React.FC<Props> = ({ backendCourses = [] }) =>
     load(controller.signal);
     return () => controller.abort();
   }, [load]);
-  useVisibleAutoRefresh(
-    () => load(undefined, true),
-    backendCourses.length > 0,
-    15_000,
-  );
+  useVisibleAutoRefresh(() => load(undefined, true), backendCourses.length > 0, 15_000);
   useEffect(() => {
     if (!notice) return;
     const timer = window.setTimeout(() => setNotice(null), 3500);

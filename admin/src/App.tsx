@@ -799,9 +799,15 @@ export default function App() {
         case "dashboard": {
           await Promise.all([
             loadAdminUsers(true),
-            fetchRegistrationOverview().then(setRegistrationOverview).catch(() => undefined),
-            fetchUpcomingCalendarEvents(10).then(setUpcomingEvents).catch(() => undefined),
-            fetchAdminAnalyticsOverview().then(setAdminAnalytics).catch(() => undefined),
+            fetchRegistrationOverview()
+              .then(setRegistrationOverview)
+              .catch(() => undefined),
+            fetchUpcomingCalendarEvents(10)
+              .then(setUpcomingEvents)
+              .catch(() => undefined),
+            fetchAdminAnalyticsOverview()
+              .then(setAdminAnalytics)
+              .catch(() => undefined),
           ]);
           break;
         }
@@ -824,7 +830,10 @@ export default function App() {
         case "grades":
         case "results":
         case "attendance": {
-          const [updatedCourses, updatedGrades] = await Promise.all([fetchCourses(), fetchGrades()]);
+          const [updatedCourses, updatedGrades] = await Promise.all([
+            fetchCourses(),
+            fetchGrades(),
+          ]);
           setCourses(updatedCourses);
           setGradesList(updatedGrades);
           break;
@@ -866,11 +875,7 @@ export default function App() {
     }
   };
 
-  useVisibleAutoRefresh(
-    refreshActiveAdminData,
-    isAuthenticated && !requiresPasswordChange,
-    10_000,
-  );
+  useVisibleAutoRefresh(refreshActiveAdminData, isAuthenticated && !requiresPasswordChange, 10_000);
 
   if (!isAuthReady) {
     return null;

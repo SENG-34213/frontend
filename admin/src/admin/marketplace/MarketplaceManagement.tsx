@@ -95,24 +95,27 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
     else setError(description);
   };
 
-  const load = useCallback(async (background = false) => {
-    if (!background) {
-      setIsLoading(true);
-      setError("");
-    }
-    try {
-      const page = await getMarketplaceProducts(search);
-      setProducts(page.content || []);
-    } catch (caught) {
+  const load = useCallback(
+    async (background = false) => {
       if (!background) {
-        setError(
-          caught instanceof Error ? caught.message : "Marketplace products could not be loaded.",
-        );
+        setIsLoading(true);
+        setError("");
       }
-    } finally {
-      if (!background) setIsLoading(false);
-    }
-  }, [search]);
+      try {
+        const page = await getMarketplaceProducts(search);
+        setProducts(page.content || []);
+      } catch (caught) {
+        if (!background) {
+          setError(
+            caught instanceof Error ? caught.message : "Marketplace products could not be loaded.",
+          );
+        }
+      } finally {
+        if (!background) setIsLoading(false);
+      }
+    },
+    [search],
+  );
 
   useEffect(() => {
     const loadTask = window.setTimeout(() => void load(), 0);

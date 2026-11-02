@@ -148,11 +148,7 @@ export function PreRegistrationsManagement() {
       <PageHeader
         title="Pre-Registrations"
         description="Review student and parent enquiries submitted through the institute website."
-        breadcrumbs={[
-          { label: "Admin" },
-          { label: "Overview" },
-          { label: "Pre-Registrations" },
-        ]}
+        breadcrumbs={[{ label: "Admin" }, { label: "Overview" }, { label: "Pre-Registrations" }]}
       />
 
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 text-xs dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
@@ -201,14 +197,19 @@ export function PreRegistrationsManagement() {
       </div>
 
       {error && (
-        <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+        <div
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
+        >
           {error}
         </div>
       )}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
         {isLoading ? (
-          <div className="p-10 text-center text-xs text-slate-500">Loading pre-registrations...</div>
+          <div className="p-10 text-center text-xs text-slate-500">
+            Loading pre-registrations...
+          </div>
         ) : records.length === 0 ? (
           <div className="p-10">
             <EmptyState
@@ -239,7 +240,8 @@ export function PreRegistrationsManagement() {
                     <td className="px-4 py-3">
                       <p className="font-semibold text-slate-900 dark:text-white">{record.name}</p>
                       <p className="mt-1 text-slate-500 dark:text-slate-400">
-                        {record.role === "parent" ? "Parent / guardian" : "Student"} · {record.city}, {record.district}
+                        {record.role === "parent" ? "Parent / guardian" : "Student"} · {record.city}
+                        , {record.district}
                       </p>
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
@@ -247,7 +249,9 @@ export function PreRegistrationsManagement() {
                       <p className="mt-1 text-slate-500 dark:text-slate-400">{record.phone}</p>
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      <p>{displayGrade(record.grade)} · {displayClassFormat(record.classFormat)}</p>
+                      <p>
+                        {displayGrade(record.grade)} · {displayClassFormat(record.classFormat)}
+                      </p>
                       <p className="mt-1 max-w-xs truncate text-slate-500 dark:text-slate-400">
                         {record.subjects.join(", ")}
                       </p>
@@ -256,13 +260,21 @@ export function PreRegistrationsManagement() {
                       {formatSubmittedAt(record.createdAt)}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${STATUS_STYLES[record.status]}`}>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${STATUS_STYLES[record.status]}`}
+                      >
                         {STATUS_LABELS[record.status]}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 ${record.seen ? "text-slate-500 dark:text-slate-400" : "font-semibold text-indigo-700 dark:text-indigo-300"}`}>
-                        {record.seen ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                      <span
+                        className={`inline-flex items-center gap-1 ${record.seen ? "text-slate-500 dark:text-slate-400" : "font-semibold text-indigo-700 dark:text-indigo-300"}`}
+                      >
+                        {record.seen ? (
+                          <Eye className="h-3.5 w-3.5" />
+                        ) : (
+                          <EyeOff className="h-3.5 w-3.5" />
+                        )}
                         {record.seen ? "Seen" : "Unseen"}
                       </span>
                     </td>
@@ -315,9 +327,12 @@ export function PreRegistrationsManagement() {
       </div>
 
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setSelected(null);
-        }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelected(null);
+          }}
+        >
           <section
             role="dialog"
             aria-modal="true"
@@ -326,7 +341,10 @@ export function PreRegistrationsManagement() {
           >
             <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800 sm:px-6">
               <div>
-                <h2 id="pre-registration-detail-title" className="text-base font-semibold text-slate-900 dark:text-white">
+                <h2
+                  id="pre-registration-detail-title"
+                  className="text-base font-semibold text-slate-900 dark:text-white"
+                >
                   {selected.name}
                 </h2>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -366,11 +384,15 @@ export function PreRegistrationsManagement() {
                   Workflow status
                   <select
                     value={statusDraft}
-                    onChange={(event) => setStatusDraft(event.target.value as PreRegistrationStatus)}
+                    onChange={(event) =>
+                      setStatusDraft(event.target.value as PreRegistrationStatus)
+                    }
                     className="mt-1.5 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   >
                     {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -380,7 +402,11 @@ export function PreRegistrationsManagement() {
                     onClick={() => void toggleSeen()}
                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
-                    {selected.seen ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {selected.seen ? (
+                      <EyeOff className="h-3.5 w-3.5" />
+                    ) : (
+                      <Eye className="h-3.5 w-3.5" />
+                    )}
                     Mark as {selected.seen ? "unseen" : "seen"}
                   </button>
                 </div>
@@ -396,8 +422,16 @@ export function PreRegistrationsManagement() {
                   className="mt-1.5 block w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-indigo-400 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </label>
-              {notice && <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">{notice}</p>}
-              {error && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{error}</p>}
+              {notice && (
+                <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">
+                  {notice}
+                </p>
+              )}
+              {error && (
+                <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">
+                  {error}
+                </p>
+              )}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"

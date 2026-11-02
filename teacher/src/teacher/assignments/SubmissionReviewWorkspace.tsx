@@ -218,13 +218,16 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     if (!currentSubmission) return;
     try {
       const result = await getSubmissionFileDownload(currentSubmission.id, file.id);
-      if (!result.downloadUrl) throw new Error("A secure submission download URL was not returned.");
+      if (!result.downloadUrl)
+        throw new Error("A secure submission download URL was not returned.");
       downloadFile(result.downloadUrl, file.name);
     } catch (requestError) {
       setNotice({
         title: "Download unavailable",
         message:
-          requestError instanceof Error ? requestError.message : "The submission file is unavailable.",
+          requestError instanceof Error
+            ? requestError.message
+            : "The submission file is unavailable.",
       });
     }
   };
