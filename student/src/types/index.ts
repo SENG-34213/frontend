@@ -21,6 +21,7 @@ export type StudentView =
 export interface StudentProfile {
   id: string;
   studentId: string;
+  grade: string;
   name: string;
   email: string;
   emailVerified?: boolean;
@@ -30,7 +31,6 @@ export interface StudentProfile {
   department: string;
   degreeProgram: string;
   semester: string;
-  currentGpa: number;
   creditsCompleted: number;
   totalCreditsRequired: number;
   academicAdvisor: {
