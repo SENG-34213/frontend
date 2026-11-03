@@ -247,11 +247,10 @@ export async function POST(request) {
       if (!ipLimit.success || !emailLimit.success) {
         return json("Too many registration attempts. Please try again later.", 429);
       }
-    } else if (process.env.NODE_ENV === "production") {
-      console.error("Production pre-registration rate limiting is not configured.");
-      return json("Registration protection is temporarily unavailable.", 503);
     } else {
-      console.warn("Pre-registration rate limiting is not configured for local development.");
+      console.warn(
+        "Website rate limiting is not configured; relying on the backend pre-registration limiter.",
+      );
     }
 
     const apiBaseUrl = (
