@@ -148,9 +148,9 @@ jobs:
           export TEACHER_IMAGE="$DOCKERHUB_USERNAME/mentify-teacher"
           export STUDENT_IMAGE="$DOCKERHUB_USERNAME/mentify-student"
           export WEBSITE_IMAGE="$DOCKERHUB_USERNAME/mentify-website"
-          docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
-          docker compose -f docker-compose.prod.yml ps
+          docker compose --env-file /opt/mentify/.env.prod -f docker-compose.prod.yml pull
+          docker compose --env-file /opt/mentify/.env.prod -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
+          docker compose --env-file /opt/mentify/.env.prod -f docker-compose.prod.yml ps
           EOF
 
       - name: Verify production routes
