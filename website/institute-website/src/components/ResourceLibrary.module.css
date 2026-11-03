@@ -255,6 +255,27 @@
   text-align: center;
 }
 
+.retryButton {
+  margin-top: 12px;
+  padding: 10px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.retryButton:hover {
+  border-color: var(--color-accent);
+}
+
+.retryButton:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
 /* Responsive layouts */
 
 @media (max-width: 1000px) {

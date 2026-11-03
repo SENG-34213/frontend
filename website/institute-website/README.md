@@ -105,3 +105,6 @@ Set the same `PRE_REGISTRATION_API_TOKEN` in the backend environment. Do not exp
 `NEXT_PUBLIC_` variable or commit real API keys, passwords, or tokens to GitHub.
 
 The website's pre-registration API requires both values to save submissions for admin review.
+The same `API_GATEWAY_URL` also connects the public Resource Library to the backend marketplace.
+Only marketplace products marked **Published** by an administrator appear there; drafts and
+course-only materials remain private.
