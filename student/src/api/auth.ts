@@ -10,7 +10,7 @@ import type {
 export async function loginStudent(
   identifier: string,
   password: string,
-  rememberMe = true,
+  rememberMe = false,
 ): Promise<AuthSession> {
   const response = await apiRequest<ApiResponse<LoginResponse>>("/api/v1/auth/login", {
     method: "POST",

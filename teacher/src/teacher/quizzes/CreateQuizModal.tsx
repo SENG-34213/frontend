@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Calendar,
@@ -46,6 +46,7 @@ const blankQuestion = (): DraftQuestion => ({
 
 const currentDateTimeInputValue = () => {
   const now = new Date();
+  now.setMinutes(now.getMinutes() + 1, 0, 0);
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   return now.toISOString().slice(0, 16);
 };
@@ -67,15 +68,21 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [maxAttempts, setMaxAttempts] = useState(1);
-  const [showResultImmediately, setShowResultImmediately] = useState(true);
   const [questions, setQuestions] = useState<DraftQuestion[]>([blankQuestion()]);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [draftQuizId, setDraftQuizId] = useState<string | null>(null);
+  const submitLockRef = useRef(false);
+  const initializedOpenRef = useRef(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      initializedOpenRef.current = false;
+      return;
+    }
+    if (initializedOpenRef.current) return;
+    initializedOpenRef.current = true;
     setCourseId(initialCourseId ?? courses[0]?.id ?? "");
     setStep("config");
     setTitle("");
@@ -86,12 +93,20 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     setStartTime("");
     setEndTime("");
     setMaxAttempts(1);
-    setShowResultImmediately(true);
     setQuestions([blankQuestion()]);
     setActiveQuestionIndex(0);
     setError("");
     setDraftQuizId(null);
-  }, [isOpen, courses, initialCourseId]);
+    submitLockRef.current = false;
+  }, [isOpen, initialCourseId]);
+
+  // Course data can finish loading while the modal is open. Populate only the
+  // missing course field; never reset the form when the parent refreshes data.
+  useEffect(() => {
+    if (isOpen && !courseId && courses.length > 0) {
+      setCourseId(initialCourseId ?? courses[0].id);
+    }
+  }, [courseId, courses, initialCourseId, isOpen]);
 
   const totalMarks = useMemo(
     () => questions.reduce((sum, question) => sum + Number(question.marks || 0), 0),
@@ -144,8 +159,12 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
     if (title.trim().length > 150) return "Quiz title cannot exceed 150 characters.";
     if (!Number.isInteger(durationMinutes) || durationMinutes < 1)
       return "Duration must be a positive whole number of minutes.";
-    if (startTime && new Date(startTime).getTime() < Date.now())
+    if ((startTime && !endTime) || (!startTime && endTime))
+      return "Set both a start and end date/time, or leave both fields empty.";
+    if (startTime && new Date(startTime).getTime() < Date.now() - 60_000)
       return "Quiz start time cannot be before the current date and time.";
+    if (startTime && endTime && new Date(endTime).getTime() <= new Date(startTime).getTime())
+      return "Quiz end time must be after the start time.";
     if (!Number.isInteger(passMark) || passMark < 0)
       return "Pass mark must be a whole number of 0 or greater.";
     if (!Number.isInteger(maxAttempts) || maxAttempts < 1)
@@ -174,6 +193,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
   };
 
   const submit = async (publishImmediately: boolean) => {
+    if (submitLockRef.current || busy) return;
     const validationError = validate(publishImmediately);
     if (validationError) {
       setError(validationError);
@@ -184,6 +204,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
       );
       return;
     }
+    submitLockRef.current = true;
     setBusy(true);
     setError("");
     try {
@@ -208,7 +229,6 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
           startTime: startTime || undefined,
           endTime: endTime || undefined,
           maxAttempts,
-          showResultImmediately,
           creationMethod: "MANUAL",
         });
         setDraftQuizId(quiz.id);
@@ -264,6 +284,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
       );
     } finally {
       setBusy(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -410,21 +431,13 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({
                   End Time
                   <input
                     type="datetime-local"
+                    min={startTime || currentDateTimeInputValue()}
                     value={endTime}
                     onChange={(event) => updateEndTime(event.target.value)}
                     className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs font-normal"
                   />
                 </label>
               </div>
-              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={showResultImmediately}
-                  onChange={(event) => setShowResultImmediately(event.target.checked)}
-                  className="rounded text-indigo-600"
-                />
-                Show results immediately after submission
-              </label>
             </div>
           ) : (
             <div className="space-y-4">

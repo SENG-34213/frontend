@@ -345,6 +345,7 @@ export const LessonEditorModal: React.FC<LessonEditorModalProps> = ({
                     <input
                       type="file"
                       multiple
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.odp,.ods,.txt,.md,.markdown,.csv,.rtf,.jpg,.jpeg,.png,.gif,.webp,.svg,.zip,.7z,.rar"
                       className="sr-only"
                       disabled={isUploading}
                       onChange={handleFileSelection}

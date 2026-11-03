@@ -67,25 +67,31 @@ export function PreRegistrationsManagement() {
 
   useEffect(() => {
     let active = true;
-    void fetchPreRegistrations({ status: statusFilter, seen: seenFilter, page, size: 20 })
-      .then((result) => {
+    const loadRecords = async (showLoading = false) => {
+      if (showLoading) setIsLoading(true);
+      try {
+        const result = await fetchPreRegistrations({ status: statusFilter, seen: seenFilter, page, size: 20 });
         if (!active) return;
         setRecords(result.content);
         setTotalPages(result.totalPages);
         setTotalElements(result.totalElements);
-      })
-      .catch((loadError: unknown) => {
+        setError("");
+      } catch (loadError: unknown) {
         if (active) {
           setError(
             loadError instanceof Error ? loadError.message : "Unable to load pre-registrations.",
           );
         }
-      })
-      .finally(() => {
-        if (active) setIsLoading(false);
-      });
+      } finally {
+        if (active && showLoading) setIsLoading(false);
+      }
+    };
+
+    void loadRecords(true);
+    const refreshInterval = window.setInterval(() => void loadRecords(), 10_000);
     return () => {
       active = false;
+      window.clearInterval(refreshInterval);
     };
   }, [page, refreshKey, seenFilter, statusFilter]);
 

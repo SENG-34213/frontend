@@ -126,6 +126,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       category: "Academic Management",
     },
     { id: "materials", title: "Learning Materials", category: "Platform Operations" },
+    { id: "payments", title: "Payments & Marketplace Purchases", category: "Platform Operations" },
     { id: "calendar", title: "Academic Calendar & Schedule", category: "Overview" },
     { id: "communication", title: "Broadcast Communication", category: "Platform Operations" },
     { id: "ai-assistant", title: "TiT AI Admin Assistant", category: "Platform Operations" },

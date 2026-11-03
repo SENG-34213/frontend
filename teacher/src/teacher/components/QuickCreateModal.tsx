@@ -5,7 +5,6 @@ import {
   Layers,
   FileCode,
   FileCheck,
-  HelpCircle,
   GraduationCap,
   Calendar,
   Check,
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import { createCourse } from "../api/courseApi";
-import type { QuizDraft } from "../api/quizApi";
 import { createAssignment, uploadAssignmentAttachment } from "../api/assignmentApi";
 import {
   createCourseModule,
@@ -34,7 +32,6 @@ export type QuickCreateType =
   | "module"
   | "lesson"
   | "assignment"
-  | "quiz"
   | "exam"
   | "event";
 
@@ -45,7 +42,6 @@ interface QuickCreateModalProps {
   onCreated: (type: QuickCreateType, item: any) => void;
   backendCourses?: BackendCourse[];
   teacherId?: string;
-  onCreateQuiz?: (draft: QuizDraft) => Promise<unknown>;
 }
 
 export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
@@ -54,7 +50,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   onClose,
   onCreated,
   backendCourses = [],
-  onCreateQuiz,
   teacherId,
 }) => {
   const [activeType, setActiveType] = useState<QuickCreateType>(type || "assignment");
@@ -106,11 +101,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [lessonContentMarkdown, setLessonContentMarkdown] = useState("");
   const [lessonReleaseDate, setLessonReleaseDate] = useState("");
   const [lessonVisible, setLessonVisible] = useState(true);
-  const [quizPassMark, setQuizPassMark] = useState("0");
-  const [quizStartTime, setQuizStartTime] = useState("");
-  const [quizEndTime, setQuizEndTime] = useState("");
-  const [quizMaxAttempts, setQuizMaxAttempts] = useState("1");
-  const [quizShowResultImmediately, setQuizShowResultImmediately] = useState(true);
   const [examStartTime, setExamStartTime] = useState("09:00");
   const [examEndTime, setExamEndTime] = useState("10:00");
   const [examDate, setExamDate] = useState(new Date().toISOString().slice(0, 10));
@@ -185,7 +175,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     setIsSubmitting(true);
     setFormError("");
 
-    const requiresCourse = ["module", "lesson", "assignment", "quiz", "exam"].includes(activeType);
+    const requiresCourse = ["module", "lesson", "assignment", "exam"].includes(activeType);
     if (requiresCourse && backendCourses.length === 0) {
       setIsSubmitting(false);
       setSuccessMsg("No courses available.");
@@ -413,37 +403,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       }
     }
 
-    if (activeType === "quiz" && onCreateQuiz && backendCourses.length > 0) {
-      try {
-        const created = await onCreateQuiz({
-          courseId: selectedCourseId,
-          title,
-          description,
-          durationMinutes: Number(duration) || 45,
-          passMark: Number(quizPassMark) || 0,
-          startTime: quizStartTime || undefined,
-          endTime: quizEndTime || undefined,
-          maxAttempts: Number(quizMaxAttempts) || 1,
-          showResultImmediately: quizShowResultImmediately,
-          creationMethod: "MANUAL",
-        });
-        setIsSubmitting(false);
-        setSuccessMsg("Created QUIZ successfully!");
-        onCreated(activeType, created);
-        setTimeout(() => {
-          setSuccessMsg("");
-          onClose();
-        }, 900);
-        return;
-      } catch (requestError) {
-        setIsSubmitting(false);
-        setFormError(
-          requestError instanceof Error ? requestError.message : "Quiz could not be created.",
-        );
-        return;
-      }
-    }
-
     if (activeType === "assignment" && backendCourses.length > 0 && assignmentModuleId) {
       try {
         const created = await createAssignment({
@@ -521,7 +480,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
   const typesList: { id: QuickCreateType; label: string; icon: React.ElementType }[] = [
     { id: "assignment", label: "Assignment", icon: FileCheck },
-    { id: "quiz", label: "Quiz", icon: HelpCircle },
     { id: "lesson", label: "Lesson", icon: FileCode },
     { id: "module", label: "Module", icon: Layers },
     { id: "course", label: "Course", icon: BookOpen },
@@ -973,6 +931,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                         <input
                           type="file"
                           multiple
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.odp,.ods,.txt,.md,.markdown,.csv,.rtf,.jpg,.jpeg,.png,.gif,.webp,.svg,.zip,.7z,.rar"
                           className="sr-only"
                           onChange={(event) => {
                             setAssignmentFiles((current) => [
@@ -1116,7 +1075,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       >
                         <option>Lecture</option>
                         <option>Reading</option>
-                        <option>Video</option>
                         <option>Practice</option>
                         <option>Assignment</option>
                       </select>
@@ -1215,85 +1173,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     </span>
                   </label>
                 </>
-              )}
-
-              {activeType === "quiz" && (
-                <div className="space-y-3 rounded-lg border border-slate-200 p-3">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Duration (minutes)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Pass mark
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={quizPassMark}
-                        onChange={(e) => setQuizPassMark(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Maximum attempts
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={quizMaxAttempts}
-                        onChange={(e) => setQuizMaxAttempts(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Start time <span className="font-normal text-slate-400">(optional)</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={quizStartTime}
-                        onChange={(e) => setQuizStartTime(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        End time <span className="font-normal text-slate-400">(optional)</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        min={quizStartTime || undefined}
-                        value={quizEndTime}
-                        onChange={(e) => setQuizEndTime(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={quizShowResultImmediately}
-                      onChange={(e) => setQuizShowResultImmediately(e.target.checked)}
-                    />{" "}
-                    Show result immediately
-                  </label>
-                </div>
               )}
 
               {activeType === "exam" && (

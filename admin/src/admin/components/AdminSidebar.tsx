@@ -28,6 +28,7 @@ import {
   ChevronLeft,
   ShoppingBag,
   ClipboardList,
+  CreditCard,
 } from "lucide-react";
 import { AdminRole } from "../types";
 
@@ -51,6 +52,7 @@ export type AdminRoute =
   | "attendance"
   | "materials"
   | "marketplace"
+  | "payments"
   | "calendar"
   | "communication"
   | "ai-assistant"
@@ -156,6 +158,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       items: [
         { id: "materials" as AdminRoute, label: "Learning Materials", icon: FolderLock },
         { id: "marketplace" as AdminRoute, label: "Marketplace", icon: ShoppingBag },
+        { id: "payments" as AdminRoute, label: "Payments & Purchases", icon: CreditCard },
         { id: "calendar" as AdminRoute, label: "Calendar", icon: Calendar },
         { id: "communication" as AdminRoute, label: "Communication", icon: MessageSquare },
         { id: "ai-assistant" as AdminRoute, label: "TiT AI", icon: Sparkles },

@@ -93,11 +93,12 @@ function mapMarketplaceProduct(product: any): MaterialItem {
     finalPrice,
     currency: product.currency || "LKR",
     status: product.status || "PUBLISHED",
-    thumbnailUrl:
-      product.thumbnailUrl ||
-      (product.thumbnailMaterialId
-        ? `/api/marketplace/materials/${encodeURIComponent(id)}/thumbnail`
-        : "/TiTJaffna-logo.jpeg"),
+    // Always use the website proxy for uploaded thumbnails. Stored thumbnail
+    // URLs may be private or expired S3 URLs, while the proxy creates a fresh
+    // public signed URL for the browser.
+    thumbnailUrl: product.thumbnailMaterialId
+      ? `/api/marketplace/materials/${encodeURIComponent(id)}/thumbnail`
+      : product.thumbnailUrl || "/TiTJaffna-logo.jpeg",
     fileFormat: product.fileFormat || undefined,
     pages: product.pageCount == null ? undefined : Number(product.pageCount),
     authorName: product.materialOwnerName || "TiT Academic Board",

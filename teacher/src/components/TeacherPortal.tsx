@@ -39,7 +39,6 @@ import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
-import { createQuiz } from "../teacher/api/quizApi";
 import { mapBackendCourse, type BackendCourse } from "../teacher/api/courseApi";
 import { useTeacherStudents } from "../teacher/hooks/useTeacherStudents";
 import { getCourseAssignments, type BackendAssignment } from "../teacher/api/assignmentApi";
@@ -389,8 +388,6 @@ export default function App() {
     } else if (type === "assignment") {
       setAssignmentRefreshToken((current) => current + 1);
       setCurrentTab("assignments");
-    } else if (type === "quiz") {
-      setCurrentTab("quizzes");
     } else if (type === "lesson" || type === "module") {
       setCurrentTab("curriculum");
     } else if (type === "event") {
@@ -612,7 +609,6 @@ export default function App() {
           {currentTab === "quizzes" && (
             <QuizDashboardView
               teacherCourses={courses}
-              onOpenCreateQuiz={() => handleOpenQuickCreate("quiz")}
               onNavigate={handleNavigate}
             />
           )}
@@ -710,7 +706,6 @@ export default function App() {
         onCreated={handleItemCreated}
         backendCourses={teacherCourses.courses}
         teacherId={session?.user.id}
-        onCreateQuiz={createQuiz}
       />
     </div>
   );

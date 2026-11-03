@@ -12,7 +12,7 @@ import { ForgotPasswordPanel } from "../../../../shared/auth/ForgotPasswordPanel
 export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -198,7 +198,7 @@ export function StudentLoginView({ onLogin }: { onLogin: (session: AuthSession) 
                     onChange={(event) => setRememberMe(event.target.checked)}
                     className="h-3.5 w-3.5 accent-indigo-600"
                   />{" "}
-                  Keep me signed in for one day
+                  Remember me
                 </label>
                 <button
                   type="button"

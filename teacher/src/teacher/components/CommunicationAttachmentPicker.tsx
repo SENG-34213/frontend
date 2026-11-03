@@ -16,12 +16,6 @@ const ALLOWED_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "text/plain",
   "application/zip",
-  "video/mp4",
-  "audio/webm",
-  "audio/webm;codecs=opus",
-  "audio/ogg",
-  "audio/mpeg",
-  "audio/wav",
 ]);
 
 export function validateCommunicationFile(file: File) {
@@ -80,7 +74,7 @@ export const CommunicationAttachmentPicker: React.FC<{
         multiple
         disabled={disabled}
         className="sr-only"
-        accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,application/zip,video/mp4,audio/webm,audio/ogg,audio/mpeg,audio/wav"
+        accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,application/zip"
         onChange={(event) => addFiles(Array.from(event.target.files ?? []))}
       />
       {files.length > 0 && (

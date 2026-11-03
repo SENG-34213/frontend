@@ -187,8 +187,6 @@ export const LearningMaterialManagement: React.FC<LearningMaterialManagementProp
             <option value="SLIDES">Legacy Slide Files</option>
             <option value="SPREADSHEET">Spreadsheets</option>
             <option value="IMAGE">Images</option>
-            <option value="VIDEO">Videos</option>
-            <option value="AUDIO">Audio</option>
             <option value="ARCHIVE">Archives</option>
             <option value="TEXT">Text Files</option>
             <option value="OTHER">Other</option>
