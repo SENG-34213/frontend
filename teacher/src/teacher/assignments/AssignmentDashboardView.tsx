@@ -230,6 +230,7 @@ const AssignmentEditModal: React.FC<{
   const [startDate, setStartDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [maxMarks, setMaxMarks] = useState("100");
+  const [allowStudentEdits, setAllowStudentEdits] = useState(true);
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
   const [submissionType, setSubmissionType] = useState<"TEXT" | "DOCUMENT">("TEXT");
@@ -249,6 +250,7 @@ const AssignmentEditModal: React.FC<{
     setStartDate(assignmentDateInput(assignment.startDate));
     setDueDate(assignmentDateInput(assignment.dueDate));
     setMaxMarks(String(assignment.maxMarks));
+    setAllowStudentEdits(assignment.allowStudentEdits !== false);
     setAllowLateSubmission(Boolean(assignment.allowLateSubmission));
     setLatePenaltyPercentage(String(assignment.latePenaltyPercentage || 0));
     setSubmissionType(assignment.submissionType === "DOCUMENT" ? "DOCUMENT" : "TEXT");
@@ -301,6 +303,7 @@ const AssignmentEditModal: React.FC<{
           startDate: `${startDate}:00`,
           dueDate: `${dueDate}:00`,
           maxMarks: Number(maxMarks),
+          allowStudentEdits,
           allowLateSubmission,
           latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
           submissionType,
@@ -594,6 +597,20 @@ const AssignmentEditModal: React.FC<{
               />
             </label>
           </div>
+          <label className="flex items-start gap-2 rounded-lg border border-slate-200 p-3 text-xs font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              checked={allowStudentEdits}
+              onChange={(e) => setAllowStudentEdits(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+            />
+            <span>
+              Allow students to edit draft submissions
+              <span className="mt-0.5 block text-[11px] font-normal text-slate-500">
+                Students can update their saved answer before submitting it for grading.
+              </span>
+            </span>
+          </label>
           <div className="space-y-2 rounded-lg border border-slate-200 p-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-700">Rubric criteria</span>
@@ -730,6 +747,7 @@ const toAssignment = (item: BackendAssignment, courses: BackendCourse[]): Assign
     weightagePercent: 0,
     allowedAttempts: item.allowedAttempts,
     allowLateSubmission: item.allowLateSubmission,
+    allowStudentEdits: item.allowStudentEdits,
     status: item.status === "PUBLISHED" ? "Active" : item.status === "CLOSED" ? "Closed" : "Draft",
     totalSubmissions: item.totalSubmissions ?? 0,
     gradedCount: item.gradedCount ?? 0,
@@ -1174,7 +1192,7 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
                         Close
                       </button>
                     )}
-                    {asg.status === "Draft" && (
+                    {(asg.status === "Draft" || asg.status === "Active") && (
                       <button
                         type="button"
                         onClick={() =>

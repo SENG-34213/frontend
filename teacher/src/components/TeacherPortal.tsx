@@ -200,7 +200,14 @@ export default function App() {
 
   // Deep view states
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<Course | null>(null);
-  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("");
+  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return (
+      new URLSearchParams(window.location.search).get("assignmentId") ||
+      window.localStorage.getItem("teacher-active-grading-assignment") ||
+      ""
+    );
+  });
   const shellData = useTeacherShellData(Boolean(session));
   const teacherCourses = useTeacherCourses(Boolean(session));
   const teacherStudents = useTeacherStudents(Boolean(session), teacherCourses.courses);
@@ -352,6 +359,14 @@ export default function App() {
 
   const handleOpenGradeAssignment = (assignmentId: string) => {
     setActiveGradingAssignmentId(assignmentId);
+    window.localStorage.setItem("teacher-active-grading-assignment", assignmentId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("assignmentId", assignmentId);
+    window.history.replaceState(
+      { ...window.history.state, portal: "teacher", tab: "grading-workspace", assignmentId },
+      "",
+      url,
+    );
     setCurrentTab("grading-workspace");
   };
 

@@ -220,27 +220,45 @@ function toEnrollment(value: JsonRecord): StudentEnrollmentState {
 function toAssignment(value: JsonRecord, course?: Course): Assignment {
   const submissionStatus = String(value.submissionStatus || "").toUpperCase();
   const assignmentStatus = String(value.assignmentStatus || value.status || "").toUpperCase();
-  const status = submissionStatus || assignmentStatus || "UNKNOWN";
+  const submittedStatuses = new Set(["SUBMITTED", "UNDER_REVIEW", "GRADED", "RETURNED"]);
+  const hasSubmitted = submittedStatuses.has(submissionStatus);
+  const dueAt = Date.parse(String(value.dueDate || ""));
+  const isPastDue = Number.isFinite(dueAt) && dueAt < Date.now();
+  const status =
+    assignmentStatus === "CLOSED" && !hasSubmitted
+      ? "CLOSED"
+      : !hasSubmitted && isPastDue && value.allowLateSubmission !== true
+        ? "OVERDUE"
+        : submissionStatus || assignmentStatus || "UNKNOWN";
+  const gradeReleased = value.gradeReleased === true || submissionStatus === "RETURNED";
   const mappedStatus =
     status === "DRAFT" || status === "PUBLISHED" || status === "ASSIGNED"
       ? "PENDING"
       : status === "UNDER_REVIEW"
         ? "SUBMITTED"
-        : status === "RETURNED"
+        : status === "RETURNED" || (status === "GRADED" && gradeReleased)
           ? "GRADED"
-          : ["PENDING", "SUBMITTED", "GRADED", "OVERDUE"].includes(status)
-            ? status
-            : "UNKNOWN";
+          : status === "GRADED"
+            ? "SUBMITTED"
+            : ["PENDING", "SUBMITTED", "GRADED", "OVERDUE", "CLOSED"].includes(status)
+              ? status
+              : "UNKNOWN";
   return {
     id: idOf(value.id),
+    submissionId: value.submissionId ? idOf(value.submissionId) : undefined,
     courseId: idOf(value.courseId),
     courseCode: course?.code || "",
     courseTitle: course?.title || "",
     title: idOf(value.title),
     description: idOf(value.description),
     instructions: idOf(value.instructions),
-    submissionType: String(value.submissionType || "TEXT").toUpperCase() === "DOCUMENT" ? "DOCUMENT" : "TEXT",
+    submissionType:
+      String(value.submissionType || "TEXT").toUpperCase() === "DOCUMENT" ? "DOCUMENT" : "TEXT",
     allowLateSubmission: value.allowLateSubmission === true,
+    latePenaltyPercentage:
+      value.latePenaltyPercentage == null ? undefined : Number(value.latePenaltyPercentage),
+    allowStudentEdits: value.allowStudentEdits !== false,
+    startDate: value.startDate,
     dueDate: idOf(value.dueDate),
     maxScore: Number(value.maxMarks ?? value.maxScore ?? 0),
     status: mappedStatus as Assignment["status"],
@@ -248,9 +266,15 @@ function toAssignment(value: JsonRecord, course?: Course): Assignment {
       ? (String(value.priority).toUpperCase() as Assignment["priority"])
       : "UNKNOWN",
     submittedDate: value.submittedAt,
-    grade: value.marks,
-    feedback: value.feedback,
-    rubricCriteria: [],
+    grade: gradeReleased ? value.marks : undefined,
+    feedback: gradeReleased ? value.feedback : undefined,
+    rubricCriteria: Array.isArray(value.rubricItems)
+      ? value.rubricItems.map((item, index) => ({
+          criteria: idOf(item.criterion || item.criteria || `Criterion ${index + 1}`),
+          points: Number(item.marks ?? item.points ?? 0),
+          description: idOf(item.description),
+        }))
+      : [],
     attachments: [],
     submissionText: value.content,
     submittedFiles: [],

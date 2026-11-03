@@ -6,6 +6,8 @@ export type BackendAssignmentStatus = "DRAFT" | "PUBLISHED" | "CLOSED";
 export type BackendAssignment = {
   id: string;
   courseId: string;
+  courseName?: string;
+  courseCode?: string;
   moduleId: string;
   lessonId?: string;
   teacherId?: string;
@@ -17,6 +19,7 @@ export type BackendAssignment = {
   maxMarks: number;
   allowedAttempts?: number;
   allowLateSubmission: boolean;
+  allowStudentEdits?: boolean;
   latePenaltyPercentage?: number;
   submissionType?: "TEXT" | "DOCUMENT";
   status: BackendAssignmentStatus;
@@ -57,10 +60,12 @@ export type AssignmentDraft = {
   maxMarks: number;
   allowedAttempts?: number;
   allowLateSubmission: boolean;
+  allowStudentEdits?: boolean;
   latePenaltyPercentage?: number;
   submissionType?: "TEXT" | "DOCUMENT";
   rubricItems?: { criterion: string; marks: number }[];
   publishImmediately?: boolean;
+  openImmediately?: boolean;
 };
 
 export type AssignmentUpdateDraft = Omit<AssignmentDraft, "courseId" | "moduleId" | "lessonId">;
@@ -157,10 +162,10 @@ export async function deleteAssignment(assignmentId: string) {
   );
 }
 
-export async function publishAssignment(assignmentId: string) {
+export async function publishAssignment(assignmentId: string, openImmediately = false) {
   return unwrap(
     await apiRequest<ApiResponse<BackendAssignment>>(
-      `/api/v1/assignments/${encodeURIComponent(assignmentId)}/publish`,
+      `/api/v1/assignments/${encodeURIComponent(assignmentId)}/publish${openImmediately ? "?openImmediately=true" : ""}`,
       { method: "POST" },
     ),
   );

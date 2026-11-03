@@ -14,6 +14,8 @@ import {
   AlertCircle,
   Search,
   ExternalLink,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { StudentSubmission, Assignment, NavigationTab } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
@@ -46,7 +48,7 @@ const mapBackendAssignment = (item: BackendAssignment): Assignment => {
   return {
     id: item.id,
     courseId: item.courseId,
-    courseCode: item.courseId,
+    courseCode: item.courseCode || item.courseName || "Course",
     title: item.title,
     description: item.description || item.instructions || "",
     dueDate: Number.isNaN(due.getTime()) ? item.dueDate : due.toLocaleDateString(),
@@ -98,6 +100,16 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
   };
 };
 
+const editableScore = (
+  submission: StudentSubmission | undefined,
+  assignment: Assignment | null,
+) => {
+  if (submission?.score === undefined) return "";
+  const penalty = Number(assignment?.latePenaltyPercentage || 0);
+  if (!submission.isLate || penalty <= 0 || penalty >= 100) return String(submission.score);
+  return String((submission.score / (1 - penalty / 100)).toFixed(2));
+};
+
 export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps> = ({
   initialAssignmentId = "",
   onBack,
@@ -116,7 +128,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   const currentAssignment = assignment;
 
   const [inputScore, setInputScore] = useState<string>(
-    currentSubmission?.score !== undefined ? String(currentSubmission.score) : "",
+    editableScore(currentSubmission, currentAssignment),
   );
   const [feedback, setFeedback] = useState<string>(currentSubmission?.feedback || "");
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -124,6 +136,14 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
   const [rubricScores, setRubricScores] = useState<string[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
+  const [isRosterCollapsed, setIsRosterCollapsed] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+
+  useEffect(() => {
+    if (initialAssignmentId && initialAssignmentId !== selectedAssignmentId) {
+      setSelectedAssignmentId(initialAssignmentId);
+    }
+  }, [initialAssignmentId, selectedAssignmentId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -209,7 +229,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
 
   // When switching submission, update local inputs
   useEffect(() => {
-    setInputScore(currentSubmission?.score !== undefined ? String(currentSubmission.score) : "");
+    setInputScore(editableScore(currentSubmission, currentAssignment));
     setFeedback(currentSubmission?.feedback || "");
     setRubricScores(currentAssignment?.rubricItems.map(() => "") ?? []);
   }, [currentSubmission?.id, currentSubmission?.feedback, currentSubmission?.score]);
@@ -296,6 +316,39 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     }
   };
 
+  // Hydrate the initially selected student as well as students selected from the roster.
+  // The submission list contains the text/grade data, while uploaded files are a separate resource.
+  useEffect(() => {
+    const sub = currentSubmission;
+    if (!sub || sub.id.startsWith("missing-") || sub.submittedFileName) return;
+    let cancelled = false;
+    void getSubmissionFiles(sub.id)
+      .then(async (files) => {
+        if (cancelled || !files[0]) return;
+        const file = files[0];
+        const download = await getSubmissionFileDownload(sub.id, file.id);
+        if (cancelled) return;
+        setPreviewUrl(download.downloadUrl || download.content || "");
+        setSubmissions((current) =>
+          current.map((submission) =>
+            submission.id === sub.id
+              ? {
+                  ...submission,
+                  submittedFileName: file.originalFilename,
+                  submittedFileId: file.id,
+                  submittedFileContentType: file.contentType,
+                  fileSizeBytes: file.fileSize,
+                }
+              : submission,
+          ),
+        );
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSubmission?.id]);
+
   const handleSaveGrade = async (goToNext = false) => {
     if (!currentSubmission || !currentAssignment || currentSubmission.status === "Pending") return;
     const numericScore = Number(inputScore);
@@ -311,26 +364,27 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
     try {
       const saved = await gradeSubmission(currentSubmission.id, { marks: numericScore, feedback });
       const mapped = mapBackendSubmission(saved, currentAssignment.maxMarks);
-      setSubmissions((prev) => prev.map((sub) => (sub.id === currentSubmission.id ? mapped : sub)));
-    } catch (requestError: unknown) {
-      setLoadError(
-        requestError instanceof Error ? requestError.message : "Grade could not be saved.",
+      setSubmissions((prev) =>
+        prev.map((sub) =>
+          sub.id === currentSubmission.id
+            ? {
+                ...sub,
+                ...mapped,
+                submittedFileName: sub.submittedFileName,
+                submittedFileId: sub.submittedFileId,
+                submittedFileContentType: sub.submittedFileContentType,
+                fileSizeBytes: sub.fileSizeBytes,
+              }
+            : sub,
+        ),
       );
+    } catch (requestError: unknown) {
+      setNotice({
+        title: "Grade could not be saved",
+        message: requestError instanceof Error ? requestError.message : "Please try again.",
+      });
       return;
     }
-
-    setSubmissions((prev) =>
-      prev.map((sub) =>
-        sub.id === currentSubmission.id
-          ? {
-              ...sub,
-              score: numericScore,
-              feedback,
-              status: "Graded",
-            }
-          : sub,
-      ),
-    );
 
     setSaveSuccess(true);
     setTimeout(() => {
@@ -351,64 +405,195 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
         ? submissions
         : submissions.filter((submission) => selectedSubmissionIds.includes(submission.id))
     ).filter(
-      (submission) => !submission.id.startsWith("missing-") && submission.score !== undefined,
+      (submission) =>
+        !submission.id.startsWith("missing-") &&
+        submission.score !== undefined &&
+        !submission.gradeReleased,
     );
-    for (const submission of targets) await releaseSubmissionGrade(submission.id);
-    setSubmissions((current) =>
-      current.map((submission) =>
-        targets.some((target) => target.id === submission.id)
-          ? { ...submission, status: "Graded", gradeReleased: true, isReturned: true }
-          : submission,
-      ),
-    );
+    if (targets.length === 0) {
+      setNotice({
+        title: "No grades to release",
+        message: all
+          ? "There are no saved private grades available to release."
+          : "Select at least one saved private grade before releasing results.",
+      });
+      return;
+    }
+    try {
+      const released = await Promise.all(
+        targets.map((submission) => releaseSubmissionGrade(submission.id)),
+      );
+      setSubmissions((current) =>
+        current.map((submission) =>
+          released.some((result) => result.id === submission.id)
+            ? {
+                ...submission,
+                ...mapBackendSubmission(
+                  released.find((result) => result.id === submission.id)!,
+                  currentAssignment?.maxMarks ?? submission.maxMarks,
+                ),
+                submittedFileName: submission.submittedFileName,
+                submittedFileId: submission.submittedFileId,
+                submittedFileContentType: submission.submittedFileContentType,
+                fileSizeBytes: submission.fileSizeBytes,
+              }
+            : submission,
+        ),
+      );
+      setSelectedSubmissionIds((current) =>
+        current.filter((id) => !targets.some((target) => target.id === id)),
+      );
+    } catch (requestError: unknown) {
+      setNotice({
+        title: "Release failed",
+        message:
+          requestError instanceof Error
+            ? requestError.message
+            : "Some grades could not be released.",
+      });
+    }
   };
 
   const handleHoldSelected = async () => {
     const targets = submissions.filter(
       (submission) =>
-        selectedSubmissionIds.includes(submission.id) && !submission.id.startsWith("missing-"),
+        selectedSubmissionIds.includes(submission.id) &&
+        !submission.id.startsWith("missing-") &&
+        submission.score !== undefined &&
+        submission.gradeReleased === true,
     );
-    for (const submission of targets) await holdSubmissionGrade(submission.id);
-    setSubmissions((current) =>
-      current.map((submission) =>
-        targets.some((target) => target.id === submission.id)
-          ? { ...submission, gradeReleased: false, isReturned: false }
-          : submission,
-      ),
-    );
-  };
-
-  const handleReturnSubmission = async () => {
-    if (!currentSubmission || currentSubmission.isReturned) return;
+    if (targets.length === 0) {
+      setNotice({
+        title: "No released grades to hold",
+        message: "Select released grades before choosing Hold selected.",
+      });
+      return;
+    }
     try {
-      await returnSubmission(currentSubmission.id);
+      const held = await Promise.all(
+        targets.map((submission) => holdSubmissionGrade(submission.id)),
+      );
       setSubmissions((current) =>
         current.map((submission) =>
-          submission.id === currentSubmission.id
-            ? { ...submission, status: "Graded", isReturned: true }
+          held.some((result) => result.id === submission.id)
+            ? {
+                ...submission,
+                ...mapBackendSubmission(
+                  held.find((result) => result.id === submission.id)!,
+                  currentAssignment?.maxMarks ?? submission.maxMarks,
+                ),
+                submittedFileName: submission.submittedFileName,
+                submittedFileId: submission.submittedFileId,
+                submittedFileContentType: submission.submittedFileContentType,
+                fileSizeBytes: submission.fileSizeBytes,
+              }
             : submission,
         ),
       );
     } catch (requestError: unknown) {
-      setLoadError(
-        requestError instanceof Error ? requestError.message : "Submission could not be returned.",
-      );
+      setNotice({
+        title: "Hold failed",
+        message:
+          requestError instanceof Error ? requestError.message : "Some grades could not be held.",
+      });
     }
   };
 
   const gradedCount = submissions.filter((s) => s.status === "Graded").length;
+  const filteredSubmissions = submissions.filter((submission) =>
+    submission.studentName.toLowerCase().includes(studentSearch.trim().toLowerCase()),
+  );
+  const currentSubmissionIndex = submissions.findIndex((s) => s.id === currentSubmission?.id);
+  const isLastSubmission = currentSubmissionIndex === submissions.length - 1;
+  const allStudentsGraded = submissions.length > 0 && gradedCount === submissions.length;
 
   if (isLoading) {
     return <div className="p-10 text-center text-sm text-slate-500">Loading submissions...</div>;
   }
 
-  if (!currentAssignment || !currentSubmission) {
+  if (!currentAssignment) {
     return (
       <div className="p-10 text-center text-sm text-slate-500">
-        {loadError || "No submissions are available for this assignment."}
+        {loadError || "Assignment details are unavailable."}
         <button onClick={onBack} className="ml-3 text-indigo-600 underline">
           Back to assignments
         </button>
+      </div>
+    );
+  }
+
+  if (!currentSubmission) {
+    return (
+      <div className="-m-4 flex min-h-[calc(100vh-5rem)] flex-col overflow-hidden bg-slate-100 lg:-m-6">
+        <div className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              onClick={onBack}
+              className="shrink-0 rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+              title="Back to Assignments"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                {currentAssignment.courseCode}
+              </p>
+              <h1 className="truncate text-sm font-bold text-slate-900">
+                {currentAssignment.title}
+              </h1>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate("grades")}
+            className="hidden rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 sm:block"
+          >
+            Open Gradebook
+          </button>
+        </div>
+
+        <main className="flex flex-1 items-center justify-center p-6">
+          <section className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-10">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+              <FileText className="h-8 w-8" />
+            </div>
+            <span className="mt-5 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-600">
+              No submissions yet
+            </span>
+            <h2 className="mt-3 text-xl font-bold tracking-tight text-slate-900">
+              No students have submitted this assignment
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
+              There is nothing to grade yet. Student submissions will appear here as soon as they
+              are received.
+            </p>
+
+            <div className="mx-auto mt-7 grid max-w-sm grid-cols-2 divide-x divide-slate-200 rounded-xl border border-slate-200 bg-slate-50 py-3">
+              <div>
+                <p className="font-mono text-xl font-bold text-slate-900">0</p>
+                <p className="mt-0.5 text-[11px] font-medium text-slate-500">Submissions</p>
+              </div>
+              <div>
+                <p className="font-mono text-xl font-bold text-emerald-600">0%</p>
+                <p className="mt-0.5 text-[11px] font-medium text-slate-500">Grading progress</p>
+              </div>
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={onBack}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Back to assignments
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700"
+              >
+                Refresh submissions
+              </button>
+            </div>
+          </section>
+        </main>
       </div>
     );
   }
@@ -471,70 +656,156 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
       {/* 3-Column Split Workspace */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Column: Student Roster */}
-        <aside className="w-64 sm:w-72 bg-white border-r border-slate-200 flex flex-col shrink-0">
-          <div className="p-3 border-b border-slate-200 bg-slate-50/70">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-              Submissions ({submissions.length})
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Filter student..."
-                className="w-full px-2.5 py-1 text-xs border border-slate-200 rounded-md focus:outline-hidden"
-              />
-            </div>
+        <aside
+          className={`${isRosterCollapsed ? "w-14" : "w-72"} bg-white border-r border-slate-200 flex flex-col shrink-0 transition-[width] duration-200`}
+        >
+          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 p-3">
+            {!isRosterCollapsed && (
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Student roster
+                </div>
+                <div className="mt-0.5 text-[11px] text-slate-400">
+                  {submissions.length} students · {gradedCount} graded
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsRosterCollapsed((current) => !current)}
+              className="ml-auto rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"
+              title={isRosterCollapsed ? "Expand student roster" : "Collapse student roster"}
+              aria-label={isRosterCollapsed ? "Expand student roster" : "Collapse student roster"}
+            >
+              {isRosterCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-            {submissions.map((sub) => {
-              const isSelected = sub.id === currentSubmission?.id;
-              const isCheckboxSelected = selectedSubmissionIds.includes(sub.id);
-              return (
-                <div
-                  key={sub.id}
-                  onClick={() => handleSelectSubmission(sub)}
-                  className={`p-3 cursor-pointer transition-colors text-left flex items-start gap-2 ${
-                    isSelected
-                      ? "bg-indigo-50/70 border-l-4 border-indigo-600"
-                      : "hover:bg-slate-50"
-                  }`}
-                >
-                  {!sub.id.startsWith("missing-") && (
-                    <input
-                      type="checkbox"
-                      checked={isCheckboxSelected}
-                      onChange={(event) => {
-                        event.stopPropagation();
-                        setSelectedSubmissionIds((current) =>
-                          event.target.checked
-                            ? [...current, sub.id]
-                            : current.filter((id) => id !== sub.id),
-                        );
-                      }}
-                      onClick={(event) => event.stopPropagation()}
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={`text-xs font-semibold truncate ${isSelected ? "text-indigo-900" : "text-slate-900"}`}
-                    >
-                      {sub.studentName}
-                    </p>
-                    <p className="text-[11px] text-slate-400 truncate">{sub.submissionDate}</p>
-                    <div className="mt-1 flex items-center gap-1.5">
-                      <StatusBadge status={sub.status} variant="clean" />
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="font-mono text-xs font-bold text-slate-800">
-                      {sub.score !== undefined ? `${sub.score}/${sub.maxMarks}` : "—"}
-                    </span>
-                  </div>
+          {!isRosterCollapsed && (
+            <>
+              <div className="border-b border-slate-200 p-3">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="search"
+                    value={studentSearch}
+                    onChange={(event) => setStudentSearch(event.target.value)}
+                    placeholder="Search students..."
+                    className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-2 text-xs outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  />
                 </div>
-              );
-            })}
-          </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-slate-100">
+                {filteredSubmissions.map((sub) => {
+                  const isSelected = sub.id === currentSubmission?.id;
+                  const isCheckboxSelected = selectedSubmissionIds.includes(sub.id);
+                  const isGraded = sub.status === "Graded" || sub.score !== undefined;
+                  return (
+                    <div
+                      key={sub.id}
+                      onClick={() => handleSelectSubmission(sub)}
+                      className={`flex cursor-pointer items-start gap-2 p-3 text-left transition-colors ${
+                        isSelected
+                          ? "border-l-4 border-indigo-600 bg-indigo-50/70"
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
+                      {!sub.id.startsWith("missing-") && (
+                        <input
+                          type="checkbox"
+                          checked={isCheckboxSelected}
+                          onChange={(event) => {
+                            event.stopPropagation();
+                            setSelectedSubmissionIds((current) =>
+                              event.target.checked
+                                ? [...current, sub.id]
+                                : current.filter((id) => id !== sub.id),
+                            );
+                          }}
+                          onClick={(event) => event.stopPropagation()}
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p
+                            className={`truncate text-xs font-semibold ${isSelected ? "text-indigo-900" : "text-slate-900"}`}
+                          >
+                            {sub.studentName}
+                          </p>
+                          {isGraded && (
+                            <span className="relative inline-flex shrink-0" title="Grade saved">
+                              <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                              <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            </span>
+                          )}
+                        </div>
+                        <p className="truncate text-[11px] text-slate-400">{sub.submissionDate}</p>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <StatusBadge status={sub.status} variant="clean" />
+                          {sub.gradeReleased && (
+                            <span className="text-[10px] font-semibold text-emerald-600">
+                              Released
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <span className="font-mono text-xs font-bold text-slate-800">
+                          {sub.score !== undefined ? `${sub.score}/${sub.maxMarks}` : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-2 border-t border-slate-200 bg-slate-50/80 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Grade visibility
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    {selectedSubmissionIds.length} selected
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleReleaseSelected(true)}
+                  disabled={submissions.every((submission) => submission.score === undefined)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" /> Release all grades
+                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleReleaseSelected(false)}
+                    disabled={selectedSubmissionIds.length === 0}
+                    className="rounded-lg border border-emerald-200 bg-white px-2 py-2 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Release selected
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleHoldSelected()}
+                    disabled={selectedSubmissionIds.length === 0}
+                    className="rounded-lg border border-amber-200 bg-white px-2 py-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Hold selected
+                  </button>
+                </div>
+                <p className="text-[10px] leading-relaxed text-slate-400">
+                  Saving a grade never releases it. Use these actions to change student visibility.
+                </p>
+              </div>
+            </>
+          )}
         </aside>
 
         {/* Center Column: Student Work & File Preview */}
@@ -551,7 +822,6 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                 Submitted on {currentSubmission.submissionDate}
               </p>
             </div>
-
             {currentSubmission.submittedFiles?.map((file) => (
               <div key={file.id} className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 font-mono hidden md:inline">
@@ -570,6 +840,41 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            {currentSubmission.submittedFileId && (
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">
+                      Submitted material
+                    </p>
+                    <p className="truncate text-sm font-semibold text-slate-800">
+                      {currentSubmission.submittedFileName || "Uploaded file"}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-slate-500">
+                      {currentSubmission.submittedFileContentType || "Document"}
+                      {currentSubmission.fileSizeBytes
+                        ? ` · ${(currentSubmission.fileSizeBytes / 1024 / 1024).toFixed(2)} MB`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (previewUrl) window.open(previewUrl, "_blank", "noopener,noreferrer");
+                  }}
+                  disabled={!previewUrl}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Open file
+                </button>
+              </div>
+            )}
+
             {currentSubmission.submittedFileId &&
             currentSubmission.submittedFileContentType?.includes("pdf") ? (
               <div className="h-[520px] overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
@@ -580,14 +885,16 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                 />
               </div>
             ) : (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  Student Submission Notes & Architecture
-                </span>
-                <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-line font-sans">
-                  {currentSubmission.submittedContentText || "No text answer was submitted."}
-                </p>
-              </div>
+              <>
+                <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Student notes and response
+                  </span>
+                  <p className="whitespace-pre-line font-sans text-xs leading-relaxed text-slate-800">
+                    {currentSubmission.submittedContentText || "No additional notes were provided."}
+                  </p>
+                </div>
+              </>
             )}
 
             {/* Code / Artifact Viewer */}
@@ -764,49 +1071,21 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  <span>Save & Next Student</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <span>
+                    {allStudentsGraded
+                      ? "All students graded"
+                      : isLastSubmission
+                        ? "Save Grade & Finish"
+                        : "Save & Next Student"}
+                  </span>
+                  {!isLastSubmission && <ChevronRight className="w-3.5 h-3.5" />}
                 </>
               )}
             </button>
-
-            <button
-              type="button"
-              onClick={() => void handleReleaseSelected(false)}
-              disabled={selectedSubmissionIds.length === 0}
-              className="w-full py-1.5 px-3 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-            >
-              Release Selected Grades
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleHoldSelected()}
-              disabled={selectedSubmissionIds.length === 0}
-              className="w-full py-1.5 px-3 text-xs font-medium text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
-            >
-              Hold Selected Grades
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleReleaseSelected(true)}
-              className="w-full py-1.5 px-3 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
-            >
-              Publish All Grades
-            </button>
-            <button
-              onClick={() => void handleSaveGrade(false)}
-              disabled={isReadOnly}
-              className="w-full py-1.5 px-3 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              Save Grade Only
-            </button>
-            <button
-              onClick={() => void handleReturnSubmission()}
-              disabled={isReadOnly}
-              className="w-full py-1.5 px-3 text-xs font-medium text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-            >
-              Return Submission
-            </button>
+            <p className="text-center text-[10px] leading-relaxed text-slate-400">
+              This saves the grade privately for teacher review. Student results remain hidden until
+              released from the roster panel.
+            </p>
           </div>
         </aside>
       </div>

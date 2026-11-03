@@ -94,6 +94,8 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentLessonId, setAssignmentLessonId] = useState("");
   const [assignmentLessons, setAssignmentLessons] = useState<CourseContentLesson[]>([]);
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
+  const [allowStudentEdits, setAllowStudentEdits] = useState(true);
+  const [openImmediatelyWhenPublished, setOpenImmediatelyWhenPublished] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
   const [assignmentSubmissionType, setAssignmentSubmissionType] = useState<"TEXT" | "DOCUMENT">(
     "TEXT",
@@ -213,7 +215,10 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       const currentMinute = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
         .toISOString()
         .slice(0, 16);
-      if (assignmentStartDate < currentMinute) {
+      if (
+        assignmentStartDate < currentMinute &&
+        !(publishImmediately && openImmediatelyWhenPublished)
+      ) {
         setIsSubmitting(false);
         setFormError("Assignment start date and time cannot be before the current time.");
         return;
@@ -453,12 +458,14 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           maxMarks: Number(maxMarks) || 100,
           allowedAttempts: 1,
           allowLateSubmission,
+          allowStudentEdits,
           latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
           submissionType: assignmentSubmissionType,
           rubricItems: rubricItems
             .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
             .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
           publishImmediately,
+          openImmediately: publishImmediately && openImmediatelyWhenPublished,
         });
         const uploadResults = await Promise.allSettled(
           assignmentFiles.map((file) => uploadAssignmentAttachment(created.id, file)),
@@ -860,6 +867,20 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       />
                     </div>
                   </div>
+                  <label className="flex items-start gap-2 rounded-lg border border-slate-200 p-3 text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={allowStudentEdits}
+                      onChange={(e) => setAllowStudentEdits(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>
+                      Allow students to edit draft submissions
+                      <span className="mt-0.5 block text-[11px] font-normal text-slate-500">
+                        Students can update their saved answer before submitting it for grading.
+                      </span>
+                    </span>
+                  </label>
 
                   <div className="space-y-2 rounded-lg border border-slate-200 p-3">
                     <div className="flex items-center justify-between">
@@ -1136,47 +1157,64 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
               )}
 
               {activeType === "assignment" && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Start date and time
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={assignmentStartDate}
-                      min={localDateTimeNow()}
-                      onChange={(e) => setAssignmentStartDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
+                <>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Start date and time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={assignmentStartDate}
+                        min={localDateTimeNow()}
+                        onChange={(e) => setAssignmentStartDate(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Due date and time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        min={assignmentStartDate}
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Maximum marks
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={maxMarks}
+                        onChange={(e) => setMaxMarks(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Due date and time
-                    </label>
+                  <label className="flex items-start gap-2 rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 text-xs font-semibold text-indigo-900">
                     <input
-                      type="datetime-local"
-                      min={assignmentStartDate}
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      type="checkbox"
+                      checked={openImmediatelyWhenPublished}
+                      onChange={(e) => setOpenImmediatelyWhenPublished(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Maximum marks
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={maxMarks}
-                      onChange={(e) => setMaxMarks(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
+                    <span>
+                      Open immediately when published
+                      <span className="mt-0.5 block text-[11px] font-normal text-indigo-700">
+                        Ignore the scheduled start time and allow submissions as soon as this
+                        assignment is published.
+                      </span>
+                    </span>
+                  </label>
+                </>
               )}
 
               {activeType === "quiz" && (

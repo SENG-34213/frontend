@@ -128,6 +128,7 @@ export interface Assignment {
   weightagePercent: number;
   allowedAttempts?: number;
   allowLateSubmission?: boolean;
+  allowStudentEdits?: boolean;
   latePenaltyPercentage?: number;
   status: "Active" | "Grading" | "Closed" | "Draft";
   totalSubmissions: number;
