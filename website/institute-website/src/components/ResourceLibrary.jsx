@@ -124,12 +124,11 @@ export default function ResourceLibrary({ lang }) {
                   <span className={styles.fileType}>
                     {formatMarketplaceCategory(resource.category)}
                   </span>
-                  <span
-                    className={resource.free ? styles.freeBadge : styles.paidBadge}
-                  >
+                  <span className={resource.free ? styles.freeBadge : styles.paidBadge}>
                     {resource.free
                       ? translate(lang, "resourcesLibrary.free")
-                      : formatMarketplacePrice(resource) || translate(lang, "resourcesLibrary.paid")}
+                      : formatMarketplacePrice(resource) ||
+                        translate(lang, "resourcesLibrary.paid")}
                   </span>
                 </div>
 
