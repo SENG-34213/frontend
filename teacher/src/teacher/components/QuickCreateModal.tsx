@@ -5,7 +5,6 @@ import {
   Layers,
   FileCode,
   FileCheck,
-  HelpCircle,
   GraduationCap,
   Calendar,
   Check,
@@ -15,7 +14,6 @@ import {
 } from "lucide-react";
 import type { BackendCourse } from "../api/courseApi";
 import { createCourse } from "../api/courseApi";
-import type { QuizDraft } from "../api/quizApi";
 import { createAssignment, uploadAssignmentAttachment } from "../api/assignmentApi";
 import {
   createCourseModule,
@@ -29,14 +27,7 @@ import { createExam } from "../api/examApi";
 import { createCalendarEvent, type CalendarEventType } from "../api/calendarApi";
 import { formatTeacherError } from "../utils/userFacingError";
 
-export type QuickCreateType =
-  | "course"
-  | "module"
-  | "lesson"
-  | "assignment"
-  | "quiz"
-  | "exam"
-  | "event";
+export type QuickCreateType = "course" | "module" | "lesson" | "assignment" | "exam" | "event";
 
 interface QuickCreateModalProps {
   isOpen: boolean;
@@ -45,7 +36,6 @@ interface QuickCreateModalProps {
   onCreated: (type: QuickCreateType, item: any) => void;
   backendCourses?: BackendCourse[];
   teacherId?: string;
-  onCreateQuiz?: (draft: QuizDraft) => Promise<unknown>;
 }
 
 export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
@@ -54,7 +44,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   onClose,
   onCreated,
   backendCourses = [],
-  onCreateQuiz,
   teacherId,
 }) => {
   const [activeType, setActiveType] = useState<QuickCreateType>(type || "assignment");
@@ -77,6 +66,10 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentStartDate, setAssignmentStartDate] = useState(
     `${new Date().toISOString().slice(0, 10)}T09:00`,
   );
+  const localDateTimeNow = () => {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  };
   const [dueDate, setDueDate] = useState("");
   const [maxMarks, setMaxMarks] = useState("100");
   const [duration, setDuration] = useState("45");
@@ -89,20 +82,19 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
   const [assignmentModules, setAssignmentModules] = useState<CourseContentModule[]>([]);
   const [assignmentLessonId, setAssignmentLessonId] = useState("");
   const [assignmentLessons, setAssignmentLessons] = useState<CourseContentLesson[]>([]);
-  const [allowedAttempts, setAllowedAttempts] = useState("1");
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
+  const [allowStudentEdits, setAllowStudentEdits] = useState(true);
+  const [openImmediatelyWhenPublished, setOpenImmediatelyWhenPublished] = useState(false);
   const [latePenaltyPercentage, setLatePenaltyPercentage] = useState("0");
+  const [assignmentSubmissionType, setAssignmentSubmissionType] = useState<"TEXT" | "DOCUMENT">(
+    "TEXT",
+  );
   const [rubricItems, setRubricItems] = useState<Array<{ criterion: string; marks: string }>>([]);
   const [assignmentFiles, setAssignmentFiles] = useState<File[]>([]);
   const [lessonContentType, setLessonContentType] = useState("Lecture");
   const [lessonContentMarkdown, setLessonContentMarkdown] = useState("");
   const [lessonReleaseDate, setLessonReleaseDate] = useState("");
   const [lessonVisible, setLessonVisible] = useState(true);
-  const [quizPassMark, setQuizPassMark] = useState("0");
-  const [quizStartTime, setQuizStartTime] = useState("");
-  const [quizEndTime, setQuizEndTime] = useState("");
-  const [quizMaxAttempts, setQuizMaxAttempts] = useState("1");
-  const [quizShowResultImmediately, setQuizShowResultImmediately] = useState(true);
   const [examStartTime, setExamStartTime] = useState("09:00");
   const [examEndTime, setExamEndTime] = useState("10:00");
   const [examDate, setExamDate] = useState(new Date().toISOString().slice(0, 10));
@@ -172,12 +164,12 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, publishImmediately = false) => {
+    e?.preventDefault();
     setIsSubmitting(true);
     setFormError("");
 
-    const requiresCourse = ["module", "lesson", "assignment", "quiz", "exam"].includes(activeType);
+    const requiresCourse = ["module", "lesson", "assignment", "exam"].includes(activeType);
     if (requiresCourse && backendCourses.length === 0) {
       setIsSubmitting(false);
       setSuccessMsg("No courses available.");
@@ -202,10 +194,25 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       return;
     }
 
-    if (activeType === "assignment" && (!allowedAttempts || Number(allowedAttempts) < 1)) {
-      setIsSubmitting(false);
-      setFormError("Allowed attempts must be at least 1.");
-      return;
+    if (activeType === "assignment") {
+      const now = new Date();
+      const currentMinute = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+        .toISOString()
+        .slice(0, 16);
+      if (
+        assignmentStartDate < currentMinute &&
+        !(publishImmediately && openImmediatelyWhenPublished)
+      ) {
+        setIsSubmitting(false);
+        setFormError("Assignment start date and time cannot be before the current time.");
+        return;
+      }
+      const totalPercentage = rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0);
+      if (totalPercentage > 100) {
+        setIsSubmitting(false);
+        setFormError("Rubric criteria percentages cannot exceed 100% in total.");
+        return;
+      }
     }
 
     if (activeType === "exam") {
@@ -390,37 +397,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
       }
     }
 
-    if (activeType === "quiz" && onCreateQuiz && backendCourses.length > 0) {
-      try {
-        const created = await onCreateQuiz({
-          courseId: selectedCourseId,
-          title,
-          description,
-          durationMinutes: Number(duration) || 45,
-          passMark: Number(quizPassMark) || 0,
-          startTime: quizStartTime || undefined,
-          endTime: quizEndTime || undefined,
-          maxAttempts: Number(quizMaxAttempts) || 1,
-          showResultImmediately: quizShowResultImmediately,
-          creationMethod: "MANUAL",
-        });
-        setIsSubmitting(false);
-        setSuccessMsg("Created QUIZ successfully!");
-        onCreated(activeType, created);
-        setTimeout(() => {
-          setSuccessMsg("");
-          onClose();
-        }, 900);
-        return;
-      } catch (requestError) {
-        setIsSubmitting(false);
-        setFormError(
-          requestError instanceof Error ? requestError.message : "Quiz could not be created.",
-        );
-        return;
-      }
-    }
-
     if (activeType === "assignment" && backendCourses.length > 0 && assignmentModuleId) {
       try {
         const created = await createAssignment({
@@ -433,12 +409,16 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
           startDate: `${assignmentStartDate}:00`,
           dueDate: `${dueDate}:00`,
           maxMarks: Number(maxMarks) || 100,
-          allowedAttempts: Number(allowedAttempts),
+          allowedAttempts: 1,
           allowLateSubmission,
+          allowStudentEdits,
           latePenaltyPercentage: allowLateSubmission ? Number(latePenaltyPercentage) || 0 : 0,
+          submissionType: assignmentSubmissionType,
           rubricItems: rubricItems
             .filter((item) => item.criterion.trim() && Number(item.marks) > 0)
             .map((item) => ({ criterion: item.criterion.trim(), marks: Number(item.marks) })),
+          publishImmediately,
+          openImmediately: publishImmediately && openImmediatelyWhenPublished,
         });
         const uploadResults = await Promise.allSettled(
           assignmentFiles.map((file) => uploadAssignmentAttachment(created.id, file)),
@@ -449,7 +429,9 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
         const failedCount = uploadResults.length - uploadedCount;
         setIsSubmitting(false);
         setSuccessMsg(
-          `Assignment created${uploadedCount ? ` with ${uploadedCount} document${uploadedCount === 1 ? "" : "s"}` : ""}.`,
+          publishImmediately
+            ? `Assignment published${uploadedCount ? ` with ${uploadedCount} document${uploadedCount === 1 ? "" : "s"}` : ""}.`
+            : `Assignment saved as draft${uploadedCount ? ` with ${uploadedCount} document${uploadedCount === 1 ? "" : "s"}` : ""}.`,
         );
         setAssignmentFiles([]);
         onCreated(activeType, created);
@@ -485,9 +467,13 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
     setFormError("This quick-create action is not available.");
   };
 
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    void handleSubmit(event, submitter?.value === "publish");
+  };
+
   const typesList: { id: QuickCreateType; label: string; icon: React.ElementType }[] = [
     { id: "assignment", label: "Assignment", icon: FileCheck },
-    { id: "quiz", label: "Quiz", icon: HelpCircle },
     { id: "lesson", label: "Lesson", icon: FileCode },
     { id: "module", label: "Module", icon: Layers },
     { id: "course", label: "Course", icon: BookOpen },
@@ -539,7 +525,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
         {/* Form Body */}
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleFormSubmit}
           className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6"
         >
           {successMsg ? (
@@ -778,20 +764,31 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Allowed attempts
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={allowedAttempts}
-                        onChange={(e) => setAllowedAttempts(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20"
-                      />
+                  <fieldset className="rounded-lg border border-slate-200 p-3">
+                    <legend className="px-1 text-xs font-semibold text-slate-700">
+                      Submission required
+                    </legend>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["TEXT", "DOCUMENT"] as const).map((submissionType) => (
+                        <label
+                          key={submissionType}
+                          className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-colors ${assignmentSubmissionType === submissionType ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                        >
+                          <input
+                            type="radio"
+                            name="assignment-submission-type"
+                            value={submissionType}
+                            checked={assignmentSubmissionType === submissionType}
+                            onChange={() => setAssignmentSubmissionType(submissionType)}
+                            className="sr-only"
+                          />
+                          {submissionType === "TEXT" ? "Text answer" : "Document"}
+                        </label>
+                      ))}
                     </div>
+                  </fieldset>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="flex items-center gap-2 pt-5">
                       <input
                         id="allow-late-submission"
@@ -822,6 +819,20 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       />
                     </div>
                   </div>
+                  <label className="flex items-start gap-2 rounded-lg border border-slate-200 p-3 text-xs font-semibold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={allowStudentEdits}
+                      onChange={(e) => setAllowStudentEdits(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>
+                      Allow students to edit draft submissions
+                      <span className="mt-0.5 block text-[11px] font-normal text-slate-500">
+                        Students can update their saved answer before submitting it for grading.
+                      </span>
+                    </span>
+                  </label>
 
                   <div className="space-y-2 rounded-lg border border-slate-200 p-3">
                     <div className="flex items-center justify-between">
@@ -840,9 +851,13 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                     </div>
                     {rubricItems.length === 0 && (
                       <p className="text-[11px] text-slate-400">
-                        Optional: add criteria and marks for grading.
+                        Optional: add criteria using percentages for grading.
                       </p>
                     )}
+                    <p className="text-[11px] text-slate-500">
+                      Total: {rubricItems.reduce((sum, item) => sum + (Number(item.marks) || 0), 0)}
+                      % / 100%
+                    </p>
                     {rubricItems.map((item, index) => (
                       <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input
@@ -861,16 +876,25 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                         <input
                           type="number"
                           min="1"
-                          placeholder="Marks"
+                          max="100"
+                          placeholder="Percentage"
                           value={item.marks}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const nextValue = Number(e.target.value);
+                            const otherTotal = rubricItems.reduce(
+                              (sum, row, rowIndex) =>
+                                sum + (rowIndex === index ? 0 : Number(row.marks) || 0),
+                              0,
+                            );
+                            if (nextValue < 0 || otherTotal + nextValue > 100) return;
                             setRubricItems((items) =>
                               items.map((row, rowIndex) =>
                                 rowIndex === index ? { ...row, marks: e.target.value } : row,
                               ),
-                            )
-                          }
+                            );
+                          }}
                           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 sm:w-20"
+                          aria-label="Rubric percentage"
                         />
                         <button
                           type="button"
@@ -901,6 +925,7 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                         <input
                           type="file"
                           multiple
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.odp,.ods,.txt,.md,.markdown,.csv,.rtf,.jpg,.jpeg,.png,.gif,.webp,.svg,.zip,.7z,.rar"
                           className="sr-only"
                           onChange={(event) => {
                             setAssignmentFiles((current) => [
@@ -1044,7 +1069,6 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                       >
                         <option>Lecture</option>
                         <option>Reading</option>
-                        <option>Video</option>
                         <option>Practice</option>
                         <option>Assignment</option>
                       </select>
@@ -1085,125 +1109,64 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
               )}
 
               {activeType === "assignment" && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Start date and time
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={assignmentStartDate}
-                      onChange={(e) => setAssignmentStartDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Due date and time
-                    </label>
-                    <input
-                      type="datetime-local"
-                      min={assignmentStartDate}
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Maximum marks
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={maxMarks}
-                      onChange={(e) => setMaxMarks(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {activeType === "quiz" && (
-                <div className="space-y-3 rounded-lg border border-slate-200 p-3">
+                <>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Duration (minutes)
+                        Start date and time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={assignmentStartDate}
+                        min={localDateTimeNow()}
+                        onChange={(e) => setAssignmentStartDate(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Due date and time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        min={assignmentStartDate}
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Maximum marks
                       </label>
                       <input
                         type="number"
                         min="1"
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
+                        value={maxMarks}
+                        onChange={(e) => setMaxMarks(e.target.value)}
                         required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Pass mark
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={quizPassMark}
-                        onChange={(e) => setQuizPassMark(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Maximum attempts
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={quizMaxAttempts}
-                        onChange={(e) => setQuizMaxAttempts(e.target.value)}
-                        required
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                        className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Start time <span className="font-normal text-slate-400">(optional)</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={quizStartTime}
-                        onChange={(e) => setQuizStartTime(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        End time <span className="font-normal text-slate-400">(optional)</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        min={quizStartTime || undefined}
-                        value={quizEndTime}
-                        onChange={(e) => setQuizEndTime(e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
-                      />
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                  <label className="flex items-start gap-2 rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 text-xs font-semibold text-indigo-900">
                     <input
                       type="checkbox"
-                      checked={quizShowResultImmediately}
-                      onChange={(e) => setQuizShowResultImmediately(e.target.checked)}
-                    />{" "}
-                    Show result immediately
+                      checked={openImmediatelyWhenPublished}
+                      onChange={(e) => setOpenImmediatelyWhenPublished(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>
+                      Open immediately when published
+                      <span className="mt-0.5 block text-[11px] font-normal text-indigo-700">
+                        Ignore the scheduled start time and allow submissions as soon as this
+                        assignment is published.
+                      </span>
+                    </span>
                   </label>
-                </div>
+                </>
               )}
 
               {activeType === "exam" && (
@@ -1423,15 +1386,38 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {isSubmitting
-                    ? "Creating..."
-                    : `Create ${activeType.charAt(0).toUpperCase() + activeType.slice(1)}`}
-                </button>
+                {activeType === "assignment" ? (
+                  <>
+                    <button
+                      type="submit"
+                      name="assignmentAction"
+                      value="draft"
+                      disabled={isSubmitting}
+                      className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      Save Draft
+                    </button>
+                    <button
+                      type="submit"
+                      name="assignmentAction"
+                      value="publish"
+                      disabled={isSubmitting}
+                      className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Saving..." : "Save & Publish"}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isSubmitting
+                      ? "Creating..."
+                      : `Create ${activeType.charAt(0).toUpperCase() + activeType.slice(1)}`}
+                  </button>
+                )}
               </div>
             </>
           )}

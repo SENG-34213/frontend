@@ -38,8 +38,6 @@ export const LearningMaterialsView: React.FC = () => {
     "SLIDES",
     "SPREADSHEET",
     "IMAGE",
-    "VIDEO",
-    "AUDIO",
     "ARCHIVE",
     "TEXT",
     "CODE",

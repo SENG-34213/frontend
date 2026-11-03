@@ -51,7 +51,6 @@ import { ConfirmModal, TextInputModal } from "../components/ActionModal";
 
 interface QuizDashboardViewProps {
   teacherCourses: Course[];
-  onOpenCreateQuiz: () => void;
   onNavigate: (tab: NavigationTab) => void;
 }
 
@@ -1347,12 +1346,11 @@ export const QuizDashboardView: React.FC<QuizDashboardViewProps> = ({
           initialDescription={sliderPreviewQuiz.description}
           initialDuration={sliderPreviewQuiz.durationMinutes}
           initialPassMark={
-            sliderPreviewQuiz.passMark ?? Math.round(sliderPreviewQuiz.totalMarks * 0.6)
+            sliderPreviewQuiz.passMark ?? Math.round(sliderPreviewQuiz.totalMarks * 0.8 * 100) / 100
           }
           initialStartTime={sliderPreviewQuiz.startTime || ""}
           initialEndTime={sliderPreviewQuiz.endTime || ""}
           initialMaxAttempts={sliderPreviewQuiz.maxAttempts ?? 1}
-          initialShowResultImmediately={sliderPreviewQuiz.showResultImmediately ?? true}
           course={teacherCourses.find((course) => course.id === sliderPreviewQuiz.courseId)}
           onClose={() => setSliderPreviewQuiz(null)}
           onRegenerate={() => setSliderPreviewQuiz(null)}

@@ -49,13 +49,13 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [maxAttempts, setMaxAttempts] = useState(1);
-  const [showResultImmediately, setShowResultImmediately] = useState(true);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const actionLockRef = useRef(false);
   const totalMarks = questions.reduce((total, question) => total + Number(question.marks || 0), 0);
 
   const updateQuestion = (index: number, next: Partial<DraftQuestion>) =>
@@ -65,10 +65,12 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
 
   const generate = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (actionLockRef.current || busy) return;
     if (!file || !courseId) {
       setError("Please select a target course and upload a source document.");
       return;
     }
+    actionLockRef.current = true;
     setBusy(true);
     setError("");
     setSuccess("");
@@ -109,6 +111,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
       );
     } finally {
       setBusy(false);
+      actionLockRef.current = false;
     }
   };
 
@@ -129,11 +132,13 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
   };
 
   const save = async (shouldPublish: boolean) => {
+    if (actionLockRef.current || busy) return;
     const validationError = validate();
     if (validationError) {
       setError(validationError);
       return;
     }
+    actionLockRef.current = true;
     setBusy(true);
     setError("");
     try {
@@ -144,7 +149,6 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
         durationMinutes: duration,
         passMark,
         maxAttempts: 1,
-        showResultImmediately: true,
         creationMethod: "AI_GENERATED",
       });
       const createdQuestions = [];
@@ -177,6 +181,7 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
       setError(requestError instanceof Error ? requestError.message : "Quiz could not be saved.");
     } finally {
       setBusy(false);
+      actionLockRef.current = false;
     }
   };
 
@@ -201,7 +206,6 @@ export const AiQuizGeneratorCard: React.FC<AiQuizGeneratorCardProps> = ({
           initialStartTime={startTime}
           initialEndTime={endTime}
           initialMaxAttempts={maxAttempts}
-          initialShowResultImmediately={showResultImmediately}
           course={courses.find((course) => course.id === courseId)}
           onClose={() => setIsSliderOpen(false)}
           onRegenerate={reset}

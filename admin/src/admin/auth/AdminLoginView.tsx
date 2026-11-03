@@ -13,7 +13,7 @@ type Props = { onLogin: (session: Awaited<ReturnType<typeof loginAdmin>>) => voi
 export function AdminLoginView({ onLogin }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -192,7 +192,7 @@ export function AdminLoginView({ onLogin }: Props) {
                     onChange={(event) => setRememberMe(event.target.checked)}
                     className="h-3.5 w-3.5 accent-indigo-600"
                   />{" "}
-                  Keep me signed in for one day
+                  Remember me
                 </label>
                 <button
                   type="button"

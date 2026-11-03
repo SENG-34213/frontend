@@ -55,7 +55,14 @@ const emptyForm: MarketplaceProductRequest = {
   discountPercent: undefined,
   currency: "LKR",
   thumbnailUrl: "",
+  fileFormat: "",
+  pageCount: undefined,
   status: "DRAFT",
+};
+
+const fileFormatFromFile = (file: File) => {
+  const extension = file.name.includes(".") ? file.name.split(".").pop() : "";
+  return (extension || file.type.split("/").pop() || "FILE").toUpperCase();
 };
 
 const label = (value: string) =>
@@ -83,6 +90,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
   const [selectedProduct, setSelectedProduct] = useState<MarketplaceProduct | null>(null);
+  const [pendingDeleteProduct, setPendingDeleteProduct] = useState<MarketplaceProduct | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [grades, setGrades] = useState<Grade[]>([]);
@@ -248,18 +256,20 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
     }
   };
 
-  const deleteProduct = async (product = selectedProduct) => {
+  const requestDelete = (product = selectedProduct) => {
     if (!product || isDeleting) return;
-    const confirmed = window.confirm(
-      `Delete "${product.title}" from the marketplace? This removes the listing but keeps the uploaded material.`,
-    );
-    if (!confirmed) return;
+    setPendingDeleteProduct(product);
+  };
+
+  const deleteProduct = async (product = pendingDeleteProduct) => {
+    if (!product || isDeleting) return;
 
     setIsDeleting(true);
     try {
       await deleteMarketplaceProduct(product.id);
       notify("success", "Marketplace material deleted", `${product.title} was removed.`);
       if (selectedProduct?.id === product.id) setSelectedProduct(null);
+      setPendingDeleteProduct(null);
       await load();
     } catch (caught) {
       notify(
@@ -294,6 +304,8 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
       discountPercent: product.discountPercent,
       currency: product.currency,
       thumbnailUrl: product.thumbnailUrl || "",
+      fileFormat: product.fileFormat || "",
+      pageCount: product.pageCount,
       status: product.status,
     });
   };
@@ -445,7 +457,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                       </button>
                       <button
                         type="button"
-                        onClick={() => void deleteProduct()}
+                        onClick={() => requestDelete()}
                         disabled={isDeleting}
                         className="inline-flex w-full items-center justify-center rounded-xl border border-rose-200 px-4 py-3 text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                         aria-label="Delete material"
@@ -765,7 +777,7 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                     )}
                     <button
                       type="button"
-                      onClick={() => void deleteProduct(product)}
+                      onClick={() => requestDelete(product)}
                       disabled={isDeleting}
                       className={
                         viewMode === "grid"
@@ -857,14 +869,44 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                           type="file"
                           required
                           accept="application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.png,.jpg,.jpeg"
-                          onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            setSelectedFile(file);
+                            if (file) {
+                              setForm((previous) => ({
+                                ...previous,
+                                fileFormat: fileFormatFromFile(file),
+                              }));
+                            }
+                          }}
                           className="mt-1.5 block w-full rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-xs font-normal dark:border-slate-700 dark:bg-slate-900"
                         />
                         <span className="mt-1 block text-[11px] font-normal text-slate-400">
                           The file is uploaded securely when you create the product.
                         </span>
+                        {form.fileFormat && (
+                          <span className="mt-1 block text-[11px] font-semibold text-indigo-600">
+                            Detected format: {form.fileFormat}
+                          </span>
+                        )}
                       </label>
                     )}
+                    <label className="block font-semibold text-slate-700 dark:text-slate-300">
+                      Page count <span className="font-normal text-slate-400">(optional)</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={form.pageCount ?? ""}
+                        onChange={(event) =>
+                          setForm((previous) => ({
+                            ...previous,
+                            pageCount: event.target.value ? Number(event.target.value) : undefined,
+                          }))
+                        }
+                        placeholder="e.g. 42"
+                        className="mt-1.5 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal dark:border-slate-700 dark:bg-slate-900"
+                      />
+                    </label>
                     <label className="block font-semibold text-slate-700 dark:text-slate-300">
                       Thumbnail image <span className="font-normal text-slate-400">(optional)</span>
                       <div className="mt-1.5 flex items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
@@ -1118,6 +1160,61 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
               </div>
             </form>
           </>
+        )}
+        {pendingDeleteProduct && (
+          <div
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+            role="presentation"
+            onClick={() => !isDeleting && setPendingDeleteProduct(null)}
+          >
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-marketplace-title"
+              className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-950"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2
+                    id="delete-marketplace-title"
+                    className="text-lg font-bold text-slate-900 dark:text-white"
+                  >
+                    Delete marketplace material?
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                    Delete{" "}
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {pendingDeleteProduct.title}
+                    </span>{" "}
+                    from the marketplace? The uploaded material will be kept, but this listing will
+                    no longer be available.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setPendingDeleteProduct(null)}
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => void deleteProduct()}
+                  className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isDeleting ? "Deleting…" : "Delete material"}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
         {detailModal}
       </div>

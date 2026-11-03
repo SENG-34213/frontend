@@ -16,6 +16,8 @@ const numberValue = (value: number | string | null | undefined) =>
 export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
   const [courseId, setCourseId] = useState("");
   const [gradeFilter, setGradeFilter] = useState("all");
+  const [assessmentFilter, setAssessmentFilter] = useState("all");
+  const [resultFilter, setResultFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [gradebook, setGradebook] = useState<TeacherGradebook | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,14 +81,6 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
   );
 
   const rows = useMemo(() => gradebook?.students ?? [], [gradebook]);
-  const filtered = useMemo(() => {
-    const query = search.toLowerCase();
-    return rows.filter((row) =>
-      [row.studentNumber, row.studentName, row.email]
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(query)),
-    );
-  }, [rows, search]);
   const uniqueItems = (items: (typeof rows)[number]["assignments"]) =>
     items.filter(
       (item, index, all) =>
@@ -95,6 +89,33 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
   const assignments = uniqueItems(rows.flatMap((row) => row.assignments));
   const quizzes = uniqueItems(rows.flatMap((row) => row.quizzes));
   const exams = uniqueItems(rows.flatMap((row) => row.exams));
+  const visibleItems =
+    assessmentFilter === "assignments"
+      ? assignments
+      : assessmentFilter === "quizzes"
+        ? quizzes
+        : assessmentFilter === "exams"
+          ? exams
+          : [...assignments, ...quizzes, ...exams];
+  const filtered = useMemo(() => {
+    const query = search.toLowerCase();
+    return rows
+      .filter((row) =>
+        [row.studentNumber, row.studentName, row.email]
+          .filter(Boolean)
+          .some((value) => value!.toLowerCase().includes(query)),
+      )
+      .filter((row) => {
+        if (resultFilter === "all") return true;
+        const rowItems = [...row.assignments, ...row.quizzes, ...row.exams].filter((item) =>
+          visibleItems.some((visibleItem) => visibleItem.assessmentId === item.assessmentId),
+        );
+        const hasResult = rowItems.some(
+          (item) => numberValue(item.status === "MISSING" ? null : item.score) !== null,
+        );
+        return resultFilter === "graded" ? hasResult : !hasResult;
+      });
+  }, [rows, search, resultFilter, visibleItems]);
   const allItems = rows.flatMap((row) => [...row.assignments, ...row.quizzes, ...row.exams]);
   const marksReturned = allItems.filter(
     (item) => numberValue(item.status === "MISSING" ? null : item.score) !== null,
@@ -144,6 +165,27 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
                 {course.courseCode || course.courseName} — {course.courseName}
               </option>
             ))}
+          </select>
+          <select
+            aria-label="Filter gradebook by assessment type"
+            value={assessmentFilter}
+            onChange={(event) => setAssessmentFilter(event.target.value)}
+            className="px-3 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden shadow-2xs"
+          >
+            <option value="all">All assessments</option>
+            <option value="assignments">Assignments</option>
+            <option value="quizzes">Quizzes</option>
+            <option value="exams">Exams</option>
+          </select>
+          <select
+            aria-label="Filter gradebook by result status"
+            value={resultFilter}
+            onChange={(event) => setResultFilter(event.target.value)}
+            className="px-3 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden shadow-2xs"
+          >
+            <option value="all">All students</option>
+            <option value="graded">With results</option>
+            <option value="missing">Missing results</option>
           </select>
         </div>
       </div>
@@ -204,7 +246,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="px-5 py-3 sticky left-0 bg-slate-50 z-10">Student</th>
-                {[...assignments, ...quizzes, ...exams].map((item) => (
+                {visibleItems.map((item) => (
                   <th key={item.assessmentId} className="px-4 py-3 text-right">
                     {item.title}
                   </th>
@@ -217,7 +259,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={assignments.length + quizzes.length + exams.length + 3}
+                    colSpan={visibleItems.length + 3}
                     className="px-5 py-10 text-center text-slate-400"
                   >
                     No gradebook records available.
@@ -234,7 +276,7 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
                         </div>
                       )}
                     </td>
-                    {[...assignments, ...quizzes, ...exams].map((item) => (
+                    {visibleItems.map((item) => (
                       <td key={item.assessmentId} className="px-4 py-3.5 text-right">
                         {renderPercentage(row, item.assessmentId)}
                       </td>

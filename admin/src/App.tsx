@@ -40,6 +40,7 @@ import { AttendanceManagement } from "./admin/attendance/AttendanceManagement";
 import { fetchAttendanceSessions } from "./admin/api/attendanceApi";
 import { LearningMaterialManagement } from "./admin/materials/LearningMaterialManagement";
 import { MarketplaceManagement } from "./admin/marketplace/MarketplaceManagement";
+import { PaymentManagement } from "./admin/payments/PaymentManagement";
 import { AdminCalendar } from "./admin/calendar/AdminCalendar";
 import { CommunicationManagement } from "./admin/communication/CommunicationManagement";
 import { NotificationCenter } from "./admin/notifications/NotificationCenter";
@@ -1492,6 +1493,8 @@ export default function App() {
       )}
 
       {currentRoute === "marketplace" && <MarketplaceManagement onToast={addToast} />}
+
+      {currentRoute === "payments" && <PaymentManagement />}
 
       {currentRoute === "calendar" && (
         <AdminCalendar

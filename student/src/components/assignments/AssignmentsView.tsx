@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FileCheck2,
   Clock,
   AlertCircle,
   CheckCircle2,
-  Search,
-  Filter,
   Calendar,
   ChevronRight,
-  Sparkles,
+  Search,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
@@ -16,9 +14,39 @@ import { EmptyState } from "../../../../shared/ui/EmptyState";
 export const AssignmentsView: React.FC = () => {
   const { assignments, setSelectedAssignmentId, setCurrentView } = useStudent();
   const [activeTab, setActiveTab] = useState<
-    "ALL" | "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE"
+    "ALL" | "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE" | "CLOSED"
   >("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const formatCountdown = (dueDate: string, status: string, startDate?: string) => {
+    if (status === "CLOSED") return "Assignment closed";
+    const opening = startDate ? Date.parse(startDate) : NaN;
+    if (Number.isFinite(opening) && opening > now) {
+      const remaining = opening - now;
+      const totalMinutes = Math.floor(remaining / 60_000);
+      const days = Math.floor(totalMinutes / (60 * 24));
+      const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+      return days > 0 ? `Opens in ${days}d ${hours}h` : `Opens in ${hours}h`;
+    }
+    const remaining = Date.parse(dueDate) - now;
+    if (!Number.isFinite(remaining)) return "Deadline unavailable";
+    if (remaining <= 0) return "Submission window closed";
+    const totalMinutes = Math.floor(remaining / 60_000);
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+    return days > 0
+      ? `${days}d ${hours}h remaining`
+      : hours > 0
+        ? `${hours}h ${minutes}m remaining`
+        : `${minutes}m remaining`;
+  };
 
   const filteredAssignments = assignments.filter((a) => {
     const matchesTab = activeTab === "ALL" || a.status === activeTab;
@@ -56,7 +84,14 @@ export const AssignmentsView: React.FC = () => {
         return (
           <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
             <AlertCircle className="h-3 w-3" />
-            <span>Past Due</span>
+            <span>Past Due · Not Submitted</span>
+          </span>
+        );
+      case "CLOSED":
+        return (
+          <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+            <AlertCircle className="h-3 w-3" />
+            <span>Closed · Not Submitted</span>
           </span>
         );
       default:
@@ -94,23 +129,25 @@ export const AssignmentsView: React.FC = () => {
 
           {/* Status Tabs */}
           <div className="flex items-center gap-1 overflow-x-auto text-xs font-semibold">
-            {(["ALL", "PENDING", "SUBMITTED", "GRADED"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-lg px-3 py-1.5 capitalize transition-colors whitespace-nowrap ${
-                  activeTab === tab
-                    ? "bg-indigo-600 text-white font-semibold shadow-2xs"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-                }`}
-              >
-                {tab.toLowerCase()} (
-                {tab === "ALL"
-                  ? assignments.length
-                  : assignments.filter((a) => a.status === tab).length}
-                )
-              </button>
-            ))}
+            {(["ALL", "PENDING", "SUBMITTED", "GRADED", "OVERDUE", "CLOSED"] as const).map(
+              (tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`rounded-lg px-3 py-1.5 capitalize transition-colors whitespace-nowrap ${
+                    activeTab === tab
+                      ? "bg-indigo-600 text-white font-semibold shadow-2xs"
+                      : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {tab.toLowerCase()} (
+                  {tab === "ALL"
+                    ? assignments.length
+                    : assignments.filter((a) => a.status === tab).length}
+                  )
+                </button>
+              ),
+            )}
           </div>
         </div>
       </div>
@@ -127,6 +164,7 @@ export const AssignmentsView: React.FC = () => {
           filteredAssignments.map((asg) => {
             const isPending = asg.status === "PENDING";
             const isGraded = asg.status === "GRADED";
+            const isClosed = asg.status === "CLOSED" || asg.status === "OVERDUE";
 
             return (
               <div
@@ -172,6 +210,21 @@ export const AssignmentsView: React.FC = () => {
                     </span>
                     <span>·</span>
                     <span>Total Marks: {asg.maxScore} pts</span>
+                    <span
+                      className={`rounded-full px-2 py-1 font-semibold ${
+                        isClosed
+                          ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                          : "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
+                      }`}
+                    >
+                      <Clock className="mr-1 inline h-3 w-3" />
+                      {formatCountdown(asg.dueDate, asg.status, asg.startDate)}
+                    </span>
+                    {asg.submittedDate && (
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Submitted {new Date(asg.submittedDate).toLocaleString()}
+                      </span>
+                    )}
                     {isGraded && (
                       <>
                         <span>·</span>
@@ -198,7 +251,13 @@ export const AssignmentsView: React.FC = () => {
                     }`}
                   >
                     <span>
-                      {isPending ? "Submit Work" : isGraded ? "Review Feedback" : "View Submission"}
+                      {isPending
+                        ? "Submit Work"
+                        : isGraded
+                          ? "Review Feedback"
+                          : isClosed
+                            ? "View Closure Details"
+                            : "View Submission"}
                     </span>
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>

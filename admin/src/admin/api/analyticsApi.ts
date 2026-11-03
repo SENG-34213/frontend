@@ -47,6 +47,7 @@ export interface AdminAnalyticsOverview {
     successfulPayments?: number;
     failedPayments?: number;
     refundedPayments?: number;
+    revenueTrend?: Record<string, number>;
   };
   partial?: boolean;
   unavailableSections?: string[];
@@ -99,6 +100,7 @@ function normalizeOverview(value: unknown): AdminAnalyticsOverview {
     "failedPayments",
     "refundedPayments",
   ]);
+  const rawPayments = source.payments as Record<string, unknown> | undefined;
   const rawEnrollment = source.enrollment as Record<string, unknown> | undefined;
   const rawUsers = source.users as Record<string, unknown> | undefined;
   const rawCoursePopularity = Array.isArray(rawEnrollment?.coursePopularity)
@@ -127,7 +129,9 @@ function normalizeOverview(value: unknown): AdminAnalyticsOverview {
     assignments,
     quizzes,
     exams,
-    payments,
+    payments: payments
+      ? { ...payments, revenueTrend: numericRecord(rawPayments?.revenueTrend) }
+      : undefined,
     partial: source.partial === true,
     unavailableSections: Array.isArray(source.unavailableSections)
       ? source.unavailableSections.filter(

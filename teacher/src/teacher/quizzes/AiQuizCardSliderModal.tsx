@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   Award,
@@ -35,12 +35,18 @@ interface Props {
   initialStartTime: string;
   initialEndTime: string;
   initialMaxAttempts: number;
-  initialShowResultImmediately: boolean;
   course?: Course;
   onClose: () => void;
   onRegenerate: () => void;
   onQuizCreated: (quiz: BackendQuiz) => void;
 }
+
+const currentDateTimeInputValue = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() + 1, 0, 0);
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 16);
+};
 
 export const AiQuizCardSliderModal: React.FC<Props> = ({
   draft,
@@ -51,7 +57,6 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
   initialStartTime,
   initialEndTime,
   initialMaxAttempts,
-  initialShowResultImmediately,
   course,
   onClose,
   onRegenerate,
@@ -63,15 +68,28 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
   const [description, setDescription] = useState(initialDescription);
   const [duration, setDuration] = useState(initialDuration);
   const [passMark, setPassMark] = useState(initialPassMark);
+  const [passMarkManuallyEdited, setPassMarkManuallyEdited] = useState(false);
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(initialEndTime);
   const [maxAttempts, setMaxAttempts] = useState(initialMaxAttempts);
-  const [showResultImmediately, setShowResultImmediately] = useState(initialShowResultImmediately);
   const [showSettings, setShowSettings] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const persistLockRef = useRef(false);
   const question = questions[currentIndex];
   const totalMarks = questions.reduce((sum, item) => sum + Number(item.marks || 0), 0);
+
+  useEffect(() => {
+    if (!passMarkManuallyEdited) {
+      setPassMark(Math.round(totalMarks * 0.8 * 100) / 100);
+    }
+  }, [totalMarks, passMarkManuallyEdited]);
+
+  const durationFromSchedule = (start: string, end: string) => {
+    if (!start || !end) return;
+    const minutes = Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+    if (Number.isFinite(minutes) && minutes > 0) setDuration(minutes);
+  };
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -96,6 +114,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
     if (!title.trim()) return "Quiz title is required.";
     if (title.length > 150) return "Quiz title cannot exceed 150 characters.";
     if (duration < 1) return "Quiz duration must be at least 1 minute.";
+    if ((startTime && !endTime) || (!startTime && endTime))
+      return "Set both a start and end date/time, or leave both fields empty.";
+    if (startTime && new Date(startTime).getTime() < Date.now() - 60_000)
+      return "Quiz start time cannot be before the current date and time.";
     if (!Number.isInteger(maxAttempts) || maxAttempts < 1)
       return "Maximum attempts must be a positive whole number.";
     if (startTime && endTime && new Date(startTime) >= new Date(endTime))
@@ -114,11 +136,13 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
     return "";
   };
   const persist = async (publish: boolean) => {
+    if (persistLockRef.current || busy) return;
     const validationError = validate();
     if (validationError) {
       setError(validationError);
       return;
     }
+    persistLockRef.current = true;
     setBusy(true);
     setError("");
     try {
@@ -131,7 +155,6 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
         startTime: startTime || undefined,
         endTime: endTime || undefined,
         maxAttempts,
-        showResultImmediately,
         creationMethod: "AI_GENERATED",
       });
       const savedQuestions = [];
@@ -156,6 +179,7 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
       setError(requestError instanceof Error ? requestError.message : "Quiz could not be saved.");
     } finally {
       setBusy(false);
+      persistLockRef.current = false;
     }
   };
 
@@ -255,7 +279,10 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                   type="number"
                   min={0}
                   value={passMark}
-                  onChange={(event) => setPassMark(Number(event.target.value))}
+                  onChange={(event) => {
+                    setPassMarkManuallyEdited(true);
+                    setPassMark(Number(event.target.value));
+                  }}
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
               </label>
@@ -282,8 +309,12 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                 Start Date &amp; Time
                 <input
                   type="datetime-local"
+                  min={currentDateTimeInputValue()}
                   value={startTime}
-                  onChange={(event) => setStartTime(event.target.value)}
+                  onChange={(event) => {
+                    setStartTime(event.target.value);
+                    durationFromSchedule(event.target.value, endTime);
+                  }}
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
               </label>
@@ -291,19 +322,14 @@ export const AiQuizCardSliderModal: React.FC<Props> = ({
                 End Date &amp; Time
                 <input
                   type="datetime-local"
+                  min={startTime || currentDateTimeInputValue()}
                   value={endTime}
-                  onChange={(event) => setEndTime(event.target.value)}
+                  onChange={(event) => {
+                    setEndTime(event.target.value);
+                    durationFromSchedule(startTime, event.target.value);
+                  }}
                   className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white"
                 />
-              </label>
-              <label className="flex items-center gap-2 text-xs text-slate-300 md:col-span-12">
-                <input
-                  type="checkbox"
-                  checked={showResultImmediately}
-                  onChange={(event) => setShowResultImmediately(event.target.checked)}
-                  className="rounded border-slate-600 bg-slate-900 text-indigo-500"
-                />
-                Show results immediately after submission
               </label>
             </div>
           )}

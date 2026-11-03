@@ -40,15 +40,18 @@ const seniorSubjects = [...juniorSubjects, "Business Studies", "History"];
 
 const alSubjects = [
   "Combined Maths",
+  "Combined Mathematics",
   "Biology",
   "Chemistry",
   "Physics",
   "Business Studies",
   "Economics",
+  "Accounting",
+  "Information & Communication Tech (ICT)",
 ];
 
-function json(message, status) {
-  return NextResponse.json({ message }, { status });
+function json(message, status, data) {
+  return NextResponse.json({ message, ...(data ? { data } : {}) }, { status });
 }
 
 function cleanText(value) {
@@ -214,31 +217,41 @@ export async function POST(request) {
       return json("One or more selected subjects are invalid for this grade.", 400);
     }
 
-    const requiredEnv = [
-      "RESEND_API_KEY",
-      "CONTACT_EMAIL",
-      "EMAIL_FROM",
-      "UPSTASH_REDIS_REST_URL",
-      "UPSTASH_REDIS_REST_TOKEN",
-    ];
+    const hasRateLimitConfig = Boolean(
+      process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+    );
+    if (hasRateLimitConfig) {
+      const redis = Redis.fromEnv();
+      const ipRateLimit = new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(5, "10 m"),
+        prefix: "mentify:preregister:ip",
+      });
+      const emailRateLimit = new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(3, "30 m"),
+        prefix: "mentify:preregister:email",
+      });
 
-    if (requiredEnv.some((key) => !process.env[key])) {
-      console.error("Pre-registration service configuration is incomplete.");
-      return json("The registration service is not configured.", 503);
-    }
-
-    const redis = Redis.fromEnv();
-    const rateLimit = new Ratelimit({
-      redis,
-      limiter: Ratelimit.slidingWindow(5, "10 m"),
-      prefix: "mentify:preregister",
-    });
-
-    const ip = request.headers.get("x-real-ip") || "unknown";
-    const limit = await rateLimit.limit(ip);
-
-    if (!limit.success) {
-      return json("Too many registration attempts. Please try again later.", 429);
+      const forwardedFor = request.headers.get("x-forwarded-for") || "";
+      const ip = (
+        forwardedFor.split(",")[0] ||
+        request.headers.get("x-real-ip") ||
+        "unknown"
+      ).trim();
+      const normalizedEmail = cleanText(body.email).toLowerCase();
+      const [ipLimit, emailLimit] = await Promise.all([
+        ipRateLimit.limit(ip),
+        emailRateLimit.limit(normalizedEmail),
+      ]);
+      if (!ipLimit.success || !emailLimit.success) {
+        return json("Too many registration attempts. Please try again later.", 429);
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      console.error("Production pre-registration rate limiting is not configured.");
+      return json("Registration protection is temporarily unavailable.", 503);
+    } else {
+      console.warn("Pre-registration rate limiting is not configured for local development.");
     }
 
     const apiBaseUrl = (
@@ -274,9 +287,20 @@ export async function POST(request) {
       }),
     });
 
+    let submissionPayload = null;
+    try {
+      submissionPayload = await submissionResponse.json();
+    } catch {
+      // The upstream service may return an empty response for an error.
+    }
+
     if (!submissionResponse.ok) {
       console.error("Pre-registration could not be saved to the admissions service.");
-      return json("We could not submit your registration. Please try again later.", 503);
+      return json(
+        submissionPayload?.message ||
+          "We could not submit your registration. Please try again later.",
+        submissionResponse.status === 429 ? 429 : 503,
+      );
     }
 
     const emailBody = [
@@ -298,20 +322,28 @@ export async function POST(request) {
       "Note: This is a pre-registration enquiry. Enrolment is subject to approval before payment.",
     ].join("\n");
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM,
-      to: [process.env.CONTACT_EMAIL],
-      replyTo: email,
-      subject: "New TiT class pre-registration",
-      text: emailBody,
-    });
-
-    if (error) {
-      console.error("Pre-registration email delivery failed.");
+    const hasEmailConfig = Boolean(
+      process.env.RESEND_API_KEY && process.env.CONTACT_EMAIL && process.env.EMAIL_FROM,
+    );
+    if (hasEmailConfig) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const { error } = await resend.emails.send({
+        from: process.env.EMAIL_FROM,
+        to: [process.env.CONTACT_EMAIL],
+        replyTo: email,
+        subject: "New TiT class pre-registration",
+        text: emailBody,
+      });
+      if (error) console.error("Pre-registration email delivery failed.");
+    } else {
+      console.warn(
+        "Pre-registration email notifications are not configured; submission was saved.",
+      );
     }
 
-    return json("Your pre-registration has been submitted successfully.", 200);
+    return json("Your pre-registration has been submitted successfully.", 200, {
+      referenceNo: submissionPayload?.data?.id || submissionPayload?.data?.referenceNo || null,
+    });
   } catch {
     console.error("Pre-registration request failed.");
     return json("The registration service is temporarily unavailable.", 500);

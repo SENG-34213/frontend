@@ -4,24 +4,20 @@ import {
   Phone,
   Mail,
   Clock,
-  Award,
   ChevronRight,
   MessageCircle,
   GraduationCap,
   BookOpen,
   Video,
   ShieldCheck,
-  UserCheck,
 } from "lucide-react";
 import { SITE_CONFIG } from "../../lib/config/site";
 
 export interface FooterProps {
   onNavigate: (path: string) => void;
-  onOpenResults?: () => void;
-  onOpenTutorApply?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenResults, onOpenTutorApply }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
     <footer className="bg-slate-950 text-slate-300 border-t border-slate-800/80 pt-20 pb-16 relative overflow-hidden">
       {/* Subtle background ambient lights */}
@@ -67,17 +63,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenResults, onOpe
                 <MessageCircle className="w-4 h-4 fill-white/20" />
                 <span>Chat on WhatsApp</span>
               </a>
-
-              {onOpenResults && (
-                <button
-                  type="button"
-                  onClick={onOpenResults}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-700/80 hover:border-amber-500/50 text-amber-300 font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                >
-                  <Award className="w-4 h-4 text-amber-400" />
-                  <span>Check Exam Results</span>
-                </button>
-              )}
             </div>
           </div>
 
@@ -247,46 +232,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenResults, onOpe
             </ul>
           </div>
 
-          {/* Col 3: Student & Tutor Services */}
+          {/* Col 3: Student Services */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-              Portals & Verification
+              Portals
             </h4>
             <ul className="space-y-3 text-sm">
-              <li>
-                {onOpenResults ? (
-                  <button
-                    type="button"
-                    onClick={onOpenResults}
-                    className="text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-2 group font-medium text-left"
-                  >
-                    <Award className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Check Student Exam Marks</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onNavigate("portals")}
-                    className="text-amber-400 hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-2 text-left"
-                  >
-                    <Award className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Student Result Verification</span>
-                  </button>
-                )}
-              </li>
-              <li>
-                {onOpenTutorApply && (
-                  <button
-                    type="button"
-                    onClick={onOpenTutorApply}
-                    className="text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer flex items-center gap-2 group font-medium text-left"
-                  >
-                    <UserCheck className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <span>Apply as a Tutor</span>
-                  </button>
-                )}
-              </li>
               <li>
                 <button
                   type="button"

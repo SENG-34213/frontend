@@ -6,7 +6,7 @@ import {
   AdmissionsFormData,
   ContactFormData,
 } from "../../types";
-import { MOCK_COURSES, MOCK_MATERIALS, MOCK_TEACHERS } from "../../data/mockData";
+import { MOCK_COURSES, MOCK_TEACHERS } from "../../data/mockData";
 import { SITE_CONFIG } from "../config/site";
 
 /**
@@ -14,7 +14,7 @@ import { SITE_CONFIG } from "../config/site";
  *
  * 1. Public Marketplace Materials List:
  *    - Route: GET /api/v1/marketplace/materials
- *    - Status: READY_FOR_FRONTEND_INTEGRATION (With verified fallback)
+ *    - Status: READY_FOR_FRONTEND_INTEGRATION
  *    - Supported Query Params: search, subject, gradeId, category, page, limit
  *
  * 2. Public Marketplace Material Details:
@@ -50,6 +50,60 @@ export interface MarketplaceQueryParams {
   isFree?: boolean;
   page?: number;
   limit?: number;
+}
+
+const MARKETPLACE_CATEGORY_LABELS: Record<string, MaterialItem["category"]> = {
+  NOTES: "Notes",
+  SHORT_NOTES: "Short Notes",
+  PAST_PAPER: "Past Papers",
+  EXAM_PAPER: "Exam Papers",
+  MODEL_PAPER: "Model Papers",
+  WORKSHEET: "Worksheets",
+  QUESTION_BANK: "Question Banks",
+  MARKING_SCHEME: "Marking Schemes",
+  REVISION_PACK: "Revision Packs",
+  STUDY_GUIDE: "Study Guides",
+  TUTORIAL: "Tutorials",
+  PRACTICE_PAPER: "Practice Papers",
+  OTHER: "Other",
+};
+
+function toBackendCategory(category?: string) {
+  if (!category || category === "all") return undefined;
+  return Object.entries(MARKETPLACE_CATEGORY_LABELS).find(([, label]) => label === category)?.[0];
+}
+
+function mapMarketplaceProduct(product: any): MaterialItem {
+  const category = MARKETPLACE_CATEGORY_LABELS[product.category] || "Other";
+  const price = Number(product.price || 0);
+  const finalPrice = Number(product.finalPrice ?? price);
+  const id = String(product.id);
+
+  return {
+    id,
+    materialId: String(product.materialId || product.id),
+    title: product.title || "Untitled resource",
+    description: product.description || product.shortDescription || "",
+    category,
+    subject: product.subject || "General",
+    gradeId: product.gradeId ? String(product.gradeId) : "",
+    price,
+    free: Boolean(product.free),
+    discountPercent: product.discountPercent == null ? undefined : Number(product.discountPercent),
+    finalPrice,
+    currency: product.currency || "LKR",
+    status: product.status || "PUBLISHED",
+    // Always use the website proxy for uploaded thumbnails. Stored thumbnail
+    // URLs may be private or expired S3 URLs, while the proxy creates a fresh
+    // public signed URL for the browser.
+    thumbnailUrl: product.thumbnailMaterialId
+      ? `/api/marketplace/materials/${encodeURIComponent(id)}/thumbnail`
+      : product.thumbnailUrl || "/TiTJaffna-logo.jpeg",
+    fileFormat: product.fileFormat || undefined,
+    pages: product.pageCount == null ? undefined : Number(product.pageCount),
+    authorName: product.materialOwnerName || "TiT Academic Board",
+    createdAt: product.createdAt,
+  };
 }
 
 class TiTApiClient {
@@ -93,88 +147,49 @@ class TiTApiClient {
   async getMarketplaceMaterials(
     params: MarketplaceQueryParams = {},
   ): Promise<ApiResponse<MaterialItem[]>> {
-    if (this.baseUrl) {
-      try {
-        const query = new URLSearchParams();
-        if (params.search) query.set("search", params.search);
-        if (params.subject) query.set("subject", params.subject);
-        if (params.gradeId) query.set("gradeId", params.gradeId);
-        if (params.category) query.set("category", params.category);
-        if (params.page) query.set("page", params.page.toString());
-        if (params.limit) query.set("limit", params.limit.toString());
+    const query = new URLSearchParams();
+    if (params.search) query.set("search", params.search);
+    if (params.subject && params.subject !== "all") query.set("subject", params.subject);
+    if (params.gradeId && /^[0-9a-f-]{36}$/i.test(params.gradeId))
+      query.set("gradeId", params.gradeId);
+    const category = toBackendCategory(params.category);
+    if (category) query.set("category", category);
+    if (params.isFree !== undefined) query.set("isFree", String(params.isFree));
+    query.set("page", String(params.page || 1));
+    query.set("limit", String(params.limit || 9));
 
-        const res = await this.request<MaterialItem[]>(
-          `/api/v1/marketplace/materials?${query.toString()}`,
-        );
-        return res;
-      } catch (err) {
-        console.warn("Backend materials fetch failed, utilizing verified mock catalog:", err);
-      }
-    }
+    const response = await fetch(`/api/marketplace/materials?${query.toString()}`);
+    if (!response.ok) throw new Error(`Marketplace API error (${response.status})`);
 
-    // Client-side filtering on mock dataset
-    let results = [...MOCK_MATERIALS];
-
-    if (params.search) {
-      const term = params.search.toLowerCase();
-      results = results.filter(
-        (m) =>
-          m.title.toLowerCase().includes(term) ||
-          m.description.toLowerCase().includes(term) ||
-          m.subject.toLowerCase().includes(term) ||
-          m.authorName?.toLowerCase().includes(term),
-      );
-    }
-
-    if (params.subject && params.subject !== "all") {
-      results = results.filter((m) => m.subject.toLowerCase() === params.subject?.toLowerCase());
-    }
-
-    if (params.gradeId && params.gradeId !== "all") {
-      results = results.filter((m) => m.gradeId === params.gradeId);
-    }
-
-    if (params.category && params.category !== "all") {
-      results = results.filter((m) => m.category === params.category);
-    }
-
-    if (params.isFree !== undefined) {
-      results = results.filter((m) => m.free === params.isFree);
-    }
-
-    const page = params.page || 1;
-    const limit = params.limit || 9;
-    const total = results.length;
-    const totalPages = Math.ceil(total / limit);
-    const paginated = results.slice((page - 1) * limit, page * limit);
+    const payload = await response.json();
+    const page = payload.data || {};
+    const content = Array.isArray(page) ? page : page.content || [];
 
     return {
       success: true,
-      data: paginated,
+      data: content.map(mapMarketplaceProduct),
       meta: {
-        page,
-        limit,
-        total,
-        totalPages,
+        page: (page.number ?? (params.page || 1) - 1) + 1,
+        limit: page.size ?? params.limit ?? 9,
+        total: page.totalElements ?? content.length,
+        totalPages: page.totalPages ?? 1,
       },
+      message: payload.message,
     };
   }
 
   async getMaterialById(id: string): Promise<ApiResponse<MaterialItem | null>> {
-    if (this.baseUrl) {
-      try {
-        const res = await this.request<MaterialItem>(`/api/v1/marketplace/materials/${id}`);
-        return res;
-      } catch (err) {
-        console.warn("Backend material detail fetch failed, utilizing mock record:", err);
-      }
+    const response = await fetch(`/api/marketplace/materials/${encodeURIComponent(id)}`);
+    if (!response.ok) {
+      if (response.status === 404)
+        return { success: false, data: null, message: "Material not found" };
+      throw new Error(`Marketplace API error (${response.status})`);
     }
-
-    const item = MOCK_MATERIALS.find((m) => m.id === id || m.materialId === id) || null;
+    const payload = await response.json();
     return {
-      success: !!item,
-      data: item,
-      message: item ? "Material retrieved" : "Material not found",
+      success: true,
+      data: payload.data ? mapMarketplaceProduct(payload.data) : null,
+      message: payload.message,
     };
   }
 
@@ -239,29 +254,50 @@ class TiTApiClient {
   async submitAdmissions(
     formData: AdmissionsFormData,
   ): Promise<ApiResponse<{ referenceNo: string }>> {
-    if (this.baseUrl) {
-      try {
-        const res = await this.request<{ referenceNo: string }>("/api/v1/public/admissions", {
-          method: "POST",
-          body: JSON.stringify(formData),
-        });
-        return res;
-      } catch (err) {
-        console.warn(
-          "Backend admissions submission failed, returning verified preview reference:",
-          err,
-        );
-      }
+    const gradeMatch = formData.grade.match(/grade-(\d+)/i);
+    const gradeNumber = gradeMatch ? Number(gradeMatch[1]) : Number(formData.grade);
+    const grade =
+      formData.grade.toLowerCase().includes("al") || gradeNumber >= 12 ? "al" : String(gradeNumber);
+    const classFormat =
+      formData.learningPreference === "Online Live"
+        ? "online"
+        : formData.learningPreference === "Physical Classroom"
+          ? "onsite"
+          : "either";
+    const email = formData.guardianEmail.trim() || formData.studentEmail?.trim() || "";
+    const phone = formData.guardianPhone.trim() || formData.studentPhone?.trim() || "";
+    const response = await fetch("/api/preregister", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        name: formData.studentFullName.trim(),
+        email,
+        phone,
+        role: "parent",
+        district: formData.district,
+        city: formData.city.trim(),
+        classFormat,
+        grade,
+        subjects: formData.preferredSubjects,
+        contactMethod:
+          formData.preferredContactMethod === "Phone Call"
+            ? "phone"
+            : formData.preferredContactMethod === "Email"
+              ? "email"
+              : "whatsapp",
+        consent: formData.consentAgreed,
+        website: "",
+      }),
+    });
+    const result = (await response.json()) as ApiResponse<{ referenceNo?: string }>;
+    if (!response.ok) {
+      throw new Error(result.message || "We could not submit your registration.");
     }
-
-    // Simulate reliable admissions acknowledgement
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    const refNo = `ADM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
-    return {
-      success: true,
-      message: "Admission pre-registration successfully received.",
-      data: { referenceNo: refNo },
-    };
+    const referenceNo = result.data?.referenceNo;
+    if (!referenceNo) {
+      throw new Error("The registration was submitted, but no reference number was returned.");
+    }
+    return { ...result, data: { referenceNo } };
   }
 
   // --- CONTACT INQUIRY ---

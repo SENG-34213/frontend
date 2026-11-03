@@ -169,17 +169,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, []);
   const isSampleEnrollmentTrend = true;
   const maxEnrollmentTrend = Math.max(...enrollmentTrend.map((point) => point.value), 1);
-  const revenueTrend = [
-    { label: "Jan", value: 185000 },
-    { label: "Feb", value: 224000 },
-    { label: "Mar", value: 208000 },
-    { label: "Apr", value: 276000 },
-    { label: "May", value: 318000 },
-    { label: "Jun", value: 362000 },
-    { label: "Jul", value: 405000 },
-    { label: "Aug", value: 468000 },
-  ];
-  const maxRevenue = Math.max(...revenueTrend.map((point) => point.value), 1);
   const calendarCells = useMemo(() => {
     const firstDay = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
     const start = new Date(firstDay);
@@ -203,6 +192,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const liveTeachers = analytics?.users?.teachers ?? kpis.totalTeachers;
   const liveCourses =
     analytics?.courses?.activeCourses ?? analytics?.courses?.totalCourses ?? kpis.totalCourses;
+  const livePayments = analytics?.payments;
+  const liveRevenue = livePayments?.revenue ?? 0;
+  const liveSuccessfulPayments = livePayments?.successfulPayments ?? 0;
+  const liveProcessedPayments =
+    (livePayments?.successfulPayments ?? 0) +
+    (livePayments?.failedPayments ?? 0) +
+    (livePayments?.refundedPayments ?? 0);
+  const revenueTrend = Object.entries(livePayments?.revenueTrend ?? {}).map(([label, value]) => ({
+    label,
+    value,
+  }));
+  const maxRevenueTrend = Math.max(...revenueTrend.map((point) => point.value), 1);
   const liveActiveUsers = analytics?.users?.accountStatusMix?.ACTIVE ?? kpis.activeUsers;
   const liveEnrollments = analytics?.enrollment?.activeEnrollments ?? kpis.activeEnrollments;
   const liveAttendance = analytics?.attendance?.averageAttendance;
@@ -882,77 +883,142 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex items-center gap-2">
                   <Activity className="h-4 w-4 text-emerald-500" />
                   <h2 className="text-base font-semibold text-slate-950 dark:text-white">
-                    Income &amp; revenue
+                    Payments &amp; revenue
                   </h2>
                 </div>
-                <p className="mt-1 text-xs text-slate-500">Sample monthly revenue growth</p>
+                <p className="mt-1 text-xs text-slate-500">Live totals from completed payments</p>
               </div>
-              <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                Sample
-              </span>
-            </div>
-            <div className="mt-6 overflow-x-auto rounded-2xl bg-emerald-50/60 p-3 dark:bg-emerald-950/20">
-              <svg
-                viewBox="0 0 520 245"
-                className="h-[230px] min-w-[460px] w-full"
-                role="img"
-                aria-label="Sample monthly income and revenue line chart"
+              <button
+                onClick={() => onNavigate("payments")}
+                className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 dark:text-emerald-300"
               >
-                {[0, 1, 2, 3].map((line) => {
-                  const y = 25 + line * 48;
-                  return (
-                    <line
-                      key={line}
-                      x1="34"
-                      x2="500"
-                      y1={y}
-                      y2={y}
-                      stroke="#10b981"
-                      strokeOpacity="0.18"
-                      strokeDasharray="4 5"
-                    />
-                  );
-                })}
-                <polyline
-                  points={revenueTrend
-                    .map((point, index) => {
-                      const x = 38 + (index / (revenueTrend.length - 1)) * 454;
-                      const y = 180 - (point.value / maxRevenue) * 135;
-                      return `${x},${y}`;
-                    })
-                    .join(" ")}
-                  fill="none"
-                  stroke="#059669"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="4"
-                />
-                {revenueTrend.map((point, index) => {
-                  const x = 38 + (index / (revenueTrend.length - 1)) * 454;
-                  const y = 180 - (point.value / maxRevenue) * 135;
-                  return (
-                    <g key={`${point.label}-${index}`}>
-                      <circle cx={x} cy={y} r="6" fill="#ffffff" stroke="#059669" strokeWidth="4" />
-                      <text
-                        x={x}
-                        y="214"
-                        textAnchor="middle"
-                        className="fill-slate-500 text-[10px]"
-                      >
-                        {point.label}
-                      </text>
-                      <title>{`${point.label}: LKR ${point.value.toLocaleString()}`}</title>
-                    </g>
-                  );
-                })}
-              </svg>
+                View payments
+              </button>
             </div>
-            <div className="mt-4 flex items-center justify-between border-t border-emerald-100 pt-4 dark:border-emerald-950/60">
-              <span className="text-xs text-slate-500">August revenue</span>
-              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                LKR {revenueTrend[revenueTrend.length - 1].value.toLocaleString()}
-              </span>
-            </div>
+            {analyticsLoading ? (
+              <div className="mt-6 h-32 animate-pulse rounded-2xl bg-emerald-50 dark:bg-emerald-950/20" />
+            ) : analyticsError || !analytics?.payments ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500 dark:border-slate-700">
+                Live payment data is temporarily unavailable.
+              </div>
+            ) : (
+              <>
+                <div className="mt-6 rounded-2xl bg-emerald-50/70 p-5 dark:bg-emerald-950/20">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                    Total revenue
+                  </p>
+                  <p className="mt-2 text-3xl font-extrabold text-emerald-700 dark:text-emerald-300">
+                    LKR {liveRevenue.toLocaleString()}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Revenue includes completed payments only.
+                  </p>
+                </div>
+                <div className="mt-4 rounded-2xl border border-emerald-100 bg-white/70 p-4 dark:border-emerald-950/60 dark:bg-slate-900/40">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Revenue growth timeline
+                    </p>
+                    <span className="text-[11px] text-slate-400">Live records</span>
+                  </div>
+                  <svg
+                    viewBox="0 0 420 150"
+                    className="h-36 w-full"
+                    role="img"
+                    aria-label="Live monthly revenue growth timeline"
+                  >
+                    {[0, 1, 2, 3].map((line) => {
+                      const y = 18 + line * 32;
+                      return (
+                        <line
+                          key={line}
+                          x1="28"
+                          x2="405"
+                          y1={y}
+                          y2={y}
+                          stroke="#94a3b8"
+                          strokeOpacity="0.2"
+                          strokeDasharray="4 5"
+                        />
+                      );
+                    })}
+                    {revenueTrend.length > 1 && (
+                      <>
+                        <polyline
+                          points={revenueTrend
+                            .map((point, index) => {
+                              const x = 30 + (index / (revenueTrend.length - 1)) * 375;
+                              const y = 112 - (point.value / maxRevenueTrend) * 88;
+                              return `${x},${y}`;
+                            })
+                            .join(" ")}
+                          fill="none"
+                          stroke="#059669"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="3"
+                        />
+                        {revenueTrend.map((point, index) => {
+                          const x = 30 + (index / (revenueTrend.length - 1)) * 375;
+                          const y = 112 - (point.value / maxRevenueTrend) * 88;
+                          return (
+                            <g key={point.label}>
+                              <circle
+                                cx={x}
+                                cy={y}
+                                r="4"
+                                fill="#ffffff"
+                                stroke="#059669"
+                                strokeWidth="3"
+                              />
+                              {(index === 0 ||
+                                index === revenueTrend.length - 1 ||
+                                index % 3 === 0) && (
+                                <text
+                                  x={x}
+                                  y="136"
+                                  textAnchor="middle"
+                                  className="fill-slate-500 text-[9px]"
+                                >
+                                  {point.label}
+                                </text>
+                              )}
+                              <title>{`${point.label}: LKR ${point.value.toLocaleString()}`}</title>
+                            </g>
+                          );
+                        })}
+                      </>
+                    )}
+                  </svg>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl border border-emerald-100 p-3 dark:border-emerald-950/60">
+                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                      {liveSuccessfulPayments}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">
+                      Successful
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-100 p-3 dark:border-emerald-950/60">
+                    <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
+                      {liveProcessedPayments}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">
+                      Processed
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-100 p-3 dark:border-emerald-950/60">
+                    <p className="text-lg font-bold text-rose-600 dark:text-rose-400">
+                      {livePayments?.refundedPayments ?? 0}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">
+                      Refunded
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>

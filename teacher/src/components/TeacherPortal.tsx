@@ -39,7 +39,6 @@ import type { AuthSession } from "../teacher/auth/authTypes";
 import { useTeacherShellData } from "../teacher/hooks/useTeacherShellData";
 import { useTeacherCourses } from "../teacher/hooks/useTeacherCourses";
 import { useTeacherNotifications } from "../teacher/hooks/useTeacherNotifications";
-import { createQuiz } from "../teacher/api/quizApi";
 import { mapBackendCourse, type BackendCourse } from "../teacher/api/courseApi";
 import { useTeacherStudents } from "../teacher/hooks/useTeacherStudents";
 import { getCourseAssignments, type BackendAssignment } from "../teacher/api/assignmentApi";
@@ -200,7 +199,14 @@ export default function App() {
 
   // Deep view states
   const [selectedCourseForDetail, setSelectedCourseForDetail] = useState<Course | null>(null);
-  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>("");
+  const [activeGradingAssignmentId, setActiveGradingAssignmentId] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return (
+      new URLSearchParams(window.location.search).get("assignmentId") ||
+      window.localStorage.getItem("teacher-active-grading-assignment") ||
+      ""
+    );
+  });
   const shellData = useTeacherShellData(Boolean(session));
   const teacherCourses = useTeacherCourses(Boolean(session));
   const teacherStudents = useTeacherStudents(Boolean(session), teacherCourses.courses);
@@ -352,6 +358,14 @@ export default function App() {
 
   const handleOpenGradeAssignment = (assignmentId: string) => {
     setActiveGradingAssignmentId(assignmentId);
+    window.localStorage.setItem("teacher-active-grading-assignment", assignmentId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("assignmentId", assignmentId);
+    window.history.replaceState(
+      { ...window.history.state, portal: "teacher", tab: "grading-workspace", assignmentId },
+      "",
+      url,
+    );
     setCurrentTab("grading-workspace");
   };
 
@@ -374,8 +388,6 @@ export default function App() {
     } else if (type === "assignment") {
       setAssignmentRefreshToken((current) => current + 1);
       setCurrentTab("assignments");
-    } else if (type === "quiz") {
-      setCurrentTab("quizzes");
     } else if (type === "lesson" || type === "module") {
       setCurrentTab("curriculum");
     } else if (type === "event") {
@@ -595,11 +607,7 @@ export default function App() {
           )}
 
           {currentTab === "quizzes" && (
-            <QuizDashboardView
-              teacherCourses={courses}
-              onOpenCreateQuiz={() => handleOpenQuickCreate("quiz")}
-              onNavigate={handleNavigate}
-            />
+            <QuizDashboardView teacherCourses={courses} onNavigate={handleNavigate} />
           )}
 
           {currentTab === "exams" && (
@@ -695,7 +703,6 @@ export default function App() {
         onCreated={handleItemCreated}
         backendCourses={teacherCourses.courses}
         teacherId={session?.user.id}
-        onCreateQuiz={createQuiz}
       />
     </div>
   );

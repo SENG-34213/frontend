@@ -97,6 +97,9 @@ Example:
 # Server-side URL for the backend API gateway
 API_GATEWAY_URL=http://localhost:8080
 
+# Stripe publishable key used by the browser Payment Element (never use the secret key here)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me
+
 # Must match PRE_REGISTRATION_API_TOKEN in the backend environment
 PRE_REGISTRATION_API_TOKEN=replace-with-a-long-random-server-only-token
 ```
@@ -108,3 +111,8 @@ The website's pre-registration API requires both values to save submissions for 
 The same `API_GATEWAY_URL` also connects the public Resource Library to the backend marketplace.
 Only marketplace products marked **Published** by an administrator appear there; drafts and
 course-only materials remain private.
+
+Marketplace payments collect buyer name, email, and phone without requiring a student session. Configure `STRIPE_SECRET_KEY`,
+`STRIPE_WEBHOOK_SECRET`, and `PAYMENT_CURRENCY` in the payment-service environment. Configure a
+Stripe webhook for `/api/v1/payments/stripe/webhook` and subscribe to
+`payment_intent.succeeded` and `payment_intent.payment_failed`.

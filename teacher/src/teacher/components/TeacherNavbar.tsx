@@ -11,7 +11,6 @@ import {
   Layers,
   FileCode,
   FileCheck,
-  HelpCircle,
   GraduationCap,
   CalendarDays,
   User,
@@ -208,11 +207,11 @@ export const TeacherNavbar: React.FC<TeacherNavbarProps> = ({
               <button
                 onClick={() => {
                   setQuickCreateOpen(false);
-                  onOpenQuickCreate("quiz");
+                  onNavigate("quizzes");
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
               >
-                <HelpCircle className="w-4 h-4 text-sky-600" />
+                <Plus className="w-4 h-4 text-sky-600" />
                 <span>New Quiz</span>
               </button>
               <button

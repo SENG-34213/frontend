@@ -74,8 +74,6 @@ const types: [MaterialType, string][] = [
   ["PRESENTATION", "Presentation"],
   ["SPREADSHEET", "Spreadsheet"],
   ["IMAGE", "Image"],
-  ["VIDEO", "Video"],
-  ["AUDIO", "Audio"],
   ["ARCHIVE", "Archive"],
   ["TEXT", "Text file"],
   ["OTHER", "Other file"],
@@ -882,6 +880,12 @@ function UploadModal({
   const maxFileSize = 500 * 1024 * 1024;
   const selectFile = (selectedFile: File) => {
     setError(null);
+    if (selectedFile.type.startsWith("video/") || selectedFile.type.startsWith("audio/")) {
+      setError(
+        "Video and audio materials are not supported. Please choose a document, image, or archive file.",
+      );
+      return;
+    }
     if (selectedFile.size > maxFileSize) {
       setError("File exceeds maximum size limit of 500 MB.");
       return;
@@ -961,6 +965,7 @@ function UploadModal({
             <input
               ref={fileInputRef}
               type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.odp,.ods,.txt,.md,.markdown,.csv,.rtf,.jpg,.jpeg,.png,.gif,.webp,.svg,.zip,.7z,.rar"
               className="hidden"
               onChange={(event) => event.target.files?.[0] && selectFile(event.target.files[0])}
             />

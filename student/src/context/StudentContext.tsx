@@ -38,6 +38,7 @@ import {
   toProfile,
   uploadSubmissionFile,
   updateCurrentStudentProfile,
+  updateAssignmentSubmission,
 } from "../api/student";
 import { useStudentCommunicationRealtime } from "../api/communicationRealtime";
 import { downloadFile } from "../../../shared/files/downloadFile";
@@ -399,7 +400,10 @@ export const StudentProvider: React.FC<{
     files: { name: string; size: string; uploadedAt: string; file?: File }[],
   ) => {
     try {
-      const response = await createAssignmentSubmission(assignmentId, submissionText);
+      const existing = assignments.find((assignment) => assignment.id === assignmentId);
+      const response = existing?.submissionId
+        ? await updateAssignmentSubmission(existing.submissionId, submissionText)
+        : await createAssignmentSubmission(assignmentId, submissionText);
       const submission = response.data || {};
       const submissionId = String(submission.id || "");
       if (!submissionId) throw new Error("The backend did not return a submission id.");

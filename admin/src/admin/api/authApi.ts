@@ -7,7 +7,7 @@ const ADMIN_ROLES = new Set(["ADMIN", "SUPER_ADMIN"]);
 export async function loginAdmin(
   identifier: string,
   password: string,
-  rememberMe = true,
+  rememberMe = false,
 ): Promise<AuthSession> {
   const response = await apiRequest<ApiResponse<LoginResponse>>("/api/v1/auth/login", {
     method: "POST",
