@@ -58,14 +58,18 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const saved = localStorage.getItem("tit_theme") || localStorage.getItem("mentify_theme");
-    if (saved === "dark" || saved === "light") {
-      setTheme(saved);
-      return;
-    }
-    if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-      setTheme("dark");
-    }
+    const preferenceTimer = window.setTimeout(() => {
+      const saved = localStorage.getItem("tit_theme") || localStorage.getItem("mentify_theme");
+      if (saved === "dark" || saved === "light") {
+        setTheme(saved);
+        return;
+      }
+      if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+        setTheme("dark");
+      }
+    }, 0);
+
+    return () => window.clearTimeout(preferenceTimer);
   }, []);
 
   useEffect(() => {

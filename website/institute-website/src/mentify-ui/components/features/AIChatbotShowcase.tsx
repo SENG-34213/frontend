@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Bot,
   Sparkles,
@@ -104,6 +104,7 @@ const KNOWLEDGE_BASE: Record<string, { steps: string[]; explanation: string; ref
 };
 
 export const AIChatbotShowcase: React.FC = () => {
+  const messageId = useRef(0);
   const [selectedLang, setSelectedLang] = useState<"en" | "si" | "ta">("en");
   const [queryInput, setQueryInput] = useState<string>("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -135,7 +136,7 @@ export const AIChatbotShowcase: React.FC = () => {
     if (!textToAsk.trim()) return;
 
     const userMsg: AIMessage = {
-      id: `usr-${Date.now()}`,
+      id: `usr-${++messageId.current}`,
       sender: "user",
       text: textToAsk,
       timestamp: "Just now",
@@ -163,7 +164,7 @@ export const AIChatbotShowcase: React.FC = () => {
 
     setTimeout(() => {
       const aiResponse: AIMessage = {
-        id: `ai-${Date.now()}`,
+        id: `ai-${++messageId.current}`,
         sender: "ai",
         text: `Here is the verified curriculum derivation (${selectedLang.toUpperCase()} Mode):`,
         steps: matched.steps,

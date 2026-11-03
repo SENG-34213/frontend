@@ -93,9 +93,13 @@ export const InteractiveAppSuite: React.FC<InteractiveAppSuiteProps> = ({
   const activeTab = controlledTab ?? internalTab;
 
   React.useEffect(() => {
-    if (initialTab) {
-      setInternalTab(initialTab);
-    }
+    const tabTimer = window.setTimeout(() => {
+      if (initialTab) {
+        setInternalTab(initialTab);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(tabTimer);
   }, [initialTab]);
 
   const handleTabSelect = (key: FeatureTabKey) => {

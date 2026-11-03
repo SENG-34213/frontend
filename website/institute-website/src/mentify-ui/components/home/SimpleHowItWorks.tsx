@@ -53,7 +53,7 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
             </div>
             <p className="text-slate-700 dark:text-slate-300">
               <span className="font-semibold text-slate-900 dark:text-white">Mr. K. Senthil:</span>{" "}
-              "Model paper 04 questions 5 to 8 are posted. Let me know if you need hints!"
+              &quot;Model paper 04 questions 5 to 8 are posted. Let me know if you need hints!&quot;
             </p>
           </div>
         </div>
@@ -85,8 +85,9 @@ export const SimpleHowItWorks: React.FC<SimpleHowItWorksProps> = ({
               AI
             </div>
             <p className="text-slate-700 dark:text-slate-300">
-              <span className="font-semibold text-slate-900 dark:text-white">TiT AI:</span> "For
-              projectile range on flat ground, R = (u² sin 2θ) / g. Let us break down the steps..."
+              <span className="font-semibold text-slate-900 dark:text-white">TiT AI:</span>{" "}
+              &quot;For projectile range on flat ground, R = (u² sin 2θ) / g. Let us break down the
+              steps...&quot;
             </p>
           </div>
         </div>

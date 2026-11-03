@@ -371,7 +371,7 @@ export const ContactLegalPage: React.FC<ContactLegalPageProps> = ({
               </h3>
               <p>
                 Parents and legal guardians may request inspection, correction, or deletion of their
-                child's pre-registration records by contacting {SITE_CONFIG.contact.email}.
+                child&apos;s pre-registration records by contacting {SITE_CONFIG.contact.email}.
               </p>
             </section>
           </div>

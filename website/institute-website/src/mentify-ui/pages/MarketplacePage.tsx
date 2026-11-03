@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   BookOpen,
   Check,
@@ -65,7 +65,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
     "Marking Schemes",
   ];
 
-  const fetchMaterials = async () => {
+  const fetchMaterials = useCallback(async () => {
     setIsLoading(true);
     setIsError(false);
 
@@ -94,11 +94,12 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, pricingFilter, search, selectedCategory, selectedGrade, selectedSubject]);
 
   useEffect(() => {
-    fetchMaterials();
-  }, [search, selectedCategory, selectedSubject, selectedGrade, pricingFilter, page]);
+    const fetchTimer = window.setTimeout(() => void fetchMaterials(), 0);
+    return () => window.clearTimeout(fetchTimer);
+  }, [fetchMaterials]);
 
   const handleResetFilters = () => {
     setSearch("");
