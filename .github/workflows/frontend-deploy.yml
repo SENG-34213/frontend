@@ -92,6 +92,7 @@ jobs:
             NEXT_PUBLIC_API_BASE_URL=/api
             NEXT_PUBLIC_WS_BASE_URL=/api/ws
             NEXT_PUBLIC_APP_BASE_PATH=${{ matrix.base_path }}
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           cache-from: type=gha,scope=${{ matrix.app }}
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
