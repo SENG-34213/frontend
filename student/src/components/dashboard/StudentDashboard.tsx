@@ -581,7 +581,6 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
       </section>
-
     </div>
   );
 };

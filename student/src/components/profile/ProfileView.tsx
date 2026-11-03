@@ -62,7 +62,9 @@ export const ProfileView: React.FC = () => {
     <div className="space-y-6 pb-12">
       <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:p-6 dark:border-slate-800 dark:bg-slate-900">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-600">Student</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-600">
+            Student
+          </p>
           <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white">
             Student Profile
           </h1>
@@ -84,7 +86,11 @@ export const ProfileView: React.FC = () => {
         <div className="flex flex-col items-center space-y-4 rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-2xl font-bold text-white shadow-lg shadow-indigo-950/20">
             {profile.avatar ? (
-              <img src={profile.avatar} alt={`${profile.name} profile`} className="h-full w-full object-cover" />
+              <img
+                src={profile.avatar}
+                alt={`${profile.name} profile`}
+                className="h-full w-full object-cover"
+              />
             ) : (
               initials
             )}
@@ -106,14 +112,22 @@ export const ProfileView: React.FC = () => {
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
               <ImagePlus className="h-3.5 w-3.5" />
               {isUploading ? "Uploading…" : "Upload photo"}
-              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" disabled={isUploading} onChange={handleImageUpload} />
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="sr-only"
+                disabled={isUploading}
+                onChange={handleImageUpload}
+              />
             </label>
           </div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm md:col-span-2 dark:border-slate-800 dark:bg-slate-900">
           <div className="border-b border-slate-100 pb-4 dark:border-slate-800">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Student Profile & Contact Information</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+              Student Profile & Contact Information
+            </h2>
             <p className="mt-1 text-sm text-slate-500">Your registered student information.</p>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -126,7 +140,9 @@ export const ProfileView: React.FC = () => {
             ].map(([label, value]) => (
               <div key={label} className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/70">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p>
-                <p className="mt-1 break-all text-sm font-medium text-slate-800 dark:text-slate-200">{value}</p>
+                <p className="mt-1 break-all text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {value}
+                </p>
               </div>
             ))}
           </div>
@@ -134,24 +150,46 @@ export const ProfileView: React.FC = () => {
       </section>
 
       {isEditing && (
-        <form onSubmit={handleSave} className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-6 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/20">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white">Edit profile details</h2>
+        <form
+          onSubmit={handleSave}
+          className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-6 shadow-sm dark:border-indigo-900/60 dark:bg-indigo-950/20"
+        >
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            Edit profile details
+          </h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Full name
-              <input required value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900" />
+              <input
+                required
+                value={formData.name}
+                onChange={(event) => setFormData({ ...formData, name: event.target.value })}
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+              />
             </label>
             <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Phone number
-              <input value={formData.phone} onChange={(event) => setFormData({ ...formData, phone: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900" />
+              <input
+                value={formData.phone}
+                onChange={(event) => setFormData({ ...formData, phone: event.target.value })}
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+              />
             </label>
           </div>
           <label className="mt-4 block text-sm font-semibold text-slate-700 dark:text-slate-300">
             Bio
-            <textarea rows={4} value={formData.bio} onChange={(event) => setFormData({ ...formData, bio: event.target.value })} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900" />
+            <textarea
+              rows={4}
+              value={formData.bio}
+              onChange={(event) => setFormData({ ...formData, bio: event.target.value })}
+              className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900"
+            />
           </label>
           <div className="mt-4 flex justify-end">
-            <button type="submit" className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">
+            <button
+              type="submit"
+              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-indigo-700"
+            >
               <Save className="h-3.5 w-3.5" /> Save changes
             </button>
           </div>
@@ -161,8 +199,12 @@ export const ProfileView: React.FC = () => {
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Course information</h2>
-            <p className="mt-1 text-sm text-slate-500">Your enrolled courses and current learning progress.</p>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+              Course information
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Your enrolled courses and current learning progress.
+            </p>
           </div>
           <BookOpen className="h-5 w-5 text-indigo-500" />
         </div>
@@ -171,7 +213,10 @@ export const ProfileView: React.FC = () => {
         ) : (
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {enrolledCourses.map((course) => (
-              <div key={course.id} className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/60">
+              <div
+                key={course.id}
+                className="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/60"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-mono text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
@@ -192,7 +237,10 @@ export const ProfileView: React.FC = () => {
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                    <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.min(100, Math.max(0, course.progressPercentage))}%` }} />
+                    <div
+                      className="h-full rounded-full bg-indigo-500"
+                      style={{ width: `${Math.min(100, Math.max(0, course.progressPercentage))}%` }}
+                    />
                   </div>
                   <span className="text-xs font-bold tabular-nums text-slate-500">
                     {course.progressPercentage}%
