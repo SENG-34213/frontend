@@ -123,15 +123,21 @@ export interface Course {
 
 export interface Assignment {
   id: string;
+  submissionId?: string;
   courseId: string;
   courseCode: string;
   courseTitle: string;
   title: string;
   description: string;
   instructions: string;
+  submissionType?: "TEXT" | "DOCUMENT";
+  allowLateSubmission?: boolean;
+  latePenaltyPercentage?: number;
+  allowStudentEdits?: boolean;
+  startDate?: string;
   dueDate: string;
   maxScore: number;
-  status: "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE" | "UNKNOWN";
+  status: "PENDING" | "SUBMITTED" | "GRADED" | "OVERDUE" | "CLOSED" | "UNKNOWN";
   priority: "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
   submittedDate?: string;
   grade?: number;
@@ -140,7 +146,7 @@ export interface Assignment {
   rubricCriteria: {
     criteria: string;
     points: number;
-    description: string;
+    description?: string;
   }[];
   attachments?: {
     id?: string;

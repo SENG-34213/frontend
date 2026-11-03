@@ -6,6 +6,8 @@ export type BackendAssignmentStatus = "DRAFT" | "PUBLISHED" | "CLOSED";
 export type BackendAssignment = {
   id: string;
   courseId: string;
+  courseName?: string;
+  courseCode?: string;
   moduleId: string;
   lessonId?: string;
   teacherId?: string;
@@ -15,9 +17,11 @@ export type BackendAssignment = {
   startDate: string;
   dueDate: string;
   maxMarks: number;
-  allowedAttempts: number;
+  allowedAttempts?: number;
   allowLateSubmission: boolean;
+  allowStudentEdits?: boolean;
   latePenaltyPercentage?: number;
+  submissionType?: "TEXT" | "DOCUMENT";
   status: BackendAssignmentStatus;
   publishedAt?: string;
   createdAt?: string;
@@ -54,10 +58,14 @@ export type AssignmentDraft = {
   startDate: string;
   dueDate: string;
   maxMarks: number;
-  allowedAttempts: number;
+  allowedAttempts?: number;
   allowLateSubmission: boolean;
+  allowStudentEdits?: boolean;
   latePenaltyPercentage?: number;
+  submissionType?: "TEXT" | "DOCUMENT";
   rubricItems?: { criterion: string; marks: number }[];
+  publishImmediately?: boolean;
+  openImmediately?: boolean;
 };
 
 export type AssignmentUpdateDraft = Omit<AssignmentDraft, "courseId" | "moduleId" | "lessonId">;
@@ -84,6 +92,15 @@ export type BackendSubmission = {
   feedback?: string;
   gradedAt?: string;
   returnedAt?: string;
+  gradeReleased?: boolean;
+};
+
+export type SubmissionFile = {
+  id: string;
+  submissionId: string;
+  originalFilename: string;
+  contentType: string;
+  fileSize: number;
 };
 
 export type BackendSubmissionFile = {
@@ -145,10 +162,10 @@ export async function deleteAssignment(assignmentId: string) {
   );
 }
 
-export async function publishAssignment(assignmentId: string) {
+export async function publishAssignment(assignmentId: string, openImmediately = false) {
   return unwrap(
     await apiRequest<ApiResponse<BackendAssignment>>(
-      `/api/v1/assignments/${encodeURIComponent(assignmentId)}/publish`,
+      `/api/v1/assignments/${encodeURIComponent(assignmentId)}/publish${openImmediately ? "?openImmediately=true" : ""}`,
       { method: "POST" },
     ),
   );
@@ -237,6 +254,24 @@ export async function gradeSubmission(
     await apiRequest<ApiResponse<BackendSubmission>>(
       `/api/v1/submissions/${encodeURIComponent(submissionId)}/grade`,
       { method: "POST", body: payload },
+    ),
+  );
+}
+
+export async function releaseSubmissionGrade(submissionId: string) {
+  return unwrap(
+    await apiRequest<ApiResponse<BackendSubmission>>(
+      `/api/v1/submissions/${encodeURIComponent(submissionId)}/release`,
+      { method: "POST" },
+    ),
+  );
+}
+
+export async function holdSubmissionGrade(submissionId: string) {
+  return unwrap(
+    await apiRequest<ApiResponse<BackendSubmission>>(
+      `/api/v1/submissions/${encodeURIComponent(submissionId)}/hold`,
+      { method: "POST" },
     ),
   );
 }

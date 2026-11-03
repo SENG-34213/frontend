@@ -79,7 +79,33 @@ export const QuizzesView: React.FC = () => {
         ? quizState(q) === "available" || quizState(q) === "upcoming"
         : quizState(q) === "completed";
     })
-    .filter((q) => courseFilter === "ALL" || q.courseId === courseFilter);
+    .filter((q) => courseFilter === "ALL" || q.courseId === courseFilter)
+    .sort((left, right) => {
+      const leftState = quizState(left);
+      const rightState = quizState(right);
+      if (leftState === "upcoming" && rightState !== "upcoming") return -1;
+      if (leftState !== "upcoming" && rightState === "upcoming") return 1;
+
+      const leftTimestamp = Date.parse(
+        leftState === "upcoming" ? left.startTime || "" : left.dueDate || "",
+      );
+      const rightTimestamp = Date.parse(
+        rightState === "upcoming" ? right.startTime || "" : right.dueDate || "",
+      );
+      if (leftState === "upcoming" && rightState === "upcoming") {
+        return (
+          (Number.isFinite(leftTimestamp) ? leftTimestamp : Number.MAX_SAFE_INTEGER) -
+          (Number.isFinite(rightTimestamp) ? rightTimestamp : Number.MAX_SAFE_INTEGER)
+        );
+      }
+      const normalizedLeft = Number.isFinite(leftTimestamp)
+        ? leftTimestamp
+        : Number.MIN_SAFE_INTEGER;
+      const normalizedRight = Number.isFinite(rightTimestamp)
+        ? rightTimestamp
+        : Number.MIN_SAFE_INTEGER;
+      return normalizedRight - normalizedLeft;
+    });
 
   const handleStartQuiz = (quiz: Quiz) => {
     if (quizState(quiz) !== "available") return;
@@ -260,7 +286,7 @@ export const QuizzesView: React.FC = () => {
                             onClick={() => setInstructionModalQuiz(quiz)}
                             className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 px-3 py-2 font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-300"
                           >
-                            <Eye className="h-3.5 w-3.5" /> Details
+                            <Clock className="h-3.5 w-3.5" /> Waiting Room
                           </button>
                         ) : (
                           <button
@@ -386,7 +412,7 @@ export const QuizzesView: React.FC = () => {
                       className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-indigo-200 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-950/40"
                     >
                       <Eye className="h-3.5 w-3.5" />
-                      <span>View Quiz Details</span>
+                      <span>Enter Waiting Room</span>
                     </button>
                   ) : (
                     <button
@@ -432,6 +458,20 @@ export const QuizzesView: React.FC = () => {
             </div>
 
             <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              {quizState(instructionModalQuiz) === "upcoming" && (
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-center dark:border-indigo-900/70 dark:bg-indigo-950/40">
+                  <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                    Waiting room opens{" "}
+                    {new Date(instructionModalQuiz.startTime || "").toLocaleString()}
+                  </p>
+                  <div className="mt-2 font-mono text-2xl font-bold tabular-nums text-indigo-700 dark:text-indigo-300">
+                    {countdown(instructionModalQuiz)?.value || "00h 00m 00s"}
+                  </div>
+                  <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    Questions will open automatically when the quiz starts.
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 font-medium">
                 <div>Duration: {instructionModalQuiz.durationMinutes} Minutes</div>
                 <div>
