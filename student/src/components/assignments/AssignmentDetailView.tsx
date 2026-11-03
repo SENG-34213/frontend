@@ -38,7 +38,10 @@ export const AssignmentDetailView: React.FC = () => {
   const assignment = assignments.find((a) => a.id === selectedAssignmentId) || assignments[0];
 
   useEffect(() => {
-    setSubmissionText(assignment?.submissionText || "");
+    const resetSubmissionText = window.setTimeout(() => {
+      setSubmissionText(assignment?.submissionText || "");
+    }, 0);
+    return () => window.clearTimeout(resetSubmissionText);
   }, [assignment?.id, assignment?.submissionText]);
 
   useEffect(() => {
