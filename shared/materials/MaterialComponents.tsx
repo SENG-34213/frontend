@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Material, MaterialApi, MaterialStatus, MaterialUploadDraft } from "./materialTypes";
+import { downloadFile } from "../files/downloadFile";
 
 function formatBytes(bytes?: number) {
   if (!bytes) return "Size unavailable";
@@ -76,7 +77,7 @@ export function MaterialDownloadAction({
           const result = await api.download(material.id);
           const url = result.downloadUrl || result.url;
           if (!url) throw new Error("The material service did not return a secure download URL.");
-          window.open(url, "_blank", "noopener,noreferrer");
+          downloadFile(url, material.fileName || material.title);
         } catch (error) {
           onError?.(error instanceof Error ? error.message : "Could not download this material.");
         } finally {

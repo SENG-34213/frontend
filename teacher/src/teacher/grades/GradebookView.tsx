@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import type { NavigationTab } from "../types";
 import type { BackendCourse } from "../api/courseApi";
 import { getTeacherGradebook, type TeacherGradebook } from "../api/gradebookApi";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 interface GradebookViewProps {
   onNavigate: (tab: NavigationTab) => void;
@@ -66,6 +67,16 @@ export const GradebookView: React.FC<GradebookViewProps> = ({ courses }) => {
       });
     return () => controller.abort();
   }, [courseId]);
+
+  useVisibleAutoRefresh(
+    async () => {
+      if (!courseId) return;
+      const result = await getTeacherGradebook(courseId);
+      setGradebook(result);
+    },
+    Boolean(courseId),
+    10_000,
+  );
 
   const rows = useMemo(() => gradebook?.students ?? [], [gradebook]);
   const filtered = useMemo(() => {

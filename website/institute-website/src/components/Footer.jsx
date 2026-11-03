@@ -30,8 +30,12 @@ export default function Footer() {
 
           <p>{translate(language, "footer.description")}</p>
 
-          <a href="https://www.youtube.com/" target="_blank" rel="noreferrer">
-            YouTube Channel
+          <a
+            href="https://www.youtube.com/@titeducation2087"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {translate(language, "footer.youtube")}
           </a>
         </section>
 
@@ -49,13 +53,13 @@ export default function Footer() {
 
         <section>
           <h3>{translate(language, "footer.addressLabel")}</h3>
-          <p>Jaffna, Sri Lanka</p>
+          <p>Alaveddy, Jaffna, Sri Lanka</p>
 
           <h3>{translate(language, "footer.phoneLabel")}</h3>
-          <a href={`tel:+94770158446`}>+94770158446</a>
+          <a href="tel:+94770158446">+94 77 015 8446</a>
 
           <h3>{translate(language, "footer.emailLabel")}</h3>
-          <a href={`mailto:admin@titjaffna.lk`}>admin@titjaffna.lk</a>
+          <a href="mailto:titeducation86@gmail.com">titeducation86@gmail.com</a>
         </section>
 
         <section>

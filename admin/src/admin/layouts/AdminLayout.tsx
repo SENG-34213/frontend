@@ -95,6 +95,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: "dashboard", title: "Platform Overview Dashboard", category: "Overview" },
     { id: "analytics", title: "Analytics & Trend Charts", category: "Overview" },
     { id: "notifications", title: "System Notifications & Webhooks", category: "Overview" },
+    { id: "pre-registrations", title: "Student Pre-Registrations", category: "Overview" },
     {
       id: "students",
       title: "Student Management & Registration Wizard",

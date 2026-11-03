@@ -409,6 +409,58 @@ export const TeacherMessagesView: React.FC<TeacherMessagesViewProps> = ({
     };
   }, [selectedGroupId]);
 
+  useEffect(() => {
+    if (!selectedGroupId) return;
+    let disposed = false;
+    let requestInFlight = false;
+
+    const refreshMessages = async () => {
+      if (disposed || requestInFlight || document.visibilityState !== "visible") {
+        return;
+      }
+      requestInFlight = true;
+      try {
+        const page = await getCommunicationMessages(selectedGroupId, 0, 30);
+        if (disposed) return;
+        setMessagesByGroup((current) => {
+          const existing = current[selectedGroupId] ?? [];
+          const merged = mergeMessages(existing, page.content);
+          const unchanged =
+            existing.length === merged.length &&
+            existing.every((message, index) => {
+              const next = merged[index];
+              return (
+                message.id === next.id &&
+                message.content === next.content &&
+                message.editedAt === next.editedAt &&
+                message.deletedForEveryone === next.deletedForEveryone &&
+                JSON.stringify(message.attachments) === JSON.stringify(next.attachments)
+              );
+            });
+          return unchanged ? current : { ...current, [selectedGroupId]: merged };
+        });
+      } catch {
+        // The WebSocket remains the primary path; retry on the next focus or interval.
+      } finally {
+        requestInFlight = false;
+      }
+    };
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") void refreshMessages();
+    };
+
+    const intervalId = window.setInterval(() => void refreshMessages(), 5_000);
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
+    };
+  }, [selectedGroupId]);
+
   async function handleSendMessage(event: React.FormEvent) {
     event.preventDefault();
     if (!activeGroup || (!inputText.trim() && pendingAttachments.length === 0)) return;

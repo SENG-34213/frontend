@@ -34,10 +34,12 @@ import {
   type AssignmentAttachment,
   type AssignmentUpdateDraft,
 } from "../api/assignmentApi";
+import { downloadFile } from "../../../../shared/files/downloadFile";
 import { StatusBadge } from "../components/StatusBadge";
 import { ApiError } from "../api/client";
 import { ConfirmModal } from "../components/ActionModal";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 interface AssignmentDashboardViewProps {
   onGradeAssignment: (assignmentId: string) => void;
@@ -320,14 +322,7 @@ const AssignmentEditModal: React.FC<{
     try {
       const result = await getAssignmentAttachmentDownload(assignment.id, attachment.id);
       if (!result.downloadUrl) throw new Error("A secure document link was not returned.");
-      const link = document.createElement("a");
-      link.href = result.downloadUrl;
-      link.download = attachment.originalFilename;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      downloadFile(result.downloadUrl, attachment.originalFilename);
     } catch (error) {
       setAttachmentError(error instanceof Error ? error.message : "Document could not be opened.");
     }
@@ -785,6 +780,24 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
       });
     return () => controller.abort();
   }, [backendCourses, refreshToken]);
+
+  useVisibleAutoRefresh(
+    async () => {
+      if (!backendCourses.length) return;
+      const results = await Promise.allSettled(
+        backendCourses.map((course) => getCourseAssignments(course.id)),
+      );
+      const loaded = results.flatMap((result) =>
+        result.status === "fulfilled" ? result.value : [],
+      );
+      if (results.some((result) => result.status === "fulfilled")) {
+        setBackendAssignments(loaded);
+        setAssignments(loaded.map((item) => toAssignment(item, backendCourses)));
+      }
+    },
+    backendCourses.length > 0,
+    10_000,
+  );
 
   const handleStatusChange = async (assignment: Assignment, action: "publish" | "close") => {
     try {

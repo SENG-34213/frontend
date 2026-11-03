@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getTeacherCourses, type BackendCourse } from "../api/courseApi";
+import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 
 type TeacherCoursesState = {
   courses: BackendCourse[];
@@ -60,6 +61,25 @@ export function useTeacherCourses(enabled: boolean): TeacherCoursesState {
       controller.abort();
     };
   }, [enabled, retryKey]);
+
+  useVisibleAutoRefresh(
+    async () => {
+      try {
+        const courses = await getTeacherCourses();
+        setState((current) => ({
+          ...current,
+          courses: courses.filter(
+            (course) => course.isPublished === true || course.courseStatus === "PUBLISHED",
+          ),
+          error: null,
+        }));
+      } catch {
+        // Keep the last known course list available during temporary outages.
+      }
+    },
+    enabled,
+    10_000,
+  );
 
   return {
     ...state,

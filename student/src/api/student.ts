@@ -93,6 +93,7 @@ function toProfile(user: StudentUserSummary): StudentProfile {
         record.studentCode ||
         "",
     ),
+    grade: idOf(studentProfile.grade || record.grade),
     name: [user.firstName, user.lastName].filter(Boolean).join(" "),
     email: user.email,
     emailVerified: user.emailVerified !== false,
@@ -102,7 +103,6 @@ function toProfile(user: StudentUserSummary): StudentProfile {
     department: idOf(record.department || studentProfile.department),
     degreeProgram: idOf(record.degreeProgram || studentProfile.degreeProgram),
     semester: idOf(record.semester || studentProfile.semester),
-    currentGpa: Number(record.currentGpa ?? 0),
     creditsCompleted: Number(record.creditsCompleted ?? 0),
     totalCreditsRequired: Number(record.totalCreditsRequired ?? 0),
     academicAdvisor: {

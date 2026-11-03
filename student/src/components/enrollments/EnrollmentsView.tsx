@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
+import { downloadBlob } from "../../../../shared/files/downloadFile";
 
 export const EnrollmentsView: React.FC = () => {
-  const { courses, profile, navigateToCourseWorkspace, showToast } = useStudent();
+  const { courses, profile, navigateToCourseWorkspace } = useStudent();
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "COMPLETED" | "ALL">("ALL");
 
   const enrolledCourses = courses.filter((c) => c.enrolled);
@@ -166,13 +167,30 @@ export const EnrollmentsView: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      showToast(`Official enrollment verification downloaded for ${course.code}`);
+                      const summary = [
+                        "Course Enrollment Summary",
+                        `Generated: ${new Date().toLocaleString()}`,
+                        `Student: ${profile.name}`,
+                        `Student ID: ${profile.studentId}`,
+                        `Course: ${course.title}`,
+                        `Course code: ${course.code}`,
+                        `Instructor: ${course.instructor.name}`,
+                        `Schedule: ${course.schedule}`,
+                        `Progress: ${course.progressPercentage}%`,
+                        "Enrollment status: Enrolled",
+                      ].join("\r\n");
+                      const filenameCode = course.code.replace(/[^a-z0-9-]+/gi, "-");
+                      downloadBlob(
+                        new Blob([summary], { type: "text/plain;charset=utf-8" }),
+                        `enrollment-summary-${filenameCode}.txt`,
+                      );
                     }}
                     className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-                    title="Download Official Verification"
+                    title="Download enrollment summary"
+                    aria-label={`Download enrollment summary for ${course.title}`}
                   >
                     <Download className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="hidden md:inline">Proof</span>
+                    <span className="hidden md:inline">Summary</span>
                   </button>
                   <button
                     onClick={() => navigateToCourseWorkspace(course.id)}

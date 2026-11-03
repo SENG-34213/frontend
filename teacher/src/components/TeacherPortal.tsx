@@ -50,6 +50,7 @@ import {
   getRouteFromPortalPath,
 } from "../../../shared/navigation/portalNavigation";
 import { installNumberInputBehavior } from "../../../shared/forms/numberInputBehavior";
+import { useVisibleAutoRefresh } from "../../../shared/useVisibleAutoRefresh";
 
 export default function App() {
   useEffect(() => installNumberInputBehavior(), []);
@@ -228,6 +229,21 @@ export default function App() {
       });
     return () => controller.abort();
   }, [session]);
+
+  useVisibleAutoRefresh(
+    async () => {
+      const data = await getTeacherDashboard();
+      if (data) setDashboardData(data);
+    },
+    Boolean(session),
+    10_000,
+  );
+
+  useVisibleAutoRefresh(
+    teacherStudents.retry,
+    Boolean(session) && currentTab === "students",
+    15_000,
+  );
   useEffect(() => {
     if (restoreStartedRef.current) return;
     restoreStartedRef.current = true;

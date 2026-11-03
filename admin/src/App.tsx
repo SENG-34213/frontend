@@ -43,6 +43,7 @@ import { MarketplaceManagement } from "./admin/marketplace/MarketplaceManagement
 import { AdminCalendar } from "./admin/calendar/AdminCalendar";
 import { CommunicationManagement } from "./admin/communication/CommunicationManagement";
 import { NotificationCenter } from "./admin/notifications/NotificationCenter";
+import { PreRegistrationsManagement } from "./admin/registrations/PreRegistrationsManagement";
 import { MentifyAIAssistant } from "./admin/ai-assistant/MentifyAIAssistant";
 import { AnalyticsDashboard } from "./admin/analytics/AnalyticsDashboard";
 import { ReportsManagement } from "./admin/reports/ReportsManagement";
@@ -81,6 +82,7 @@ import {
   getRouteFromPortalPath,
 } from "../../shared/navigation/portalNavigation";
 import { installNumberInputBehavior } from "../../shared/forms/numberInputBehavior";
+import { useVisibleAutoRefresh } from "../../shared/useVisibleAutoRefresh";
 import {
   createEnrollment,
   deleteEnrollment,
@@ -273,6 +275,7 @@ export default function App() {
       "dashboard",
       "analytics",
       "notifications",
+      "pre-registrations",
       "students",
       "teachers",
       "administrators",
@@ -365,6 +368,7 @@ export default function App() {
         "dashboard",
         "analytics",
         "notifications",
+        "pre-registrations",
         "students",
         "teachers",
         "administrators",
@@ -415,7 +419,7 @@ export default function App() {
     window.sessionStorage.setItem(ADMIN_ROUTE_STORAGE_KEY, currentRoute);
   }, [currentRoute, isAuthReady]);
 
-  const loadAdminUsers = async () => {
+  const loadAdminUsers = async (silent = false) => {
     try {
       const data = await fetchAdminUsers();
       // Keep locally-added users when the initial/background request finishes after
@@ -433,11 +437,13 @@ export default function App() {
         return [...data.administrators, ...previous.filter((user) => !returnedIds.has(user.id))];
       });
     } catch (error) {
-      addToast(
-        "error",
-        "Users unavailable",
-        error instanceof Error ? error.message : "Unable to load user information.",
-      );
+      if (!silent) {
+        addToast(
+          "error",
+          "Users unavailable",
+          error instanceof Error ? error.message : "Unable to load user information.",
+        );
+      }
     }
   };
 
@@ -786,6 +792,90 @@ export default function App() {
     },
     [],
   );
+
+  const refreshActiveAdminData = async () => {
+    try {
+      switch (currentRoute) {
+        case "dashboard": {
+          await Promise.all([
+            loadAdminUsers(true),
+            fetchRegistrationOverview()
+              .then(setRegistrationOverview)
+              .catch(() => undefined),
+            fetchUpcomingCalendarEvents(10)
+              .then(setUpcomingEvents)
+              .catch(() => undefined),
+            fetchAdminAnalyticsOverview()
+              .then(setAdminAnalytics)
+              .catch(() => undefined),
+          ]);
+          break;
+        }
+        case "students":
+        case "teachers":
+        case "administrators":
+        case "registrations":
+          await loadAdminUsers(true);
+          break;
+        case "courses":
+          setCourses(await fetchCourses());
+          break;
+        case "enrollments":
+          setEnrollmentApiRecords(await fetchEnrollments());
+          break;
+        case "academic":
+        case "assignments":
+        case "quizzes":
+        case "examinations":
+        case "grades":
+        case "results":
+        case "attendance": {
+          const [updatedCourses, updatedGrades] = await Promise.all([
+            fetchCourses(),
+            fetchGrades(),
+          ]);
+          setCourses(updatedCourses);
+          setGradesList(updatedGrades);
+          break;
+        }
+        case "notifications": {
+          const items = await getAdminNotifications();
+          setNotifications(
+            items.map((item) => ({
+              id: item.id,
+              type: item.type,
+              title: item.title,
+              message: item.message,
+              category: notificationCategory(item.type),
+              timestamp: formatNotificationTime(item.occurredAt || item.createdAt),
+              read: Boolean(item.readAt),
+              linkAction: notificationRoute(item.type),
+            })),
+          );
+          break;
+        }
+        case "calendar": {
+          const now = new Date();
+          setEvents(
+            await fetchCalendarEvents(
+              new Date(now.getFullYear(), now.getMonth(), 1),
+              new Date(now.getFullYear(), now.getMonth() + 1, 1),
+            ),
+          );
+          break;
+        }
+        case "analytics":
+          setAdminAnalytics(await fetchAdminAnalyticsOverview());
+          break;
+        default:
+          break;
+      }
+    } catch {
+      // Keep the last successfully loaded view data during temporary outages.
+    }
+  };
+
+  useVisibleAutoRefresh(refreshActiveAdminData, isAuthenticated && !requiresPasswordChange, 10_000);
 
   if (!isAuthReady) {
     return null;
@@ -1428,6 +1518,8 @@ export default function App() {
           onNavigate={setCurrentRoute}
         />
       )}
+
+      {currentRoute === "pre-registrations" && <PreRegistrationsManagement />}
 
       {currentRoute === "ai-assistant" && <MentifyAIAssistant />}
 

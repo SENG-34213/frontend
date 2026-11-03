@@ -1,6 +1,6 @@
 {
   "site": {
-    "name": "Institute Name",
+    "name": "TiT Education",
     "tagline": "Education, knowledge and growth"
   },
   "nav": {
@@ -180,6 +180,9 @@
     "searchPlaceholder": "Search by title or description...",
     "categoryLabel": "Filter by category",
     "allCategories": "All categories",
+    "category": "Category",
+    "subject": "Subject",
+    "price": "Price",
     "categories": {
       "study-skills": "Study skills",
       "learning": "Learning",
@@ -195,7 +198,12 @@
     "download": "Download resource",
     "downloadUnavailable": "Downloads are not available yet.",
     "paidNotice": "This resource requires payment. Online payment and access will be introduced later.",
-    "sampleNotice": "Sample catalogue content — actual resources will be added later."
+    "sampleNotice": "Sample catalogue content — actual resources will be added later.",
+    "loading": "Loading resources...",
+    "loadError": "The resource catalogue could not be loaded. Please try again.",
+    "retry": "Try again",
+    "notFound": "This resource is unavailable or is no longer published.",
+    "noDescription": "No description is available."
   },
 
   "contactForm": {

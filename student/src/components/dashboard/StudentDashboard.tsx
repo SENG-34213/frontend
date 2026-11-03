@@ -11,14 +11,12 @@ import {
   Clock3,
   FileCheck2,
   GraduationCap,
-  MessageSquare,
   PlayCircle,
   RefreshCw,
   Target,
   TrendingUp,
 } from "lucide-react";
 import { useStudent } from "../../context/StudentContext";
-import { EventStatusBadge } from "../../../../shared/calendar/EventStatusBadge";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 const clamp = (value: number) => Math.min(100, Math.max(0, Number.isFinite(value) ? value : 0));
@@ -105,7 +103,6 @@ export const StudentDashboard: React.FC = () => {
     assignments,
     quizzes,
     examinations,
-    calendarEvents,
     navigateToCourseWorkspace,
     setSelectedAssignmentId,
     setCurrentView,
@@ -119,13 +116,6 @@ export const StudentDashboard: React.FC = () => {
   const pendingAssignments = assignments.filter((assignment) => assignment.status === "PENDING");
   const upcomingExams = examinations.filter((exam) => exam.status === "UPCOMING");
   const availableQuizzes = quizzes.filter((quiz) => quiz.status === "AVAILABLE");
-  const completedLessons = enrolledCourses.reduce(
-    (sum, course) =>
-      sum +
-      course.modules.flatMap((module) => module.lessons).filter((lesson) => lesson.completed)
-        .length,
-    0,
-  );
   const averageProgress = enrolledCourses.length
     ? Math.round(
         enrolledCourses.reduce((sum, course) => sum + course.progressPercentage, 0) /
@@ -135,6 +125,7 @@ export const StudentDashboard: React.FC = () => {
   const creditProgress = profile.totalCreditsRequired
     ? clamp((profile.creditsCompleted / profile.totalCreditsRequired) * 100)
     : 0;
+  const currentGrade = profile.grade || "—";
   const assessmentPerformance = useMemo(() => {
     const assignmentScores = assignments
       .filter((assignment) => assignment.status === "GRADED" && assignment.grade != null)
@@ -256,14 +247,12 @@ export const StudentDashboard: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-3">
             <div className="bg-white/[0.06] p-4">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400">Semester</p>
-              <p className="mt-1 max-w-[100px] truncate text-sm font-bold">
-                {profile.semester || "Current"}
-              </p>
-            </div>
-            <div className="bg-white/[0.06] p-4">
               <p className="text-[10px] uppercase tracking-wider text-slate-400">Degree progress</p>
               <p className="mt-1 text-sm font-bold text-cyan-300">{Math.round(creditProgress)}%</p>
+            </div>
+            <div className="bg-white/[0.06] p-4">
+              <p className="text-[10px] uppercase tracking-wider text-slate-400">Current grade</p>
+              <p className="mt-1 text-sm font-bold text-emerald-300">{currentGrade}</p>
             </div>
           </div>
         </div>
@@ -311,12 +300,12 @@ export const StudentDashboard: React.FC = () => {
           onClick={() => setCurrentView("examinations")}
         />
         <Stat
-          label="Lessons"
-          value={completedLessons}
-          detail="Completed lessons"
-          icon={CheckCircle2}
+          label="Current grade"
+          value={currentGrade}
+          detail="Current grade on record"
+          icon={Award}
           tone="bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300"
-          onClick={() => setCurrentView("my-courses")}
+          onClick={() => setCurrentView("grades")}
         />
       </section>
 
@@ -590,104 +579,6 @@ export const StudentDashboard: React.FC = () => {
               })
             )}
           </div>
-        </div>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Upcoming schedule
-              </h2>
-              <p className="mt-1 text-xs text-slate-500">Your next calendar events.</p>
-            </div>
-            <button
-              onClick={() => setCurrentView("calendar")}
-              className="text-xs font-semibold text-indigo-600"
-            >
-              Calendar →
-            </button>
-          </div>
-          <div className="mt-4 space-y-3">
-            {calendarEvents.slice(0, 4).map((event) => (
-              <div
-                key={event.id}
-                className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/60"
-              >
-                <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                  <span className="text-[9px] font-bold uppercase">
-                    {new Date(event.date).toLocaleDateString("en-US", { weekday: "short" })}
-                  </span>
-                  <span className="text-sm font-bold">{new Date(event.date).getDate()}</span>
-                </div>
-                <div className="min-w-0">
-                  <p
-                    className={`truncate text-xs font-bold text-slate-800 dark:text-slate-100 ${event.status === "CANCELLED" ? "line-through opacity-70" : ""}`}
-                  >
-                    {event.title}
-                  </p>
-                  {event.status === "CANCELLED" && (
-                    <EventStatusBadge status={event.status} compact />
-                  )}
-                  <p className="mt-1 truncate text-[10px] text-slate-500">
-                    {event.startTime} · {event.location || "Location not set"}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {calendarEvents.length === 0 && (
-              <p className="py-8 text-center text-xs text-slate-400">No upcoming events.</p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Quick access</h2>
-            <p className="mt-1 text-xs text-slate-500">Jump directly to the tools you use most.</p>
-          </div>
-          <MessageSquare className="h-5 w-5 text-slate-300" />
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <button
-            onClick={() => setCurrentView("grades")}
-            className="rounded-2xl border border-slate-200 p-4 text-left hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/40"
-          >
-            <Award className="h-5 w-5 text-violet-500" />
-            <p className="mt-3 text-xs font-bold text-slate-800 dark:text-slate-100">View grades</p>
-            <p className="mt-1 text-[10px] text-slate-500">Academic results</p>
-          </button>
-          <button
-            onClick={() => setCurrentView("messages")}
-            className="rounded-2xl border border-slate-200 p-4 text-left hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/40"
-          >
-            <MessageSquare className="h-5 w-5 text-cyan-500" />
-            <p className="mt-3 text-xs font-bold text-slate-800 dark:text-slate-100">Messages</p>
-            <p className="mt-1 text-[10px] text-slate-500">Talk to instructors</p>
-          </button>
-          <button
-            onClick={() => setCurrentView("quizzes")}
-            className="rounded-2xl border border-slate-200 p-4 text-left hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/40"
-          >
-            <Target className="h-5 w-5 text-amber-500" />
-            <p className="mt-3 text-xs font-bold text-slate-800 dark:text-slate-100">
-              Practice quizzes
-            </p>
-            <p className="mt-1 text-[10px] text-slate-500">Build confidence</p>
-          </button>
-          <button
-            onClick={() => setCurrentView("materials")}
-            className="rounded-2xl border border-slate-200 p-4 text-left hover:border-indigo-200 hover:bg-indigo-50 dark:border-slate-800 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/40"
-          >
-            <BookOpen className="h-5 w-5 text-emerald-500" />
-            <p className="mt-3 text-xs font-bold text-slate-800 dark:text-slate-100">
-              Study materials
-            </p>
-            <p className="mt-1 text-[10px] text-slate-500">Course resources</p>
-          </button>
         </div>
       </section>
     </div>
