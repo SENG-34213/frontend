@@ -43,7 +43,7 @@ export interface MaterialItem {
   currency: string;
   status: "PUBLISHED" | "DRAFT" | "ARCHIVED";
   thumbnailUrl: string;
-  fileFormat?: "PDF" | "DOCX" | "ZIP";
+  fileFormat?: string;
   fileSize?: string;
   pages?: number;
   authorName?: string;

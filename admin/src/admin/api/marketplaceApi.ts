@@ -37,6 +37,8 @@ export interface MarketplaceProduct {
   currency: string;
   status: MarketplaceStatus;
   thumbnailUrl?: string;
+  fileFormat?: string;
+  pageCount?: number;
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -59,6 +61,8 @@ export interface MarketplaceProductRequest {
   discountPercent?: number;
   currency: string;
   thumbnailUrl?: string;
+  fileFormat?: string;
+  pageCount?: number;
   status?: MarketplaceStatus;
 }
 

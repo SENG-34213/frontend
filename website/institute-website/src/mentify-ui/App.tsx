@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { CartItem, CourseItem, Language, MaterialItem } from "./types";
-import { MOCK_COURSES, MOCK_MATERIALS } from "./data/mockData";
+import { MOCK_COURSES } from "./data/mockData";
+import { api } from "./lib/api/client";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
 import { CartDrawer } from "./components/layout/CartDrawer";
@@ -29,6 +30,22 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
   const [currentPath, setCurrentPath] = useState<string>("home");
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
   const [selectedMaterial, setSelectedMaterial] = useState<MaterialItem | null>(null);
+  const [materials, setMaterials] = useState<MaterialItem[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    api
+      .getMarketplaceMaterials({ page: 1, limit: 100 })
+      .then((response) => {
+        if (isMounted) setMaterials(response.data);
+      })
+      .catch((error) => console.error("Unable to load homepage marketplace materials", error));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Localization State
   const [currentLang, setCurrentLang] = useState<Language>(initialLang);
@@ -85,7 +102,7 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
         }
       } else if (hash.startsWith("material-")) {
         const id = hash.replace("material-", "");
-        const found = MOCK_MATERIALS.find((m) => m.id === id);
+        const found = materials.find((m) => m.id === id);
         if (found) {
           setSelectedMaterial(found);
           setCurrentPath("material-detail");
@@ -101,7 +118,7 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
     }
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
+  }, [materials]);
 
   const navigateTo = (path: string) => {
     window.location.hash = path;
@@ -191,7 +208,7 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
             currentLang={currentLang}
             onNavigate={navigateTo}
             courses={MOCK_COURSES}
-            materials={MOCK_MATERIALS}
+            materials={materials}
             onSelectCourse={handleSelectCourse}
             onSelectMaterial={handleSelectMaterial}
             onApplyCourse={handleApplyCourse}
@@ -235,7 +252,7 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
           <MaterialDetailPage
             currentLang={currentLang}
             material={selectedMaterial}
-            relatedMaterials={MOCK_MATERIALS.filter(
+            relatedMaterials={materials.filter(
               (m) => m.id !== selectedMaterial.id && m.subject === selectedMaterial.subject,
             )}
             onBack={() => navigateTo("marketplace")}

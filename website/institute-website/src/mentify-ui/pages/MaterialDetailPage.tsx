@@ -87,6 +87,10 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                 src={material.thumbnailUrl}
                 alt={material.title}
                 className="w-full h-full object-cover max-h-96"
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = "/TiTJaffna-logo.jpeg";
+                }}
               />
             </div>
 
@@ -111,7 +115,7 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     File Format
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.fileFormat || "PDF"}
+                    {material.fileFormat || "Not provided"}
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -119,7 +123,7 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     Page Count
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.pages || 32} Pages
+                    {material.pages ? `${material.pages} Pages` : "Not provided"}
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -127,7 +131,7 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     Download Size
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.fileSize || "5.2 MB"}
+                    {material.fileSize || "Not provided"}
                   </span>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -135,7 +139,7 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     Total Downloads
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.downloadCount ? material.downloadCount.toLocaleString() : "1,200+"}
+                    {material.downloadCount ? material.downloadCount.toLocaleString() : "Not provided"}
                   </span>
                 </div>
               </div>

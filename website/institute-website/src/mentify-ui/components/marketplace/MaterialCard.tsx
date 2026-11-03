@@ -26,6 +26,10 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
           alt={material.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = "/TiTJaffna-logo.jpeg";
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent" />
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
@@ -61,10 +65,12 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
           <span className="bg-slate-900/70 px-2 py-0.5 rounded backdrop-blur-xs">
             {material.subject}
           </span>
-          {material.pages && (
+          {(material.fileFormat || material.pages) && (
             <span className="bg-slate-900/70 px-2 py-0.5 rounded backdrop-blur-xs flex items-center gap-1">
               <FileText className="w-3 h-3 text-cyan-300" />
-              {material.pages} pgs
+              {[material.fileFormat, material.pages && `${material.pages} pages`]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-function getGatewayUrl(path, searchParams) {
+export function getMarketplaceGatewayUrl(path, searchParams) {
   const configuredUrl =
     process.env.API_GATEWAY_URL ||
     process.env.NEXT_PUBLIC_API_GATEWAY_URL ||
@@ -19,7 +19,7 @@ function getGatewayUrl(path, searchParams) {
 }
 
 export async function forwardMarketplaceRequest(path, searchParams) {
-  const url = getGatewayUrl(path, searchParams);
+  const url = getMarketplaceGatewayUrl(path, searchParams);
 
   if (!url) {
     return NextResponse.json(
