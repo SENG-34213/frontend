@@ -43,6 +43,27 @@ services:
       start_period: 20s
     networks: [backend]
 
+  website-frontend:
+    image: ${WEBSITE_IMAGE:-holins/mentify-website}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_GATEWAY_URL: http://api-gateway:8080
+      PRE_REGISTRATION_API_TOKEN: ${PRE_REGISTRATION_API_TOKEN:-}
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL:-}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/en >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks: [backend]
+
 networks:
   backend:
     external: true
