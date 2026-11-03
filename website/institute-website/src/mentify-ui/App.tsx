@@ -8,9 +8,6 @@ import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
 import { CartDrawer } from "./components/layout/CartDrawer";
 import { CheckoutModal } from "./components/marketplace/CheckoutModal";
-import { QuickApplyModal } from "./components/admissions/QuickApplyModal";
-import { ExamResultsLookupModal } from "./components/portal/ExamResultsLookupModal";
-import { TutorApplicationModal } from "./components/tutors/TutorApplicationModal";
 
 // Pages
 import { HomePage } from "./pages/HomePage";
@@ -56,16 +53,20 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   // Theme State (Light by default, togglable to Dark)
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("tit_theme") || localStorage.getItem("mentify_theme");
-      if (saved === "dark" || saved === "light") return saved;
-      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        return "dark";
-      }
+  // Keep the first render deterministic for SSR. Browser theme preferences
+  // are applied after hydration to prevent a server/client markup mismatch.
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("tit_theme") || localStorage.getItem("mentify_theme");
+    if (saved === "dark" || saved === "light") {
+      setTheme(saved);
+      return;
     }
-    return "light";
-  });
+    if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark");
+    }
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -80,14 +81,6 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
-
-  // Admission Enquiry Modal State
-  const [isQuickApplyOpen, setIsQuickApplyOpen] = useState(false);
-  const [quickApplyCourse, setQuickApplyCourse] = useState<CourseItem | null>(null);
-
-  // TiT Jaffna Exam Results & Tutor Application Modals
-  const [isResultsOpen, setIsResultsOpen] = useState(false);
-  const [isTutorApplyOpen, setIsTutorApplyOpen] = useState(false);
 
   // Synchronize hash with currentPath
   useEffect(() => {
@@ -126,6 +119,16 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const openPreRegistration = () => {
+    navigateTo("home");
+    window.setTimeout(() => {
+      document.getElementById("academic-placement")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+  };
+
   const handleSelectCourse = (course: CourseItem) => {
     setSelectedCourse(course);
     window.location.hash = `course-${course.id}`;
@@ -140,9 +143,8 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleApplyCourse = (course: CourseItem) => {
-    setQuickApplyCourse(course);
-    setIsQuickApplyOpen(true);
+  const handleApplyCourse = () => {
+    navigateTo("admissions");
   };
 
   const handleAddToCart = (material: MaterialItem) => {
@@ -176,10 +178,7 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
         onLanguageChange={setCurrentLang}
         cartCount={totalCartCount}
         onOpenCart={() => setIsCartOpen(true)}
-        onOpenAdmissions={() => {
-          setQuickApplyCourse(null);
-          setIsQuickApplyOpen(true);
-        }}
+        onOpenAdmissions={openPreRegistration}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -213,12 +212,7 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
             onSelectMaterial={handleSelectMaterial}
             onApplyCourse={handleApplyCourse}
             onAddToCart={handleAddToCart}
-            onOpenAdmissions={() => {
-              setQuickApplyCourse(null);
-              setIsQuickApplyOpen(true);
-            }}
-            onOpenResults={() => setIsResultsOpen(true)}
-            onOpenTutorApply={() => setIsTutorApplyOpen(true)}
+            onOpenAdmissions={() => navigateTo("admissions")}
           />
         )}
 
@@ -264,20 +258,14 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
         {currentPath === "features" && (
           <FeaturesPage
             onNavigate={navigateTo}
-            onOpenAdmissions={() => {
-              setQuickApplyCourse(null);
-              setIsQuickApplyOpen(true);
-            }}
+            onOpenAdmissions={() => navigateTo("admissions")}
           />
         )}
 
         {currentPath === "about" && (
           <AboutPage
             onNavigate={navigateTo}
-            onOpenAdmissions={() => {
-              setQuickApplyCourse(null);
-              setIsQuickApplyOpen(true);
-            }}
+            onOpenAdmissions={() => navigateTo("admissions")}
           />
         )}
 
@@ -309,8 +297,6 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
       {/* Global Application Footer */}
       <Footer
         onNavigate={navigateTo}
-        onOpenResults={() => setIsResultsOpen(true)}
-        onOpenTutorApply={() => setIsTutorApplyOpen(true)}
       />
 
       {/* Slide-out Cart Drawer */}
@@ -336,18 +322,6 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
         }}
       />
 
-      {/* Instant Course Enquiry / Pre-Registration Modal */}
-      <QuickApplyModal
-        isOpen={isQuickApplyOpen}
-        onClose={() => setIsQuickApplyOpen(false)}
-        selectedCourse={quickApplyCourse}
-      />
-
-      {/* Official Exam Results Lookup Modal */}
-      <ExamResultsLookupModal isOpen={isResultsOpen} onClose={() => setIsResultsOpen(false)} />
-
-      {/* Official Apply as a Tutor Modal */}
-      <TutorApplicationModal isOpen={isTutorApplyOpen} onClose={() => setIsTutorApplyOpen(false)} />
     </div>
   );
 }

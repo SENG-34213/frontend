@@ -17,9 +17,11 @@ export const SITE_CONFIG = {
     businessHours: "Monday – Sunday: 8:00 AM – 8:30 PM (IST)",
   },
   portals: {
-    student: process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL || "#portal",
-    teacher: process.env.NEXT_PUBLIC_TEACHER_PORTAL_URL || "#tutors",
-    admin: process.env.NEXT_PUBLIC_ADMIN_PORTAL_URL || "#admin",
+    // Local URLs are supplied through .env.local. These relative fallbacks
+    // match the shared production paths exposed by Caddy.
+    student: process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL || "/student/",
+    teacher: process.env.NEXT_PUBLIC_TEACHER_PORTAL_URL || "/teacher/",
+    admin: process.env.NEXT_PUBLIC_ADMIN_PORTAL_URL || "/admin/",
     results: "#results",
   },
   apiGatewayUrl: process.env.NEXT_PUBLIC_API_GATEWAY_URL || "",

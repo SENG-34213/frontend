@@ -16,14 +16,13 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "../ui/Button";
+import { api } from "../../lib/api/client";
 
 interface AcademicPlacementSectionProps {
-  onOpenAdmissions?: () => void;
   onNavigate?: (path: string) => void;
 }
 
 export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> = ({
-  onOpenAdmissions,
   onNavigate,
 }) => {
   // Form State
@@ -31,20 +30,26 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
   const [stream, setStream] = useState<string>("Physical Science (Combined Maths)");
   const [studentName, setStudentName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [district, setDistrict] = useState<string>("Jaffna");
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [reservationCode, setReservationCode] = useState<string>("");
-  const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string }>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: { name?: string; phone?: string } = {};
+    const newErrors: { name?: string; phone?: string; email?: string } = {};
 
     if (!studentName.trim()) {
       newErrors.name = "Please enter student name";
     }
     if (!phone.trim() || phone.replace(/\D/g, "").length < 9) {
       newErrors.phone = "Please enter a valid phone number (min 9 digits)";
+    }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -53,20 +58,67 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
     }
 
     setErrors({});
-    const code = `TIT-${Math.floor(1000 + Math.random() * 9000)}`;
-    setReservationCode(code);
-    setSubmitted(true);
+    setSubmitError("");
+    setIsSubmitting(true);
+    try {
+      const gradeMatch = grade.match(/Grade\s+(\d+)/i);
+      const gradeValue = grade.toLowerCase().includes("a/l") || grade.startsWith("Grade 12") || grade.startsWith("Grade 13")
+        ? "al"
+        : gradeMatch?.[1] || "1";
+      const subjects = gradeValue !== "al"
+        ? ["Maths", "Science"]
+        : stream.startsWith("Physical")
+          ? ["Combined Mathematics", "Physics"]
+        : stream.startsWith("Biological")
+          ? ["Biology", "Chemistry"]
+          : stream.startsWith("Commerce")
+            ? ["Business Studies", "Economics", "Accounting"]
+            : stream.startsWith("Technology")
+              ? ["Information & Communication Tech (ICT)"]
+              : stream.startsWith("Arts")
+                ? ["History"]
+                : ["Maths", "Science"];
+
+      const response = await api.submitAdmissions({
+        studentFullName: studentName.trim(),
+        studentInitials: studentName.trim().split(/\s+/).map((part) => part[0]).join("."),
+        dateOfBirth: "2008-01-01",
+        gender: "other",
+        guardianName: `Parent/Guardian of ${studentName.trim()}`,
+        guardianRelation: "Parent",
+        guardianPhone: phone.trim(),
+        guardianEmail: email.trim(),
+        studentEmail: email.trim(),
+        studentPhone: phone.trim(),
+        district,
+        city: district,
+        address: district,
+        grade: gradeValue,
+        preferredSubjects: subjects,
+        learningPreference: "Hybrid",
+        preferredContactMethod: "WhatsApp",
+        consentAgreed: true,
+      });
+      setReservationCode(response.data.referenceNo);
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "We could not submit your pre-registration.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setSubmitted(false);
     setStudentName("");
     setPhone("");
+    setEmail("");
+    setSubmitError("");
     setErrors({});
   };
 
   return (
-    <section className="relative">
+    <section id="academic-placement" className="relative scroll-mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Section Header - Middle Aligned */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
@@ -336,6 +388,26 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                     )}
                   </div>
 
+                  {/* Email */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g. parent@example.com"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errors.email) setErrors({ ...errors, email: undefined });
+                      }}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+                    />
+                    {errors.email && (
+                      <p className="text-[11px] text-rose-500 font-medium">{errors.email}</p>
+                    )}
+                  </div>
+
                   {/* District */}
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -364,11 +436,18 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                   {/* Submit Button */}
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-2"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>Submit Pre-Registration</span>
+                    {isSubmitting ? <Clock className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    <span>{isSubmitting ? "Submitting…" : "Submit Pre-Registration"}</span>
                   </button>
+
+                  {submitError && (
+                    <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+                      {submitError}
+                    </p>
+                  )}
 
                   <p className="text-[10px] text-slate-500 text-center">
                     No payment required now · Our Alaveddy coordinator confirms placements by phone
@@ -428,22 +507,12 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                    {onOpenAdmissions && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={onOpenAdmissions}
-                        className="flex-1 justify-center"
-                      >
-                        Open Full Admissions Portal
-                      </Button>
-                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleReset}
                       leftIcon={<RotateCcw className="w-3.5 h-3.5" />}
-                      className="justify-center"
+                      className="w-full justify-center"
                     >
                       Register Another
                     </Button>

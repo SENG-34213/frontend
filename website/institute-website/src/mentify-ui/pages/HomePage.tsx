@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import {
   ArrowRight,
-  Award,
   BookOpen,
   CheckCircle2,
   GraduationCap,
   Sparkles,
-  UserCheck,
 } from "lucide-react";
 import { CourseItem, Language, MaterialItem } from "../types";
 import { SITE_CONFIG } from "../lib/config/site";
@@ -34,8 +32,6 @@ export interface HomePageProps {
   onApplyCourse: (course: CourseItem) => void;
   onAddToCart: (material: MaterialItem) => void;
   onOpenAdmissions: () => void;
-  onOpenResults?: () => void;
-  onOpenTutorApply?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -48,8 +44,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   onApplyCourse,
   onAddToCart,
   onOpenAdmissions,
-  onOpenResults,
-  onOpenTutorApply,
 }) => {
   const [activeFeatureTab, setActiveFeatureTab] = useState<FeatureTabKey>("chat");
   const [showInteractiveSandbox, setShowInteractiveSandbox] = useState<boolean>(false);
@@ -94,29 +88,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                   {t("hero.cta.courses")}
                 </Button>
 
-                {onOpenResults && (
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={onOpenResults}
-                    leftIcon={<Award className="w-5 h-5 text-amber-500" />}
-                    className="w-full sm:w-auto border-amber-300 dark:border-amber-700/60 bg-amber-50/50 dark:bg-amber-950/20 text-amber-900 dark:text-amber-200 hover:bg-amber-100/60"
-                  >
-                    Check Exam Results
-                  </Button>
-                )}
-
-                {onOpenTutorApply && (
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    onClick={onOpenTutorApply}
-                    leftIcon={<UserCheck className="w-5 h-5 text-indigo-500" />}
-                    className="w-full sm:w-auto text-slate-700 dark:text-slate-300"
-                  >
-                    Apply as a Tutor
-                  </Button>
-                )}
               </div>
 
               {/* Verified Trust Metrics */}
@@ -181,7 +152,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           {/* TiT Jaffna Institutional Capability Bar */}
           <div className="mt-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800">
               <div className="flex items-center gap-3.5 pt-2 sm:pt-0 sm:pr-4">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                   <Sparkles className="w-5 h-5" />
@@ -206,28 +177,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     24/7 on-demand revision archives
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className="flex items-center gap-3.5 pt-3 sm:pt-0 sm:px-4 cursor-pointer group"
-                onClick={onOpenResults}
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      Exam Results Portal
-                    </h4>
-                    <span className="text-[9px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">
-                      New
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Term 1, 2, 3 official report cards
                   </p>
                 </div>
               </div>
@@ -365,7 +314,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 5. SECURE YOUR ACADEMIC PLACEMENT - PROPER PRE-REGISTRATION SECTION */}
-      <AcademicPlacementSection onOpenAdmissions={onOpenAdmissions} onNavigate={onNavigate} />
+      <AcademicPlacementSection onNavigate={onNavigate} />
 
       {/* 6. FREQUENTLY ASKED QUESTIONS */}
       <section>
