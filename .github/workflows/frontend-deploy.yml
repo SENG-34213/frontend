@@ -34,7 +34,7 @@ jobs:
       - name: Install, lint, and build applications
         run: |
           set -euo pipefail
-          for app in admin teacher student; do
+          for app in admin teacher student website/institute-website; do
             npm ci --prefix "$app"
             npm run lint --prefix "$app"
             npm run build --prefix "$app"
@@ -63,6 +63,9 @@ jobs:
           - app: student
             image: mentify-student
             base_path: /student
+          - app: website/institute-website
+            image: mentify-website
+            base_path: ""
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -144,6 +147,7 @@ jobs:
           export ADMIN_IMAGE="$DOCKERHUB_USERNAME/mentify-admin"
           export TEACHER_IMAGE="$DOCKERHUB_USERNAME/mentify-teacher"
           export STUDENT_IMAGE="$DOCKERHUB_USERNAME/mentify-student"
+          export WEBSITE_IMAGE="$DOCKERHUB_USERNAME/mentify-website"
           docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
           docker compose -f docker-compose.prod.yml ps
@@ -166,3 +170,5 @@ jobs:
           check_http_200 /admin/
           check_http_200 /teacher/
           check_http_200 /student/
+          check_http_200 /
+          check_http_200 /en
