@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  CheckCircle2,
   CreditCard,
   Mail,
   Phone,
@@ -70,9 +69,12 @@ export const PaymentManagement: React.FC = () => {
   }, [status]);
 
   useEffect(() => {
-    void load();
+    const initialLoad = window.setTimeout(() => void load(), 0);
     const interval = window.setInterval(() => void load(), 15_000);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.clearTimeout(initialLoad);
+      window.clearInterval(interval);
+    };
   }, [load]);
 
   const filtered = useMemo(() => {
