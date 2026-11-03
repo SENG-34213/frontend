@@ -1179,11 +1179,19 @@ export const MarketplaceManagement: React.FC<MarketplaceManagementProps> = ({ on
                   <Trash2 className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 id="delete-marketplace-title" className="text-lg font-bold text-slate-900 dark:text-white">
+                  <h2
+                    id="delete-marketplace-title"
+                    className="text-lg font-bold text-slate-900 dark:text-white"
+                  >
                     Delete marketplace material?
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                    Delete <span className="font-semibold text-slate-900 dark:text-white">{pendingDeleteProduct.title}</span> from the marketplace? The uploaded material will be kept, but this listing will no longer be available.
+                    Delete{" "}
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {pendingDeleteProduct.title}
+                    </span>{" "}
+                    from the marketplace? The uploaded material will be kept, but this listing will
+                    no longer be available.
                   </p>
                 </div>
               </div>

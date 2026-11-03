@@ -139,7 +139,9 @@ export const MaterialDetailPage: React.FC<MaterialDetailPageProps> = ({
                     Total Downloads
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-0.5 block">
-                    {material.downloadCount ? material.downloadCount.toLocaleString() : "Not provided"}
+                    {material.downloadCount
+                      ? material.downloadCount.toLocaleString()
+                      : "Not provided"}
                   </span>
                 </div>
               </div>

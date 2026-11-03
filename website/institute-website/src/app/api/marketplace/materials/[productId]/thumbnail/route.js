@@ -10,12 +10,16 @@ export async function GET(_request, { params }) {
   );
 
   if (!productUrl) {
-    return NextResponse.json({ message: "The marketplace API is not configured." }, { status: 503 });
+    return NextResponse.json(
+      { message: "The marketplace API is not configured." },
+      { status: 503 },
+    );
   }
 
   try {
     const productResponse = await fetch(productUrl, { cache: "no-store" });
-    if (!productResponse.ok) return NextResponse.json({ message: "Marketplace product not found." }, { status: 404 });
+    if (!productResponse.ok)
+      return NextResponse.json({ message: "Marketplace product not found." }, { status: 404 });
 
     const productPayload = await productResponse.json();
     const thumbnailMaterialId = productPayload?.data?.thumbnailMaterialId;
@@ -37,6 +41,9 @@ export async function GET(_request, { params }) {
 
     return NextResponse.redirect(location, 302);
   } catch {
-    return NextResponse.json({ message: "Thumbnail service is temporarily unavailable." }, { status: 502 });
+    return NextResponse.json(
+      { message: "Thumbnail service is temporarily unavailable." },
+      { status: 502 },
+    );
   }
 }

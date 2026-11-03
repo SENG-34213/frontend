@@ -234,7 +234,11 @@ export async function POST(request) {
       });
 
       const forwardedFor = request.headers.get("x-forwarded-for") || "";
-      const ip = (forwardedFor.split(",")[0] || request.headers.get("x-real-ip") || "unknown").trim();
+      const ip = (
+        forwardedFor.split(",")[0] ||
+        request.headers.get("x-real-ip") ||
+        "unknown"
+      ).trim();
       const normalizedEmail = cleanText(body.email).toLowerCase();
       const [ipLimit, emailLimit] = await Promise.all([
         ipRateLimit.limit(ip),
@@ -332,7 +336,9 @@ export async function POST(request) {
       });
       if (error) console.error("Pre-registration email delivery failed.");
     } else {
-      console.warn("Pre-registration email notifications are not configured; submission was saved.");
+      console.warn(
+        "Pre-registration email notifications are not configured; submission was saved.",
+      );
     }
 
     return json("Your pre-registration has been submitted successfully.", 200, {

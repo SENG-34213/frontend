@@ -150,7 +150,8 @@ class TiTApiClient {
     const query = new URLSearchParams();
     if (params.search) query.set("search", params.search);
     if (params.subject && params.subject !== "all") query.set("subject", params.subject);
-    if (params.gradeId && /^[0-9a-f-]{36}$/i.test(params.gradeId)) query.set("gradeId", params.gradeId);
+    if (params.gradeId && /^[0-9a-f-]{36}$/i.test(params.gradeId))
+      query.set("gradeId", params.gradeId);
     const category = toBackendCategory(params.category);
     if (category) query.set("category", category);
     if (params.isFree !== undefined) query.set("isFree", String(params.isFree));
@@ -180,11 +181,16 @@ class TiTApiClient {
   async getMaterialById(id: string): Promise<ApiResponse<MaterialItem | null>> {
     const response = await fetch(`/api/marketplace/materials/${encodeURIComponent(id)}`);
     if (!response.ok) {
-      if (response.status === 404) return { success: false, data: null, message: "Material not found" };
+      if (response.status === 404)
+        return { success: false, data: null, message: "Material not found" };
       throw new Error(`Marketplace API error (${response.status})`);
     }
     const payload = await response.json();
-    return { success: true, data: payload.data ? mapMarketplaceProduct(payload.data) : null, message: payload.message };
+    return {
+      success: true,
+      data: payload.data ? mapMarketplaceProduct(payload.data) : null,
+      message: payload.message,
+    };
   }
 
   // --- COURSES ---
@@ -250,9 +256,8 @@ class TiTApiClient {
   ): Promise<ApiResponse<{ referenceNo: string }>> {
     const gradeMatch = formData.grade.match(/grade-(\d+)/i);
     const gradeNumber = gradeMatch ? Number(gradeMatch[1]) : Number(formData.grade);
-    const grade = formData.grade.toLowerCase().includes("al") || gradeNumber >= 12
-      ? "al"
-      : String(gradeNumber);
+    const grade =
+      formData.grade.toLowerCase().includes("al") || gradeNumber >= 12 ? "al" : String(gradeNumber);
     const classFormat =
       formData.learningPreference === "Online Live"
         ? "online"

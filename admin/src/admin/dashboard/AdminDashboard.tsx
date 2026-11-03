@@ -963,9 +963,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           const y = 112 - (point.value / maxRevenueTrend) * 88;
                           return (
                             <g key={point.label}>
-                              <circle cx={x} cy={y} r="4" fill="#ffffff" stroke="#059669" strokeWidth="3" />
-                              {(index === 0 || index === revenueTrend.length - 1 || index % 3 === 0) && (
-                                <text x={x} y="136" textAnchor="middle" className="fill-slate-500 text-[9px]">
+                              <circle
+                                cx={x}
+                                cy={y}
+                                r="4"
+                                fill="#ffffff"
+                                stroke="#059669"
+                                strokeWidth="3"
+                              />
+                              {(index === 0 ||
+                                index === revenueTrend.length - 1 ||
+                                index % 3 === 0) && (
+                                <text
+                                  x={x}
+                                  y="136"
+                                  textAnchor="middle"
+                                  className="fill-slate-500 text-[9px]"
+                                >
                                   {point.label}
                                 </text>
                               )}
@@ -979,16 +993,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                   <div className="rounded-xl border border-emerald-100 p-3 dark:border-emerald-950/60">
-                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{liveSuccessfulPayments}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">Successful</p>
+                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                      {liveSuccessfulPayments}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">
+                      Successful
+                    </p>
                   </div>
                   <div className="rounded-xl border border-emerald-100 p-3 dark:border-emerald-950/60">
-                    <p className="text-lg font-bold text-slate-700 dark:text-slate-200">{liveProcessedPayments}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">Processed</p>
+                    <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
+                      {liveProcessedPayments}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">
+                      Processed
+                    </p>
                   </div>
                   <div className="rounded-xl border border-emerald-100 p-3 dark:border-emerald-950/60">
-                    <p className="text-lg font-bold text-rose-600 dark:text-rose-400">{livePayments?.refundedPayments ?? 0}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">Refunded</p>
+                    <p className="text-lg font-bold text-rose-600 dark:text-rose-400">
+                      {livePayments?.refundedPayments ?? 0}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-500">
+                      Refunded
+                    </p>
                   </div>
                 </div>
               </>

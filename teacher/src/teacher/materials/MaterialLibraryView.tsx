@@ -881,7 +881,9 @@ function UploadModal({
   const selectFile = (selectedFile: File) => {
     setError(null);
     if (selectedFile.type.startsWith("video/") || selectedFile.type.startsWith("audio/")) {
-      setError("Video and audio materials are not supported. Please choose a document, image, or archive file.");
+      setError(
+        "Video and audio materials are not supported. Please choose a document, image, or archive file.",
+      );
       return;
     }
     if (selectedFile.size > maxFileSize) {

@@ -63,7 +63,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <MessageCircle className="w-4 h-4 fill-white/20" />
                 <span>Chat on WhatsApp</span>
               </a>
-
             </div>
           </div>
 

@@ -85,7 +85,9 @@ export const PaymentManagement: React.FC = () => {
     );
   }, [payments, query]);
 
-  const successful = overview?.successfulPayments ?? payments.filter((payment) => payment.status === "SUCCESS").length;
+  const successful =
+    overview?.successfulPayments ??
+    payments.filter((payment) => payment.status === "SUCCESS").length;
   const pending = payments.filter((payment) => payment.status === "PENDING").length;
   const revenueCurrency = payments.find((payment) => payment.currency)?.currency || "LKR";
 

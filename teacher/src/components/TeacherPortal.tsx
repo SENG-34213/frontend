@@ -607,10 +607,7 @@ export default function App() {
           )}
 
           {currentTab === "quizzes" && (
-            <QuizDashboardView
-              teacherCourses={courses}
-              onNavigate={handleNavigate}
-            />
+            <QuizDashboardView teacherCourses={courses} onNavigate={handleNavigate} />
           )}
 
           {currentTab === "exams" && (

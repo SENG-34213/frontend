@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  GraduationCap,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, GraduationCap, Sparkles } from "lucide-react";
 import { CourseItem, Language, MaterialItem } from "../types";
 import { SITE_CONFIG } from "../lib/config/site";
 import { getTranslation } from "../lib/translations";
@@ -87,7 +81,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                 >
                   {t("hero.cta.courses")}
                 </Button>
-
               </div>
 
               {/* Verified Trust Metrics */}

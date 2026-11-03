@@ -256,17 +256,11 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
         )}
 
         {currentPath === "features" && (
-          <FeaturesPage
-            onNavigate={navigateTo}
-            onOpenAdmissions={() => navigateTo("admissions")}
-          />
+          <FeaturesPage onNavigate={navigateTo} onOpenAdmissions={() => navigateTo("admissions")} />
         )}
 
         {currentPath === "about" && (
-          <AboutPage
-            onNavigate={navigateTo}
-            onOpenAdmissions={() => navigateTo("admissions")}
-          />
+          <AboutPage onNavigate={navigateTo} onOpenAdmissions={() => navigateTo("admissions")} />
         )}
 
         {currentPath === "teachers" && (
@@ -295,9 +289,7 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
       </main>
 
       {/* Global Application Footer */}
-      <Footer
-        onNavigate={navigateTo}
-      />
+      <Footer onNavigate={navigateTo} />
 
       {/* Slide-out Cart Drawer */}
       <CartDrawer
@@ -321,7 +313,6 @@ export default function App({ initialLang = "en" }: { initialLang?: Language }) 
           setCart([]);
         }}
       />
-
     </div>
   );
 }

@@ -27,13 +27,7 @@ import { createExam } from "../api/examApi";
 import { createCalendarEvent, type CalendarEventType } from "../api/calendarApi";
 import { formatTeacherError } from "../utils/userFacingError";
 
-export type QuickCreateType =
-  | "course"
-  | "module"
-  | "lesson"
-  | "assignment"
-  | "exam"
-  | "event";
+export type QuickCreateType = "course" | "module" | "lesson" | "assignment" | "exam" | "event";
 
 interface QuickCreateModalProps {
   isOpen: boolean;

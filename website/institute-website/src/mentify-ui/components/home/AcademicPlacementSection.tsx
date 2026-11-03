@@ -62,26 +62,34 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
     setIsSubmitting(true);
     try {
       const gradeMatch = grade.match(/Grade\s+(\d+)/i);
-      const gradeValue = grade.toLowerCase().includes("a/l") || grade.startsWith("Grade 12") || grade.startsWith("Grade 13")
-        ? "al"
-        : gradeMatch?.[1] || "1";
-      const subjects = gradeValue !== "al"
-        ? ["Maths", "Science"]
-        : stream.startsWith("Physical")
-          ? ["Combined Mathematics", "Physics"]
-        : stream.startsWith("Biological")
-          ? ["Biology", "Chemistry"]
-          : stream.startsWith("Commerce")
-            ? ["Business Studies", "Economics", "Accounting"]
-            : stream.startsWith("Technology")
-              ? ["Information & Communication Tech (ICT)"]
-              : stream.startsWith("Arts")
-                ? ["History"]
-                : ["Maths", "Science"];
+      const gradeValue =
+        grade.toLowerCase().includes("a/l") ||
+        grade.startsWith("Grade 12") ||
+        grade.startsWith("Grade 13")
+          ? "al"
+          : gradeMatch?.[1] || "1";
+      const subjects =
+        gradeValue !== "al"
+          ? ["Maths", "Science"]
+          : stream.startsWith("Physical")
+            ? ["Combined Mathematics", "Physics"]
+            : stream.startsWith("Biological")
+              ? ["Biology", "Chemistry"]
+              : stream.startsWith("Commerce")
+                ? ["Business Studies", "Economics", "Accounting"]
+                : stream.startsWith("Technology")
+                  ? ["Information & Communication Tech (ICT)"]
+                  : stream.startsWith("Arts")
+                    ? ["History"]
+                    : ["Maths", "Science"];
 
       const response = await api.submitAdmissions({
         studentFullName: studentName.trim(),
-        studentInitials: studentName.trim().split(/\s+/).map((part) => part[0]).join("."),
+        studentInitials: studentName
+          .trim()
+          .split(/\s+/)
+          .map((part) => part[0])
+          .join("."),
         dateOfBirth: "2008-01-01",
         gender: "other",
         guardianName: `Parent/Guardian of ${studentName.trim()}`,
@@ -102,7 +110,9 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
       setReservationCode(response.data.referenceNo);
       setSubmitted(true);
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "We could not submit your pre-registration.");
+      setSubmitError(
+        error instanceof Error ? error.message : "We could not submit your pre-registration.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -439,7 +449,11 @@ export const AcademicPlacementSection: React.FC<AcademicPlacementSectionProps> =
                     disabled={isSubmitting}
                     className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer mt-2"
                   >
-                    {isSubmitting ? <Clock className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    {isSubmitting ? (
+                      <Clock className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
                     <span>{isSubmitting ? "Submitting…" : "Submit Pre-Registration"}</span>
                   </button>
 

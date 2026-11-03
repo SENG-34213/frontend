@@ -70,7 +70,12 @@ export function PreRegistrationsManagement() {
     const loadRecords = async (showLoading = false) => {
       if (showLoading) setIsLoading(true);
       try {
-        const result = await fetchPreRegistrations({ status: statusFilter, seen: seenFilter, page, size: 20 });
+        const result = await fetchPreRegistrations({
+          status: statusFilter,
+          seen: seenFilter,
+          page,
+          size: 20,
+        });
         if (!active) return;
         setRecords(result.content);
         setTotalPages(result.totalPages);
