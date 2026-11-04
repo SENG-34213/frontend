@@ -335,20 +335,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               that need your attention today.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+          <div className="flex items-center">
             <button
               onClick={() => onNavigate("attendance")}
               className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-xs font-bold text-slate-900 transition hover:bg-cyan-50"
             >
               <CheckCircle2 className="h-4 w-4" />
               Attendance
-            </button>
-            <button
-              onClick={() => onNavigate("grading-workspace")}
-              className="flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-xs font-semibold text-white transition hover:bg-white/15"
-            >
-              <ClipboardList className="h-4 w-4" />
-              Review queue
             </button>
           </div>
         </div>

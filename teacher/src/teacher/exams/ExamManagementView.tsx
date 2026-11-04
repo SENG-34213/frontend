@@ -34,7 +34,6 @@ import { TextInputModal } from "../components/ActionModal";
 import { ExamInstructionUpload } from "../components/ExamInstructionUpload";
 import { downloadExamAttachment, getExamAttachments, type ExamAttachment } from "../api/examApi";
 import { downloadBlob } from "../../../../shared/files/downloadFile";
-import { useVisibleAutoRefresh } from "../../../../shared/useVisibleAutoRefresh";
 import { EmptyState } from "../../../../shared/ui/EmptyState";
 
 interface ExamManagementViewProps {
@@ -255,19 +254,6 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
 
     return () => controller.abort();
   }, [backendCourses, backendCoursesError, backendCoursesLoading]);
-
-  useVisibleAutoRefresh(
-    async () => {
-      if (backendCoursesLoading || backendCoursesError || !backendCourses.length) return;
-      const loaded = (
-        await Promise.all(backendCourses.map((course) => getCourseExams(course.id)))
-      ).flat();
-      setBackendExams(loaded);
-      setExams(loaded.map((exam) => mapBackendExam(exam, backendCourses)));
-    },
-    !backendCoursesLoading && !backendCoursesError && backendCourses.length > 0,
-    15_000,
-  );
 
   const replaceExam = (updated: BackendExam) => {
     setBackendExams((current) => current.map((exam) => (exam.id === updated.id ? updated : exam)));
@@ -538,7 +524,10 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
         </div>
 
         <button
-          onClick={() => setIsWizardOpen(true)}
+          onClick={() => {
+            setError(null);
+            setIsWizardOpen(true);
+          }}
           className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5 self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -585,6 +574,15 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
                 ))}
               </div>
             </div>
+
+            {error && (
+              <div
+                role="alert"
+                className="mx-6 mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium leading-relaxed text-rose-700"
+              >
+                {error}
+              </div>
+            )}
 
             {/* Wizard Body */}
             <div className="p-6 space-y-4">
@@ -842,7 +840,7 @@ export const ExamManagementView: React.FC<ExamManagementViewProps> = ({
       )}
 
       {/* Scheduled Exams List */}
-      {error && (
+      {error && !isWizardOpen && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
           {error}
         </div>
