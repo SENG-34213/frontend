@@ -214,12 +214,6 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
               </span>
             </div>
             <div className="flex justify-between gap-3">
-              <span className="text-slate-400">Department:</span>
-              <span className="truncate font-medium text-slate-700 dark:text-slate-300">
-                {profile.department || "Not recorded"}
-              </span>
-            </div>
-            <div className="flex justify-between gap-3">
               <span className="text-slate-400">Courses:</span>
               <span className="font-medium text-slate-700 dark:text-slate-300">
                 {courses.length}
@@ -304,10 +298,6 @@ export const TeacherProfileView: React.FC<TeacherProfileViewProps> = ({
               {[
                 ["Email", profile.email || "—"],
                 ["Phone Number", profile.phone || "Not recorded"],
-                ["Title", profile.title || "Not recorded"],
-                ["Department", profile.department || "Not recorded"],
-                ["Office Location", profile.officeLocation || "Not recorded"],
-                ["Office Hours", profile.officeHours || "Not recorded"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/70">
                   <p className="text-[10px] uppercase tracking-wider text-slate-400">{label}</p>
