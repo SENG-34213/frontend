@@ -880,12 +880,21 @@ export const AssignmentDashboardView: React.FC<AssignmentDashboardViewProps> = (
     try {
       const updated = await updateAssignment(record.id, draft);
       const saved = publishImmediately ? await publishAssignment(record.id) : updated;
+      // Some update/publish responses omit the edited schedule fields. Keep the
+      // dashboard countdown in sync with the values the teacher just saved.
+      const savedWithSchedule = {
+        ...saved,
+        startDate: draft.startDate,
+        dueDate: draft.dueDate,
+      };
       setBackendAssignments((current) =>
-        current.map((entry) => (entry.id === saved.id ? saved : entry)),
+        current.map((entry) => (entry.id === savedWithSchedule.id ? savedWithSchedule : entry)),
       );
       setAssignments((current) =>
         current.map((entry) =>
-          entry.id === saved.id ? toAssignment(saved, backendCourses) : entry,
+          entry.id === savedWithSchedule.id
+            ? toAssignment(savedWithSchedule, backendCourses)
+            : entry,
         ),
       );
       setEditingAssignment(null);

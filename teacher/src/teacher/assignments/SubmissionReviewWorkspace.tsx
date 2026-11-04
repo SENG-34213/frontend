@@ -86,7 +86,9 @@ const mapBackendSubmission = (item: BackendSubmission, maxMarks = 100): StudentS
         : item.status === "GRADED" || item.status === "RETURNED"
           ? "Graded"
           : "Submitted",
-    score: item.marks,
+    // The API uses null for an ungraded submission. Keep it unset for grading
+    // state, while the list can display a clear 0 until a mark is entered.
+    score: item.marks ?? undefined,
     isReturned: item.status === "RETURNED",
     isLate: item.isLate,
     gradeReleased: item.gradeReleased,
@@ -757,7 +759,7 @@ export const SubmissionReviewWorkspace: React.FC<SubmissionReviewWorkspaceProps>
                       </div>
                       <div className="shrink-0 text-right">
                         <span className="font-mono text-xs font-bold text-slate-800">
-                          {sub.score !== undefined ? `${sub.score}/${sub.maxMarks}` : "—"}
+                          {`${sub.score ?? 0}/${sub.maxMarks}`}
                         </span>
                       </div>
                     </div>
